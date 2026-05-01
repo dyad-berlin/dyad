@@ -2,7 +2,6 @@
 	import { goto } from '$app/navigation';
 	import { enhance } from '$app/forms';
 	import { copy } from '$lib/copy';
-	import { capture } from '$lib/analytics';
 
 	interface Props {
 		mode?: 'waitlist' | 'login';
@@ -68,7 +67,6 @@
 
 			if (res.ok) {
 				success = true;
-				capture('waitlist_joined', { referred_by: dyadRef || null });
 				if (newsletterConsent) {
 					fetch('/api/newsletter', {
 						method: 'POST',

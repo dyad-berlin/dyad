@@ -4,7 +4,6 @@ import { requireAuth } from '$lib/server/auth.js';
 import { parseJsonBody } from '$lib/server/parse-body.js';
 import { SupabaseMeetingService } from '$lib/services/meeting.js';
 import { handleServiceError } from '$lib/server/handle-service-error.js';
-import { env } from '$env/dynamic/public';
 
 /** POST /api/meetings/[id]/cancel — cancel with optional reason */
 export const POST: RequestHandler = async ({ params, request, locals }) => {
@@ -22,18 +21,6 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 	const service = new SupabaseMeetingService(locals.supabase);
 	try {
 		const tier = await service.cancel(params.id, body.reason);
-		if (env.PUBLIC_POSTHOG_KEY) {
-			fetch('https://eu.i.posthog.com/capture/', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					api_key: env.PUBLIC_POSTHOG_KEY,
-					distinct_id: user.id,
-					event: 'meeting_cancelled',
-					properties: { meeting_id: params.id, tier }
-				})
-			}).catch(() => {});
-		}
 		return json({ ok: true, tier });
 	} catch (err) {
 		return handleServiceError(err, '[meetings/cancel]');

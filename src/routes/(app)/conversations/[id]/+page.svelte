@@ -1,25 +1,13 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import { goto, invalidateAll } from '$app/navigation';
-	import { onMount } from 'svelte';
 	import SlotCard from '$lib/components/SlotCard.svelte';
 	import FloatingNav from '$lib/components/FloatingNav.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import MeetingCard from '$lib/components/MeetingCard.svelte';
 	import { copy } from '$lib/copy';
-	import { capture } from '$lib/analytics';
 
 	let { data }: { data: PageData } = $props();
-
-	onMount(() => {
-		capture('conversation_viewed', { prompt_id: data.prompt.id });
-
-		// Track when an invitee loads the page with a pending invite waiting for them
-		const viewerIsAuthor = data.prompt.author_id === data.user?.id;
-		if (!viewerIsAuthor && data.invitedSlotIds.length > 0) {
-			capture('meeting_invite_received', { prompt_id: data.prompt.id });
-		}
-	});
 
 	// svelte-ignore state_referenced_locally — intentional initial-value capture for editable field
 	let responseText = $state(data.myComment?.body ?? '');
@@ -65,7 +53,6 @@
 			});
 			if (res.ok) {
 				responseStatus = 'sent';
-				capture('conversation_responded', { prompt_id: data.prompt.id });
 			} else {
 				const err = await res.json().catch(() => ({}));
 				responseError = (err as any).error ?? copy.common.sendFailed;
@@ -96,7 +83,6 @@
 					}
 				}
 				inviteStatus = 'sent';
-				capture('meeting_invite_sent', { prompt_id: data.prompt.id });
 			} else {
 				const err = await res.json().catch(() => ({}));
 				inviteError = (err as any).error ?? copy.common.sendFailed;
@@ -148,7 +134,6 @@
 			const res = await fetch(`/api/invitations/${invitationId}/accept`, { method: 'POST' });
 			if (res.ok) {
 				const { meetingId } = await res.json();
-				capture('meeting_invite_accepted', { prompt_id: data.prompt.id, meeting_id: meetingId });
 				goto(`/meetings/${meetingId}`);
 			} else {
 				const err = await res.json().catch(() => ({}));
@@ -184,7 +169,6 @@
 				body: JSON.stringify(reason ? { reason } : {})
 			});
 			if (res.ok) {
-				capture('meeting_invite_declined', { prompt_id: data.prompt.id });
 				openDeclineId = null;
 				declineMessage = '';
 				await invalidateAll();

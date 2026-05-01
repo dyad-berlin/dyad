@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { capture } from '$lib/analytics';
-
 	let { onDone, username = '' }: { onDone: () => void; username?: string } = $props();
 
 	let step = $state(0);
@@ -11,18 +9,15 @@
 
 	function next() {
 		if (!isLast) {
-			capture('onboarding_step_completed', { step: stepNames[step] });
 			step++;
 		}
 	}
 
 	function skip() {
-		capture('onboarding_skipped', { step: stepNames[step] });
 		onDone();
 	}
 
 	function finish() {
-		capture('onboarding_completed');
 		onDone();
 	}
 </script>
