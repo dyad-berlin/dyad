@@ -1,28 +1,9 @@
 <script lang="ts">
-	import { page } from '$app/stores';
-	import { browser } from '$app/environment';
-	import { onMount } from 'svelte';
-	import { env } from '$env/dynamic/public';
 	import type { LayoutData } from './$types';
 	import MeetingFeedbackModal from '$lib/components/MeetingFeedbackModal.svelte';
 	import FeedbackModal from '$lib/components/FeedbackModal.svelte';
-	import { initPosthog, capture } from '$lib/analytics';
 
 	let { data, children }: { data: LayoutData; children: any } = $props();
-
-	let posthogReady = $state(false);
-
-	// PostHog disabled — re-enable after privacy/reliability fixes land (#101)
-	// onMount(async () => {
-	// 	if (!env.PUBLIC_POSTHOG_KEY) return;
-	// 	await initPosthog(env.PUBLIC_POSTHOG_KEY, data.user?.id, data.username);
-	// 	posthogReady = true;
-	// });
-
-	// $effect(() => {
-	// 	if (!posthogReady || !browser) return;
-	// 	capture('$pageview', { path: $page.url.pathname });
-	// });
 </script>
 
 <main class="main-content">

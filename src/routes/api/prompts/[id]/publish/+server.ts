@@ -5,7 +5,6 @@ import { parseJsonBody } from '$lib/server/parse-body.js';
 import { SupabasePromptCommandService } from '$lib/services/prompt-command.js';
 import type { TimeSlotInput } from '$lib/domain/types.js';
 import { handleServiceError } from '$lib/server/handle-service-error.js';
-import { env } from '$env/dynamic/public';
 
 /** POST /api/prompts/[id]/publish — publish a draft with time slots */
 export const POST: RequestHandler = async ({ params, request, locals }) => {
@@ -33,18 +32,6 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 	const service = new SupabasePromptCommandService(locals.supabase);
 	try {
 		await service.publish(params.id, user.id, body.slots);
-		if (env.PUBLIC_POSTHOG_KEY) {
-			fetch('https://eu.i.posthog.com/capture/', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					api_key: env.PUBLIC_POSTHOG_KEY,
-					distinct_id: user.id,
-					event: 'conversation_published',
-					properties: { prompt_id: params.id, slot_count: body.slots.length }
-				})
-			}).catch(() => {});
-		}
 		return json({ ok: true });
 	} catch (err) {
 		return handleServiceError(err, '[prompts/publish]');
