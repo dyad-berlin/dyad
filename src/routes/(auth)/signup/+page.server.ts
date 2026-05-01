@@ -132,25 +132,6 @@ export const actions: Actions = {
 			return fail(400, { username, error: friendly });
 		}
 
-		// Capture signup event server-side
-		const { env } = await import('$env/dynamic/public');
-		if (env.PUBLIC_POSTHOG_KEY && signUpData.user) {
-			fetch('https://eu.i.posthog.com/capture/', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					api_key: env.PUBLIC_POSTHOG_KEY,
-					distinct_id: signUpData.user.id,
-					event: 'referral_signup_completed',
-					properties: {
-						referred_by: refUsername ?? null,
-						has_motivation: !!joinMotivation,
-						motivation: joinMotivation
-					}
-				})
-			}).catch(() => {});
-		}
-
 		// Local dev (enable_confirmations = false): session is returned immediately
 		if (signUpData.session) {
 			redirect(302, '/discover?welcome=1');
