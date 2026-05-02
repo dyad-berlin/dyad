@@ -1,4 +1,5 @@
 import { redirect } from '@sveltejs/kit';
+import type { Session } from '@prefig/upact';
 import type { Actions } from './$types';
 
 /**
@@ -8,7 +9,7 @@ import type { Actions } from './$types';
  */
 export const actions: Actions = {
 	default: async ({ locals }) => {
-		await locals.supabase.auth.signOut();
+		await locals.identityPort.invalidate({} as Session);
 		redirect(303, '/');
 	}
 };
