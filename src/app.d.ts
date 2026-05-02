@@ -12,7 +12,6 @@ declare global {
 			user: User | null;
 			session: Session | null;
 			identityPort: IdentityPort;
-			isAdmin: boolean;
 		}
 		// interface PageData {}
 		// interface PageState {}

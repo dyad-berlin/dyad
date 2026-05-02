@@ -3,8 +3,17 @@ import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/publi
 import { dev } from '$app/environment';
 import type { Handle } from '@sveltejs/kit';
 import { createSupabaseAdapter } from '@prefig/upact-supabase';
+import { requireAdminAuth } from '$lib/server/admin-auth';
 
 export const handle: Handle = async ({ event, resolve }) => {
+	// Admin plane: gated by HTTP Basic Auth, no overlap with user identity.
+	// Returns 401 + WWW-Authenticate before any user-app logic runs.
+	if (event.url.pathname.startsWith('/admin')) {
+		const authResponse = requireAdminAuth(event.request);
+		if (authResponse) return authResponse;
+		return resolve(event);
+	}
+
 	event.locals.supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
 		cookies: {
 			getAll: () => event.cookies.getAll(),
@@ -46,14 +55,6 @@ export const handle: Handle = async ({ event, resolve }) => {
 	event.locals.session = session;
 	event.locals.user = user;
 
-	// Admin identity: out-of-port channel. Admin is an operator role, not a user
-	// attribute — it sits above the upact port, not inside it. For the Supabase
-	// phase this is the app_metadata JWT claim (set via Admin API, immutable from
-	// the client). After a provider swap, replace with the equivalent substrate-
-	// native claim (e.g., OIDC group membership). See docs/solutions/identity-
-	// decoupling-security-tradeoffs.md for the full rationale.
-	event.locals.isAdmin = user?.app_metadata?.role === 'admin';
-
 	// Redirect old /prompts/ URLs to /conversations/
 	if (event.url.pathname.startsWith('/prompts/')) {
 		const newPath = event.url.pathname.replace('/prompts/', '/conversations/') + event.url.search;
@@ -88,16 +89,14 @@ export const handle: Handle = async ({ event, resolve }) => {
 			const gateStatus = await gateService.checkGate(user.id);
 
 			if (gateStatus.gated && gateStatus.feedbackFormId) {
-				if (!event.locals.isAdmin) {
-					if (pathname.startsWith('/api/')) {
-						return new Response(JSON.stringify({ error: 'gated', feedbackFormId: gateStatus.feedbackFormId }), {
-							status: 403,
-							headers: { 'Content-Type': 'application/json' }
-						});
-					}
-					// Store in locals so the layout renders the feedback modal instead of redirecting
-					(event.locals as any).pendingFeedbackFormId = gateStatus.feedbackFormId;
+				if (pathname.startsWith('/api/')) {
+					return new Response(JSON.stringify({ error: 'gated', feedbackFormId: gateStatus.feedbackFormId }), {
+						status: 403,
+						headers: { 'Content-Type': 'application/json' }
+					});
 				}
+				// Store in locals so the layout renders the feedback modal instead of redirecting
+				(event.locals as any).pendingFeedbackFormId = gateStatus.feedbackFormId;
 			}
 		}
 	}
