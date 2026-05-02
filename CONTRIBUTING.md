@@ -6,18 +6,16 @@ dyad is built by a small team — a developer and a non-technical co-founder —
 
 ### Branch workflow
 
-Always work on a branch. Never commit directly to `main` or `dev`.
+Always work on a branch. Never commit directly to `main`.
 
 ```bash
-git checkout dev
-git pull origin dev
+git checkout main
+git pull origin main
 git checkout -b feat/your-feature-name
 # ... make changes ...
 git push -u origin feat/your-feature-name
-gh pr create --base dev
+gh pr create --base main
 ```
-
-PRs target `dev`. The `main` branch receives merges from `dev` for releases.
 
 ### Before pushing
 
@@ -37,7 +35,7 @@ Keep them concise. The commit body should explain *why*, not *what* (the diff sh
 
 ### CSS: design tokens only
 
-Every CSS value must reference a design token from `src/app.css`. No hardcoded pixel values, colours, or font sizes. Check `docs/design/design-system.md` for the spec.
+Every CSS value must reference a design token from `src/app.css`. No hardcoded pixel values, colours, or font sizes. See the *Visual system* section of `DESIGN.md` for the catalogue.
 
 ```css
 /* Yes */
@@ -55,7 +53,7 @@ All user-facing text lives in `src/lib/copy.ts`. Don't scatter string literals i
 
 ### Domain language
 
-Internal code uses "prompt" for the conversation starter. User-facing routes and copy use "conversation." See `docs/design/domain-language.md` for the full mapping.
+Internal code uses "prompt" for the conversation starter. User-facing routes and copy use "conversation." See the *Domain language* section of `DESIGN.md` for the full mapping.
 
 ---
 
@@ -74,15 +72,9 @@ npm run dev                  # starts Vite at localhost:5173
 
 | File | Purpose |
 |------|---------|
-| `CLAUDE.md` | Full architecture guide, route structure, patterns |
-| `docs/design/design-principles.md` | Product principles — no pre-meeting contact, feedback gate, etc. |
-| `docs/design/design-system.md` | Visual language, tokens, component specs |
-| `docs/solutions/` | 24 documented gotchas and patterns — check before implementing |
-| `src/lib/copy.ts` | All user-facing text, organized by route |
-
-### Decision making
-
-Check `docs/solutions/` before implementing anything. Past gotchas are documented there: TipTap reactive loop, Leaflet SSR issues, RLS visibility patterns. Don't rediscover what's known.
+| `CLAUDE.md` | Architecture guide, route structure, patterns |
+| `DESIGN.md` | Design philosophy, structural commitments, domain language, visual system |
+| `src/lib/copy.ts` | All user-facing text, organised by route |
 
 ### Admin operations (alpha test)
 
@@ -99,13 +91,6 @@ Check `docs/solutions/` before implementing anything. Past gotchas are documente
 
 Read `CLAUDE.md` — it contains the architecture, route structure, service layer pattern, environment variables, and key files. It's the single source of truth for the codebase.
 
-### Plans and todos
-
-- Plans live in `docs/plans/`. Check for an existing plan before starting work.
-- Todos live in `todos/`. Check for related todos before implementing.
-- When you complete a plan, move it to `docs/plans/archive/`.
-- When you complete a todo, move it to `todos/archive/`.
-
 ### Patterns to follow
 
 - **Service layer**: All DB access goes through `src/lib/services/`. Don't query Supabase directly from page loaders.
@@ -116,10 +101,8 @@ Read `CLAUDE.md` — it contains the architecture, route structure, service laye
 
 ### What to check before UI changes
 
-1. Check `docs/design/design-system.md` for tokens and specs
-2. Check `origin/archive/v01-design-reference` branch for design reference images
-3. Check `docs/solutions/` for related gotchas
-4. Use design tokens — never hardcode CSS values
+1. Read the *Visual system* and *Components* sections of `DESIGN.md` for tokens and component specs.
+2. Use design tokens — never hardcode CSS values.
 
 ### Testing
 
@@ -133,24 +116,3 @@ npx playwright test  # needs dev server at localhost:5173
 
 The pre-push hook runs all 26 E2E tests automatically.
 
-### Solution documents
-
-When you solve a non-obvious problem, document it in `docs/solutions/` with this structure:
-
-```markdown
----
-topic: Brief description
-date: YYYY-MM-DD
-prs: [PR numbers]
-tags: [relevant, tags]
----
-
-# Title
-
-## Context
-## What We Learned
-## The Fix / Pattern
-## Why This Matters
-```
-
-This prevents the same problem from being re-discovered by future contributors (human or AI).

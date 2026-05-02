@@ -6,7 +6,7 @@ dyad.berlin is a SvelteKit app for facilitating in-person conversations in Berli
 
 **Stack:** SvelteKit, Svelte 5 (runes), Supabase (auth + DB + storage), TipTap/ProseMirror (rich text editor), Leaflet (map), Cloudflare Pages.
 
-**Domain vocabulary:** The internal model uses "prompt" for the written conversation starter. User-facing copy uses "conversation." See `docs/design/domain-language.md` for the full mapping.
+**Domain vocabulary:** The internal model uses "prompt" for the written conversation starter. User-facing copy uses "conversation." See the *Domain language* section of `DESIGN.md` for the full mapping.
 
 ## Architecture
 
@@ -42,7 +42,7 @@ All authenticated routes live under `src/routes/(app)/`. The layout provides:
 ### Key Patterns
 
 - **Generation counter for async races**: Used in the prompt editor's auto-save (`saveGeneration`) and the MapView marker rebuilds. Prevents stale responses from corrupting state.
-- **TipTap + Svelte 5**: Use `createSubscriber` from `svelte/reactivity` to bridge TipTap transactions into runes. Never call store methods directly from `onUpdate`. See `docs/solutions/integration-issues/svelte5-tiptap-reactive-loop.md`.
+- **TipTap + Svelte 5**: Use `createSubscriber` from `svelte/reactivity` to bridge TipTap transactions into runes. Never call store methods directly from `onUpdate` — that path produces an infinite reactive loop.
 - **Copy-on-write for reactivity**: Svelte 5 runes track by assignment. Any `Map` or `Set` mutation must create a new instance.
 - **Response-first invitation flow**: Users must write a response before they can invite to meet. The response IS the meeting context.
 
@@ -77,7 +77,7 @@ All authenticated routes live under `src/routes/(app)/`. The layout provides:
 | `ADMIN_DEV_BYPASS` | No (dev only) | Set to `1` in `.env.local` to allow `/admin/*` through without Cloudflare Access. Has no effect in production builds. |
 | `PUBLIC_ASSET_BASE_URL` | No | Override for static page imagery (e.g. `/why` hero images). Falls back to the default Supabase uploads bucket. Set this to route assets through a sovereign host without touching code. |
 
-Admin authentication is gated by Cloudflare Access at the edge — operator identity lives in Cloudflare's identity layer, not in dyad. See `docs/solutions/identity-decoupling-security-tradeoffs.md` for setup and architectural reasoning.
+Admin authentication is gated by Cloudflare Access at the edge — operator identity lives in Cloudflare's identity layer, not in dyad. See `src/lib/server/admin-auth.ts` for the implementation and `SECURITY.md` for the threat model.
 
 ## Database
 
@@ -114,42 +114,25 @@ Schema defined in `supabase/migrations/` (source of truth). Key tables:
 
 ## Design References
 
-- `docs/design/design-principles.md` — Core product principles (no pre-meeting contact, healthy brain, feedback gate)
-- `docs/design/design-system.md` — Visual language, tokens, component specs
-- `docs/design/domain-language.md` — Internal vs user-facing vocabulary
-- `docs/design/user-archetypes.md` — Seekers, explorers, gatherers, in-betweeners
-- `docs/design/sustainability-and-accessibility.md` — Business model, steward ownership, venue partnerships
-- `docs/stories/` — User stories (001-004)
-- `docs/solutions/` — Documented gotchas and patterns (24 solution docs)
-- `docs/ROADMAP.md` — v0.1 → v0.2 → v0.3 scope and driving factors
-
-## Todos & Plans
-
-The `todos/` directory contains prioritized findings from code reviews. Files follow the pattern `{NNN}-{status}-{priority}-{description}.md`. Completed items are in `todos/archive/`.
-
-The `docs/plans/` directory contains implementation plans. When resolving a todo or completing a plan, always move the file to the corresponding `archive/` subdirectory rather than deleting it.
+- `DESIGN.md` — Consolidated design reference: philosophy, structural commitments (coordination not communication, calm technology, feedback gate, anti-sorting), domain language, visual system, components.
 
 ## Ways of Working
 
-### For all contributors (including non-technical co-founders using Claude Code)
+### For all contributors
 
-1. **Always work on a branch, never commit directly to main.** Create a branch, make changes, push, create a PR, review, merge. This protects main from broken code.
+1. **Always work on a branch, never commit directly to main.** Create a branch, make changes, push, create a PR, review, merge.
 
-2. **Read before writing.** Always read the file you're about to change. Understand the existing code before modifying it. Use the design docs and solution docs as context.
+2. **Read before writing.** Always read the file you're about to change. Understand existing patterns before modifying them.
 
-3. **Run `npx svelte-check --threshold error` before pushing.** This catches type errors and broken imports. Pre-existing errors (15, all Supabase type widening) are known — only worry about NEW errors.
+3. **Run `npx svelte-check --threshold error` before pushing.** This catches type errors and broken imports. Pre-existing errors are known — only worry about new ones.
 
-   **Integration tests** against a real Supabase stack: `npm run test:integration:local`. See [docs/TESTING.md](docs/TESTING.md) for setup, the three tiers (unit / integration / E2E), and how `.env.local` is auto-generated from `supabase status`.
+   **Integration tests** against a real Supabase stack: `npm run test:integration:local`. The three tiers (unit / integration / E2E) and `.env.local` auto-generation from `supabase status` are covered in `CONTRIBUTING.md`.
 
 4. **Commit messages follow conventional format.** `fix: description`, `feat: description`, `docs: description`, `refactor: description`. Keep them concise.
 
-5. **Check `docs/solutions/` before implementing.** Past gotchas are documented there. The TipTap reactive loop, Leaflet SSR issues, RLS visibility patterns — don't rediscover what's already known.
+5. **For copy/wording changes:** Edit `src/lib/copy.ts`. Single source for all user-facing text.
 
-6. **For copy/wording changes:** Edit `src/lib/copy.ts` (once it exists — part of v0.1 work). This is the single source for all user-facing text.
-
-7. **For CSS fixes:** Use design tokens from `src/app.css` (`--space-*`, `--text-*`, `--radius-*`). Don't hardcode pixel values. Check `docs/design/design-system.md` for the spec.
-
-8. **For bug fixes during alpha test:** Read the in-app feedback report, understand the issue, check if there's a related todo in `todos/`, fix on a branch, PR, merge. If unsure, leave a comment on the PR describing the uncertainty.
+6. **For CSS fixes:** Use design tokens from `src/app.css` (`--space-*`, `--text-*`, `--radius-*`). Don't hardcode pixel values. The full token catalogue is in `DESIGN.md`.
 
 ### Admin operations (during alpha test)
 
@@ -160,7 +143,7 @@ The `docs/plans/` directory contains implementation plans. When resolving a todo
 
 ## Engineering Standards
 
-The sections below codify operational standards for API contracts, security, migrations, and workflow. They exist because a 17-issue code review (see `todos/REVIEW-2026-02-22.md`) showed these are the areas where problems actually occur.
+The sections below codify operational standards for API contracts, security, migrations, and workflow. They exist because past code reviews surfaced these as the areas where problems actually occur.
 
 ### API Endpoint Standards
 
