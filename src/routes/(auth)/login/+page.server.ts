@@ -1,4 +1,5 @@
 import { fail, redirect } from '@sveltejs/kit';
+import type { Session } from '@prefig/upact';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
@@ -27,20 +28,20 @@ export const actions: Actions = {
 			return fail(400, { email: email.toString(), error: 'Please enter your password' });
 		}
 
-		const { error } = await locals.supabase.auth.signInWithPassword({
-			email,
-			password
-		});
+		const result = await locals.identityPort.authenticate({ kind: 'password', email, password });
 
-		if (error) {
-			return fail(400, { email: email.toString(), error: error.message });
+		if ('code' in result) {
+			const message = result.code === 'rate_limited'
+				? 'Too many attempts — please try again later'
+				: 'Invalid email or password';
+			return fail(400, { email: email.toString(), error: message });
 		}
 
 		redirect(302, '/discover');
 	},
 
 	logout: async ({ locals }) => {
-		await locals.supabase.auth.signOut();
+		await locals.identityPort.invalidate({} as Session);
 		redirect(302, '/login');
 	},
 
