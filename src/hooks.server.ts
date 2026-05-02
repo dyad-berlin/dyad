@@ -38,7 +38,12 @@ export const handle: Handle = async ({ event, resolve }) => {
 		return { session, user };
 	};
 
-	// Populate user and session for convenience
+	// TODO (Phase E): replace safeGetSession() with identityPort.currentUpactor(event.request)
+	// so per-request identity resolves through the port rather than calling Supabase Auth
+	// directly. Requires: (1) locals.upactor: Upactor | null added to App.Locals,
+	// (2) feedback gate uses upactor.id, (3) admin check solved without app_metadata
+	// (privacy minima deliberately exclude it — either profiles.is_admin DB check or
+	// keep locals.user as a named exception for that one callsite).
 	const { session, user } = await event.locals.safeGetSession();
 	event.locals.session = session;
 	event.locals.user = user;
