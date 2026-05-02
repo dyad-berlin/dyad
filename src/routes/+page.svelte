@@ -128,9 +128,9 @@
 				<button class="join-btn" onclick={() => openAuth('waitlist')}>
 					join waitlist
 				</button>
-				<button class="login-btn" onclick={() => openAuth('login')}>
+				<a href="/login" class="login-btn">
 					log in
-				</button>
+				</a>
 				<button class="theme-toggle theme-toggle-inline" onclick={() => themeStore.toggle()} aria-label="Toggle theme">
 					{#if themeStore.current === 'light'}
 						<svg width="14" height="14" viewBox="0 0 16 16" fill="none">
