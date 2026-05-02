@@ -7,7 +7,9 @@ import { handleServiceError } from '$lib/server/handle-service-error.js';
 
 /** POST /api/meetings/[id]/cancel — cancel with optional reason */
 export const POST: RequestHandler = async ({ params, request, locals }) => {
-	requireIdentity(locals);
+	// Auth guard: throws 401 if not signed in. Identity itself is unused
+	// here — RLS enforces ownership on the underlying RPC call.
+	const _upactor = requireIdentity(locals);
 
 	const [body, errorResponse] = await parseJsonBody<{ reason?: string }>(request);
 	if (errorResponse) return errorResponse;
