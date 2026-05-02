@@ -73,10 +73,11 @@ All authenticated routes live under `src/routes/(app)/`. The layout provides:
 | `PUBLIC_SUPABASE_URL` | Yes | Supabase project URL |
 | `PUBLIC_SUPABASE_ANON_KEY` | Yes | Supabase anon key (public, works with RLS) |
 | `RESEND_API_KEY` | Yes | Email delivery (invites, notifications) |
-| `SUPABASE_SERVICE_ROLE_KEY` | Yes (for admin plane) | Service-role client for the admin plane. The user app never uses it. |
-| `ADMIN_USERNAME` | Yes (for admin plane) | HTTP Basic Auth username gating `/admin/*`. The admin plane has zero overlap with user auth — see `docs/solutions/identity-decoupling-security-tradeoffs.md`. |
-| `ADMIN_PASSWORD` | Yes (for admin plane) | HTTP Basic Auth password for the admin plane. Rotate regularly. |
+| `SUPABASE_SERVICE_ROLE_KEY` | Yes (for admin plane) | Service-role client for the admin plane to access the user-tier database. |
+| `ADMIN_DEV_BYPASS` | No (dev only) | Set to `1` in `.env.local` to allow `/admin/*` through without Cloudflare Access. Has no effect in production builds. |
 | `PUBLIC_ASSET_BASE_URL` | No | Override for static page imagery (e.g. `/why` hero images). Falls back to the default Supabase uploads bucket. Set this to route assets through a sovereign host without touching code. |
+
+Admin authentication is gated by Cloudflare Access at the edge — operator identity lives in Cloudflare's identity layer, not in dyad. See `docs/solutions/identity-decoupling-security-tradeoffs.md` for setup and architectural reasoning.
 
 ## Database
 

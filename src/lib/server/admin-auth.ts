@@ -1,89 +1,67 @@
+import { dev } from '$app/environment';
 import { env } from '$env/dynamic/private';
 
 /**
- * HTTP Basic Auth check for the admin plane.
+ * Admin authentication via Cloudflare Access.
  *
- * Admin identity is intentionally separate from user identity — see
- * docs/solutions/identity-decoupling-security-tradeoffs.md. The admin plane
- * has zero overlap with user auth: the user app routes the request through
- * upact (locals.user, locals.identityPort), this helper does not.
+ * Production: Cloudflare Zero Trust gates `/admin/*` at the edge. Operators
+ * authenticate via Cloudflare's identity layer (Google, GitHub, email OTP, …)
+ * BEFORE the request reaches dyad. Cloudflare adds these headers to authenticated
+ * requests:
+ *   - Cf-Access-Authenticated-User-Email   (the operator's email)
+ *   - Cf-Access-Jwt-Assertion              (signed JWT for verification)
  *
- * Returns null when valid credentials are present (caller proceeds).
- * Returns a 401 Response with WWW-Authenticate header otherwise (caller
- * should return that response directly).
+ * dyad has no admin login flow, no admin auth.users rows, no admin sessions.
+ * Operator identity lives entirely in Cloudflare's identity layer.
  *
- * Environment variables (both required; throws if either is unset):
- *   ADMIN_USERNAME — admin operator username
- *   ADMIN_PASSWORD — admin operator password
+ * Local dev: Cloudflare Access doesn't run locally. Set ADMIN_DEV_BYPASS=1 in
+ * .env.local to allow /admin/* through with a synthetic operator. Without the
+ * bypass, /admin/* returns 401 locally — useful for testing the unauthenticated
+ * path.
  *
- * To replace this with GitHub OAuth, OIDC SSO, or another mechanism, change
- * only this file. The admin layout and admin pages remain unchanged.
+ * To replace Cloudflare Access with another mechanism (Tailscale, custom
+ * proxy, OIDC SSO, etc.): change only this file. Everything downstream is
+ * unaffected.
+ *
+ * See docs/solutions/identity-decoupling-security-tradeoffs.md.
  */
-export function requireAdminAuth(request: Request): Response | null {
-	const expectedUser = env.ADMIN_USERNAME;
-	const expectedPass = env.ADMIN_PASSWORD;
-	if (!expectedUser || !expectedPass) {
-		throw new Error('ADMIN_USERNAME and ADMIN_PASSWORD must be set for the admin plane');
-	}
-	return verifyBasicAuth(request, expectedUser, expectedPass);
+
+export interface AdminOperator {
+	email: string;
 }
 
 /**
- * Pure-function variant for testing — no env dependency. Takes the expected
- * credentials directly. The exported requireAdminAuth wraps this with env
- * reading + fail-closed validation.
+ * Returns the authenticated admin operator for this request, or null if the
+ * request is not authorized for the admin plane.
+ *
+ * Reads `dev` and the `ADMIN_DEV_BYPASS` env var via the module imports.
+ * The pure variant `resolveAdminOperator` exists for testing.
  */
-export function verifyBasicAuth(
-	request: Request,
-	expectedUser: string,
-	expectedPass: string
-): Response | null {
-	const header = request.headers.get('authorization');
-	if (!header || !header.startsWith('Basic ')) {
-		return unauthorized();
-	}
-
-	let decoded: string;
-	try {
-		decoded = atob(header.slice(6));
-	} catch {
-		return unauthorized();
-	}
-
-	const sep = decoded.indexOf(':');
-	if (sep < 0) {
-		return unauthorized();
-	}
-
-	const providedUser = decoded.slice(0, sep);
-	const providedPass = decoded.slice(sep + 1);
-
-	if (!timingSafeEqual(providedUser, expectedUser) || !timingSafeEqual(providedPass, expectedPass)) {
-		return unauthorized();
-	}
-
-	return null;
-}
-
-function unauthorized(): Response {
-	return new Response('Authentication required', {
-		status: 401,
-		headers: {
-			'WWW-Authenticate': 'Basic realm="Admin", charset="UTF-8"'
-		}
+export function getAuthorizedAdminOperator(request: Request): AdminOperator | null {
+	return resolveAdminOperator(request, {
+		devMode: dev,
+		bypassEnabled: env.ADMIN_DEV_BYPASS === '1'
 	});
 }
 
 /**
- * Constant-time string comparison. Returns true iff the two strings are equal.
- * Compares character by character to a fixed length to avoid revealing match
- * progress through timing.
+ * Pure variant: takes the dev/bypass flags as parameters. Used by getAuthorizedAdminOperator
+ * with real env values, and by tests with controlled inputs.
  */
-function timingSafeEqual(a: string, b: string): boolean {
-	const len = Math.max(a.length, b.length);
-	let mismatch = a.length !== b.length ? 1 : 0;
-	for (let i = 0; i < len; i++) {
-		mismatch |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
+export function resolveAdminOperator(
+	request: Request,
+	flags: { devMode: boolean; bypassEnabled: boolean }
+): AdminOperator | null {
+	const email = request.headers.get('cf-access-authenticated-user-email');
+	if (email && email.length > 0) {
+		return { email };
 	}
-	return mismatch === 0;
+
+	// Local-dev escape hatch. Production builds set devMode=false (the dev import
+	// from $app/environment is only true under `vite dev`).
+	if (flags.devMode && flags.bypassEnabled) {
+		return { email: 'dev@localhost' };
+	}
+
+	return null;
 }
