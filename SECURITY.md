@@ -1,6 +1,6 @@
 # Security
 
-Reporting and threat-model notes for `dyad.berlin`. The platform is in alpha; we treat security reports seriously and welcome them.
+Reporting and threat-model notes for `dyad.berlin`. The platform is in alpha and the team is small; we read every report.
 
 ## Reporting a vulnerability
 

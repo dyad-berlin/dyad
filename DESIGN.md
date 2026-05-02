@@ -1,6 +1,6 @@
 # Design
 
-This document is the consolidated design reference for dyad. It covers why the platform is shaped the way it is (philosophy and structural commitments), how internal vocabulary maps to user-facing language (domain language), and the visual system contributors should follow when changing UI.
+The consolidated design reference for dyad. Three sections: why the platform is shaped the way it is, how internal vocabulary maps to user-facing copy, and the visual system to follow when changing UI.
 
 ## Why dyad is shaped this way
 
@@ -8,112 +8,112 @@ People come to dyad seeking safety, validation, belonging. The comfortable path 
 
 The deeper need is for a way to be with others that cuts across the categories we have been sorted into — not "authentic connection" (a phrase emptied of meaning) but the practice of encountering someone outside your category and discovering that the ground between you is more solid than expected.
 
-Dyad's structural choices — no interest matching, no similarity algorithms, a commons not a feed, shared questions not shared identities — are not UX preferences. They are an attempt to build social infrastructure that cross-links rather than clusters. The conversation prompt is the emulsifier: it gives different people a surface to meet across without dissolving difference. Every feature that makes the platform "easier" by reducing friction through sorting accelerates the very isolation the platform exists to address. Efficiency is not the goal. The goal is encounter.
+Dyad's structural choices — no interest matching, no similarity algorithms, a commons not a feed, shared questions not shared identities — are not UX preferences. They are an attempt to build social infrastructure that cross-links rather than clusters. The conversation prompt is the emulsifier: it gives different people a surface to meet across without dissolving difference. Every feature that makes the platform "easier" by reducing friction through sorting accelerates the very isolation the platform exists to address. The goal is encounter, not efficiency.
 
-Dyad is an enabler of in-person community, not a replacement for it. Every design decision should be evaluated against this: does it get people into the same room, or does it give them a reason to stay on their screens?
+Dyad is an enabler of in-person community, not a replacement for it. Every design decision should be evaluated against that: does it get people into the same room, or does it give them a reason to stay on their screens?
 
 ## Structural commitments
 
-These are not policy preferences. They are encoded in the data model, the API surface, and the UI. Changing them changes what the platform is.
+These are encoded in the data model, the API surface, and the UI. Changing them changes what the platform is.
 
 ### Coordination, not communication
 
 The platform helps members find a time and place to meet in person. It does not mediate contact between them before the meeting. The encounter is where the conversation happens; the app is the coordination layer that gets two people to the same place at the same time.
 
-- The meeting is analogue. You agree on a time and place through the app, then you show up.
-- No contact details exchanged through the platform (may need stripping enforcement on free-text fields).
-- Responses are allowed without inviting. A user can leave one response on a conversation without sending an invitation. This is a single message to the author, not a messaging channel. Responses are editable (with an "edited" indicator). One response per user per conversation.
+- The meeting is analogue. Members agree on a time and place through the app, then they show up. Like the old days.
+- No contact details exchanged through the platform. Free-text fields may need stripping enforcement.
+- Responses are allowed without inviting. A member can leave one response on a conversation without sending an invitation. This is a single message to the author, not a messaging channel. Responses are editable (with an "edited" indicator). One response per member per conversation.
 - No threading, no replies, no back-and-forth. A response is a one-way message. If the responder later decides to invite, the invitation flow picks up from there.
 - No-show is a valid outcome. Reported in the post-meeting feedback form. No-shows trigger moderator review.
-- If they meet and exchange contact info in person — great. The platform's job ends at getting them to the same place at the same time.
+- If members meet and exchange contact info in person — great. The platform's job ends at getting them to the same place at the same time.
 
 ### Response-first invitation
 
-A user must write a response before they can invite to meet. The response IS the meeting context. This is enforced in the data model: invitations are tied to responses, not to bare prompt IDs.
+A member must write a response before they can invite to meet. The response *is* the meeting context. This is enforced in the data model: invitations are tied to responses, not to bare prompt IDs.
 
 ### Calm technology
 
 The platform follows the *calm technology* posture (Weiser & Brown 1996; Case 2015) — minimal demand on attention, app-as-surface rather than push-as-channel.
 
 - Notifications are opt-in (email, push) and minimal by design.
-- The app itself is the primary surface. Feedback prompts and meeting updates appear when you open the app, not as pings demanding attention.
+- The app itself is the primary surface. Feedback prompts and meeting updates appear in-app, not as pings demanding attention.
 - The feedback gate is a hard line: no access to the app at all until at least minimum feedback is submitted. The gate activates immediately when meeting start time passes (mid-session, not on next login).
-- No reminder cadence. If a user never submits feedback, they remain gated. The blocking is the reminder.
+- No reminder cadence. If a member never submits feedback, they remain gated. The blocking is the reminder.
 
-### Anti-sorting / no curation by similarity
+### Anti-sorting
 
 - No interest matching. No personality tests. No "people like you" recommendations.
 - The discover page is a commons, not a feed.
 - People become visible through their writing and their meeting feedback — not through profiles or bios.
-- If "following" is ever introduced, it must NOT influence discover ordering. Following without anti-sorting guardrails contradicts the platform's reason for existing.
+- If "following" is ever introduced, it must not influence discover ordering. Following without anti-sorting guardrails contradicts the platform's reason for existing.
 
 ### Reputation through structure, not score
 
-- Reputation is profile-visible, not numerical. Expressed through feedback, testimonials, and behavioural signals — not a number.
+- Reputation is profile-visible, not numerical. Expressed through feedback, testimonials, and behavioural signals.
 - Cancellation history, no-show history, and feedback quality contribute to what others see.
-- The user controls which received feedback to display; cancellation/no-show signals may not be hideable.
+- The member controls which received feedback to display; cancellation/no-show signals may not be hideable.
 - Marks are associated with the email address. Deleting an account to escape bad reputation is not viable.
-- Not a blacklist — bad behaviour reduces attractiveness, doesn't hard-block.
+- Not a blacklist. Bad behaviour reduces attractiveness, doesn't hard-block.
 
 ### Anonymity and identity
 
-- Users should be able to protect their pseudonymity. Usernames are not given importance.
-- Identity accrues through reputation: feedback, testimonials, showing-up history. Identity is built through action, not self-declaration.
+- Members should be able to protect their pseudonymity. Usernames are not given importance.
+- Identity accrues through action: feedback, testimonials, showing-up history. Not through self-declaration.
 
 ### Privacy by structure: location and time
 
-- Author sets 1–3 time slots at publish time, each with start time, duration, and location.
+- The author sets 1–3 time slots at publish time, each with start time, duration, and location.
 - Time slots use a rolling 7-day window. Without active future slots, the prompt is auto-archived.
 - The exact location is private. The system generates a general area (neighbourhood-level) from the exact location. The inviter sees only the general area; exact location is revealed after acceptance.
 - Confirmed time slots are hidden from non-participants (RLS-enforced).
-- The inviter picks ONE time+place option. No negotiation. If accepted, that's the meeting.
-- Time slots where the user already has an accepted meeting are hidden — no double-booking.
+- The inviter picks one time+place option. No negotiation. If accepted, that's the meeting.
+- Time slots where a member already has an accepted meeting are hidden — no double-booking.
 
 ### Cancellation symmetry
 
-- Both starters and inviters can cancel. Same tiers apply to both parties.
+- Both authors and inviters can cancel. Same tiers apply to both parties.
 - Withdrawing an invitation before acceptance is free.
 - Invitations expire 12 hours before meeting start time if unanswered.
-- Account deletion releases the other party from feedback gate. Cancellation rules apply.
+- Account deletion releases the other party from the feedback gate. Cancellation rules apply.
 
 ### Admin visibility, stated plainly
 
 - Admins can see everything. All conversations, invitations, feedback, profiles.
-- Users should assume admins can read anything they upload. The platform does not collect private or confidential details beyond what users agree to share.
-- Admins can: edit/remove conversations, suspend users, force-cancel meetings, see "share with platform" feedback, manage moderation.
+- Members should assume admins can read anything they upload. The platform does not collect private or confidential details beyond what members agree to share.
+- Admins can: edit/remove conversations, suspend members, force-cancel meetings, see "share with platform" feedback, manage moderation.
 
 ### No interrupting modals
 
-- Onboarding is NOT a guided tour with modals highlighting UI elements.
-- Inducting users into platform norms happens organically through the interface itself.
-- Modals that keep the user in context are fine (e.g. waitlist form when an anon visitor clicks a conversation). The principle: don't interrupt flow with demands for attention. Overlays that serve the user's current intent are not interruptions.
+- Onboarding is not a guided tour with modals highlighting UI elements.
+- Members are inducted into platform norms organically through the interface itself.
+- Modals that keep a member in context are fine — for example, the waitlist form that appears when an anonymous visitor clicks a conversation. The principle: don't interrupt flow with demands for attention. Overlays that serve the member's current intent are not interruptions.
 
 ### Inclusive language
 
 - Avoid intellectualism signals. Phrases like "independent thinkers" or "meet through writing" create invisible barriers.
-- Test copy: would a nurse, a barista, a retiree feel addressed by this language?
-- Curiosity, not expertise. Prompts should invite exploration, not signal that you need to be well-read to participate.
+- Test copy against the question: would a nurse, a barista, a retiree feel addressed by this language?
+- Curiosity, not expertise. Prompts should invite exploration, not signal that being well-read is a prerequisite.
 
 ## Domain language
 
-The internal model uses precise technical terms. User-facing copy uses natural, everyday language. The user should never encounter domain vocabulary.
+The internal model uses precise technical terms; user-facing copy uses everyday language. Members should never encounter domain vocabulary.
 
 | Internal (code/API/DB) | User-facing | Notes |
 |------------------------|-------------|-------|
-| `prompt` | **conversation** | A "prompt" is the written starting point. A "conversation" is the whole flow — writing, meeting, talking. Users see "conversation" because that is the human experience. |
-| `prompt_comments` (DB) / `comment` | **response** | Writing a response is intentional — it's engagement with the conversation, not a casual comment. The response is the gateway to the invitation. |
+| `prompt` | **conversation** | A "prompt" is the written starting point. A "conversation" is the whole flow — writing, meeting, talking. Members see "conversation" because that is the human experience. |
+| `prompt_comments` (DB) / `comment` | **response** | Writing a response is intentional engagement with the conversation, not a casual comment. The response is the gateway to the invitation. |
 | `time_slot` | **time** / **available time** | "Pick a time", not "select a slot". |
 | `LocationRef` | **location** / **place** | Natural language. |
 | `general_area` | **neighbourhood** | The area shown to the inviter before acceptance. |
 | `exact_location` | **location** / **where to meet** | Only shown after acceptance. |
 | `author_id` | **you** / **the author** | No IDs surfaced. |
-| `body` (TipTap JSON) | *(not named)* | The user writes; they don't "create a body". |
+| `body` (TipTap JSON) | *(not named)* | Members write; they don't "create a body". |
 | `state: draft` | **draft** | Passes through as-is. |
 | `state: published` | **published** / **live** | "Your conversation is live on the discover feed." |
 | `state: archived` | **archived** / **past** | "past" is acceptable for softer language. |
 | `feedback_form` | **feedback** | "How did it go?" not "complete your feedback form". |
 | `meeting`, `invitation` | same | Pass through — natural words. |
-| `region` | **city** / *(implicit)* | Berlin is implicit; don't force users to choose. |
+| `region` | **city** / *(implicit)* | Berlin is implicit; don't force members to choose. |
 
 **Boundary discipline.** Map domain → user-facing at the service/component boundary. A frontend component must never display raw API field names. Error messages from the API may surface domain words ("Failed to create prompt"); catch and rephrase at the UI layer.
 
@@ -121,7 +121,7 @@ The internal model uses precise technical terms. User-facing copy uses natural, 
 
 ## Visual system
 
-Visual language extracted from the design reference. Tokens are defined in `src/app.css`. **Use tokens, not hardcoded values.** The design system is a contract; treat every CSS value as a token reference.
+Tokens live in `src/app.css`. Use tokens, not hardcoded values. The design system is a contract: every CSS value should reference a token.
 
 ### Palette
 
@@ -218,8 +218,8 @@ Two fonts. Serif is the primary voice; monospace is for metadata and system labe
 
 - **430px** is the phone breakpoint (content stacking, column collapse).
 - **FloatingNav** is the sole primary navigation on all viewports — fixed glassmorphic pill.
-- **Main content** is centered, padded with `--space-4`, max-width varies by page.
-- **Admin access** is a small icon button (admin operators only); admin plane lives at `admin.dyad.berlin` in production.
+- **Main content** is centred, padded with `--space-4`, max-width varies by page.
+- **Admin access** is a small icon button (admin operators only); the admin plane lives at `admin.dyad.berlin` in production.
 
 ## Components
 
@@ -227,7 +227,7 @@ Two fonts. Serif is the primary voice; monospace is for metadata and system labe
 
 Pill-shaped, fixed, glassmorphic. Two variants.
 
-**Discover variant** (top): `[Map] [Calendar] [Search…] [+] [Profile]`. Search is an expanding pill (`flex: 1`, `rgba(0,0,0,0.07)` bg). `backdrop-filter: blur(12px)`. Shadow `0 4px 24px rgba(0,0,0,0.15)`. z-index 800. Max-width 360px, centered.
+**Discover variant** (top): `[Map] [Calendar] [Search…] [+] [Profile]`. Search is an expanding pill (`flex: 1`, `rgba(0,0,0,0.07)` bg). `backdrop-filter: blur(12px)`. Shadow `0 4px 24px rgba(0,0,0,0.15)`. z-index 800. Max-width 360px, centred.
 
 **Editor variant** (top): `[← Back] [• Saved] [...] [Continue]`. Continue is a dark pill (`--text-primary` bg, `--bg-canvas` text, `--radius-pill`). Saved indicator is a green dot + "Saved".
 
@@ -249,7 +249,7 @@ States: default border; selected (`border-width: 2px; border-color: var(--text-p
 - Fixed-positioned, 16px top corners on mobile, 12px all corners on desktop.
 - Max-width 480px (mobile), 680px (desktop). Max-height 50–60vh, scrollable.
 - Dismissed by clicking the map or tapping another pin.
-- Desktop (≥ 768px): centered at bottom with 24px inset.
+- Desktop (≥ 768px): centred at bottom with 24px inset.
 
 ### Cards
 
@@ -267,11 +267,11 @@ States: default border; selected (`border-width: 2px; border-color: var(--text-p
 
 ### Inputs
 
-`--text-base` font size; padding `--space-3`; `--border-link` border; `--radius-input` corners; transparent background. Focus: `outline: none`, border-color `--text-muted`. Placeholder color `--text-muted`.
+`--text-base` font size; padding `--space-3`; `--border-link` border; `--radius-input` corners; transparent background. Focus: `outline: none`, border-color `--text-muted`. Placeholder colour `--text-muted`.
 
 ### Cover images
 
-- **Placeholder (editor):** dashed border (`1.5px dashed rgba(0,0,0,0.12)`), `--radius-card` corners, centered icon + "Add a cover photo" + "Required. Click or drag an image." Warm bg (`rgba(0,0,0,0.025)`).
+- **Placeholder (editor):** dashed border (`1.5px dashed rgba(0,0,0,0.12)`), `--radius-card` corners, centred icon + "Add a cover photo" + "Required. Click or drag an image." Warm bg (`rgba(0,0,0,0.025)`).
 - **Preview (editor):** full-width, `--radius-card`, max-height 280px, `object-fit: cover`. "Change cover" overlay bottom-right.
 - **Detail page:** full-width, max-height 400px, `--radius-card`.
 - **Map pins:** 44×44px circular, 2px white border, subtle shadow. Cover image or dark circle with initial letter.
@@ -280,9 +280,7 @@ States: default border; selected (`border-width: 2px; border-color: var(--text-p
 
 ### Guidance through placeholders
 
-The app uses placeholder text as its primary guidance mechanism — no tutorial modals, no persistent labels, no instruction paragraphs above form fields.
-
-The pattern: grey placeholder text tells the user what to do. Once they type, the instructions disappear. The interface is clean after interaction.
+The app uses placeholder text as its primary guidance mechanism — no tutorial modals, no persistent labels, no instruction paragraphs above form fields. Grey placeholder text tells a member what to do; once they type, the instructions disappear and the interface is clean.
 
 Examples:
 
@@ -290,20 +288,20 @@ Examples:
 - Editor body: "Start writing..."
 - Response textarea: "Write your response — once sent, you'll see available times to meet"
 - Invitation message: "Add a note (optional)"
-- Search input: "Search" (large, centered)
+- Search input: "Search" (large, centred)
 
 Rules:
 
 - Default placeholder text is short — a verb phrase, not a question or sentence.
-- At key transition points in the user journey, a flow-guiding placeholder may describe what happens next (one line). The placeholder IS the guidance — there is no surrounding explainer copy.
+- At key transition points in the journey, a flow-guiding placeholder may describe what happens next (one line). The placeholder *is* the guidance — there is no surrounding explainer copy.
 - No labels above inputs that duplicate the placeholder meaning.
 - No persistent hint text below inputs (exception: privacy notes like "Only visible to you and the author").
-- Section titles are minimal or absent — the placeholder IS the affordance.
+- Section titles are minimal or absent — the placeholder *is* the affordance.
 - Use `--text-muted` at reduced opacity so placeholders feel like whispers, not instructions.
 
 ### Monospace metadata
 
-Used for: @usernames, dates, stat labels, slot areas, badges. Font `--font-mono`, size `--text-xs` (11px), color `--text-muted`. Often `text-transform: uppercase` with `letter-spacing: 0.04em`.
+For @usernames, dates, stat labels, slot areas, badges. Font `--font-mono`, size `--text-xs` (11px), colour `--text-muted`. Often `text-transform: uppercase` with `letter-spacing: 0.04em`.
 
 ### Glassmorphic surfaces
 
@@ -312,8 +310,8 @@ Used for: @usernames, dates, stat labels, slot areas, badges. Font `--font-mono`
 ### Animations
 
 - Bottom sheet: `fly` from y 200, 280ms.
-- Hover transitions: 0.15s on backgrounds, colors, borders.
-- Theme transitions: 0.2s ease on all color properties (global).
+- Hover transitions: 0.15s on backgrounds, colours, borders.
+- Theme transitions: 0.2s ease on all colour properties (global).
 - Map geolocation: instant jump, no animation (`animate: false`).
 - RotatingHeadline: 2800ms interval, 420ms fade+slide per word.
 - City dot pulse: 2.5s ease-in-out infinite, opacity 1 → 0.4 → 1.
@@ -324,7 +322,7 @@ Used for: @usernames, dates, stat labels, slot areas, badges. Font `--font-mono`
 - **Buttons / actions** (lowercase): "start a conversation", "publish", "sign out".
 - **Badges / labels** (Sentence case): "Draft", "Published", "Archived".
 
-## What this document does not cover
+## Out of scope for this document
 
 - Pixel-perfect measurements for one-off layouts (measure from the reference, then express in tokens).
 - Dark-mode colour values beyond what is listed (defined in `src/app.css`).
