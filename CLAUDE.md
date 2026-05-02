@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-dyad.berlin is a SvelteKit app for facilitating in-person conversations in Berlin. Users write conversation prompts, schedule meeting slots with locations, and meet strangers for real conversations. The platform handles the full cycle: discover → respond → invite → meet → give feedback.
+dyad.berlin is a SvelteKit app for facilitating in-person conversations in Berlin. Members write conversation prompts, schedule meeting slots with locations, and meet strangers in person. The platform handles the full cycle: discover → respond → invite → meet → give feedback.
 
 **Stack:** SvelteKit, Svelte 5 (runes), Supabase (auth + DB + storage), TipTap/ProseMirror (rich text editor), Leaflet (map), Cloudflare Pages.
 
@@ -44,7 +44,7 @@ All authenticated routes live under `src/routes/(app)/`. The layout provides:
 - **Generation counter for async races**: Used in the prompt editor's auto-save (`saveGeneration`) and the MapView marker rebuilds. Prevents stale responses from corrupting state.
 - **TipTap + Svelte 5**: Use `createSubscriber` from `svelte/reactivity` to bridge TipTap transactions into runes. Never call store methods directly from `onUpdate` — that path produces an infinite reactive loop.
 - **Copy-on-write for reactivity**: Svelte 5 runes track by assignment. Any `Map` or `Set` mutation must create a new instance.
-- **Response-first invitation flow**: Users must write a response before they can invite to meet. The response IS the meeting context.
+- **Response-first invitation flow**: Members must write a response before they can invite to meet. The response is the meeting context.
 
 ## Route Structure
 

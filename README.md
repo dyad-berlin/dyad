@@ -1,10 +1,8 @@
 # dyad
 
-A small social platform for in-person conversations between strangers. A member writes a conversation prompt and suggests times and places. Another member responds, privately, once. The author picks one. They meet in person. Both reflect afterwards. No messaging between them; no feed; one response per prompt.
+A small social platform for in-person conversations between strangers. A member writes a conversation prompt and suggests times and places to meet. Another member responds, privately and only once. The author picks one. They meet in person, and both reflect afterwards. No messaging between them, no feed, one response per prompt.
 
-In alpha in Berlin. EU-hosted. Built toward steward ownership rather than VC.
-
-`https://dyad.berlin`
+In alpha in Berlin, EU-hosted, built toward steward ownership rather than VC. `https://dyad.berlin`.
 
 ## What this repository contains
 
@@ -14,7 +12,7 @@ The full source for `dyad.berlin` — frontend, server code, database migrations
 
 SvelteKit, Svelte 5 (runes), Supabase (auth + Postgres + storage), TipTap (rich text), Leaflet (map), Cloudflare Pages.
 
-The application identity layer goes through the [upact](https://github.com/prefig/upact) port — a typed contract that binds the application to architectural privacy minima regardless of which substrate handles authentication. Today the substrate is Supabase via [`@prefig/upact-supabase`](https://github.com/prefig/upact-supabase). The full architectural posture and the security tradeoffs of decoupling from the substrate are in `DESIGN.md` and `SECURITY.md`.
+The application identity layer goes through the [upact](https://github.com/prefig/upact) port: a typed contract that binds the application to architectural privacy minima regardless of which substrate handles authentication. Today the substrate is Supabase via [`@prefig/upact-supabase`](https://github.com/prefig/upact-supabase). The threat model and the security implications of decoupling from the substrate are in [SECURITY.md](SECURITY.md).
 
 ## Local development
 

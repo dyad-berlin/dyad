@@ -1,8 +1,8 @@
 # Contributing to dyad.berlin
 
-## For Everyone
+## For everyone
 
-dyad is built by a small team — a developer and a non-technical co-founder — with help from AI agents. Whether you're a human contributor or an AI agent working via Claude Code, these conventions apply equally.
+dyad is built by a small team with help from AI tooling. Whether you're contributing as a human or as an agent working via Claude Code, the conventions below apply equally.
 
 ### Branch workflow
 
@@ -47,9 +47,9 @@ padding: 16px;
 font-size: 14px;
 ```
 
-### Copy: centralized text
+### Copy: centralised text
 
-All user-facing text lives in `src/lib/copy.ts`. Don't scatter string literals in components. The copy file is organized by route.
+All user-facing text lives in `src/lib/copy.ts`. Don't scatter string literals in components. The file is organised by route.
 
 ### Domain language
 
@@ -57,7 +57,7 @@ Internal code uses "prompt" for the conversation starter. User-facing routes and
 
 ---
 
-## For Human Contributors
+## For human contributors
 
 ### Getting started
 
@@ -76,27 +76,20 @@ npm run dev                  # starts Vite at localhost:5173
 | `DESIGN.md` | Design philosophy, structural commitments, domain language, visual system |
 | `src/lib/copy.ts` | All user-facing text, organised by route |
 
-### Admin operations (alpha test)
-
-- **Invite new users:** Admin panel > Waitlist > click "Invite"
-- **View tester feedback:** Admin panel > Feedback
-- **View users:** Admin panel > Users
-- No database access needed for routine operations
-
 ---
 
-## For AI Agents (Claude Code)
+## For AI agents (Claude Code)
 
 ### Context loading
 
-Read `CLAUDE.md` — it contains the architecture, route structure, service layer pattern, environment variables, and key files. It's the single source of truth for the codebase.
+Read `CLAUDE.md` first — it covers the architecture, route structure, service layer pattern, environment variables, and the engineering standards specific to this codebase.
 
 ### Patterns to follow
 
 - **Service layer**: All DB access goes through `src/lib/services/`. Don't query Supabase directly from page loaders.
 - **Generation counter**: Used in editor auto-save and MapView to prevent stale async results.
 - **Copy-on-write**: Svelte 5 runes track by assignment. `Map`/`Set` mutations must create new instances.
-- **Response-first flow**: Users must write a response before inviting to meet. The response IS the meeting context.
+- **Response-first flow**: Members must write a response before inviting to meet. The response is the meeting context.
 - **FloatingNav per page**: Each page renders its own `FloatingNav` variant. Don't render it from layouts.
 
 ### What to check before UI changes
@@ -114,5 +107,4 @@ npx vitest run
 npx playwright test  # needs dev server at localhost:5173
 ```
 
-The pre-push hook runs all 26 E2E tests automatically.
-
+The pre-push hook runs the E2E suite automatically.
