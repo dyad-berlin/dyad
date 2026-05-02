@@ -9,7 +9,7 @@
 	</a>
 
 	<h1>Datenschutzerkl&auml;rung</h1>
-	<p class="subtitle">Stand: Februar 2026</p>
+	<p class="subtitle">Stand: Mai 2026</p>
 
 	<section>
 		<h2>1. Verantwortlicher</h2>
@@ -60,7 +60,32 @@
 	</section>
 
 	<section>
-		<h2>6. Ihre Rechte</h2>
+		<h2>6. Reichweitenmessung mit Plausible Analytics</h2>
+		<p>
+			Zur Auswertung der Seitennutzung setzen wir Plausible Analytics ein, einen
+			datenschutzfreundlichen Analyse-Dienst der Plausible Insights O&Uuml;
+			(V&auml;ike-Ameerika 8&ndash;101, 10146 Tallinn, Estland), gehostet in der EU.
+		</p>
+		<p>
+			Erfasst werden ausschlie&szlig;lich aggregierte Nutzungsdaten: aufgerufene URL,
+			Referrer-URL, Browser, Betriebssystem, Ger&auml;teklasse und das anhand der
+			IP-Adresse abgeleitete Land. Plausible verwendet keine Cookies, kein localStorage
+			und kein Fingerprinting. IP-Adressen werden nicht gespeichert; sie flie&szlig;en
+			nur in einen kurzlebigen Hash zur t&auml;glichen Eindeutigkeitserkennung ein und
+			werden anschlie&szlig;end verworfen. Personenbezogene Daten werden nicht erhoben.
+		</p>
+		<p>
+			Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an einer
+			anonymen Nutzungsanalyse zur Verbesserung der Plattform). Da keine
+			personenbezogenen Daten verarbeitet werden, ist eine Einwilligung nicht
+			erforderlich. G&auml;ngige Tracker-Blocker werden respektiert. Weitere
+			Informationen finden Sie in der
+			<a href="https://plausible.io/data-policy" target="_blank" rel="noopener noreferrer">Datenrichtlinie von Plausible</a>.
+		</p>
+	</section>
+
+	<section>
+		<h2>7. Ihre Rechte</h2>
 		<p>
 			Sie haben das Recht auf Auskunft (&sect; 15 DSGVO), Berichtigung (&sect; 16 DSGVO),
 			L&ouml;schung (&sect; 17 DSGVO), Einschr&auml;nkung der Verarbeitung (&sect; 18 DSGVO),
@@ -73,7 +98,7 @@
 	</section>
 
 	<section>
-		<h2>7. Beschwerderecht</h2>
+		<h2>8. Beschwerderecht</h2>
 		<p>
 			Sie haben das Recht, sich bei der zust&auml;ndigen Aufsichtsbeh&ouml;rde zu beschweren:<br />
 			Berliner Beauftragte f&uuml;r Datenschutz und Informationsfreiheit<br />
