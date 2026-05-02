@@ -49,11 +49,12 @@ export const handle: Handle = async ({ event, resolve }) => {
 	// Admin status from profiles.is_admin — application-owned, substrate-agnostic.
 	// Replaces the former app_metadata.role === 'admin' check (Supabase-specific).
 	if (user) {
-		const { data: profile } = await event.locals.supabase
+		const { data: profile, error: profileError } = await event.locals.supabase
 			.from('profiles')
 			.select('is_admin')
 			.eq('id', user.id)
 			.single();
+		if (profileError) console.error('[hooks] failed to read profiles.is_admin:', profileError.message);
 		event.locals.isAdmin = profile?.is_admin ?? false;
 	} else {
 		event.locals.isAdmin = false;

@@ -28,13 +28,16 @@ export const actions: Actions = {
 			return fail(400, { email: email.toString(), error: 'Please enter your password' });
 		}
 
-		const result = await locals.identityPort.authenticate({ kind: 'password', email, password });
-
-		if ('code' in result) {
-			const message = result.code === 'rate_limited'
-				? 'Too many attempts — please try again later'
-				: 'Invalid email or password';
-			return fail(400, { email: email.toString(), error: message });
+		try {
+			const result = await locals.identityPort.authenticate({ kind: 'password', email, password });
+			if ('code' in result) {
+				const message = result.code === 'rate_limited'
+					? 'Too many attempts — please try again later'
+					: 'Invalid email or password';
+				return fail(400, { email: email.toString(), error: message });
+			}
+		} catch {
+			return fail(503, { email: email.toString(), error: 'Service temporarily unavailable — please try again' });
 		}
 
 		redirect(302, '/discover');
@@ -44,7 +47,12 @@ export const actions: Actions = {
 		// Both the Supabase and OIDC adapters ignore the passed Session —
 		// each reads its own cookie state to know what to clear.
 		// If a future adapter requires a real Session here, thread it from authenticate().
-		await locals.identityPort.invalidate({} as Session);
+		try {
+			await locals.identityPort.invalidate({} as Session);
+		} catch {
+			// Fail open: redirect even if the substrate is unavailable.
+			// The cookie will expire naturally; the user is effectively logged out.
+		}
 		redirect(302, '/login');
 	},
 
@@ -61,7 +69,8 @@ export const actions: Actions = {
 		});
 
 		if (error) {
-			return fail(400, { email: email.toString(), error: error.message });
+			console.error('[resetPassword]', error.message);
+			return fail(400, { email: email.toString(), error: 'Unable to send reset email — please try again' });
 		}
 
 		return { success: true, message: 'Check your email for a password reset link' };
@@ -78,7 +87,8 @@ export const actions: Actions = {
 		const { error } = await locals.supabase.auth.updateUser({ password });
 
 		if (error) {
-			return fail(400, { error: error.message });
+			console.error('[updatePassword]', error.message);
+			return fail(400, { error: 'Unable to update password — please try again' });
 		}
 
 		redirect(302, '/discover');
