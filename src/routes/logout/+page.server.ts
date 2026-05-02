@@ -11,7 +11,11 @@ export const actions: Actions = {
 	default: async ({ locals }) => {
 		// See note in (auth)/login/+page.server.ts — both current adapters
 		// ignore the Session param and read their own cookie state.
-		await locals.identityPort.invalidate({} as Session);
+		try {
+			await locals.identityPort.invalidate({} as Session);
+		} catch {
+			// Fail open: redirect even if the substrate is unavailable.
+		}
 		redirect(303, '/');
 	}
 };
