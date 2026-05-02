@@ -2,9 +2,22 @@
 	import '../app.css';
 	// favicon.png is in static/ — referenced directly
 	import { onMount } from 'svelte';
+	import { page } from '$app/stores';
+	import { env } from '$env/dynamic/public';
 	import { themeStore } from '$lib/stores/theme.svelte';
 
 	let { children } = $props();
+
+	// Plausible analytics: load on the public + authenticated app, NOT the
+	// admin plane. Production admin lives at admin.dyad.berlin; local dev
+	// uses path-based /admin/*. Disabled when PUBLIC_PLAUSIBLE_DOMAIN is unset.
+	const PLAUSIBLE_DOMAIN = env.PUBLIC_PLAUSIBLE_DOMAIN;
+	const PLAUSIBLE_SRC = env.PUBLIC_PLAUSIBLE_SCRIPT_SRC || 'https://plausible.io/js/script.js';
+	const plausibleEnabled = $derived(
+		!!PLAUSIBLE_DOMAIN
+			&& $page.url.hostname !== 'admin.dyad.berlin'
+			&& !$page.url.pathname.startsWith('/admin/')
+	);
 
 	// Initialize theme on mount
 	$effect(() => {
@@ -60,6 +73,9 @@
 <svelte:head>
 	<title>dyad.</title>
 	<link rel="icon" href="/favicon.png" type="image/png" />
+	{#if plausibleEnabled}
+		<script defer data-domain={PLAUSIBLE_DOMAIN} src={PLAUSIBLE_SRC}></script>
+	{/if}
 </svelte:head>
 
 {@render children()}
