@@ -33,16 +33,33 @@ export interface AdminOperator {
 /**
  * Returns the authenticated admin operator for this request, or null if the
  * request is not authorized for the admin plane.
+ *
+ * Reads `dev` and the `ADMIN_DEV_BYPASS` env var via the module imports.
+ * The pure variant `resolveAdminOperator` exists for testing.
  */
 export function getAuthorizedAdminOperator(request: Request): AdminOperator | null {
+	return resolveAdminOperator(request, {
+		devMode: dev,
+		bypassEnabled: env.ADMIN_DEV_BYPASS === '1'
+	});
+}
+
+/**
+ * Pure variant: takes the dev/bypass flags as parameters. Used by getAuthorizedAdminOperator
+ * with real env values, and by tests with controlled inputs.
+ */
+export function resolveAdminOperator(
+	request: Request,
+	flags: { devMode: boolean; bypassEnabled: boolean }
+): AdminOperator | null {
 	const email = request.headers.get('cf-access-authenticated-user-email');
 	if (email && email.length > 0) {
 		return { email };
 	}
 
-	// Local-dev escape hatch. NEVER respect this in production builds —
-	// the `dev` guard from $app/environment is true only in `vite dev`.
-	if (dev && env.ADMIN_DEV_BYPASS === '1') {
+	// Local-dev escape hatch. Production builds set devMode=false (the dev import
+	// from $app/environment is only true under `vite dev`).
+	if (flags.devMode && flags.bypassEnabled) {
 		return { email: 'dev@localhost' };
 	}
 
