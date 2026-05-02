@@ -1,77 +1,66 @@
 import { describe, it, expect } from 'vitest';
-import { verifyBasicAuth } from './admin-auth.js';
+import { resolveAdminOperator } from './admin-auth.js';
 
-const VALID_USER = 'admin';
-const VALID_PASS = 'correct-horse-battery-staple';
+const PROD_FLAGS = { devMode: false, bypassEnabled: false } as const;
+const DEV_BYPASS_FLAGS = { devMode: true, bypassEnabled: true } as const;
+const DEV_NO_BYPASS_FLAGS = { devMode: true, bypassEnabled: false } as const;
+const PROD_BYPASS_SET_FLAGS = { devMode: false, bypassEnabled: true } as const;
 
-function makeRequest(authHeader?: string): Request {
-	const headers = new Headers();
-	if (authHeader !== undefined) headers.set('authorization', authHeader);
-	return new Request('http://localhost/admin', { headers });
+function makeRequest(headers: Record<string, string> = {}): Request {
+	const h = new Headers();
+	for (const [k, v] of Object.entries(headers)) h.set(k, v);
+	return new Request('http://localhost/admin/waitlist', { headers: h });
 }
 
-function basicAuth(user: string, pass: string): string {
-	return `Basic ${btoa(`${user}:${pass}`)}`;
-}
-
-describe('verifyBasicAuth', () => {
-	it('returns null for valid credentials', () => {
-		const result = verifyBasicAuth(makeRequest(basicAuth(VALID_USER, VALID_PASS)), VALID_USER, VALID_PASS);
-		expect(result).toBeNull();
-	});
-
-	it('returns 401 with WWW-Authenticate when authorization header is missing', () => {
-		const result = verifyBasicAuth(makeRequest(), VALID_USER, VALID_PASS);
-		expect(result).not.toBeNull();
-		expect(result!.status).toBe(401);
-		expect(result!.headers.get('www-authenticate')).toContain('Basic');
-		expect(result!.headers.get('www-authenticate')).toContain('realm');
-	});
-
-	it('returns 401 for non-Basic authorization scheme', () => {
-		const result = verifyBasicAuth(makeRequest('Bearer some-token'), VALID_USER, VALID_PASS);
-		expect(result).not.toBeNull();
-		expect(result!.status).toBe(401);
-	});
-
-	it('returns 401 for malformed base64', () => {
-		const result = verifyBasicAuth(makeRequest('Basic !!!not-base64!!!'), VALID_USER, VALID_PASS);
-		expect(result).not.toBeNull();
-		expect(result!.status).toBe(401);
-	});
-
-	it('returns 401 for missing colon separator', () => {
-		const noColon = `Basic ${btoa('admincorrect-horse')}`;
-		const result = verifyBasicAuth(makeRequest(noColon), VALID_USER, VALID_PASS);
-		expect(result).not.toBeNull();
-		expect(result!.status).toBe(401);
-	});
-
-	it('returns 401 for wrong username', () => {
-		const result = verifyBasicAuth(makeRequest(basicAuth('attacker', VALID_PASS)), VALID_USER, VALID_PASS);
-		expect(result).not.toBeNull();
-		expect(result!.status).toBe(401);
-	});
-
-	it('returns 401 for wrong password', () => {
-		const result = verifyBasicAuth(makeRequest(basicAuth(VALID_USER, 'wrong')), VALID_USER, VALID_PASS);
-		expect(result).not.toBeNull();
-		expect(result!.status).toBe(401);
-	});
-
-	it('returns 401 for empty credentials', () => {
-		const result = verifyBasicAuth(makeRequest(basicAuth('', '')), VALID_USER, VALID_PASS);
-		expect(result).not.toBeNull();
-		expect(result!.status).toBe(401);
-	});
-
-	it('handles credentials containing colons (only first colon is the separator)', () => {
-		const passWithColon = 'pass:with:colons';
-		const result = verifyBasicAuth(
-			makeRequest(basicAuth(VALID_USER, passWithColon)),
-			VALID_USER,
-			passWithColon
+describe('resolveAdminOperator', () => {
+	it('returns the operator when Cloudflare Access set the email header', () => {
+		const op = resolveAdminOperator(
+			makeRequest({ 'cf-access-authenticated-user-email': 'theodore@example.com' }),
+			PROD_FLAGS
 		);
-		expect(result).toBeNull();
+		expect(op).toEqual({ email: 'theodore@example.com' });
+	});
+
+	it('returns null in production when no Cloudflare header', () => {
+		expect(resolveAdminOperator(makeRequest(), PROD_FLAGS)).toBeNull();
+	});
+
+	it('returns null when the Cloudflare header is empty string', () => {
+		expect(
+			resolveAdminOperator(
+				makeRequest({ 'cf-access-authenticated-user-email': '' }),
+				PROD_FLAGS
+			)
+		).toBeNull();
+	});
+
+	it('reads the header case-insensitively', () => {
+		const op = resolveAdminOperator(
+			makeRequest({ 'Cf-Access-Authenticated-User-Email': 'a@b.c' }),
+			PROD_FLAGS
+		);
+		expect(op).toEqual({ email: 'a@b.c' });
+	});
+
+	it('dev bypass returns synthetic operator only when both devMode AND bypassEnabled', () => {
+		expect(resolveAdminOperator(makeRequest(), DEV_BYPASS_FLAGS)).toEqual({ email: 'dev@localhost' });
+	});
+
+	it('dev bypass is gated off when devMode=false (production with bypass var leaked)', () => {
+		// CRITICAL: even if ADMIN_DEV_BYPASS=1 leaks into a production build,
+		// the dev=false gate must keep the bypass disabled.
+		expect(resolveAdminOperator(makeRequest(), PROD_BYPASS_SET_FLAGS)).toBeNull();
+	});
+
+	it('dev bypass is gated off when bypassEnabled=false (dev mode but no env opt-in)', () => {
+		expect(resolveAdminOperator(makeRequest(), DEV_NO_BYPASS_FLAGS)).toBeNull();
+	});
+
+	it('Cloudflare header takes precedence over dev bypass', () => {
+		const op = resolveAdminOperator(
+			makeRequest({ 'cf-access-authenticated-user-email': 'real-op@example.com' }),
+			DEV_BYPASS_FLAGS
+		);
+		expect(op).toEqual({ email: 'real-op@example.com' });
 	});
 });
