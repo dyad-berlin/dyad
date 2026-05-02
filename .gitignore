@@ -38,3 +38,16 @@ playwright-report/
 test-results/
 tests/.auth/
 .env.test
+
+# Internal-only documentation (kept in ~/prefig/docs/dyad)
+docs/
+
+# Compound-engineering run artefacts
+.context/
+
+# Stray screenshots and PDFs at repo root
+/*.png
+/*.jpg
+/*.jpeg
+/*.webp
+/*.pdf
