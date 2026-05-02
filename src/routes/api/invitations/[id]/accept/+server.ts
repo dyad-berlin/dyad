@@ -6,7 +6,9 @@ import { handleServiceError } from '$lib/server/handle-service-error.js';
 
 /** POST /api/invitations/[id]/accept — accept invitation, create meeting atomically */
 export const POST: RequestHandler = async ({ params, locals }) => {
-	requireIdentity(locals);
+	// Auth guard: throws 401 if not signed in. Identity itself is unused
+	// here — RLS enforces ownership on the underlying RPC call.
+	const _upactor = requireIdentity(locals);
 
 	const service = new SupabaseInvitationService(locals.supabase);
 	try {
