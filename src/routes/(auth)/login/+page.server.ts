@@ -41,6 +41,9 @@ export const actions: Actions = {
 	},
 
 	logout: async ({ locals }) => {
+		// Both the Supabase and OIDC adapters ignore the passed Session —
+		// each reads its own cookie state to know what to clear.
+		// If a future adapter requires a real Session here, thread it from authenticate().
 		await locals.identityPort.invalidate({} as Session);
 		redirect(302, '/login');
 	},
