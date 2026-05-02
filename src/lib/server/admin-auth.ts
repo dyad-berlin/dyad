@@ -1,50 +1,50 @@
-import type { SupabaseClient, User } from '@supabase/supabase-js';
+import { dev } from '$app/environment';
+import { env } from '$env/dynamic/private';
 
 /**
- * Admin authorization check (separate from authentication).
+ * Admin authentication via Cloudflare Access.
  *
- * Admins authenticate via /admin/login through the admin-namespaced Supabase
- * client (sb-admin cookies — see admin-supabase.ts). After authentication, this
- * helper checks the app_metadata.admin_authorized claim to confirm the user is
- * authorized to access the admin plane.
+ * Production: Cloudflare Zero Trust gates `/admin/*` at the edge. Operators
+ * authenticate via Cloudflare's identity layer (Google, GitHub, email OTP, …)
+ * BEFORE the request reaches dyad. Cloudflare adds these headers to authenticated
+ * requests:
+ *   - Cf-Access-Authenticated-User-Email   (the operator's email)
+ *   - Cf-Access-Jwt-Assertion              (signed JWT for verification)
  *
- * The claim is set via the Supabase Admin API (immutable from the client side):
+ * dyad has no admin login flow, no admin auth.users rows, no admin sessions.
+ * Operator identity lives entirely in Cloudflare's identity layer.
  *
- *   UPDATE auth.users SET raw_app_meta_data =
- *     raw_app_meta_data || '{"admin_authorized": true}'::jsonb
- *   WHERE email = '<admin-email>';
+ * Local dev: Cloudflare Access doesn't run locally. Set ADMIN_DEV_BYPASS=1 in
+ * .env.local to allow /admin/* through with a synthetic operator. Without the
+ * bypass, /admin/* returns 401 locally — useful for testing the unauthenticated
+ * path.
  *
- * To revoke admin access: set the claim to false (or remove it) and the user's
- * next request will be denied.
+ * To replace Cloudflare Access with another mechanism (Tailscale, custom
+ * proxy, OIDC SSO, etc.): change only this file. Everything downstream is
+ * unaffected.
  *
  * See docs/solutions/identity-decoupling-security-tradeoffs.md.
  */
 
-/**
- * Returns the authenticated admin user if and only if:
- *   1. The admin Supabase client has a valid session (sb-admin cookies present)
- *   2. That session's user has app_metadata.admin_authorized = true
- *
- * Returns null in any other case (no session, or session but not authorized).
- *
- * Pure function — no env dependency, takes the admin Supabase client. The
- * caller (hooks, login route) constructs the client and passes it in.
- */
-export async function getAuthorizedAdminUser(
-	adminSupabase: SupabaseClient
-): Promise<User | null> {
-	const { data, error } = await adminSupabase.auth.getUser();
-	if (error || !data.user) return null;
-	if (!isAdminAuthorized(data.user)) return null;
-	return data.user;
+export interface AdminOperator {
+	email: string;
 }
 
 /**
- * Pure predicate: is this user authorized for the admin plane?
- *
- * Exported for testing and for use in the login flow (after authentication
- * we check this claim before issuing the admin session).
+ * Returns the authenticated admin operator for this request, or null if the
+ * request is not authorized for the admin plane.
  */
-export function isAdminAuthorized(user: User): boolean {
-	return user.app_metadata?.admin_authorized === true;
+export function getAuthorizedAdminOperator(request: Request): AdminOperator | null {
+	const email = request.headers.get('cf-access-authenticated-user-email');
+	if (email && email.length > 0) {
+		return { email };
+	}
+
+	// Local-dev escape hatch. NEVER respect this in production builds —
+	// the `dev` guard from $app/environment is true only in `vite dev`.
+	if (dev && env.ADMIN_DEV_BYPASS === '1') {
+		return { email: 'dev@localhost' };
+	}
+
+	return null;
 }

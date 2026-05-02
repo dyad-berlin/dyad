@@ -1,23 +1,26 @@
 import { createServerClient } from '@supabase/ssr';
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
 import { dev } from '$app/environment';
-import { redirect, type Handle } from '@sveltejs/kit';
+import type { Handle } from '@sveltejs/kit';
 import { createSupabaseAdapter } from '@prefig/upact-supabase';
-import { createAdminSupabaseClient } from '$lib/server/admin-supabase';
-import { getAuthorizedAdminUser } from '$lib/server/admin-auth';
+import { getAuthorizedAdminOperator } from '$lib/server/admin-auth';
 
 export const handle: Handle = async ({ event, resolve }) => {
-	// Admin plane: separate cookie namespace (sb-admin), separate auth flow.
-	// Login at /admin/login. No overlap with user identity.
+	// Admin plane: gated by Cloudflare Access at the edge. dyad has no admin
+	// login flow — Cloudflare authenticates the operator before the request
+	// reaches us. We just verify the Cf-Access-Authenticated-User-Email header.
 	if (event.url.pathname.startsWith('/admin')) {
-		// /admin/login is the only admin route accessible without an admin session.
-		if (event.url.pathname === '/admin/login' || event.url.pathname.startsWith('/admin/login/')) {
-			return resolve(event);
-		}
-		const adminSupabase = createAdminSupabaseClient(event.cookies);
-		const adminUser = await getAuthorizedAdminUser(adminSupabase);
-		if (!adminUser) {
-			redirect(302, '/admin/login');
+		const operator = getAuthorizedAdminOperator(event.request);
+		if (!operator) {
+			return new Response(
+				'Admin access requires Cloudflare Access authentication.\n\n' +
+					'Production: this should not be reachable — Cloudflare Access ' +
+					'will redirect unauthenticated requests to its own login page ' +
+					'before they hit the origin.\n\n' +
+					'Local dev: set ADMIN_DEV_BYPASS=1 in .env.local to allow ' +
+					'/admin/* through.',
+				{ status: 401, headers: { 'Content-Type': 'text/plain' } }
+			);
 		}
 		return resolve(event);
 	}

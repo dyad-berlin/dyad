@@ -1,51 +1,49 @@
-import { describe, it, expect } from 'vitest';
-import type { User } from '@supabase/supabase-js';
-import { isAdminAuthorized } from './admin-auth.js';
+import { describe, it, expect, vi } from 'vitest';
+import { getAuthorizedAdminOperator } from './admin-auth.js';
 
-function user(overrides: Partial<User> = {}): User {
-	return {
-		id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
-		aud: 'authenticated',
-		email: 'a@b.c',
-		app_metadata: {},
-		user_metadata: {},
-		created_at: '2026-01-01T00:00:00Z',
-		...overrides
-	} as User;
+// Note: we don't mock $app/environment.dev here because vitest runs in
+// "non-dev" mode by default — the dev fallback is naturally inactive. To
+// exercise the dev-bypass path explicitly, see the conditional test below.
+
+function makeRequest(headers: Record<string, string> = {}): Request {
+	const h = new Headers();
+	for (const [k, v] of Object.entries(headers)) h.set(k, v);
+	return new Request('http://localhost/admin/waitlist', { headers: h });
 }
 
-describe('isAdminAuthorized', () => {
-	it('returns true when app_metadata.admin_authorized is the boolean true', () => {
-		expect(isAdminAuthorized(user({ app_metadata: { admin_authorized: true } }))).toBe(true);
+describe('getAuthorizedAdminOperator', () => {
+	it('returns the operator when Cloudflare Access set the email header', () => {
+		const op = getAuthorizedAdminOperator(
+			makeRequest({ 'cf-access-authenticated-user-email': 'theodore@example.com' })
+		);
+		expect(op).toEqual({ email: 'theodore@example.com' });
 	});
 
-	it('returns false when admin_authorized is missing', () => {
-		expect(isAdminAuthorized(user({ app_metadata: {} }))).toBe(false);
+	it('returns null when the Cloudflare Access header is missing', () => {
+		const op = getAuthorizedAdminOperator(makeRequest());
+		expect(op).toBeNull();
 	});
 
-	it('returns false when admin_authorized is false', () => {
-		expect(isAdminAuthorized(user({ app_metadata: { admin_authorized: false } }))).toBe(false);
+	it('returns null when the Cloudflare Access header is empty string', () => {
+		const op = getAuthorizedAdminOperator(
+			makeRequest({ 'cf-access-authenticated-user-email': '' })
+		);
+		expect(op).toBeNull();
 	});
 
-	it('returns false when admin_authorized is the string "true" (truthy but not boolean)', () => {
-		// Strict boolean check — string truthiness must not pass.
-		expect(isAdminAuthorized(user({ app_metadata: { admin_authorized: 'true' } as never }))).toBe(false);
+	it('reads the header case-insensitively (HTTP header convention)', () => {
+		const op = getAuthorizedAdminOperator(
+			makeRequest({ 'Cf-Access-Authenticated-User-Email': 'a@b.c' })
+		);
+		expect(op).toEqual({ email: 'a@b.c' });
 	});
 
-	it('returns false when app_metadata is missing entirely', () => {
-		expect(isAdminAuthorized(user({ app_metadata: undefined as never }))).toBe(false);
-	});
-
-	it('ignores user_metadata even when it claims admin (only app_metadata is trusted)', () => {
-		// app_metadata is set by the Admin API (immutable from client side).
-		// user_metadata is editable by the user — must not grant admin.
-		expect(
-			isAdminAuthorized(
-				user({
-					app_metadata: {},
-					user_metadata: { admin_authorized: true }
-				})
-			)
-		).toBe(false);
+	it('the dev bypass is not active in test env (dev=false in vitest)', () => {
+		// Defensive: confirms the dev fallback isn't accidentally letting requests
+		// through during normal test runs.
+		vi.stubEnv('ADMIN_DEV_BYPASS', '1');
+		const op = getAuthorizedAdminOperator(makeRequest());
+		expect(op).toBeNull();
+		vi.unstubAllEnvs();
 	});
 });
