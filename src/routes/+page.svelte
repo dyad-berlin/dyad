@@ -11,7 +11,7 @@
 	import RotatingHeadline from '$lib/components/RotatingHeadline.svelte';
 
 	const og = copy.landing;
-	const ogImage = `${og.ogUrl}/images/logo.png`;
+	const ogImage = `${og.ogUrl}/images/og-card.png`;
 
 	function slotDates(slots: { start_time: string }[]): string {
 		const dates = new Set<string>();
@@ -81,7 +81,7 @@
 	<meta property="og:site_name" content={og.ogSiteName} />
 
 	<!-- Twitter / X -->
-	<meta name="twitter:card" content="summary" />
+	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:title" content={og.title} />
 	<meta name="twitter:description" content={og.metaDescription} />
 	<meta name="twitter:image" content={ogImage} />
