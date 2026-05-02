@@ -4,11 +4,12 @@ import { requireIdentity } from '$lib/services/identity.js';
 import { parseJsonBody } from '$lib/server/parse-body.js';
 import { SupabaseMeetingService } from '$lib/services/meeting.js';
 import { handleServiceError } from '$lib/server/handle-service-error.js';
-import { env } from '$env/dynamic/public';
 
 /** POST /api/meetings/[id]/cancel — cancel with optional reason */
 export const POST: RequestHandler = async ({ params, request, locals }) => {
-	const upactor = requireIdentity(locals);
+	// Auth guard: throws 401 if not signed in. Identity itself is unused
+	// here — RLS enforces ownership on the underlying RPC call.
+	const _upactor = requireIdentity(locals);
 
 	const [body, errorResponse] = await parseJsonBody<{ reason?: string }>(request);
 	if (errorResponse) return errorResponse;
@@ -22,18 +23,6 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 	const service = new SupabaseMeetingService(locals.supabase);
 	try {
 		const tier = await service.cancel(params.id, body.reason);
-		if (env.PUBLIC_POSTHOG_KEY) {
-			fetch('https://eu.i.posthog.com/capture/', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					api_key: env.PUBLIC_POSTHOG_KEY,
-					distinct_id: upactor.id,
-					event: 'meeting_cancelled',
-					properties: { meeting_id: params.id, tier }
-				})
-			}).catch(() => {});
-		}
 		return json({ ok: true, tier });
 	} catch (err) {
 		return handleServiceError(err, '[meetings/cancel]');
