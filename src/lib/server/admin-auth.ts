@@ -1,64 +1,103 @@
 import { dev } from '$app/environment';
 import { env } from '$env/dynamic/private';
+import { createRemoteJWKSet, jwtVerify, type JWTPayload } from 'jose';
 
 /**
  * Admin authentication via Cloudflare Access.
  *
- * Production: Cloudflare Zero Trust gates `/admin/*` at the edge. Operators
- * authenticate via Cloudflare's identity layer (Google, GitHub, email OTP, …)
- * BEFORE the request reaches dyad. Cloudflare adds these headers to authenticated
- * requests:
- *   - Cf-Access-Authenticated-User-Email   (the operator's email)
- *   - Cf-Access-Jwt-Assertion              (signed JWT for verification)
+ * Production: Cloudflare Zero Trust gates `admin.dyad.berlin` at the edge.
+ * Operators authenticate via Cloudflare's identity layer BEFORE the request
+ * reaches dyad. Cloudflare attaches the signed identity JWT to the request:
+ *   - Cf-Access-Jwt-Assertion              (signed JWT — always present)
+ *   - Cf-Access-Authenticated-User-Email   (convenience header — sometimes missing)
  *
- * dyad has no admin login flow, no admin auth.users rows, no admin sessions.
- * Operator identity lives entirely in Cloudflare's identity layer.
+ * We verify the JWT against Cloudflare's published JWKS and read the email
+ * from the JWT claims. The convenience email header is consulted first as
+ * a fast path when present, but the JWT is the authoritative source.
+ *
+ * Env vars (required in production):
+ *   CF_ACCESS_TEAM_DOMAIN  e.g. dyad-berlin.cloudflareaccess.com
+ *   CF_ACCESS_AUD          per-application audience tag from the Access dashboard
  *
  * Local dev: Cloudflare Access doesn't run locally. Set ADMIN_DEV_BYPASS=1 in
- * .env.local to allow /admin/* through with a synthetic operator. Without the
- * bypass, /admin/* returns 401 locally — useful for testing the unauthenticated
- * path.
- *
- * To replace Cloudflare Access with another mechanism (Tailscale, custom
- * proxy, OIDC SSO, etc.): change only this file. Everything downstream is
- * unaffected.
- *
- * See docs/solutions/identity-decoupling-security-tradeoffs.md.
+ * .env.local to allow /admin/* through with a synthetic operator.
  */
 
 export interface AdminOperator {
 	email: string;
 }
 
+export type JwtVerifier = (jwt: string) => Promise<{ email: string } | null>;
+
+let _jwks: ReturnType<typeof createRemoteJWKSet> | null = null;
+function getJwks(teamDomain: string) {
+	if (!_jwks) {
+		_jwks = createRemoteJWKSet(new URL(`https://${teamDomain}/cdn-cgi/access/certs`));
+	}
+	return _jwks;
+}
+
+const productionJwtVerifier: JwtVerifier = async (jwt) => {
+	const teamDomain = env.CF_ACCESS_TEAM_DOMAIN;
+	const audience = env.CF_ACCESS_AUD;
+	if (!teamDomain || !audience) {
+		console.error('[admin-auth] CF_ACCESS_TEAM_DOMAIN or CF_ACCESS_AUD not configured');
+		return null;
+	}
+	try {
+		const { payload } = await jwtVerify(jwt, getJwks(teamDomain), {
+			issuer: `https://${teamDomain}`,
+			audience
+		});
+		return extractEmail(payload);
+	} catch (error) {
+		console.error('[admin-auth] JWT verification failed', error);
+		return null;
+	}
+};
+
+function extractEmail(payload: JWTPayload): { email: string } | null {
+	const email = payload.email;
+	if (typeof email === 'string' && email.length > 0) return { email };
+	return null;
+}
+
 /**
  * Returns the authenticated admin operator for this request, or null if the
  * request is not authorized for the admin plane.
- *
- * Reads `dev` and the `ADMIN_DEV_BYPASS` env var via the module imports.
- * The pure variant `resolveAdminOperator` exists for testing.
  */
-export function getAuthorizedAdminOperator(request: Request): AdminOperator | null {
+export async function getAuthorizedAdminOperator(request: Request): Promise<AdminOperator | null> {
 	return resolveAdminOperator(request, {
 		devMode: dev,
-		bypassEnabled: env.ADMIN_DEV_BYPASS === '1'
+		bypassEnabled: env.ADMIN_DEV_BYPASS === '1',
+		verifyJwt: productionJwtVerifier
 	});
 }
 
 /**
- * Pure variant: takes the dev/bypass flags as parameters. Used by getAuthorizedAdminOperator
- * with real env values, and by tests with controlled inputs.
+ * Pure variant: takes the dev/bypass flags and JWT verifier as parameters.
+ * Used by getAuthorizedAdminOperator with real values, and by tests with
+ * controlled inputs.
  */
-export function resolveAdminOperator(
+export async function resolveAdminOperator(
 	request: Request,
-	flags: { devMode: boolean; bypassEnabled: boolean }
-): AdminOperator | null {
-	const email = request.headers.get('cf-access-authenticated-user-email');
-	if (email && email.length > 0) {
-		return { email };
+	flags: {
+		devMode: boolean;
+		bypassEnabled: boolean;
+		verifyJwt?: JwtVerifier;
+	}
+): Promise<AdminOperator | null> {
+	const headerEmail = request.headers.get('cf-access-authenticated-user-email');
+	if (headerEmail && headerEmail.length > 0) {
+		return { email: headerEmail };
 	}
 
-	// Local-dev escape hatch. Production builds set devMode=false (the dev import
-	// from $app/environment is only true under `vite dev`).
+	const jwt = request.headers.get('cf-access-jwt-assertion');
+	if (jwt && flags.verifyJwt) {
+		const claims = await flags.verifyJwt(jwt);
+		if (claims) return claims;
+	}
+
 	if (flags.devMode && flags.bypassEnabled) {
 		return { email: 'dev@localhost' };
 	}
