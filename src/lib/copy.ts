@@ -118,9 +118,6 @@ export const copy = {
 		myOfferedTimes: 'Times you offered',
 		myOfferedTimesBooked: 'booked',
 		myScheduledMeetings: 'Your scheduled meetings',
-		// Edit-in-place: visible revision marker beside the published date.
-		revisedOn: (date: string) => `revised ${date}`,
-		edit: 'Edit',
 		unpublish: 'Unpublish',
 		unpublishConfirm: 'Take this off the feed and back to drafts? You can republish anytime.',
 		failedToUnpublish: 'Failed to unpublish.',
@@ -158,8 +155,6 @@ export const copy = {
 		// Action-bar buttons
 		publishAction: 'Publish…',
 		republishAction: 'Republish…',
-		unpublishAction: 'Unpublish',
-		archiveAction: 'Archive',
 		deleteAction: 'Delete',
 		discardTitle: 'Discard draft',
 		discardConfirm: 'This will permanently delete this draft. This cannot be undone.',
