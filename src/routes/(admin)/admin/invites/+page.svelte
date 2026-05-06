@@ -72,13 +72,16 @@
 			});
 			const body = await res.json();
 			if (res.ok) {
-				result = {
-					email,
-					message: body.alreadyInvited
-						? 'Re-sent with the existing token.'
-						: 'New invitation sent (previous one had expired).',
-					url: body.inviteUrl
-				};
+				const baseMessage = body.alreadyInvited
+					? 'Re-sent with the existing token.'
+					: 'New invitation sent (previous one had expired).';
+				// Surface delivery failure: the invite token is valid (DB row exists or
+				// already existed), but the email itself didn't go out. Admin can copy
+				// the link from the result panel and reach the recipient another way.
+				const message = body.delivered === false
+					? `${baseMessage} Email did not deliver. Link is valid; see logs.`
+					: baseMessage;
+				result = { email, message, url: body.inviteUrl };
 				const { [email]: _o, ...restOpeners } = openerByEmail;
 				const { [email]: _m, ...restMessages } = messageByEmail;
 				openerByEmail = restOpeners;
@@ -111,9 +114,20 @@
 			});
 			const body = await res.json();
 			if (res.ok) {
+				// Distinguish "row + email both succeeded" from "row succeeded, email
+				// failed to deliver" — the second case still produces a usable invite
+				// link the operator can copy out, but the recipient won't know.
+				if (body.delivered === false) {
+					return {
+						status: 'failed',
+						note: body.alreadyInvited
+							? 'had a valid invite, email did not deliver'
+							: 'invite created, email did not deliver'
+					};
+				}
 				return {
 					status: body.alreadyInvited ? 'resent' : 'sent',
-					note: body.alreadyInvited ? 'had a valid invite — email re-sent' : undefined
+					note: body.alreadyInvited ? 'had a valid invite, email re-sent' : undefined
 				};
 			}
 			if (res.status === 409) return { status: 'joined', note: 'already signed up' };

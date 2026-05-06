@@ -109,14 +109,17 @@ export const POST: RequestHandler = async ({ request }) => {
 		.limit(1);
 
 	if (existing && existing.length > 0) {
-		// Already has a valid invite — resend the email and return the existing link
+		// Already has a valid invite — resend the email and return the existing link.
+		// sendEmail returns false on delivery failure (it does not throw); surface
+		// the result so the admin UI can distinguish "link valid + email sent" from
+		// "link valid + email failed to send" instead of always claiming success.
 		const inviteUrl = `${APP_ORIGIN}/join?token=${existing[0].token}`;
-		await sendEmail({
+		const delivered = await sendEmail({
 			to: email.trim(),
 			subject: copy.email.inviteSubject,
 			html: renderInviteEmail({ opener: buildOpener(name), inviteUrl, message: trimmedMessage })
-		}).catch((err) => console.error('[admin/invites] Failed to resend invite email:', err));
-		return json({ ok: true, alreadyInvited: true, inviteUrl });
+		});
+		return json({ ok: true, alreadyInvited: true, inviteUrl, delivered });
 	}
 
 	// Check if this email is already a registered user
@@ -152,12 +155,15 @@ export const POST: RequestHandler = async ({ request }) => {
 
 	const inviteUrl = `${APP_ORIGIN}/join?token=${token}`;
 
-	// Send invite email
-	await sendEmail({
+	// Send invite email. sendEmail returns false on delivery failure (it does not
+	// throw); surface the result so the admin UI can distinguish a successful
+	// invitation+email from an invitation row that was created but the email
+	// didn't go out (e.g. provider misconfig, Resend rejection).
+	const delivered = await sendEmail({
 		to: email.trim(),
 		subject: copy.email.inviteSubject,
 		html: renderInviteEmail({ opener: buildOpener(name), inviteUrl, message: trimmedMessage })
-	}).catch((err) => console.error('[admin/invites] Failed to send invite email:', err));
+	});
 
-	return json({ ok: true, inviteUrl });
+	return json({ ok: true, inviteUrl, delivered });
 };
