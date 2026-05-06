@@ -291,27 +291,10 @@
 		}
 	}
 
-	// ── Unpublish (published → draft, stays in editor) ─────────────────────────
-	async function handleUnpublish() {
-		const res = await fetch(`/api/prompts/${promptId}/unpublish`, { method: 'POST' });
-		if (res.ok) {
-			// Refresh page data so the editor's state derivations flip from
-			// published to draft and the action bar updates accordingly.
-			window.location.reload();
-		} else {
-			const e = await res.json().catch(() => ({}));
-			publishError = (e as any).error ?? copy.conversation.failedToUnpublish;
-		}
-	}
-
-	// ── Archive ────────────────────────────────────────────────────────────────
-	async function handleArchive() {
-		const res = await fetch(`/api/prompts/${promptId}/archive`, { method: 'POST' });
-		if (res.ok) goto('/profile?view=conversations');
-		else { const e = await res.json().catch(() => ({})); publishError = (e as any).error ?? copy.conversation.failedToArchive; }
-	}
-
-	// ── Delete (published) ─────────────────────────────────────────────────────
+	// ── Delete (archived prompts) ──────────────────────────────────────────────
+	// The editor only renders for draft and archived states (published prompts
+	// redirect to the read view at the loader). Archived prompts can be deleted
+	// or republished via the action bar; this dialog handles the delete path.
 	let deletePublishedDialog = $state<ConfirmDialog | undefined>();
 
 	async function handleDeletePublished() {
@@ -321,7 +304,6 @@
 	}
 
 	let isDraft = $derived(data.prompt.state === 'draft');
-	let isPublished = $derived(data.prompt.state === 'published');
 	let isArchived = $derived(data.prompt.state === 'archived');
 </script>
 
@@ -358,14 +340,6 @@
 			{:else if isArchived}
 				<button class="delete-btn" onclick={() => deletePublishedDialog?.open()}>{copy.editor.deleteAction}</button>
 				<button class="btn-primary btn-primary--sm" onclick={handleOpenPublish}>{copy.editor.republishAction}</button>
-			{:else}
-				<!-- Published: content edits auto-save. Unpublish takes it off the
-				     feed and back to draft so the author can keep working without
-				     publishing. Archive sets it aside (terminal). Delete removes
-				     it permanently. -->
-				<button class="action-btn" onclick={handleUnpublish}>{copy.editor.unpublishAction}</button>
-				<button class="action-btn" onclick={handleArchive}>{copy.editor.archiveAction}</button>
-				<button class="delete-btn" onclick={() => deletePublishedDialog?.open()}>{copy.editor.deleteAction}</button>
 			{/if}
 		</div>
 	</div>
@@ -431,19 +405,6 @@
 		<p class="publish-error">{publishError}</p>
 	{/if}
 
-	<!-- Published: slot list info only -->
-	{#if isPublished && data.slots.length > 0}
-		<section class="published-info">
-			{#each data.slots as slot}
-				<div class="existing-slot">
-					<span>{new Date(slot.start_time).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
-					<span>{new Date(slot.start_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</span>
-					<span>{slot.duration_minutes} min</span>
-					<span class="slot-area">{slot.general_area}</span>
-				</div>
-			{/each}
-		</section>
-	{/if}
 </div>
 
 <ConfirmDialog
@@ -564,21 +525,6 @@
 	.error-text { color: var(--color-danger); font-size: var(--text-sm); }
 	.publish-error { font-size: var(--text-sm); color: var(--color-danger); margin: var(--space-3) 0; }
 
-	/* Published state */
-	.published-info { margin-top: var(--space-10); padding-top: var(--space-8); border-top: 1px solid var(--border-link); }
-	.section-title { font-size: var(--text-lg); font-weight: normal; margin: 0 0 var(--space-1); color: var(--text-primary); }
-	.section-desc { font-size: var(--text-sm); color: var(--text-muted); margin: 0 0 var(--space-5); }
-
-	.slot-list { display: flex; flex-direction: column; gap: var(--space-2); margin-bottom: var(--space-4); }
-	.existing-slot {
-		display: flex;
-		gap: var(--space-3);
-		font-size: var(--text-sm);
-		color: var(--text-primary);
-		padding: var(--space-2) 0;
-		border-bottom: 1px solid var(--border-link);
-	}
-	.slot-area { color: var(--text-muted); text-transform: uppercase; font-size: var(--text-xs); letter-spacing: 0.04em; }
 
 	.published-actions { display: flex; gap: var(--space-4); align-items: center; margin-top: var(--space-4); }
 
