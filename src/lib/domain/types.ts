@@ -25,6 +25,7 @@ export interface Prompt {
 	published_at: string | null;
 	archived_at: string | null;
 	hidden_at: string | null;
+	edited_at: string | null;
 	created_at: string;
 	updated_at: string;
 }
@@ -72,6 +73,7 @@ export interface PromptDetail extends PromptSummary {
 	state: 'draft' | 'published' | 'archived';
 	body: JSONContent;
 	body_html: string; // server-rendered TipTap HTML (sanitized)
+	edited_at: string | null; // last revision while in published state, null if never edited
 }
 
 // Engagement types

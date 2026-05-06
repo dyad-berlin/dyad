@@ -96,6 +96,17 @@ The platform follows the *calm technology* posture (Weiser & Brown 1996; Case 20
 - Members are inducted into platform norms organically through the interface itself.
 - Modals that keep a member in context are fine — for example, the waitlist form that appears when an anonymous visitor clicks a conversation. The principle: don't interrupt flow with demands for attention. Overlays that serve the member's current intent are not interruptions.
 
+### Three states, four verbs
+
+Conversations move through three states: **draft** (pre-publication, only the author sees it), **published** (live on the feed), **archived** (off the feed, kept). Four author actions move between them.
+
+- **Edit** revises a published conversation in place. Title, body, and cover image stay editable. The timestamp of the most recent revision (`prompts.edited_at`) appears on the read view as a quiet "revised on …" line beside the publish meta, so readers see when the prompt was changed rather than encountering silent edits.
+- **Archive** takes a conversation off the feed while keeping the record. Archived conversations remain editable in the editor, and the editor's action bar surfaces "Republish…" so the author can bring them back with fresh slots. The archive-then-republish pair fits the case where the author wants to rework privately before re-staging.
+- **Republish** moves an archived conversation back to published through the same publish flow that handles drafts. Slots are re-chosen each time; the prompt itself can be lightly or heavily reworked between archive and republish.
+- **Delete** removes the conversation permanently.
+
+We don't add a separate "unpublish to draft" affordance. It would do the same thing as archive then republish, just with a different state value sitting between the bookends. The semantic difference (archive feels final, draft feels reversible) is a labeling concern, addressed by how the Archive action is described in the editor, not by another state.
+
 ### Inclusive language
 
 - Avoid intellectualism signals. Phrases like "independent thinkers" or "meet through writing" create invisible barriers.
