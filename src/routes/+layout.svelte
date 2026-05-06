@@ -5,7 +5,6 @@
 	import { page } from '$app/state';
 	import { env } from '$env/dynamic/public';
 	import { themeStore } from '$lib/stores/theme.svelte';
-	import Footer from '$lib/components/Footer.svelte';
 
 	let { children } = $props();
 
@@ -83,5 +82,3 @@
 </svelte:head>
 
 {@render children()}
-
-<Footer />
