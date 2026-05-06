@@ -42,23 +42,21 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		redirect(302, '/discover');
 	}
 
-	// Load existing slots if published
-	let slots: Array<{
+	// The editor only edits drafts. To revise a published conversation, the
+	// author must Unpublish first (which transitions it to draft and lands them
+	// here). Redirecting prevents an inconsistent edit-in-place flow on a live
+	// prompt. Same posture for archived: those go through Republish, not direct
+	// editing in this surface.
+	if (prompt.state === 'published') {
+		redirect(302, `/conversations/${params.id}`);
+	}
+
+	const slots: Array<{
 		id: string;
 		start_time: string;
 		duration_minutes: number;
 		general_area: string;
 	}> = [];
-
-	if (prompt.state === 'published') {
-		const availableSlots = await service.getAvailableSlots(params.id, userId);
-		slots = availableSlots.map((s) => ({
-			id: s.id,
-			start_time: s.start_time,
-			duration_minutes: s.duration_minutes,
-			general_area: s.general_area
-		}));
-	}
 
 	return { prompt, slots };
 };
