@@ -96,6 +96,16 @@ The platform follows the *calm technology* posture (Weiser & Brown 1996; Case 20
 - Members are inducted into platform norms organically through the interface itself.
 - Modals that keep a member in context are fine — for example, the waitlist form that appears when an anonymous visitor clicks a conversation. The principle: don't interrupt flow with demands for attention. Overlays that serve the member's current intent are not interruptions.
 
+### A small state machine, three intents
+
+Conversations move through three states: **draft** (pre-publication, only the author sees it), **published** (live on the feed), **archived** (off the feed, kept). Each state corresponds to a single author intent, and the verbs that move between states are shaped to match.
+
+- **Edit** is for refining a published conversation in public. Title, body, and cover image stay editable; the timestamp of the most recent revision (`prompts.edited_at`) appears on the read view as a quiet "revised on …" line beside the publish meta. The conversation is a written thing that can grow and clarify itself; the visible revision is the platform's commitment that the author's words don't shift silently.
+- **Archive** is for setting a conversation aside. The conversation comes off the feed, the record stays. Archived conversations remain editable in the editor, and the editor's action bar surfaces "Republish…" so the author can return them to the feed with fresh slots when they're ready. The pair (archive + republish) is the right shape when the author wants to take the conversation private to rework it, not when they want to refine in place.
+- **Republish** brings an archived conversation back to the feed through the same publish flow that moves drafts to published. Slots are re-chosen each time; the prompt itself can be lightly or heavily reworked between archive and republish.
+
+These four verbs (Edit, Archive, Republish, Delete) cover the lifecycle without a fourth state. We do not add a separate "unpublish to draft" affordance because it would duplicate the archive → republish path under a different name — the same trip with different luggage tags. Three states, four verbs, one mental model.
+
 ### Inclusive language
 
 - Avoid intellectualism signals. Phrases like "independent thinkers" or "meet through writing" create invisible barriers.
