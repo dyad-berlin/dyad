@@ -77,6 +77,15 @@ The platform follows the *calm technology* posture (Weiser & Brown 1996; Case 20
 - If a desired outcome can only be reached through a consent-requiring path, the choice is to find a consent-free alternative or to accept that the feature is foreclosed. The principle is structural, not aesthetic — it composes with the upact privacy port, the payment-opacity contract, and the calm-tech use shape.
 - The brand signal is incidental but real: visitors do not encounter a cookie wall on `dyad.berlin`.
 
+### Payment opacity
+
+- Payment substrates (Stripe, Apple Pay, Google Pay, future processors) hold the contact-bearing data per their data-controller role. dyad's database holds opaque tokens only: `stripe_customer_id`, `stripe_payment_intent_id`, `stripe_subscription_id`, plus the boolean / numeric state dyad needs (`amount_cents`, `kind`, timestamps).
+- No card details, wallet identities, payer emails or names, billing addresses, or phone numbers ever land in dyad's database. Webhook handlers and any payment-bearing code path log only `event.id`, `event.type`, and `metadata.kind`. Logging `event.data.object` or sub-fields is forbidden.
+- No decline records exist on dyad's side. Three structural defenses combine: no client-side API call on dismiss; PaymentIntent creation at confirm-tap rather than prompt-mount; webhook subscription scoped to `payment_intent.succeeded` only. A user who dismisses a Trinkgeld sheet without tapping never causes a Stripe-side or dyad-side artifact.
+- The architectural commitment is enforced by `tests/integration/payment-opacity-lint.test.ts`. Any new payment-bearing code that introduces a forbidden field name fails the build. The lint covers both snake_case (`email`, `card_*`, `holder_name`, `billing_*`, `payer_*`, `decline_*`) and camelCase (`payerEmail`, `holderName`, `billingAddress`, `cardBrand`, `lastFour`) variants, plus untyped freeform columns (`metadata JSONB`, `notes TEXT`, `extra JSONB`) in payment-bearing migrations.
+- The opacity contract has two distinct defenses with different strength claims: structural (load-bearing — the no-API-call-on-dismiss architecture; declines are unobservable in dyad's database because no code path exists to record them) and lint-test (a casual-drift tripwire that catches naive violations but is not the load-bearing defense).
+- dyad accepts paid lifetime memberships and other clearly-defined-good purchases (Founding Circle, tiered membership, Trinkgeld, venue patron contributions). dyad does not accept donations: the legal envelope of donations (charity status, gift tax, German Spendenrecht) is structurally heavier than membership-shaped commercial transactions and currently out of scope.
+
 ### Cancellation symmetry
 
 - Both authors and inviters can cancel. Same tiers apply to both parties.
