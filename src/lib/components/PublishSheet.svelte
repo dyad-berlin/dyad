@@ -312,10 +312,8 @@
 		max-width: 480px;
 		max-height: 85vh;
 		overflow-y: auto;
-		padding: var(--space-6) var(--space-5) 0;
+		padding: var(--space-6) var(--space-5);
 		box-sizing: border-box;
-		display: flex;
-		flex-direction: column;
 	}
 
 	.sheet-close {
@@ -401,11 +399,8 @@
 	.day-name { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.04em; }
 	.day-num { font-size: var(--text-md); font-weight: 600; line-height: 1; }
 
-	.day-section {
-		margin-bottom: var(--space-5);
-	}
-
 	.day-section + .day-section {
+		margin-top: var(--space-5);
 		padding-top: var(--space-5);
 		border-top: 1px solid var(--border-subtle);
 	}
@@ -488,11 +483,11 @@
 		flex-direction: column;
 		align-items: flex-end;
 		gap: var(--space-2);
-		margin-top: auto;
-		padding: var(--space-4) 0 var(--space-5);
+		padding: var(--space-4) 0 0;
 		position: sticky;
 		bottom: 0;
-		background: linear-gradient(to bottom, transparent, var(--bg-canvas) var(--space-2));
+		background: var(--bg-canvas);
+		margin-top: var(--space-5);
 	}
 
 	.footer-hint {

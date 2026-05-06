@@ -325,7 +325,7 @@
 
 	.location-search input {
 		font-size: var(--text-sm);
-		padding: var(--space-2) var(--space-7) var(--space-2) var(--space-3);
+		padding: var(--space-2) var(--space-8) var(--space-2) var(--space-3);
 		border: 1px solid var(--border-link);
 		border-radius: var(--radius-input);
 		background: transparent;
@@ -334,10 +334,7 @@
 		box-sizing: border-box;
 	}
 
-	.location-search input:focus-visible {
-		outline: 2px solid var(--border-link-hover);
-		outline-offset: 1px;
-	}
+	.location-search input:focus { outline: none; border-color: var(--text-muted); }
 
 	.clear-button {
 		position: absolute;
@@ -357,16 +354,16 @@
 
 	.location-dropdown {
 		position: absolute;
-		top: calc(100% + 2px);
+		top: 100%;
 		left: 0;
 		right: 0;
 		background: var(--bg-canvas);
 		border: 1px solid var(--border-link);
-		border-radius: var(--radius-input);
+		border-radius: 0 0 var(--radius-input) var(--radius-input);
+		border-top: none;
 		max-height: 240px;
 		overflow-y: auto;
 		z-index: 10;
-		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 	}
 
 	.location-option {
@@ -389,10 +386,7 @@
 		background: var(--bg-control);
 	}
 
-	.location-option:focus-visible {
-		outline: 2px solid var(--border-link-hover);
-		outline-offset: -2px;
-	}
+	.location-option:focus { outline: none; background: var(--bg-control); }
 
 	.location-option--manual .loc-name {
 		color: var(--text-muted);
@@ -400,7 +394,7 @@
 	}
 
 	.loc-name { color: var(--text-primary); display: block; }
-	.loc-addr { color: var(--text-muted); font-size: var(--text-xs); display: block; margin-top: 2px; }
+	.loc-addr { color: var(--text-muted); font-size: var(--text-xs); display: block; margin-top: var(--space-1); }
 
 	.dropdown-state {
 		padding: var(--space-2) var(--space-3);
