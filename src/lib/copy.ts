@@ -118,6 +118,8 @@ export const copy = {
 		myOfferedTimes: 'Times you offered',
 		myOfferedTimesBooked: 'booked',
 		myScheduledMeetings: 'Your scheduled meetings',
+		// Edit-in-place: visible revision marker beside the published date.
+		revisedOn: (date: string) => `revised ${date}`,
 		edit: 'Edit',
 		archive: 'Archive',
 		archiveConfirm: 'Archiving will expire pending invitations. Continue?',

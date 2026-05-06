@@ -69,6 +69,16 @@ export class SupabasePromptCommandService implements PromptCommandService {
 		if (data.body !== undefined) updates.body = data.body;
 		if (data.coverImageUrl !== undefined) updates.cover_image_url = data.coverImageUrl;
 
+		// Track revisions on a published prompt so the read view can surface
+		// "revised X" alongside the original publish meta. Drafts don't get
+		// edited_at set — every save on a draft is "the latest version,"
+		// there's no public surface to honour. Archived edits are not part of
+		// the supported flow (terminal state).
+		const existing = await this.getOwnPrompt(promptId, authorId);
+		if (existing.state === 'published' && Object.keys(updates).length > 0) {
+			updates.edited_at = new Date().toISOString();
+		}
+
 		const { data: prompt, error } = await this.supabase
 			.from('prompts')
 			.update(updates)
