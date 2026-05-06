@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { fly } from 'svelte/transition';
-	import { onMount, onDestroy } from 'svelte';
+	import { fly, fade } from 'svelte/transition';
+	import { onMount, onDestroy, tick } from 'svelte';
 	import { getWeekDates } from '$lib/utils/dates';
 	import LocationSearch from '$lib/components/LocationSearch.svelte';
 	import type { LocationRef, TimeSlotInput } from '$lib/domain/types';
@@ -26,6 +26,15 @@
 	// Per-day slot drafts: Map<date, SlotDraft[]>
 	let daySlots = $state<Map<string, SlotDraft[]>>(new Map());
 
+	// Default times ladder: morning, afternoon, evening. New slots draw from
+	// this list by index, so adding three slots on the same day gives
+	// 09:00, 14:00, 19:00 by default rather than three identical 09:00 entries.
+	const DEFAULT_TIME_LADDER = ['09:00', '14:00', '19:00'];
+
+	function nextDefaultTime(existingCount: number): string {
+		return DEFAULT_TIME_LADDER[Math.min(existingCount, DEFAULT_TIME_LADDER.length - 1)];
+	}
+
 	function toggleDay(date: string) {
 		const next = new Set(selectedDays);
 		if (next.has(date)) {
@@ -36,7 +45,7 @@
 		} else {
 			next.add(date);
 			const nextSlots = new Map(daySlots);
-			nextSlots.set(date, [{ time: '09:00', duration: 60, location: null }]);
+			nextSlots.set(date, [{ time: nextDefaultTime(0), duration: 60, location: null }]);
 			daySlots = nextSlots;
 		}
 		selectedDays = next;
@@ -46,7 +55,28 @@
 		const current = daySlots.get(date) ?? [];
 		if (current.length >= 3) return;
 		const nextSlots = new Map(daySlots);
-		nextSlots.set(date, [...current, { time: '09:00', duration: 60, location: null }]);
+		nextSlots.set(date, [
+			...current,
+			{ time: nextDefaultTime(current.length), duration: 60, location: null }
+		]);
+		daySlots = nextSlots;
+	}
+
+	function removeTimeSlot(date: string, index: number) {
+		const current = daySlots.get(date);
+		if (!current) return;
+		const updated = current.filter((_, i) => i !== index);
+		const nextSlots = new Map(daySlots);
+		if (updated.length === 0) {
+			// Removing the last slot deselects the day entirely so the form
+			// stays internally consistent (selectedDays = days with at least one slot).
+			nextSlots.delete(date);
+			const nextDays = new Set(selectedDays);
+			nextDays.delete(date);
+			selectedDays = nextDays;
+		} else {
+			nextSlots.set(date, updated);
+		}
 		daySlots = nextSlots;
 	}
 
@@ -59,6 +89,29 @@
 		nextSlots.set(date, updated);
 		daySlots = nextSlots;
 	}
+
+	// Derived: at least one slot exists somewhere with a location set.
+	// The Publish button is disabled until this is true (P0 friction fix:
+	// validation no longer waits for a click round-trip).
+	const hasPublishableSlot = $derived.by(() => {
+		for (const drafts of daySlots.values()) {
+			for (const draft of drafts) {
+				if (draft.location) return true;
+			}
+		}
+		return false;
+	});
+
+	// Derived: count of slots with locations missing, for the inline hint.
+	const missingLocationCount = $derived.by(() => {
+		let count = 0;
+		for (const drafts of daySlots.values()) {
+			for (const draft of drafts) {
+				if (!draft.location) count++;
+			}
+		}
+		return count;
+	});
 
 	function handlePublish() {
 		const slots: TimeSlotInput[] = [];
@@ -75,17 +128,33 @@
 		onPublish(slots);
 	}
 
-	// Lock body scroll
+	// Body scroll lock + Esc to close + initial focus management.
 	let prevOverflow = '';
-	onMount(() => {
+	let closeButton: HTMLButtonElement | undefined = $state();
+
+	function handleKeydown(e: KeyboardEvent) {
+		if (e.key === 'Escape' && !publishing) {
+			e.preventDefault();
+			onClose();
+		}
+	}
+
+	onMount(async () => {
 		prevOverflow = document.body.style.overflow;
 		document.body.style.overflow = 'hidden';
-	});
-	onDestroy(() => {
-		document.body.style.overflow = prevOverflow;
+		document.addEventListener('keydown', handleKeydown);
+		// Move focus to the close button on mount so the dialog has a defined
+		// keyboard entry point. tick() lets the binding settle.
+		await tick();
+		closeButton?.focus();
 	});
 
-	// Time options (7:00 AM to 10:00 PM in 30-min increments)
+	onDestroy(() => {
+		document.body.style.overflow = prevOverflow;
+		document.removeEventListener('keydown', handleKeydown);
+	});
+
+	// Time options (7:00 AM to 10:00 PM in 30-min increments).
 	const timeOptions = (() => {
 		const options: { value: string; label: string }[] = [];
 		for (let h = 7; h <= 22; h++) {
@@ -109,28 +178,36 @@
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <!-- svelte-ignore a11y_click_events_have_key_events -->
-<div class="backdrop" onclick={onClose}>
+<div class="backdrop" onclick={onClose} transition:fade={{ duration: 200 }}>
 	<div
 		class="sheet"
 		role="dialog"
 		aria-modal="true"
+		aria-labelledby="publish-sheet-title"
 		tabindex="-1"
 		onclick={(e) => e.stopPropagation()}
 		transition:fly={{ y: 200, duration: 280 }}
 	>
-		<button class="sheet-close" onclick={onClose} aria-label="Close">&times;</button>
+		<button
+			bind:this={closeButton}
+			class="sheet-close"
+			onclick={onClose}
+			aria-label="Close">&times;</button>
 
-		<h2 class="sheet-title">Publish as a Conversation</h2>
-		<p class="sheet-subtitle">Pick days, then set time and place for each.</p>
+		<h2 id="publish-sheet-title" class="sheet-title">Publish as a conversation</h2>
 		<p class="sheet-note">We only show the address to those you agree to meet.</p>
 
 		<!-- Day picker -->
-		<p class="label">Select days</p>
+		<div class="day-picker-header">
+			<p class="label">Select days</p>
+			<p class="window-hint">Pick from the next 7 days.</p>
+		</div>
 		<div class="day-picker">
 			{#each weekDates as day}
 				<button
 					class="day-cell"
 					class:selected={selectedDays.has(day.date)}
+					aria-pressed={selectedDays.has(day.date)}
 					onclick={() => toggleDay(day.date)}
 				>
 					<span class="day-name">{day.dayShort.toUpperCase()}</span>
@@ -149,7 +226,7 @@
 					{/if}
 				</div>
 
-				{#each daySlots.get(date) ?? [] as slot, i}
+				{#each daySlots.get(date) ?? [] as slot, i (i)}
 					<div class="slot-config">
 						<div class="slot-time-row">
 							<select
@@ -167,13 +244,19 @@
 							<select
 								class="duration-select"
 								value={slot.duration}
-								onchange={(e) => updateSlot(date, i, 'duration', Number((e.target as HTMLSelectElement).value))}
+								onchange={(e) =>
+									updateSlot(date, i, 'duration', Number((e.target as HTMLSelectElement).value))}
 							>
 								<option value={30}>30 min</option>
 								<option value={45}>45 min</option>
 								<option value={60}>1 hour</option>
 								<option value={90}>1.5 hours</option>
 							</select>
+
+							<button
+								class="slot-remove"
+								onclick={() => removeTimeSlot(date, i)}
+								aria-label="Remove time slot">&times;</button>
 						</div>
 
 						<LocationSearch
@@ -191,10 +274,17 @@
 		{/if}
 
 		<div class="sheet-footer">
+			{#if selectedDays.size > 0 && !hasPublishableSlot}
+				<p class="footer-hint">
+					{missingLocationCount === 1
+						? 'Set a place for the time slot to publish.'
+						: 'Set a place for at least one time slot to publish.'}
+				</p>
+			{/if}
 			<button
 				class="btn-primary"
 				onclick={handlePublish}
-				disabled={publishing || selectedDays.size === 0}
+				disabled={publishing || !hasPublishableSlot}
 			>
 				{publishing ? 'Publishing...' : 'Publish'}
 			</button>
@@ -222,8 +312,10 @@
 		max-width: 480px;
 		max-height: 85vh;
 		overflow-y: auto;
-		padding: var(--space-6) var(--space-5);
+		padding: var(--space-6) var(--space-5) 0;
 		box-sizing: border-box;
+		display: flex;
+		flex-direction: column;
 	}
 
 	.sheet-close {
@@ -236,6 +328,7 @@
 		color: var(--text-muted);
 		cursor: pointer;
 		padding: var(--space-1);
+		line-height: 1;
 	}
 
 	.sheet-close:hover { color: var(--text-primary); }
@@ -244,12 +337,6 @@
 		font-size: var(--text-2xl);
 		font-weight: normal;
 		color: var(--text-primary);
-		margin: 0 0 var(--space-1);
-	}
-
-	.sheet-subtitle {
-		font-size: var(--text-base);
-		color: var(--text-muted);
 		margin: 0 0 var(--space-2);
 	}
 
@@ -261,10 +348,24 @@
 		letter-spacing: 0.02em;
 	}
 
+	.day-picker-header {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: var(--space-3);
+		margin-bottom: var(--space-2);
+	}
+
 	.label {
 		font-size: var(--text-base);
 		color: var(--text-muted);
-		margin: 0 0 var(--space-2);
+		margin: 0;
+	}
+
+	.window-hint {
+		font-size: var(--text-xs);
+		color: var(--text-muted);
+		margin: 0;
 	}
 
 	.day-picker {
@@ -289,20 +390,24 @@
 		transition: background 0.15s, color 0.15s, border-color 0.15s;
 	}
 
+	.day-cell:hover { border-color: var(--border-link-hover); }
+
 	.day-cell.selected {
-		background: var(--text-primary);
-		color: var(--bg-canvas);
+		background: var(--bg-control);
 		border-color: var(--text-primary);
+		color: var(--text-primary);
 	}
 
 	.day-name { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.04em; }
 	.day-num { font-size: var(--text-md); font-weight: 600; line-height: 1; }
 
 	.day-section {
-		margin-bottom: var(--space-4);
-		padding: var(--space-3);
-		border: 1px solid var(--border-link);
-		border-radius: var(--radius-input);
+		margin-bottom: var(--space-5);
+	}
+
+	.day-section + .day-section {
+		padding-top: var(--space-5);
+		border-top: 1px solid var(--border-subtle);
 	}
 
 	.day-header {
@@ -350,13 +455,27 @@
 		background: transparent;
 		color: var(--text-primary);
 		flex: 1;
+		min-width: 0;
 	}
 
 	.for-label {
-		font-size: var(--text-base);
+		font-size: var(--text-sm);
 		color: var(--text-muted);
 		flex-shrink: 0;
 	}
+
+	.slot-remove {
+		font-size: var(--text-md);
+		line-height: 1;
+		color: var(--text-muted);
+		background: none;
+		border: none;
+		cursor: pointer;
+		padding: var(--space-1) var(--space-2);
+		flex-shrink: 0;
+	}
+
+	.slot-remove:hover { color: var(--text-primary); }
 
 	.publish-error {
 		font-size: var(--text-sm);
@@ -366,8 +485,20 @@
 
 	.sheet-footer {
 		display: flex;
-		justify-content: flex-end;
-		margin-top: var(--space-4);
+		flex-direction: column;
+		align-items: flex-end;
+		gap: var(--space-2);
+		margin-top: auto;
+		padding: var(--space-4) 0 var(--space-5);
+		position: sticky;
+		bottom: 0;
+		background: linear-gradient(to bottom, transparent, var(--bg-canvas) var(--space-2));
+	}
+
+	.footer-hint {
+		font-size: var(--text-xs);
+		color: var(--text-muted);
+		margin: 0;
 	}
 
 	/* .btn-primary lives in shared.css */
@@ -380,6 +511,16 @@
 		.sheet {
 			border-radius: var(--radius-card);
 			max-height: 70vh;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		/* Suppress motion for users who request it. The fly + fade transitions
+		   on the modal still apply a 1ms duration so Svelte's lifecycle keeps
+		   working; visually they appear instant. */
+		:global(.backdrop), :global(.sheet) {
+			transition-duration: 1ms !important;
+			animation-duration: 1ms !important;
 		}
 	}
 </style>
