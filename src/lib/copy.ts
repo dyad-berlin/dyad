@@ -172,6 +172,11 @@ export const copy = {
 		selectDays: 'Select days',
 		addTime: '+ add time',
 		publishing: 'Publishing...',
+		publishButton: 'Publish',
+		removeTimeSlot: 'Remove time slot',
+		closeDialog: 'Close',
+		setPlaceForOneSlot: 'Set a place for the time slot to publish.',
+		setPlaceForAtLeastOneSlot: 'Set a place for at least one time slot to publish.',
 	},
 
 	// ── Profile ────────────────────────────────────────────────────────

@@ -3,6 +3,7 @@
 	import { onMount, onDestroy, tick } from 'svelte';
 	import { getWeekDates } from '$lib/utils/dates';
 	import LocationSearch from '$lib/components/LocationSearch.svelte';
+	import { copy } from '$lib/copy';
 	import type { LocationRef, TimeSlotInput } from '$lib/domain/types';
 
 	interface Props {
@@ -18,9 +19,19 @@
 	let selectedDays = $state<Set<string>>(new Set());
 
 	interface SlotDraft {
+		// Stable id for the {#each} key. Index keys cause Svelte to reuse
+		// LocationSearch instances across slot reorderings, leaking the previous
+		// slot's captured query state into the new position. The id is created
+		// when the draft is constructed and never reused.
+		id: number;
 		time: string;
 		duration: number;
 		location: LocationRef | null;
+	}
+
+	let nextSlotId = 0;
+	function makeSlot(time: string): SlotDraft {
+		return { id: nextSlotId++, time, duration: 60, location: null };
 	}
 
 	// Per-day slot drafts: Map<date, SlotDraft[]>
@@ -45,7 +56,7 @@
 		} else {
 			next.add(date);
 			const nextSlots = new Map(daySlots);
-			nextSlots.set(date, [{ time: nextDefaultTime(0), duration: 60, location: null }]);
+			nextSlots.set(date, [makeSlot(nextDefaultTime(0))]);
 			daySlots = nextSlots;
 		}
 		selectedDays = next;
@@ -55,10 +66,7 @@
 		const current = daySlots.get(date) ?? [];
 		if (current.length >= 3) return;
 		const nextSlots = new Map(daySlots);
-		nextSlots.set(date, [
-			...current,
-			{ time: nextDefaultTime(current.length), duration: 60, location: null }
-		]);
+		nextSlots.set(date, [...current, makeSlot(nextDefaultTime(current.length))]);
 		daySlots = nextSlots;
 	}
 
@@ -80,7 +88,12 @@
 		daySlots = nextSlots;
 	}
 
-	function updateSlot(date: string, index: number, field: keyof SlotDraft, value: any) {
+	function updateSlot<K extends keyof SlotDraft>(
+		date: string,
+		index: number,
+		field: K,
+		value: SlotDraft[K]
+	) {
 		const current = daySlots.get(date);
 		if (!current) return;
 		const updated = [...current];
@@ -132,6 +145,14 @@
 	let prevOverflow = '';
 	let closeButton: HTMLButtonElement | undefined = $state();
 
+	// Mirror the OS reduced-motion preference into transition durations so
+	// Svelte's lifecycle timers shorten with the visual fade. CSS-only
+	// `transition-duration: 1ms !important` on the rendered backdrop affects
+	// rendering but does not shorten the 280ms Svelte holds the DOM alive
+	// for the fly-out — the body scroll-lock would stay active after visual
+	// close.
+	let reducedMotion = $state(false);
+
 	function handleKeydown(e: KeyboardEvent) {
 		if (e.key === 'Escape' && !publishing) {
 			e.preventDefault();
@@ -143,6 +164,7 @@
 		prevOverflow = document.body.style.overflow;
 		document.body.style.overflow = 'hidden';
 		document.addEventListener('keydown', handleKeydown);
+		reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 		// Move focus to the close button on mount so the dialog has a defined
 		// keyboard entry point. tick() lets the binding settle.
 		await tick();
@@ -178,7 +200,7 @@
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <!-- svelte-ignore a11y_click_events_have_key_events -->
-<div class="backdrop" onclick={onClose} transition:fade={{ duration: 200 }}>
+<div class="backdrop" onclick={onClose} transition:fade={{ duration: reducedMotion ? 1 : 200 }}>
 	<div
 		class="sheet"
 		role="dialog"
@@ -186,25 +208,27 @@
 		aria-labelledby="publish-sheet-title"
 		tabindex="-1"
 		onclick={(e) => e.stopPropagation()}
-		transition:fly={{ y: 200, duration: 280 }}
+		transition:fly={{ y: 200, duration: reducedMotion ? 1 : 280 }}
 	>
 		<button
 			bind:this={closeButton}
+			type="button"
 			class="sheet-close"
 			onclick={onClose}
-			aria-label="Close">&times;</button>
+			aria-label={copy.editor.closeDialog}>&times;</button>
 
-		<h2 id="publish-sheet-title" class="sheet-title">Publish as a conversation</h2>
-		<p class="sheet-note">We only show the address to those you agree to meet.</p>
+		<h2 id="publish-sheet-title" class="sheet-title">{copy.editor.publishAsConversation}</h2>
+		<p class="sheet-note">{copy.editor.privacyNote}</p>
 
 		<!-- Day picker -->
 		<div class="day-picker-header">
-			<p class="label">Select days</p>
-			<p class="window-hint">Pick from the next 7 days.</p>
+			<p class="label">{copy.editor.selectDays}</p>
+			<p class="window-hint">{copy.editor.publishWindowHint}</p>
 		</div>
 		<div class="day-picker">
 			{#each weekDates as day}
 				<button
+					type="button"
 					class="day-cell"
 					class:selected={selectedDays.has(day.date)}
 					aria-pressed={selectedDays.has(day.date)}
@@ -222,11 +246,11 @@
 				<div class="day-header">
 					<span class="day-header-text">{formatDayHeader(date)}</span>
 					{#if (daySlots.get(date)?.length ?? 0) < 3}
-						<button class="add-time" onclick={() => addTimeSlot(date)}>+ add time</button>
+						<button type="button" class="add-time" onclick={() => addTimeSlot(date)}>{copy.editor.addTime}</button>
 					{/if}
 				</div>
 
-				{#each daySlots.get(date) ?? [] as slot, i (i)}
+				{#each daySlots.get(date) ?? [] as slot, i (slot.id)}
 					<div class="slot-config">
 						<div class="slot-time-row">
 							<select
@@ -254,9 +278,10 @@
 							</select>
 
 							<button
+								type="button"
 								class="slot-remove"
 								onclick={() => removeTimeSlot(date, i)}
-								aria-label="Remove time slot">&times;</button>
+								aria-label={copy.editor.removeTimeSlot}>&times;</button>
 						</div>
 
 						<LocationSearch
@@ -275,18 +300,20 @@
 
 		<div class="sheet-footer">
 			{#if selectedDays.size > 0 && !hasPublishableSlot}
-				<p class="footer-hint">
+				<p id="publish-hint" class="footer-hint">
 					{missingLocationCount === 1
-						? 'Set a place for the time slot to publish.'
-						: 'Set a place for at least one time slot to publish.'}
+						? copy.editor.setPlaceForOneSlot
+						: copy.editor.setPlaceForAtLeastOneSlot}
 				</p>
 			{/if}
 			<button
+				type="button"
 				class="btn-primary"
 				onclick={handlePublish}
 				disabled={publishing || !hasPublishableSlot}
+				aria-describedby="publish-hint"
 			>
-				{publishing ? 'Publishing...' : 'Publish'}
+				{publishing ? copy.editor.publishing : copy.editor.publishButton}
 			</button>
 		</div>
 	</div>
@@ -509,13 +536,9 @@
 		}
 	}
 
-	@media (prefers-reduced-motion: reduce) {
-		/* Suppress motion for users who request it. The fly + fade transitions
-		   on the modal still apply a 1ms duration so Svelte's lifecycle keeps
-		   working; visually they appear instant. */
-		:global(.backdrop), :global(.sheet) {
-			transition-duration: 1ms !important;
-			animation-duration: 1ms !important;
-		}
-	}
+	/* prefers-reduced-motion is handled in JS by passing reducedMotion into
+	   the fly+fade transitions, so Svelte's lifecycle timer shortens with the
+	   visual fade. CSS-only `transition-duration: 1ms !important` would
+	   shorten the rendering but leave the body scroll-lock active for 280ms
+	   after visual close. */
 </style>

@@ -29,6 +29,10 @@
 	let searchTimer: ReturnType<typeof setTimeout> | undefined;
 	let abortController: AbortController | undefined;
 	let blurCloseTimer: ReturnType<typeof setTimeout> | undefined;
+	// Set in onDestroy. The deferred blur-close timer can fire after destroy
+	// during DOM detach in some browsers; the guard keeps writes off dead
+	// reactive state.
+	let destroyed = false;
 
 	// Manual option appears as the last item in the dropdown when the query is
 	// non-empty. Lets the member explicitly say "use this text as the place name
@@ -77,7 +81,11 @@
 			if (err instanceof DOMException && err.name === 'AbortError') return;
 			results = [];
 		} finally {
-			if (!controller.signal.aborted) {
+			// Defensive guard: clear loading whenever this controller is no longer
+			// the active one (it has been superseded or cleared) AND when the
+			// signal is unaborted. The race is the abort-mid-body-read narrow path
+			// where both runs would skip clearing loading.
+			if (!controller.signal.aborted || abortController !== controller) {
 				loading = false;
 			}
 			if (abortController === controller) abortController = undefined;
@@ -175,6 +183,10 @@
 		if (e.key === 'Escape') {
 			if (dropdownOpen) {
 				e.preventDefault();
+				// Stop the keydown bubbling to the document so PublishSheet's
+				// global Esc-to-close handler doesn't dismiss the whole modal
+				// when the user just wanted to close the dropdown.
+				e.stopPropagation();
 				closeDropdown();
 			}
 			return;
@@ -194,6 +206,7 @@
 		// lat/lng = 0,0 which broke the public map view.
 		if (blurCloseTimer) clearTimeout(blurCloseTimer);
 		blurCloseTimer = setTimeout(() => {
+			if (destroyed) return;
 			closeDropdown();
 			// Re-sync the visible query with the committed value. If the user
 			// typed something but didn't commit, the input now reflects what's
@@ -210,24 +223,32 @@
 	}
 
 	onDestroy(() => {
+		destroyed = true;
 		if (searchTimer) clearTimeout(searchTimer);
 		if (blurCloseTimer) clearTimeout(blurCloseTimer);
 		clearAbort();
 	});
 
+	// Empty-state and any-content predicates. Folded together — the empty-state
+	// row is one of the four content sources (loading, results, manual, empty),
+	// so the any-content predicate enumerates all four directly.
 	const showEmptyState = $derived(
 		dropdownOpen && !loading && query.trim().length >= 2 && results.length === 0 && !manualOption
 	);
 
 	const showAnyDropdownContent = $derived(
-		dropdownOpen && (loading || results.length > 0 || manualOption || showEmptyState)
+		dropdownOpen && (loading || results.length > 0 || !!manualOption || showEmptyState)
 	);
 
-	// Auto-scroll the highlighted option into view when keyboard navigation moves it.
+	// Auto-scroll the highlighted option into view when keyboard navigation
+	// moves it. Capture the index before tick() so a fast follow-up keypress
+	// doesn't make this microtask scroll to the wrong (now-stale) row.
 	$effect(() => {
 		if (highlightedIndex < 0) return;
+		const idx = highlightedIndex;
 		void tick().then(() => {
-			const el = document.getElementById(optionId(highlightedIndex));
+			if (idx !== highlightedIndex) return;
+			const el = document.getElementById(optionId(idx));
 			el?.scrollIntoView({ block: 'nearest' });
 		});
 	});
@@ -275,6 +296,7 @@
 			{#each results as result, i (result.place_id)}
 				<button
 					type="button"
+					tabindex="-1"
 					id={optionId(i)}
 					class="location-option"
 					class:highlighted={highlightedIndex === i}
@@ -295,6 +317,7 @@
 				{@const manualIdx = results.length}
 				<button
 					type="button"
+					tabindex="-1"
 					id={optionId(manualIdx)}
 					class="location-option location-option--manual"
 					class:highlighted={highlightedIndex === manualIdx}
