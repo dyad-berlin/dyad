@@ -20,6 +20,15 @@ declare global {
 				PUBLIC_SUPABASE_URL: string;
 				PUBLIC_SUPABASE_ANON_KEY: string;
 			};
+			// Cloudflare Workers ExecutionContext — payment-bearing webhook
+			// handlers use ctx.waitUntil(...) to fire-and-forget non-state-critical
+			// work (operator alerts, internal analytics) after returning 200 to
+			// Stripe. Optional because non-Workers runtimes (vite dev, vitest)
+			// do not expose it; consumers must fall back to inline await when
+			// undefined.
+			ctx?: {
+				waitUntil(promise: Promise<unknown>): void;
+			};
 		}
 	}
 }
