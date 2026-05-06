@@ -21,6 +21,9 @@ export const copy = {
 		send: 'Send',
 		back: 'Back',
 		cancel: 'Cancel',
+		save: 'Save',
+		saving: 'Saving...',
+		edit: 'Edit',
 		accept: 'Accept',
 		accepting: 'Accepting...',
 		loading: 'Loading...',
@@ -118,6 +121,15 @@ export const copy = {
 		myOfferedTimes: 'Times you offered',
 		myOfferedTimesBooked: 'booked',
 		myScheduledMeetings: 'Your scheduled meetings',
+		// SlotEditor: inline slot management. addATime is the row that morphs
+		// into the add form; the warn/confirm pair fires when the action would
+		// withdraw a pending invitation.
+		addATime: '+ add a time',
+		removeSlot: (area: string) => `Remove time at ${area}`,
+		editSlotPendingWarn: (inviter: string) => `Editing this time will withdraw a pending invitation from @${inviter}.`,
+		editSlotConfirm: 'Save anyway',
+		removeSlotPendingWarn: (inviter: string) => `Removing this time will withdraw a pending invitation from @${inviter}.`,
+		removeSlotConfirm: 'Remove anyway',
 		unpublish: 'Unpublish',
 		unpublishConfirm: 'Take this off the feed and back to drafts? You can republish anytime.',
 		failedToUnpublish: 'Failed to unpublish.',
@@ -169,6 +181,7 @@ export const copy = {
 		coverUploadFailed: 'Couldn’t upload that image. Please try again.',
 		coverNetworkError: 'Couldn’t reach the server. Check your connection.',
 		writingPlaceholder: 'you can start writing here',
+		locationPlaceholder: 'Search for a place…',
 		publishAsConversation: 'Publish as a conversation',
 		publishWindowHint: 'Pick from the next 7 days.',
 		privacyNote: 'We only show the address to those you agree to meet.',
