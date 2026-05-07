@@ -116,7 +116,6 @@ export const copy = {
 		youAreMeeting: (username: string) => `You are meeting @${username}`,
 		viewMeeting: 'View meeting →',
 		myOfferedTimes: 'Times you offered',
-		myOfferedTimesBooked: 'booked',
 		myScheduledMeetings: 'Your scheduled meetings',
 		// Edit-in-place: visible revision marker beside the published date.
 		revisedOn: (date: string) => `revised ${date}`,
