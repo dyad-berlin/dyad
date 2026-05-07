@@ -286,8 +286,6 @@
 						startTime={slot.start_time}
 						durationMinutes={slot.duration_minutes}
 						area={slot.general_area}
-						invited={slot.accepted}
-						invitedNote={slot.accepted ? copy.conversation.myOfferedTimesBooked : undefined}
 					/>
 				{/each}
 			</section>
