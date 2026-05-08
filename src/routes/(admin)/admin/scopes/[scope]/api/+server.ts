@@ -31,6 +31,7 @@ export const POST: RequestHandler = async ({ params, request }) => {
 		return json({ error: 'username is required' }, { status: 400 });
 	}
 
+	// identity_scopes.identity_id FKs to identities(id), not profiles(id).
 	const { data: profile } = await supabase
 		.from('profiles')
 		.select('id')
@@ -41,20 +42,34 @@ export const POST: RequestHandler = async ({ params, request }) => {
 		return json({ error: 'No member with that username' }, { status: 404 });
 	}
 
-	// Upsert: if a previously-revoked grant exists, restore it. Otherwise insert.
-	// granted_by is NULL (admin-originated; mirrors invitations.invited_by).
+	const { data: identity } = await supabase
+		.from('identities')
+		.select('id')
+		.eq('id', profile.id)
+		.maybeSingle();
+
+	if (!identity?.id) {
+		return json(
+			{ error: 'Member exists but has no identity row' },
+			{ status: 500 }
+		);
+	}
+
 	const { data: existing } = await supabase
 		.from('identity_scopes')
 		.select('identity_id, revoked_at')
-		.eq('identity_id', profile.id)
+		.eq('identity_id', identity.id)
 		.eq('scope', params.scope)
 		.maybeSingle();
 
 	if (existing) {
+		// Restoring a revoked grant clears revoked_at but preserves the original
+		// granted_at — the cohort timestamp belongs to the first grant, not the
+		// re-grant.
 		const { error: dbError } = await supabase
 			.from('identity_scopes')
-			.update({ revoked_at: null, granted_at: new Date().toISOString() })
-			.eq('identity_id', profile.id)
+			.update({ revoked_at: null })
+			.eq('identity_id', identity.id)
 			.eq('scope', params.scope);
 		if (dbError) {
 			console.error('[admin/scopes/[scope]/api] restore grant failed:', dbError.message);
@@ -64,7 +79,7 @@ export const POST: RequestHandler = async ({ params, request }) => {
 	}
 
 	const { error: dbError } = await supabase.from('identity_scopes').insert({
-		identity_id: profile.id,
+		identity_id: identity.id,
 		scope: params.scope,
 		granted_by: null
 	});
