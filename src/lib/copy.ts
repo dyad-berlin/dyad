@@ -116,7 +116,6 @@ export const copy = {
 		youAreMeeting: (username: string) => `You are meeting @${username}`,
 		viewMeeting: 'View meeting →',
 		myOfferedTimes: 'Times you offered',
-		myOfferedTimesBooked: 'booked',
 		myScheduledMeetings: 'Your scheduled meetings',
 		unpublish: 'Unpublish',
 		unpublishConfirm: 'Take this off the feed and back to drafts? You can republish anytime.',
