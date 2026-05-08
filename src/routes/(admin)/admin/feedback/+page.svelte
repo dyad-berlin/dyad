@@ -48,9 +48,6 @@
 					<span class="badge badge-status-{entry.status}">{entry.status}</span>
 				</div>
 				<p class="feedback-description">{entry.description}</p>
-				{#if entry.pageUrl}
-					<span class="feedback-meta">Page: {entry.pageUrl}</span>
-				{/if}
 			</div>
 		{/each}
 	</div>
@@ -107,5 +104,4 @@
 	.feedback-user { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--text-muted); }
 	.feedback-date { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--text-muted); }
 	.feedback-description { font-size: var(--text-md); line-height: var(--leading-relaxed); margin: 0; }
-	.feedback-meta { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--text-muted); display: block; margin-top: var(--space-2); word-break: break-all; }
 </style>
