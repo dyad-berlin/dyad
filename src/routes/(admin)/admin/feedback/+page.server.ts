@@ -7,7 +7,7 @@ export const load: PageServerLoad = async () => {
 
 	const { data: feedbackEntries } = await supabase
 		.from('feedback')
-		.select('id, user_id, type, description, context, status, created_at')
+		.select('id, user_id, type, description, status, created_at')
 		.order('created_at', { ascending: false });
 
 	// Look up usernames for user_ids (no FK — parallel lookup pattern)
@@ -20,9 +20,7 @@ export const load: PageServerLoad = async () => {
 
 	const entries = (feedbackEntries ?? []).map(f => ({
 		...f,
-		username: usernameMap.get(f.user_id) ?? null,
-		pageUrl: (f.context as any)?.page_url ?? null,
-		userAgent: (f.context as any)?.user_agent ?? null
+		username: usernameMap.get(f.user_id) ?? null
 	}));
 
 	return { entries };

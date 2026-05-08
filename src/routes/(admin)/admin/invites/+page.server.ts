@@ -7,18 +7,10 @@ export const load: PageServerLoad = async () => {
 
 	// All invitations, most recent first. Token stays server-side — re-send
 	// looks up the existing token by email.
-	const [{ data: invitations }, { data: admins }] = await Promise.all([
-		supabase
-			.from('invitations')
-			.select('id, email, expires_at, used_at, created_at, invited_by')
-			.order('created_at', { ascending: false }),
-		// Usernames of everyone who has ever sent an invite — small set, batched
-		// once so the row render doesn't N+1.
-		supabase.from('profiles').select('id, username')
-	]);
-
-	const usernameById = new Map<string, string>();
-	for (const a of admins ?? []) usernameById.set(a.id, a.username);
+	const { data: invitations } = await supabase
+		.from('invitations')
+		.select('id, email, expires_at, used_at, created_at')
+		.order('created_at', { ascending: false });
 
 	const now = Date.now();
 	const rows = (invitations ?? []).map((inv) => {
@@ -34,7 +26,6 @@ export const load: PageServerLoad = async () => {
 			created_at: inv.created_at,
 			expires_at: inv.expires_at,
 			used_at: inv.used_at,
-			invited_by_username: inv.invited_by ? (usernameById.get(inv.invited_by) ?? null) : null,
 			status
 		};
 	});
