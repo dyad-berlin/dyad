@@ -1,5 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { makeAdminClient } from '$lib/server/supabase-admin.js';
+import { SupabaseScopeService } from '$lib/services/scope.js';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
@@ -113,8 +114,8 @@ export const actions: Actions = {
 			return fail(400, { username, error: friendly });
 		}
 
-		// New identities.id mirrors auth.users.id by the D1 backfill convention.
-		// Used below for the optional scope auto-grant.
+		// identities.id mirrors auth.users.id by the D1 backfill convention,
+		// so the just-created auth user's id is the identities.id for FK targets.
 		const newIdentityId = createUserData.user.id;
 
 		// Mark the invitation as used so it can't be reused.
@@ -124,10 +125,11 @@ export const actions: Actions = {
 			return fail(400, { username, error: 'This invitation could not be processed. Please try again.' });
 		}
 
-		// Resolve referred_by + auto-grant any scope attached to the invitation.
+		// invitations RLS permits admin reads only; locals.supabase is still anon
+		// at this point (sign-in happens below).
 		let referredById: string | null = null;
 
-		const { data: invRow } = await locals.supabase
+		const { data: invRow } = await admin
 			.from('invitations')
 			.select('invited_by, scope')
 			.eq('token', token)
@@ -136,18 +138,19 @@ export const actions: Actions = {
 			referredById = invRow.invited_by;
 		}
 
-		// If the invitation carries a scope, auto-grant it. Service-role insert;
-		// granted_by mirrors invitation.invited_by (NULL when admin-created).
-		// Failure is logged but does not block signup — the operator can grant
-		// manually from /admin/scopes/[scope] if this insert fails.
 		if (invRow?.scope) {
-			const { error: grantError } = await admin.from('identity_scopes').insert({
-				identity_id: newIdentityId,
-				scope: invRow.scope,
-				granted_by: invRow.invited_by ?? null
-			});
-			if (grantError) {
-				console.error('[join] auto-grant identity_scopes failed:', grantError.message);
+			try {
+				const scopeService = new SupabaseScopeService(admin);
+				await scopeService.autoGrantOnJoin({
+					identityId: newIdentityId,
+					scope: invRow.scope,
+					grantedBy: invRow.invited_by ?? null
+				});
+			} catch (grantError) {
+				console.error(
+					'[join] auto-grant identity_scopes failed:',
+					grantError instanceof Error ? grantError.message : String(grantError)
+				);
 			}
 		}
 
