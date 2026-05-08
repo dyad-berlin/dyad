@@ -152,4 +152,60 @@ describe('Admin scope RPCs (Unit 4 RPCs)', () => {
 			await adminClient.from('scopes').delete().eq('scope', slug);
 		});
 	});
+
+	describe('ScopeService.autoGrantOnJoin', () => {
+		it('admin client inserts identity_scopes via the service method', async () => {
+			const { SupabaseScopeService } = await import('../../src/lib/services/scope.js');
+			const service = new SupabaseScopeService(adminClient);
+
+			// Use a fresh test user (kai) so we don't collide with grants seeded
+			// by other tests in this file.
+			const kaiId = TEST_USERS.kai.id;
+			await adminClient.from('identity_scopes').delete()
+				.eq('identity_id', kaiId)
+				.eq('scope', TEST_SCOPE);
+
+			await service.autoGrantOnJoin({
+				identityId: kaiId,
+				scope: TEST_SCOPE,
+				grantedBy: null
+			});
+
+			const { data: row } = await adminClient
+				.from('identity_scopes')
+				.select('identity_id, scope, granted_by, revoked_at')
+				.eq('identity_id', kaiId)
+				.eq('scope', TEST_SCOPE)
+				.maybeSingle();
+
+			expect(row?.identity_id).toBe(kaiId);
+			expect(row?.scope).toBe(TEST_SCOPE);
+			expect(row?.granted_by).toBeNull();
+			expect(row?.revoked_at).toBeNull();
+
+			// Cleanup
+			await adminClient.from('identity_scopes').delete()
+				.eq('identity_id', kaiId)
+				.eq('scope', TEST_SCOPE);
+		});
+
+		it('throws when service-role client is not used (RLS rejects anon)', async () => {
+			const { SupabaseScopeService } = await import('../../src/lib/services/scope.js');
+			const { createClient } = await import('@supabase/supabase-js');
+			const anonClient = createClient(
+				process.env.PUBLIC_SUPABASE_URL ?? 'http://127.0.0.1:54321',
+				process.env.PUBLIC_SUPABASE_ANON_KEY ?? '',
+				{ auth: { persistSession: false, autoRefreshToken: false } }
+			);
+			const service = new SupabaseScopeService(anonClient);
+
+			await expect(
+				service.autoGrantOnJoin({
+					identityId: TEST_USERS.kai.id,
+					scope: TEST_SCOPE,
+					grantedBy: null
+				})
+			).rejects.toThrow();
+		});
+	});
 });
