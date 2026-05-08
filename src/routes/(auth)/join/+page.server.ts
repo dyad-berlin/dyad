@@ -96,22 +96,26 @@ export const actions: Actions = {
 		// served that purpose, and we don't want signUp() to fail when Supabase
 		// auth has enable_confirmations enabled but no SMTP wired up for auth.
 		const admin = makeAdminClient();
-		const { error: signUpError } = await admin.auth.admin.createUser({
+		const { data: createUserData, error: signUpError } = await admin.auth.admin.createUser({
 			email,
 			password,
 			email_confirm: true,
 			user_metadata: { username, berlin_based: berlinBased }
 		});
 
-		if (signUpError) {
+		if (signUpError || !createUserData?.user?.id) {
 			console.error('[join] admin.createUser failed:', signUpError);
 			// Surface a safe message — the raw error can leak Postgres detail.
-			const msg = signUpError.message.toLowerCase();
+			const msg = signUpError?.message?.toLowerCase() ?? '';
 			const friendly = msg.includes('already') || msg.includes('exists')
 				? 'An account with this email already exists.'
 				: 'Could not create your account. Please try again.';
 			return fail(400, { username, error: friendly });
 		}
+
+		// New identities.id mirrors auth.users.id by the D1 backfill convention.
+		// Used below for the optional scope auto-grant.
+		const newIdentityId = createUserData.user.id;
 
 		// Mark the invitation as used so it can't be reused.
 		const { error: useError } = await locals.supabase.rpc('use_invitation', { invite_token: token });
@@ -120,17 +124,31 @@ export const actions: Actions = {
 			return fail(400, { username, error: 'This invitation could not be processed. Please try again.' });
 		}
 
-		// Resolve referred_by: check invitation's invited_by first, then dyad_ref cookie
+		// Resolve referred_by + auto-grant any scope attached to the invitation.
 		let referredById: string | null = null;
 
-		// 1. Check if invitation has invited_by
 		const { data: invRow } = await locals.supabase
 			.from('invitations')
-			.select('invited_by')
+			.select('invited_by, scope')
 			.eq('token', token)
 			.single();
 		if (invRow?.invited_by) {
 			referredById = invRow.invited_by;
+		}
+
+		// If the invitation carries a scope, auto-grant it. Service-role insert;
+		// granted_by mirrors invitation.invited_by (NULL when admin-created).
+		// Failure is logged but does not block signup — the operator can grant
+		// manually from /admin/scopes/[scope] if this insert fails.
+		if (invRow?.scope) {
+			const { error: grantError } = await admin.from('identity_scopes').insert({
+				identity_id: newIdentityId,
+				scope: invRow.scope,
+				granted_by: invRow.invited_by ?? null
+			});
+			if (grantError) {
+				console.error('[join] auto-grant identity_scopes failed:', grantError.message);
+			}
 		}
 
 		// 2. Fall back to dyad_ref cookie (username → resolve to user id)
