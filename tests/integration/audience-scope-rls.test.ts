@@ -149,19 +149,31 @@ describe('Audience scope RLS (Unit 2)', () => {
 		});
 	});
 
-	describe('prompts RLS (authenticated, deliberate decision)', () => {
-		// The plan deliberately leaves authenticated SELECT on prompts open. Direct-URL
-		// access works for any authenticated member with the prompt UUID, regardless
-		// of scope grant. Application-layer filtering in prompt-query.ts gates listing
-		// surfaces. Documented as the "R8 question" in the plan; this test asserts the
-		// current behavior so a future amendment is a deliberate change, not a surprise.
-		it('non-grantee authenticated user CAN SELECT a scoped prompt via direct UUID (current behavior)', async () => {
+	describe('prompts RLS (authenticated, R8 closed)', () => {
+		// Migration 20260508180200 closed the R8 gap: authenticated SELECT on
+		// prompts now requires scope membership when audience_scope is non-NULL.
+		// The bounded-safety promise is now detail-bounded, not just listing-bounded.
+		// Authors continue to see their own work via the "Authors can manage own
+		// prompts" FOR ALL policy.
+		it('non-grantee authenticated user CANNOT SELECT a scoped prompt via direct UUID', async () => {
 			const { data } = await nonGranteeClient.from('prompts').select('id').eq('id', scopedPromptId).maybeSingle();
-			expect(data?.id).toBe(scopedPromptId);
+			expect(data).toBeNull();
 		});
 
 		it('grantee authenticated user CAN SELECT the scoped prompt', async () => {
 			const { data } = await granteeClient.from('prompts').select('id').eq('id', scopedPromptId).maybeSingle();
+			expect(data?.id).toBe(scopedPromptId);
+		});
+
+		it('author CAN SELECT their own scoped prompt regardless of grant state', async () => {
+			// ava is the author of the scoped prompt (set up in beforeAll). Even if
+			// her grant were revoked, she'd still read her own prompt via the
+			// "Authors can manage own prompts" FOR ALL policy.
+			const avaClient = await createAuthenticatedClient(
+				TEST_USERS.ava.email,
+				TEST_USERS.ava.password
+			);
+			const { data } = await avaClient.from('prompts').select('id').eq('id', scopedPromptId).maybeSingle();
 			expect(data?.id).toBe(scopedPromptId);
 		});
 	});

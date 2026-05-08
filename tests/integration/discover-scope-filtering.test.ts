@@ -208,14 +208,23 @@ describe('Discover scope filtering (Unit 3)', () => {
 		});
 	});
 
-	describe('getPromptDetail (deliberately does not filter)', () => {
-		// Direct-URL access stays open to authenticated members regardless of
-		// scope (the R8 question — see plan). This test asserts the current
-		// behavior so a future amendment is a deliberate change, not a surprise.
-		it('non-grantee can fetch detail of a scoped prompt via direct UUID', async () => {
+	describe('getPromptDetail (R8 closed: scope-gated at RLS)', () => {
+		// Migration 20260508180200 closed R8: authenticated SELECT on prompts now
+		// requires scope membership for non-NULL audience_scope. getPromptDetail
+		// returns null when the caller is a non-grantee — the bounded-safety
+		// promise is now detail-bounded, not just listing-bounded.
+		it('non-grantee gets null when fetching scoped prompt detail', async () => {
 			const detail = await nonGranteeServices.promptQuery.getPromptDetail(
 				scopedPromptId,
 				SEED_USERS.other.id
+			);
+			expect(detail).toBeNull();
+		});
+
+		it('grantee can fetch the scoped prompt detail with audience_scope populated', async () => {
+			const detail = await granteeServices.promptQuery.getPromptDetail(
+				scopedPromptId,
+				SEED_USERS.digit.id
 			);
 			expect(detail?.id).toBe(scopedPromptId);
 			expect(detail?.audience_scope).toBe(TEST_SCOPE);
