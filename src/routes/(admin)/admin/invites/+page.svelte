@@ -292,9 +292,6 @@
 					</div>
 					<div class="invite-meta">
 						Sent {formatDate(inv.created_at)}
-						{#if inv.invited_by_username}
-							<span class="by">by @{inv.invited_by_username}</span>
-						{/if}
 						{#if inv.status === 'pending'}
 							<span class="dot">·</span>
 							expires {formatDate(inv.expires_at)}
@@ -454,7 +451,6 @@
 	.invite-header { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-1); flex-wrap: wrap; }
 	.invite-email { font-family: var(--font-mono); font-size: var(--text-sm); }
 	.invite-meta { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--text-muted); }
-	.invite-meta .by { margin-left: var(--space-2); }
 	.invite-meta .dot { margin: 0 var(--space-2); }
 
 	.badge {

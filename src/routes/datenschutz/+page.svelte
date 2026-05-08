@@ -48,6 +48,12 @@
 			Registrierung werden E-Mail-Adresse und ggf. weitere Angaben gespeichert.
 			Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO (Vertragserf&uuml;llung).
 		</p>
+		<p>
+			Wenn Sie zur Plattform eingeladen werden, speichern wir Ihre E-Mail-Adresse
+			bereits vor der Registrierung, um Ihnen die Einladung zustellen zu k&ouml;nnen.
+			Dieser Eintrag bleibt nach Annahme der Einladung als Nachweis erhalten;
+			eine L&ouml;schung erfolgt auf Anfrage.
+		</p>
 	</section>
 
 	<section>
