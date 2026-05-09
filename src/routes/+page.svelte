@@ -4,7 +4,7 @@
 	import { themeStore } from '$lib/stores/theme.svelte';
 	import { copy } from '$lib/copy';
 	import type { PageData } from './$types';
-	import type { PromptSummary } from '$lib/domain/types';
+	import type { PromptSummary, TimeSlot } from '$lib/domain/types';
 	import ConversationCard from '$lib/components/ConversationCard.svelte';
 	import BottomSheet from '$lib/components/BottomSheet.svelte';
 	import AuthDialog from '$lib/components/AuthDialog.svelte';
@@ -33,8 +33,9 @@
 
 	let mapCenter = $state<[number, number] | null>(null);
 	let mapZoom = $state<number | null>(null);
-	let selectedPinPrompts = $state<PromptSummary[]>([]);
-	let fullscreenPinPrompts = $state<PromptSummary[]>([]);
+	type SelectedPinItem = { prompt: PromptSummary; slot: TimeSlot };
+	let selectedPinItems = $state<SelectedPinItem[]>([]);
+	let fullscreenPinItems = $state<SelectedPinItem[]>([]);
 	let scrolledPastHero = $state(false);
 	let mapFullscreen = $state(false);
 
@@ -52,13 +53,13 @@
 		authDialog?.show(mode);
 	}
 
-	function handlePinSelect(prompts: PromptSummary[], _area: string) {
+	function handlePinSelect(items: SelectedPinItem[], _area: string) {
 		if (window.innerWidth <= 768) {
 			// Mobile: go fullscreen directly, skip hero-map sheet
 			mapFullscreen = true;
-			setTimeout(() => { fullscreenPinPrompts = prompts; }, 320);
+			setTimeout(() => { fullscreenPinItems = items; }, 320);
 		} else {
-			selectedPinPrompts = prompts;
+			selectedPinItems = items;
 		}
 	}
 
@@ -111,7 +112,7 @@
 					onSelectPin={handlePinSelect}
 					onMoveEnd={handleMapMove}
 					scrollWheelZoom={false}
-					onMapClick={() => selectedPinPrompts = []}
+					onMapClick={() => selectedPinItems = []}
 				/>
 			{:catch}
 				<div class="hero-map-placeholder"></div>
@@ -125,9 +126,9 @@
 					<path d="M10 2h4v4M6 14H2v-4M14 2l-5 5M2 14l5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
 				</svg>
 			</button>
-			{#if selectedPinPrompts.length > 0}
+			{#if selectedPinItems.length > 0}
 				<div class="hero-sheet-wrap">
-					<BottomSheet prompts={selectedPinPrompts} onClose={() => selectedPinPrompts = []} onCardClick={() => openAuth('waitlist')} hideAuthor navClearance={false} />
+					<BottomSheet items={selectedPinItems} onClose={() => selectedPinItems = []} onCardClick={() => openAuth('waitlist')} hideAuthor navClearance={false} />
 				</div>
 			{/if}
 		</div>
@@ -180,14 +181,14 @@
 					onSelectPin={handlePinSelect}
 					onMoveEnd={handleMapMove}
 					scrollWheelZoom={true}
-					onMapClick={() => selectedPinPrompts = []}
+					onMapClick={() => selectedPinItems = []}
 				/>
 			{:catch}
 				<div class="hero-map-placeholder"></div>
 			{/await}
-			{#if selectedPinPrompts.length > 0}
+			{#if selectedPinItems.length > 0}
 				<div class="right-sheet-wrap">
-					<BottomSheet prompts={selectedPinPrompts} onClose={() => selectedPinPrompts = []} onCardClick={() => openAuth('waitlist')} hideAuthor navClearance={false} />
+					<BottomSheet items={selectedPinItems} onClose={() => selectedPinItems = []} onCardClick={() => openAuth('waitlist')} hideAuthor navClearance={false} />
 				</div>
 			{/if}
 		</div>
@@ -225,17 +226,17 @@
 				prompts={data.prompts}
 				initialCenter={mapCenter}
 				initialZoom={mapZoom}
-				onSelectPin={(prompts) => fullscreenPinPrompts = prompts}
+				onSelectPin={(items) => fullscreenPinItems = items}
 				onMoveEnd={handleMapMove}
-				onMapClick={() => fullscreenPinPrompts = []}
+				onMapClick={() => fullscreenPinItems = []}
 			/>
 		{/await}
-		{#if fullscreenPinPrompts.length > 0}
+		{#if fullscreenPinItems.length > 0}
 			<div class="overlay-sheet-wrap">
-				<BottomSheet prompts={fullscreenPinPrompts} onClose={() => fullscreenPinPrompts = []} onCardClick={() => openAuth('waitlist')} hideAuthor navClearance={false} />
+				<BottomSheet items={fullscreenPinItems} onClose={() => fullscreenPinItems = []} onCardClick={() => openAuth('waitlist')} hideAuthor navClearance={false} />
 			</div>
 		{/if}
-		<button class="map-overlay-close" onclick={() => { mapFullscreen = false; fullscreenPinPrompts = []; selectedPinPrompts = []; }} aria-label="Close map">
+		<button class="map-overlay-close" onclick={() => { mapFullscreen = false; fullscreenPinItems = []; selectedPinItems = []; }} aria-label="Close map">
 			<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
 				<path d="M2 2l12 12M14 2L2 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
 			</svg>

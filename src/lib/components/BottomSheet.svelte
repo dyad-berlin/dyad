@@ -1,17 +1,24 @@
 <script lang="ts">
 	import { fly } from 'svelte/transition';
-	import type { PromptSummary } from '$lib/domain/types';
+	import type { PromptSummary, TimeSlot } from '$lib/domain/types';
 	import ConversationCard from './ConversationCard.svelte';
 
+	export interface BottomSheetItem {
+		prompt: PromptSummary;
+		/** When set (typically from a clicked map pin), the card shows this slot's
+		 *  date and area instead of falling back to `prompt.soonest_slot`. */
+		slot?: TimeSlot;
+	}
+
 	interface Props {
-		prompts: PromptSummary[];
+		items: BottomSheetItem[];
 		onCardClick?: (promptId: string) => void;
 		onClose?: () => void;
 		hideAuthor?: boolean;
 		navClearance?: boolean;
 	}
 
-	let { prompts, onCardClick, onClose, hideAuthor = false, navClearance = true }: Props = $props();
+	let { items, onCardClick, onClose, hideAuthor = false, navClearance = true }: Props = $props();
 
 	function formatDate(iso: string): string {
 		return new Date(iso).toLocaleDateString('en-US', {
@@ -40,18 +47,21 @@
 		</button>
 	{/if}
 	<div class="sheet-body">
-		{#each prompts as prompt}
+		{#each items as item}
+			{@const dateIso = item.slot?.start_time ?? item.prompt.soonest_slot}
+			{@const areaLabel = item.slot?.general_area ?? null}
 			<ConversationCard
 				variant="compact"
-				title={prompt.title ?? 'Untitled'}
-				coverUrl={prompt.cover_image_url}
-				snippet={prompt.body_snippet}
-				metaLeft={prompt.soonest_slot ? formatDate(prompt.soonest_slot) : null}
-				authorUsername={prompt.author_username}
+				title={item.prompt.title ?? 'Untitled'}
+				coverUrl={item.prompt.cover_image_url}
+				snippet={item.prompt.body_snippet}
+				metaLeft={dateIso ? formatDate(dateIso) : null}
+				metaRight={areaLabel}
+				authorUsername={item.prompt.author_username}
 				anonymiseAuthor={hideAuthor}
-				audienceScopeName={prompt.audience_scope_name}
-				href={onCardClick ? undefined : `/conversations/${prompt.id}`}
-				onclick={onCardClick ? () => onCardClick(prompt.id) : undefined}
+				audienceScopeName={item.prompt.audience_scope_name}
+				href={onCardClick ? undefined : `/conversations/${item.prompt.id}`}
+				onclick={onCardClick ? () => onCardClick(item.prompt.id) : undefined}
 			/>
 		{/each}
 	</div>
