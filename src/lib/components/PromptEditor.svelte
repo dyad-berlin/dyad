@@ -49,7 +49,11 @@
 		editor = new Editor({
 			element,
 			extensions: [
-				StarterKit.configure({ link: false }),
+				StarterKit.configure({
+					link: false,
+					underline: false,
+					heading: { levels: [1, 2, 3] }
+				}),
 				Link.configure({
 					openOnClick: false,
 					HTMLAttributes: { rel: 'noopener noreferrer', target: '_blank' }

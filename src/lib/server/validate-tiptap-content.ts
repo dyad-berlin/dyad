@@ -95,6 +95,16 @@ function validateNode(node: unknown, depth = 0): string | null {
 			if (typeof src === 'string' && !SAFE_URL_PROTOCOL.test(src)) {
 				return `Unsafe image src protocol`;
 			}
+		} else if (n.type === 'heading') {
+			for (const key of Object.keys(attrs)) {
+				if (key !== 'level') {
+					return `Invalid heading attribute: "${key}"`;
+				}
+			}
+			const level = attrs.level;
+			if (typeof level !== 'number' || ![1, 2, 3].includes(level)) {
+				return `Invalid heading level: ${JSON.stringify(level)}`;
+			}
 		} else {
 			const dangerousAttrs = ['onclick', 'onerror', 'onload', 'onmouseover', 'href', 'src'];
 			for (const key of Object.keys(attrs)) {
