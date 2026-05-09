@@ -24,18 +24,19 @@ function makeSlot(opts: Partial<TimeSlot> & { area?: string; lat?: number | null
 function makePrompt(id: string, slots: TimeSlot[]): PromptSummary {
 	return {
 		id,
+		author_id: `author-${id}`,
+		author_username: 'alice',
+		author_display_name: null,
 		title: `Prompt ${id}`,
 		body_snippet: '',
 		cover_image_url: null,
-		author_username: 'alice',
-		author_display_name: null,
-		audience_scope: null,
-		audience_scope_name: null,
-		state: 'published',
-		published_at: '2026-05-09T10:00:00Z',
+		available_slots: slots,
 		soonest_slot: slots[0]?.start_time ?? null,
-		available_slots: slots
-	} as unknown as PromptSummary;
+		published_at: '2026-05-09T10:00:00Z',
+		region: 'berlin',
+		audience_scope: null,
+		audience_scope_name: null
+	};
 }
 
 describe('buildPins — per-slot, per-area', () => {

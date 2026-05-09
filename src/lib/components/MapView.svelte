@@ -64,11 +64,14 @@
 					});
 				// Deduplicate by prompt ID. The directly-clicked pin sits at distance 0, so
 				// the sort places it first — its slot wins for the BottomSheet card.
+				// Dedup by prompt ID. The directly-clicked pin is at distance 0, so the
+				// distance sort places it first — it always survives dedup. The first
+				// occurrence (closest) for each prompt wins, so the clicked pin's slot
+				// is the one the BottomSheet card renders.
 				const seen = new Set<string>();
-				const unique = nearby.filter(p => { if (seen.has(p.prompt.id)) return false; seen.add(p.prompt.id); return true; });
-				const items = unique.length > 0
-					? unique.map(p => ({ prompt: p.prompt, slot: p.slot }))
-					: [{ prompt: pin.prompt, slot: pin.slot }];
+				const items = nearby
+					.filter(p => { if (seen.has(p.prompt.id)) return false; seen.add(p.prompt.id); return true; })
+					.map(p => ({ prompt: p.prompt, slot: p.slot }));
 				onSelectPin(items, `${items.length} nearby`);
 			});
 			marker.addTo(markerLayer);
