@@ -4,6 +4,14 @@
 
 dyad is built by a small team with help from AI tooling. Whether you're contributing as a human or as an agent working via Claude Code, the conventions below apply equally.
 
+### Contributor License Agreement
+
+External contributors must sign the dyad Contributor License Agreement ([`CLA.md`](CLA.md)) before their pull requests can be merged. The signing is handled by [`cla-assistant.io`](https://cla-assistant.io/): when you open your first pull request, the bot will post a comment with a one-click sign-in link. After signing once, future contributions are auto-approved for the same GitHub account.
+
+You retain copyright in your contribution. The CLA is a license grant, not a copyright assignment. See `CLA.md` for the full text.
+
+The CLA does not apply to contributions from the dyad cofounders or current maintainers.
+
 ### Branch workflow
 
 Always work on a branch. Never commit directly to `main`.
