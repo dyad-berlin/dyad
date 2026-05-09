@@ -52,16 +52,16 @@
 		restore: (value) => { mapCenter = value.center; mapZoom = value.zoom; }
 	};
 	let searchOpen = $state(false);
-	let selectedPinPrompts = $state<PromptSummary[]>([]);
+	let selectedPinItems = $state<Array<{ prompt: PromptSummary; slot: TimeSlot }>>([]);
 	let selectedPinArea = $state('');
 
-	function handlePinSelect(prompts: PromptSummary[], area: string) {
-		selectedPinPrompts = prompts;
+	function handlePinSelect(items: Array<{ prompt: PromptSummary; slot: TimeSlot }>, area: string) {
+		selectedPinItems = items;
 		selectedPinArea = area;
 	}
 
 	function closeSheet() {
-		selectedPinPrompts = [];
+		selectedPinItems = [];
 		selectedPinArea = '';
 	}
 
@@ -145,8 +145,8 @@
 			onMoveEnd={(c, z) => { mapCenter = c; mapZoom = z; }}
 		/>
 	</div>
-	{#if selectedPinPrompts.length > 0}
-		<BottomSheet prompts={selectedPinPrompts} />
+	{#if selectedPinItems.length > 0}
+		<BottomSheet items={selectedPinItems} />
 	{/if}
 {:else}
 <div class="content">

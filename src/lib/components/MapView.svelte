@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
-	import type { PromptSummary } from '$lib/domain/types';
+	import type { PromptSummary, TimeSlot } from '$lib/domain/types';
 	import type { Map as LeafletMap, LayerGroup } from 'leaflet';
 	import { buildPins, berlinDistance, FUZZ_MAX_METERS } from './MapView.pins';
 
 	interface Props {
 		prompts: PromptSummary[];
-		onSelectPin: (prompts: PromptSummary[], area: string) => void;
+		onSelectPin: (items: Array<{ prompt: PromptSummary; slot: TimeSlot }>, area: string) => void;
 		onMapClick?: () => void;
 		initialCenter?: [number, number] | null;
 		initialZoom?: number | null;
@@ -57,12 +57,15 @@
 						const distA = (a.position[0] - clickedPos[0]) ** 2 + (a.position[1] - clickedPos[1]) ** 2;
 						const distB = (b.position[0] - clickedPos[0]) ** 2 + (b.position[1] - clickedPos[1]) ** 2;
 						return distA - distB;
-					})
-					.map(p => p.prompt);
-				// Deduplicate by prompt ID (a prompt with multiple slots may have multiple pins)
+					});
+				// Deduplicate by prompt ID. The directly-clicked pin sits at distance 0, so
+				// the sort places it first — its slot wins for the BottomSheet card.
 				const seen = new Set<string>();
-				const unique = nearby.filter(p => { if (seen.has(p.id)) return false; seen.add(p.id); return true; });
-				onSelectPin(unique.length > 0 ? unique : [pin.prompt], `${unique.length} nearby`);
+				const unique = nearby.filter(p => { if (seen.has(p.prompt.id)) return false; seen.add(p.prompt.id); return true; });
+				const items = unique.length > 0
+					? unique.map(p => ({ prompt: p.prompt, slot: p.slot }))
+					: [{ prompt: pin.prompt, slot: pin.slot }];
+				onSelectPin(items, `${items.length} nearby`);
 			});
 			marker.addTo(markerLayer);
 		}
