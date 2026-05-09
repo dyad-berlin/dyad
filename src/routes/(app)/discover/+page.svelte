@@ -52,17 +52,14 @@
 		restore: (value) => { mapCenter = value.center; mapZoom = value.zoom; }
 	};
 	let searchOpen = $state(false);
-	let selectedPinPrompts = $state<PromptSummary[]>([]);
-	let selectedPinArea = $state('');
+	let selectedPinItems = $state<Array<{ prompt: PromptSummary; slot: TimeSlot }>>([]);
 
-	function handlePinSelect(prompts: PromptSummary[], area: string) {
-		selectedPinPrompts = prompts;
-		selectedPinArea = area;
+	function handlePinSelect(items: Array<{ prompt: PromptSummary; slot: TimeSlot }>, _area: string) {
+		selectedPinItems = items;
 	}
 
 	function closeSheet() {
-		selectedPinPrompts = [];
-		selectedPinArea = '';
+		selectedPinItems = [];
 	}
 
 	const weekDates = getWeekDates();
@@ -106,6 +103,16 @@
 		);
 	});
 
+	// Slot-level predicate for the map: a Wednesday-only filter should drop the
+	// Tuesday-Mitte pin even on conversations that have a Wednesday slot
+	// elsewhere. `filteredPrompts` already narrows the conversation list; this
+	// narrows the pin set within each conversation.
+	let mapSlotFilter = $derived(
+		hasFilters
+			? (slot: TimeSlot) => slotMatchesDate(slot, selectedDates) && slotMatchesArea(slot, selectedAreas)
+			: undefined
+	);
+
 	function toggleDate(date: string) {
 		const next = new Set(selectedDates);
 		if (next.has(date)) next.delete(date);
@@ -117,6 +124,17 @@
 		selectedDates = new Set();
 		selectedAreas = new Set();
 	}
+
+	// Reset the BottomSheet selection whenever the filter state changes — otherwise
+	// the sheet keeps displaying conversations that are no longer on the filtered
+	// map. Per-slot pins make this gap more visible because clicks pull more items
+	// into the sheet. Reading the Sets directly tracks identity reassignment
+	// (toggleDate/clearFilters create new Set instances each time).
+	$effect(() => {
+		if (selectedDates && selectedAreas) {
+			selectedPinItems = [];
+		}
+	});
 
 	/** Format slot dates for display, e.g. "Fri 28 · Sat 29" */
 	/** Format a single slot's time, e.g. "7:30 PM" */
@@ -138,6 +156,7 @@
 	<div class="map-pane">
 		<MapView
 			prompts={filteredPrompts}
+			slotFilter={mapSlotFilter}
 			onSelectPin={handlePinSelect}
 			onMapClick={closeSheet}
 			initialCenter={mapCenter}
@@ -145,8 +164,8 @@
 			onMoveEnd={(c, z) => { mapCenter = c; mapZoom = z; }}
 		/>
 	</div>
-	{#if selectedPinPrompts.length > 0}
-		<BottomSheet prompts={selectedPinPrompts} />
+	{#if selectedPinItems.length > 0}
+		<BottomSheet items={selectedPinItems} />
 	{/if}
 {:else}
 <div class="content">
