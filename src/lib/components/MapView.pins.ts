@@ -80,7 +80,7 @@ export function buildPins(items: PromptSummary[], slotFilter?: SlotFilter): MapP
 		for (const slot of prompt.available_slots) {
 			if (!slot || slot.general_area_lat == null || slot.general_area_lng == null) continue;
 
-			const area = slot.general_area?.trim();
+			const area = slot.general_area.trim();
 			if (!area) continue;
 
 			if (slotFilter && !slotFilter(slot)) continue;

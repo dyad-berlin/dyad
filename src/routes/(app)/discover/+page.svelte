@@ -53,16 +53,13 @@
 	};
 	let searchOpen = $state(false);
 	let selectedPinItems = $state<Array<{ prompt: PromptSummary; slot: TimeSlot }>>([]);
-	let selectedPinArea = $state('');
 
-	function handlePinSelect(items: Array<{ prompt: PromptSummary; slot: TimeSlot }>, area: string) {
+	function handlePinSelect(items: Array<{ prompt: PromptSummary; slot: TimeSlot }>, _area: string) {
 		selectedPinItems = items;
-		selectedPinArea = area;
 	}
 
 	function closeSheet() {
 		selectedPinItems = [];
-		selectedPinArea = '';
 	}
 
 	const weekDates = getWeekDates();
@@ -131,14 +128,12 @@
 	// Reset the BottomSheet selection whenever the filter state changes — otherwise
 	// the sheet keeps displaying conversations that are no longer on the filtered
 	// map. Per-slot pins make this gap more visible because clicks pull more items
-	// into the sheet.
+	// into the sheet. Reading the Sets directly tracks identity reassignment
+	// (toggleDate/clearFilters create new Set instances each time).
 	$effect(() => {
-		// Reactive reads: depend on filter identity (Sets are reassigned on each
-		// toggle, so reading the variable itself is the dependency we want).
-		const _filtersFingerprint = `${selectedDates.size}:${selectedAreas.size}`;
-		void _filtersFingerprint;
-		selectedPinItems = [];
-		selectedPinArea = '';
+		if (selectedDates && selectedAreas) {
+			selectedPinItems = [];
+		}
 	});
 
 	/** Format slot dates for display, e.g. "Fri 28 · Sat 29" */
