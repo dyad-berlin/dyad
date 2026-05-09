@@ -1,11 +1,12 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
-	import type { PromptSummary } from '$lib/domain/types';
+	import type { PromptSummary, TimeSlot } from '$lib/domain/types';
 	import type { Map as LeafletMap, LayerGroup } from 'leaflet';
+	import { buildPins, berlinDistance, FUZZ_MAX_METERS, type SlotFilter } from './MapView.pins';
 
 	interface Props {
 		prompts: PromptSummary[];
-		onSelectPin: (prompts: PromptSummary[], area: string) => void;
+		onSelectPin: (items: Array<{ prompt: PromptSummary; slot: TimeSlot }>, area: string) => void;
 		onMapClick?: () => void;
 		initialCenter?: [number, number] | null;
 		initialZoom?: number | null;
@@ -13,9 +14,13 @@
 		scrollWheelZoom?: boolean;
 		zoomControl?: boolean;
 		zoomControlPosition?: 'topleft' | 'topright' | 'bottomleft' | 'bottomright';
+		/** Optional per-slot filter — when present, only slots passing this predicate
+		 *  produce a pin. Used by the discover page so date/area filters narrow pin
+		 *  emission rather than just the conversation list. */
+		slotFilter?: SlotFilter;
 	}
 
-	let { prompts, onSelectPin, onMapClick, initialCenter, initialZoom, onMoveEnd, scrollWheelZoom = true, zoomControl = false, zoomControlPosition = 'topleft' }: Props = $props();
+	let { prompts, onSelectPin, onMapClick, initialCenter, initialZoom, onMoveEnd, scrollWheelZoom = true, zoomControl = false, zoomControlPosition = 'topleft', slotFilter }: Props = $props();
 
 	let mapContainer: HTMLElement | undefined = $state();
 	let map: LeafletMap | undefined;
@@ -24,64 +29,12 @@
 	// ── Configuration ────────────────────────────────────────────────────────
 	const BERLIN_CENTER: [number, number] = [52.52, 13.405];
 	const DEFAULT_ZOOM = 12;
-	const FUZZ_MIN_METERS = 150;
-	const FUZZ_MAX_METERS = 400;
-	const DEG_TO_METERS = 111_320;
-	const LON_SCALE = Math.cos(52.52 * Math.PI / 180); // ~0.609 for Berlin
-
-	/** Approximate distance in meters between two lat/lng points in Berlin. Zero trig per call. */
-	function berlinDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-		const dy = (lat2 - lat1) * DEG_TO_METERS;
-		const dx = (lon2 - lon1) * DEG_TO_METERS * LON_SCALE;
-		return Math.sqrt(dx * dx + dy * dy);
-	}
-
-	// ── Deterministic fuzz from slot ID ──────────────────────────────────────
-	// Simple hash: converts a string to a number between 0 and 1
-	function hashToFloat(str: string, seed: number): number {
-		let hash = seed;
-		for (let i = 0; i < str.length; i++) {
-			hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0;
-		}
-		return (Math.abs(hash) % 10000) / 10000;
-	}
-
-	function fuzzCentroid(id: string, lat: number, lng: number): [number, number] {
-		const angle = hashToFloat(id, 1) * 2 * Math.PI;
-		const distFraction = hashToFloat(id, 2); // 0-1
-		const distMeters = FUZZ_MIN_METERS + distFraction * (FUZZ_MAX_METERS - FUZZ_MIN_METERS);
-
-		// Convert meters to degrees (latitude correction for longitude)
-		const dLat = (distMeters / 111320) * Math.cos(angle);
-		const dLng = (distMeters / (111320 * Math.cos(lat * Math.PI / 180))) * Math.sin(angle);
-
-		return [lat + dLat, lng + dLng];
-	}
-
-	// ── Build pin data: one entry per prompt (using first slot's centroid) ───
-	function buildPins(items: PromptSummary[]): Array<{
-		position: [number, number];
-		prompt: PromptSummary;
-		area: string;
-	}> {
-		const pins: Array<{ position: [number, number]; prompt: PromptSummary; area: string }> = [];
-
-		for (const prompt of items) {
-			const slot = prompt.available_slots[0];
-			if (!slot || slot.general_area_lat == null || slot.general_area_lng == null) continue;
-
-			const position = fuzzCentroid(slot.id, slot.general_area_lat, slot.general_area_lng);
-			pins.push({ position, prompt, area: slot.general_area });
-		}
-
-		return pins;
-	}
 
 	function rebuildMarkers(L: typeof import('leaflet')) {
 		if (!markerLayer) return;
 		markerLayer.clearLayers();
 
-		const pins = buildPins(prompts);
+		const pins = buildPins(prompts, slotFilter);
 
 		for (const pin of pins) {
 			// Cover image marker (or placeholder)
@@ -108,12 +61,18 @@
 						const distA = (a.position[0] - clickedPos[0]) ** 2 + (a.position[1] - clickedPos[1]) ** 2;
 						const distB = (b.position[0] - clickedPos[0]) ** 2 + (b.position[1] - clickedPos[1]) ** 2;
 						return distA - distB;
-					})
-					.map(p => p.prompt);
-				// Deduplicate by prompt ID (a prompt with multiple slots may have multiple pins)
+					});
+				// Deduplicate by prompt ID. The directly-clicked pin sits at distance 0, so
+				// the sort places it first — its slot wins for the BottomSheet card.
+				// Dedup by prompt ID. The directly-clicked pin is at distance 0, so the
+				// distance sort places it first — it always survives dedup. The first
+				// occurrence (closest) for each prompt wins, so the clicked pin's slot
+				// is the one the BottomSheet card renders.
 				const seen = new Set<string>();
-				const unique = nearby.filter(p => { if (seen.has(p.id)) return false; seen.add(p.id); return true; });
-				onSelectPin(unique.length > 0 ? unique : [pin.prompt], `${unique.length} nearby`);
+				const items = nearby
+					.filter(p => { if (seen.has(p.prompt.id)) return false; seen.add(p.prompt.id); return true; })
+					.map(p => ({ prompt: p.prompt, slot: p.slot }));
+				onSelectPin(items, `${items.length} nearby`);
 			});
 			marker.addTo(markerLayer);
 		}
@@ -168,10 +127,17 @@
 	});
 
 	let prevPrompts: PromptSummary[] | undefined;
+	let prevSlotFilter: SlotFilter | undefined;
 	$effect(() => {
 		const currentPrompts = prompts;
-		if (leafletModule && markerLayer && currentPrompts !== prevPrompts) {
+		const currentFilter = slotFilter;
+		if (
+			leafletModule &&
+			markerLayer &&
+			(currentPrompts !== prevPrompts || currentFilter !== prevSlotFilter)
+		) {
 			prevPrompts = currentPrompts;
+			prevSlotFilter = currentFilter;
 			rebuildMarkers(leafletModule);
 		}
 	});
