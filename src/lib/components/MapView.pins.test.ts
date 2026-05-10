@@ -1,6 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import type { PromptSummary, TimeSlot } from '$lib/domain/types';
-import { buildPins, fuzzCentroid, FUZZ_MIN_METERS, FUZZ_MAX_METERS } from './MapView.pins.js';
+import {
+	buildPins,
+	fuzzCentroid,
+	FUZZ_MIN_METERS,
+	FUZZ_MAX_METERS,
+	PIN_DEDUP_PROXIMITY_METERS
+} from './MapView.pins.js';
 
 // ── Fixture builders ─────────────────────────────────────────────────────
 
@@ -39,6 +45,14 @@ function makePrompt(id: string, slots: TimeSlot[]): PromptSummary {
 	};
 }
 
+describe('PIN_DEDUP_PROXIMITY_METERS', () => {
+	it('is exactly 2 × FUZZ_MAX_METERS (load-bearing invariant — fuzz + dedup share the privacy primitive)', () => {
+		// If FUZZ_MAX_METERS changes, this assertion fails loudly so the dedup
+		// derivation is revisited deliberately rather than drifting silently.
+		expect(PIN_DEDUP_PROXIMITY_METERS).toBe(2 * FUZZ_MAX_METERS);
+	});
+});
+
 describe('buildPins — per-slot, per-area', () => {
 	it('emits one pin per distinct general_area when a prompt has slots in multiple areas', () => {
 		const prompt = makePrompt('p1', [
@@ -47,7 +61,7 @@ describe('buildPins — per-slot, per-area', () => {
 		]);
 		const pins = buildPins([prompt]);
 		expect(pins).toHaveLength(2);
-		expect(pins.map((p) => p.area).sort()).toEqual(['Kreuzberg', 'Mitte']);
+		expect(pins.map((p) => p.slots[0].general_area).sort()).toEqual(['Kreuzberg', 'Mitte']);
 		expect(pins.every((p) => p.prompt.id === 'p1')).toBe(true);
 	});
 
@@ -59,7 +73,7 @@ describe('buildPins — per-slot, per-area', () => {
 		]);
 		const pins = buildPins([prompt]);
 		expect(pins).toHaveLength(1);
-		expect(pins[0].area).toBe('Mitte');
+		expect(pins[0].slots[0].general_area).toBe('Mitte');
 		expect(pins[0].slots.map((s) => s.id)).toEqual(['s1', 's2', 's3']);
 	});
 
@@ -139,6 +153,10 @@ describe('buildPins — per-slot, per-area', () => {
 	});
 
 	it('skips slots whose general_area is empty or whitespace-only', () => {
+		// Skipped to avoid a blank area label in the BottomSheet card. The original
+		// rationale (avoid empty-string dedup-key collisions under text-key dedup)
+		// no longer applies post-spatial-dedup, but the cosmetic skip is still
+		// load-bearing for UI correctness — keep it.
 		const prompt = makePrompt('p1', [
 			makeSlot({ area: '', lat: 52.52, lng: 13.405 }),
 			makeSlot({ area: '   ', lat: 52.50, lng: 13.40 }),
@@ -146,7 +164,7 @@ describe('buildPins — per-slot, per-area', () => {
 		]);
 		const pins = buildPins([prompt]);
 		expect(pins).toHaveLength(1);
-		expect(pins[0].area).toBe('Mitte');
+		expect(pins[0].slots[0].general_area).toBe('Mitte');
 	});
 
 	it('locks the ordering invariant: with three same-area slots, slots[0] is the earliest by available_slots position', () => {
@@ -177,7 +195,58 @@ describe('buildPins — per-slot, per-area', () => {
 		];
 		const pins = buildPins(prompts);
 		expect(pins).toHaveLength(3);
-		expect(pins.map((p) => p.area).sort()).toEqual(['Kreuzberg', 'Mitte', 'Neukölln']);
+		expect(pins.map((p) => p.slots[0].general_area).sort()).toEqual(['Kreuzberg', 'Mitte', 'Neukölln']);
+	});
+});
+
+describe('buildPins — spatial-dedup edge cases', () => {
+	// Convert a metres-along-latitude offset to a degree delta (Berlin is small
+	// enough that pure-latitude offsets are exact under berlinDistance).
+	const DEG_PER_METER_LAT = 1 / 111_320;
+
+	it('boundary: exactly 2 × FUZZ_MAX_METERS apart still collapses (predicate uses <=)', () => {
+		const lat0 = 52.520;
+		const lat1 = lat0 + PIN_DEDUP_PROXIMITY_METERS * DEG_PER_METER_LAT; // exactly at threshold
+		const prompt = makePrompt('p1', [
+			makeSlot({ id: 'a', area: 'Mitte', lat: lat0, lng: 13.405 }),
+			makeSlot({ id: 'b', area: 'Mitte', lat: lat1, lng: 13.405 })
+		]);
+		const pins = buildPins([prompt]);
+		expect(pins).toHaveLength(1);
+		expect(pins[0].slots).toHaveLength(2);
+	});
+
+	it('boundary: just past 2 × FUZZ_MAX_METERS splits into two pins', () => {
+		const lat0 = 52.520;
+		const lat1 = lat0 + (PIN_DEDUP_PROXIMITY_METERS + 1) * DEG_PER_METER_LAT; // 1m beyond
+		const prompt = makePrompt('p1', [
+			makeSlot({ id: 'a', area: 'Mitte', lat: lat0, lng: 13.405 }),
+			makeSlot({ id: 'b', area: 'Mitte', lat: lat1, lng: 13.405 })
+		]);
+		const pins = buildPins([prompt]);
+		expect(pins).toHaveLength(2);
+	});
+
+	it('non-transitive clustering: cluster membership is measured against the seed only, not the whole cluster', () => {
+		// Three slots in a line, each ~700m from the next:
+		//   A → B: 700m (within 800m threshold, B joins A's pin)
+		//   A → C: 1400m (beyond threshold, C seeds new pin)
+		//   B → C: 700m (would cluster if measured pairwise — but we measure from seed A)
+		// Expected: 2 pins. {A, B} and {C}. The seed-anchored algorithm is
+		// load-bearing for predictability; pin assignment must not depend on
+		// pairwise transitivity.
+		const lat0 = 52.520;
+		const latB = lat0 + 700 * DEG_PER_METER_LAT;
+		const latC = lat0 + 1400 * DEG_PER_METER_LAT;
+		const prompt = makePrompt('p1', [
+			makeSlot({ id: 'a', area: 'Mitte', lat: lat0, lng: 13.405 }),
+			makeSlot({ id: 'b', area: 'Mitte', lat: latB, lng: 13.405 }),
+			makeSlot({ id: 'c', area: 'Mitte', lat: latC, lng: 13.405 })
+		]);
+		const pins = buildPins([prompt]);
+		expect(pins).toHaveLength(2);
+		expect(pins[0].slots.map((s) => s.id)).toEqual(['a', 'b']);
+		expect(pins[1].slots.map((s) => s.id)).toEqual(['c']);
 	});
 });
 
@@ -191,24 +260,43 @@ describe('buildPins — slotFilter', () => {
 		expect(buildPins([prompt], undefined)).toHaveLength(2);
 	});
 
-	it('skips slots that fail the predicate before per-area dedup', () => {
+	it('skips slots that fail the predicate before spatial dedup', () => {
 		// A "Wednesday only" filter on a conversation with Tuesday-Mitte +
-		// Wednesday-Kreuzberg should yield only the Kreuzberg pin.
+		// Wednesday-Kreuzberg should yield only the Kreuzberg pin. Coordinates
+		// are realistic and distinct so the test is honest about the
+		// filter-then-dedup ordering instead of relying on default-coord collisions.
 		const prompt = makePrompt('p1', [
-			makeSlot({ id: 'tue-mitte', area: 'Mitte', startTime: '2026-05-12T18:00:00Z' }),
-			makeSlot({ id: 'wed-kreuzberg', area: 'Kreuzberg', startTime: '2026-05-13T18:00:00Z' })
+			makeSlot({
+				id: 'tue-mitte',
+				area: 'Mitte',
+				lat: 52.520,
+				lng: 13.405,
+				startTime: '2026-05-12T18:00:00Z'
+			}),
+			makeSlot({
+				id: 'wed-kreuzberg',
+				area: 'Kreuzberg',
+				lat: 52.499,
+				lng: 13.418,
+				startTime: '2026-05-13T18:00:00Z'
+			})
 		]);
 		const wednesdayOnly = (slot: TimeSlot) => slot.start_time.startsWith('2026-05-13');
 		const pins = buildPins([prompt], wednesdayOnly);
 		expect(pins).toHaveLength(1);
-		expect(pins[0].area).toBe('Kreuzberg');
+		expect(pins[0].slots[0].general_area).toBe('Kreuzberg');
 		expect(pins[0].slots[0].id).toBe('wed-kreuzberg');
 	});
 
 	it('returns zero pins when the filter excludes every slot', () => {
 		const prompt = makePrompt('p1', [
-			makeSlot({ area: 'Mitte', startTime: '2026-05-12T18:00:00Z' }),
-			makeSlot({ area: 'Kreuzberg', startTime: '2026-05-13T18:00:00Z' })
+			makeSlot({ area: 'Mitte', lat: 52.520, lng: 13.405, startTime: '2026-05-12T18:00:00Z' }),
+			makeSlot({
+				area: 'Kreuzberg',
+				lat: 52.499,
+				lng: 13.418,
+				startTime: '2026-05-13T18:00:00Z'
+			})
 		]);
 		const friday = (slot: TimeSlot) => slot.start_time.startsWith('2026-05-15');
 		expect(buildPins([prompt], friday)).toHaveLength(0);
@@ -252,7 +340,7 @@ describe('buildPins — slotFilter', () => {
 		const allTrue = () => true;
 		const pins = buildPins([prompt], allTrue);
 		expect(pins).toHaveLength(1);
-		expect(pins[0].area).toBe('Kreuzberg');
+		expect(pins[0].slots[0].general_area).toBe('Kreuzberg');
 	});
 });
 
