@@ -1,6 +1,15 @@
 import type { PromptSummary, TimeSlot } from '$lib/domain/types';
 
 // ── Configuration ────────────────────────────────────────────────────────
+//
+// FUZZ_MAX_METERS is load-bearing in three places. Changing it has UX
+// consequences in all three — review all dependents before adjusting:
+//   1. fuzzCentroid (this file): the radius of the random offset applied
+//      to every public-side coordinate. The privacy primitive.
+//   2. MapView.svelte click handler: the radius for the "nearby" filter
+//      that decides which pins join the BottomSheet on click.
+//   3. PIN_DEDUP_PROXIMITY_METERS (this file): 2 × FUZZ_MAX_METERS, the
+//      threshold for collapsing distinct slots into one pin.
 export const FUZZ_MIN_METERS = 150;
 export const FUZZ_MAX_METERS = 400;
 const DEG_TO_METERS = 111_320;
@@ -22,15 +31,15 @@ export const PIN_DEDUP_PROXIMITY_METERS = 2 * FUZZ_MAX_METERS;
  * `slots` array holds every slot of this prompt whose centroid sits within
  * `PIN_DEDUP_PROXIMITY_METERS` of `slots[0]`'s centroid, ordered by
  * `start_time ASC` (the order `prompt-query.ts` returns). `slots[0]` seeds
- * the fuzz position. The BottomSheet card uses the full array to render
- * every date this conversation is offered in this cluster, instead of
- * silently dropping all but the first.
+ * the fuzz position and provides the area label (consumers should read
+ * `slots[0].general_area` rather than caching a `MapPin.area` field, since
+ * different slots in the same cluster can carry slightly different area
+ * strings under text drift like "Mitte" vs "Berlin Mitte").
  */
 export interface MapPin {
 	position: [number, number];
 	prompt: PromptSummary;
 	slots: TimeSlot[];
-	area: string;
 }
 
 /** Approximate distance in meters between two lat/lng points in Berlin. Zero trig per call. */
@@ -66,7 +75,7 @@ export function fuzzCentroid(id: string, lat: number, lng: number): [number, num
 }
 
 /**
- * Predicate applied to each slot before per-area dedup. When undefined,
+ * Predicate applied to each slot before spatial dedup. When undefined,
  * every coordinate-bearing slot is eligible. When provided, slots returning
  * `false` are skipped — e.g. the discover page passes a date/area filter so
  * a "Wednesday only" filter does not still render the Tuesday-Mitte pin
@@ -100,20 +109,25 @@ export function buildPins(items: PromptSummary[], slotFilter?: SlotFilter): MapP
 		for (const slot of prompt.available_slots) {
 			if (!slot || slot.general_area_lat == null || slot.general_area_lng == null) continue;
 
-			const area = slot.general_area.trim();
-			if (!area) continue;
+			// Coordinates are non-null from the guard above — extract once and use locals
+			// for the rest of the loop. Seeds in `promptPins` passed the same guard, so
+			// `seed.general_area_lat!` / `seed.general_area_lng!` are the right shape to
+			// express the construction invariant for the `find` predicate.
+			const lat = slot.general_area_lat;
+			const lng = slot.general_area_lng;
+
+			// Skip slots with a blank area label so the BottomSheet card always
+			// has something to display. No longer load-bearing for dedup safety
+			// (which is now spatial), but still load-bearing for UI clarity.
+			if (!slot.general_area.trim()) continue;
 
 			if (slotFilter && !slotFilter(slot)) continue;
 
 			const existing = promptPins.find((p) => {
 				const seed = p.slots[0];
 				return (
-					berlinDistance(
-						slot.general_area_lat as number,
-						slot.general_area_lng as number,
-						seed.general_area_lat as number,
-						seed.general_area_lng as number
-					) <= PIN_DEDUP_PROXIMITY_METERS
+					berlinDistance(lat, lng, seed.general_area_lat!, seed.general_area_lng!) <=
+					PIN_DEDUP_PROXIMITY_METERS
 				);
 			});
 
@@ -122,8 +136,8 @@ export function buildPins(items: PromptSummary[], slotFilter?: SlotFilter): MapP
 				continue;
 			}
 
-			const position = fuzzCentroid(slot.id, slot.general_area_lat, slot.general_area_lng);
-			const pin: MapPin = { position, prompt, slots: [slot], area };
+			const position = fuzzCentroid(slot.id, lat, lng);
+			const pin: MapPin = { position, prompt, slots: [slot] };
 			promptPins.push(pin);
 			pins.push(pin);
 		}
