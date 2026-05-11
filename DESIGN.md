@@ -4,13 +4,7 @@ The consolidated design reference for dyad. Three sections: why the platform is 
 
 ## Why dyad is shaped this way
 
-People come to dyad seeking safety, validation, belonging. The comfortable path to those is through affinity — finding people like you, forming cliques, retreating into shared language. This is the local minimum: it feels like connection but reproduces the sorting that isolates us in the first place.
-
-The deeper need is for a way to be with others that cuts across the categories we have been sorted into — not "authentic connection" (a phrase emptied of meaning) but the practice of encountering someone outside your category and discovering that the ground between you is more solid than expected.
-
-Dyad's structural choices — no interest matching, no similarity algorithms, a commons not a feed, shared questions not shared identities — are not UX preferences. They are an attempt to build social infrastructure that cross-links rather than clusters. The conversation prompt is the emulsifier: it gives different people a surface to meet across without dissolving difference. Every feature that makes the platform "easier" by reducing friction through sorting accelerates the very isolation the platform exists to address. The goal is encounter, not efficiency.
-
-Dyad is an enabler of in-person community, not a replacement for it. Every design decision should be evaluated against that: does it get people into the same room, or does it give them a reason to stay on their screens?
+People in Berlin who want to meet across social categories have no coordination layer for that. Every available digital tool (dating apps, Meetup, social feeds, networking apps) routes them toward affinity-based sorting, which feels like connection but reproduces the clustering that left them isolated in the first place. The crux: making stranger-meeting "easier" almost always means reducing friction through similarity matching, which accelerates the very isolation the user came in trying to address.
 
 ## Structural commitments
 
