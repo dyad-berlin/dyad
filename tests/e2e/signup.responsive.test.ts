@@ -4,7 +4,7 @@ import { createAdminClient, TEST_USERS } from '../helpers/auth.js';
 
 test.describe('Signup flow', () => {
 	const testEmail = 'signup-test@test.invalid';
-	const testPassword = 'testpass123!';
+	const testPassword = 'local-fixture-not-a-secret';
 	const testUsername = `testuser${nanoid(6).toLowerCase()}`;
 	const admin = createAdminClient();
 	let createdUserId: string | null = null;
