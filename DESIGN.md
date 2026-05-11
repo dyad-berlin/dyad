@@ -244,10 +244,6 @@ For @usernames, dates, stat labels, slot areas, badges. Font `--font-mono`, size
 
 `--bg-glass` (`rgba(245,244,240,0.96)` / dark `rgba(10,10,10,0.96)`) is used for FloatingNav, the date filter panel, and other floating UI. Always pair with `backdrop-filter: blur(12px)`.
 
-### Animations
-
-Hover transitions are quick (~150ms); theme transitions are slower (~400ms with an eased curve). The bottom sheet flies up from y:160 over ~480ms. Specific durations live in `--duration-*` tokens in `src/app.css`; refer to those when adding new animations rather than hardcoding values.
-
 ### Modals
 
 The first-arrival onboarding modal is a 4-step intro on the discover page. Members can skip at any step. After that, members find their way through the interface itself. Other modals are fine when they serve the member's current task, like the waitlist form that appears when a visitor clicks a conversation. The line is whether the overlay helps with what the member is doing or interrupts it.
