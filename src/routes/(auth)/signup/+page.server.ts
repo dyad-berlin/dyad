@@ -24,16 +24,11 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		redirect(302, '/');
 	}
 
-	// Validate ref using admin client — anon role can't read profiles
-	const { data: profile } = await makeAdminClient()
-		.from('profiles')
-		.select('id')
-		.eq('username', ref)
-		.maybeSingle();
-
-	if (!profile) {
-		redirect(302, '/');
-	}
+	// We do not validate whether `ref` resolves to an existing profile here.
+	// Differentiating the response based on profile existence would let an
+	// unauthenticated visitor enumerate usernames by toggling the ref param.
+	// The signup action resolves the ref to a UUID; if it doesn't resolve,
+	// referred_by is left null. No new information is leaked at load time.
 
 	const email = url.searchParams.get('email') ?? null;
 	const motivation = url.searchParams.get('motivation') ?? null;
