@@ -48,6 +48,11 @@ plans/
 .context/
 compound-engineering.local.md
 
+# Personal Claude Code settings (not project-wide config)
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
+.claude/projects/
+
 # Stray screenshots and PDFs at repo root
 /*.png
 /*.jpg
