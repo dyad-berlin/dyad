@@ -4,9 +4,18 @@
  * vitest config in this directory.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { routeKind } from '../../src/lib/server/route-kind.js';
 import { resolveAdminOperator } from '../../src/lib/server/admin-auth.js';
+
+// Suppress the header-fallback console.error fired by the canary cases —
+// the log is intentional and pinned by admin-bypass-jwt-precedence.test.ts.
+beforeEach(() => {
+	vi.spyOn(console, 'error').mockImplementation(() => {});
+});
+afterEach(() => {
+	vi.restoreAllMocks();
+});
 
 const PROD_OPTS = {
 	devMode: false,
@@ -51,9 +60,10 @@ describe('PoC #1 — non-canonical hostname admin bypass (regression test)', () 
 		).toBe('user');
 	});
 
-	// Defence-in-depth canary: admin-auth still admits a spoofed header when
-	// called without the routing layer. If this flips, the routing-layer
-	// gate is the only thing standing between an attacker and admission.
+	// Defence-in-depth canary: admin-auth admits a spoofed header when called
+	// in isolation; the routing layer is what blocks the attacker in production.
+	// If admin-auth is ever hardened to reject in isolation, this canary flips —
+	// keep the routing layer regardless. Two locks beat one.
 	it.each(NON_CANONICAL_ADMIN_URLS)(
 		'admin-auth admits spoofed header in isolation (canary; protected by routing layer): %s',
 		async (href) => {

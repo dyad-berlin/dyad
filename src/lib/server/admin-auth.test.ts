@@ -1,8 +1,9 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from 'vitest';
 import { resolveAdminOperator, type JwtVerifier } from './admin-auth.js';
 
+let errorSpy: MockInstance<typeof console.error>;
 beforeEach(() => {
-	vi.spyOn(console, 'error').mockImplementation(() => {});
+	errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 });
 afterEach(() => {
 	vi.restoreAllMocks();
@@ -128,7 +129,6 @@ describe('resolveAdminOperator', () => {
 	});
 
 	it('emits a structured console.error on the header-fallback path', async () => {
-		const errorSpy = console.error as unknown as ReturnType<typeof vi.fn>;
 		errorSpy.mockClear();
 		await resolveAdminOperator(
 			makeRequest({ 'cf-access-authenticated-user-email': 'op@example.com' }),
@@ -144,7 +144,6 @@ describe('resolveAdminOperator', () => {
 	});
 
 	it('does NOT emit the header-fallback log when a JWT is present and verifies', async () => {
-		const errorSpy = console.error as unknown as ReturnType<typeof vi.fn>;
 		errorSpy.mockClear();
 		await resolveAdminOperator(
 			makeRequest({ 'cf-access-jwt-assertion': 'signed.jwt.value' }),

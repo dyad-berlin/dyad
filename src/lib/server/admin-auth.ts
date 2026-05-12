@@ -82,6 +82,8 @@ export async function resolveAdminOperator(
 	const jwtHeader = request.headers.get('cf-access-jwt-assertion');
 	if (jwtHeader !== null) {
 		if (jwtHeader.length === 0) return null;
+		// Reject rather than fall through to header trust — a JWT was emitted
+		// and we can't verify it. Falling through would silently regress.
 		if (!flags.verifyJwt) return null;
 		const claims = await flags.verifyJwt(jwtHeader);
 		return claims ?? null;

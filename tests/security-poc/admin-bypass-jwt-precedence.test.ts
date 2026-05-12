@@ -4,11 +4,12 @@
  * vitest config in this directory.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from 'vitest';
 import { resolveAdminOperator, type JwtVerifier } from '../../src/lib/server/admin-auth.js';
 
+let errorSpy: MockInstance<typeof console.error>;
 beforeEach(() => {
-	vi.spyOn(console, 'error').mockImplementation(() => {});
+	errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 });
 afterEach(() => {
 	vi.restoreAllMocks();
@@ -62,7 +63,6 @@ describe('PoC #2 — JWT-first precedence (regression test)', () => {
 
 	it('falls back to the header only when no JWT was emitted, and logs the fallback', async () => {
 		const verifier = vi.fn(rejectingJwtVerifier);
-		const errorSpy = console.error as unknown as ReturnType<typeof vi.fn>;
 		errorSpy.mockClear();
 
 		const request = makeRequest({
