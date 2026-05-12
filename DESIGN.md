@@ -16,7 +16,7 @@ The platform helps members find a time and place to meet in person. It does not 
 
 - The meeting is analogue. Members agree on a time and place through the app, then they show up.
 - One response per member per conversation. *(DB UNIQUE constraint on `prompt_comments(prompt_id, author_id)`)*
-- A response is a one-way message; replies and threading are not supported. *(Schema absence: `prompt_comments` has no `parent_id` column.)*
+- A response is a one-way message. *(Schema absence: `prompt_comments` has no `parent_id` column.)*
 - Responses are editable, with an "edited" indicator surfaced to the author.
 - A member must write a response before they can invite to meet. The response is the meeting context. *(UI- and service-layer only; `prompt_invitations.comment_id` is nullable.)*
 - No contact details exchanged through the platform. *(Held by review; no server-side stripping of phone numbers or emails in free-text fields today.)*
@@ -25,7 +25,7 @@ The platform helps members find a time and place to meet in person. It does not 
 
 ### Calm technology
 
-We have tried to make the app ask very little of members' attention. Notifications and prompts appear when there's something specific to act on. The usual engagement-loop mechanics are deliberately absent.
+We have tried to make the app ask very little of members' attention. Notifications and prompts appear when there's something specific to act on.
 
 - Notifications are opt-in (email, push) and minimal by design.
 - No reminder cadence. The feedback gate prevents access to the rest of the app until minimum feedback ("did the meeting happen?") is submitted, and stays in place until both members have submitted.
