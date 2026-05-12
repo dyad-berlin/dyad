@@ -34,9 +34,9 @@ We have tried to make the app ask very little of members' attention. Notificatio
 ### Anti-sorting
 
 - No interest matching. No personality tests. No "people like you" recommendations.
-- The discover page is a commons, not a feed. *(Discover queries order by `published_at DESC` only — no engagement signals, no decay, no personalisation. See `src/lib/services/prompt-query.ts`.)*
+- The discover page is a commons, not a feed. *(Discover queries order by `published_at DESC` only. See `src/lib/services/prompt-query.ts`.)*
 - Members see each other through their prompts. There are no separate profile bios. *(Schema absence: no `bio` column on `profiles`.)*
-- No follower graph. *(Schema absence: no `follows` table. Held by review — a future PR adding one would need to be caught.)*
+- No follower graph. *(Schema absence: no `follows` table. A future PR adding one would need to be caught by review.)*
 
 ### Meeting cycle
 
@@ -55,7 +55,7 @@ Current setup: Plausible (cookieless, EU-hosted) for analytics, self-hosted Sang
 
 ### Admin visibility
 
-- Members should assume admins can read anything they upload. The platform does not collect private or confidential details beyond what members agree to share. *(Service-role Supabase client bypasses RLS by design; this is the honest disclosure, not a flaw to fix.)*
+- Members should assume admins can read anything they upload. The platform does not collect private or confidential details beyond what members agree to share. *(Service-role Supabase client bypasses RLS by design.)*
 
 ### Conversation states
 
