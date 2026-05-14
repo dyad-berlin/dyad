@@ -1,4 +1,9 @@
 import { escapeHtml } from '$lib/utils/escape-html.js';
+import { copy } from '$lib/copy';
+import { tokens } from '$lib/design-tokens.js';
+
+const { color, textSize, space, leading, letterSpacing } = tokens;
+const SERIF = "'SangBleu Sunrise', Georgia, serif";
 
 // Font URLs are absolute because email clients have no relative-URL context.
 // Files self-hosted on dyad.berlin/fonts/* (mirror of static/fonts/).
@@ -21,15 +26,16 @@ const SIGNATURE_FONT_FACE = `
 			</style>`;
 
 // Table layout because Outlook does not reliably render flex/grid.
-const EMAIL_SIGNED_FOOTER = `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin: 0;">
+// border-collapse + mso-* are Outlook hygiene; without them Outlook injects stray whitespace and borders.
+const EMAIL_SIGNED_FOOTER = `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin: 0; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
 					<tr>
-						<td style="vertical-align: middle; padding-right: 16px;">
-							<a href="https://dyad.berlin" style="display: inline-block;"><img src="https://dyad.berlin/images/logo-dark.png" alt="dyad" style="height: 48px; width: auto; display: block;" /></a>
+						<td style="vertical-align: middle; padding: 0 ${space[5]} 0 0;">
+							<a href="https://dyad.berlin" style="display: inline-block; text-decoration: none;"><img src="https://dyad.berlin/images/logo-dark.png" alt="dyad" style="height: 48px; width: auto; display: block; border: 0;" /></a>
 						</td>
-						<td style="vertical-align: middle; padding-left: 16px; border-left: 1px solid #e0ddd8;">
-							<p style="font-family: 'SangBleu Sunrise', Georgia, serif; font-weight: 300; font-size: 14px; color: #3a3a3a; margin: 0 0 2px;">With care and joy,</p>
-							<p style="font-family: 'SangBleu Sunrise', Georgia, serif; font-weight: 400; font-size: 16px; color: #1a1a1a; margin: 0 0 8px;">Luna and Fiore</p>
-							<p style="font-family: 'SangBleu Sunrise', Georgia, serif; font-weight: 300; font-size: 11px; color: #999; margin: 0; font-variant: small-caps; letter-spacing: 0.08em;">dyad · berlin</p>
+						<td style="vertical-align: middle; padding: 0 0 0 ${space[5]}; border-left: 1px solid ${color.borderSubtle};">
+							<p style="font-family: ${SERIF}; font-weight: 300; font-size: ${textSize.base}; line-height: ${leading.tight}; color: ${color.textSecondary}; margin: 0 0 2px;">${copy.email.signature.closing}</p>
+							<p style="font-family: ${SERIF}; font-weight: 400; font-size: ${textSize.lg}; line-height: ${leading.tight}; color: ${color.textPrimary}; margin: 0 0 ${space[2]};">${copy.email.signature.names}</p>
+							<p style="font-family: ${SERIF}; font-weight: 300; font-size: ${textSize.xs}; line-height: ${leading.tight}; color: ${color.textMuted}; letter-spacing: ${letterSpacing.label}; margin: 0;">${copy.email.signature.brand}</p>
 						</td>
 					</tr>
 				</table>`;
@@ -54,16 +60,16 @@ export function renderInviteEmail(params: {
 	const openerBlock = params.opener ? `\n\t\t\t\t<p>${params.opener}</p>` : '';
 	const personalBlock = params.message
 		? `
-				<blockquote style="margin: 0 0 24px; padding: 12px 16px; background: #f7f4ee; border-left: 3px solid #c8c2b6; font-style: italic; color: #3a3a3a; white-space: pre-wrap;">${escapeHtml(
+				<blockquote style="margin: 0 0 ${space[6]}; padding: ${space[3]} ${space[4]}; background: #f7f4ee; border-left: 3px solid #c8c2b6; font-style: italic; color: ${color.textSecondary}; white-space: pre-wrap;">${escapeHtml(
 					params.message
 				).replace(/\n/g, '<br>')}</blockquote>`
 		: '';
 
 	return `${SIGNATURE_FONT_FACE}
-			<div style="font-family: Helvetica, Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 40px 20px; color: #1a1a1a; line-height: 1.7;">${openerBlock}${personalBlock}
-				<p><a href="${params.inviteUrl}" style="color: #1a1a1a; font-weight: bold; text-decoration: underline;">Join dyad</a></p>
-				<p style="font-size: 14px; color: #666;">This link expires in ${params.expiryDays} days.</p>
-				<hr style="border: none; border-top: 1px solid #e0ddd8; margin: 32px 0 16px;" />
+			<div style="font-family: Helvetica, Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 40px 20px; color: ${color.textPrimary}; line-height: ${leading.relaxed};">${openerBlock}${personalBlock}
+				<p><a href="${params.inviteUrl}" style="color: ${color.textPrimary}; font-weight: bold; text-decoration: underline;">Join dyad</a></p>
+				<p style="font-size: ${textSize.base}; color: ${color.textMuted};">This link expires in ${params.expiryDays} days.</p>
+				<hr style="border: none; border-top: 1px solid ${color.borderSubtle}; margin: ${space[8]} 0 ${space[4]};" />
 				${EMAIL_SIGNED_FOOTER}
 			</div>
 		`;

@@ -430,5 +430,13 @@ export const copy = {
 			`Hi ${displayName}, We are letting in groups of people to come and play. We are currently on our private beta and would love for you to take a walk inside and tell us about your experience. You can do this asynchronously via the feedback area on the bottom right with a question mark icon. We are looking forward to bringing the fruits of our love, care and labor to you. Join: ${inviteUrl}. This link expires in ${expiryDays} days.`,
 		waitlistSubject: "What's in a conversation?",
 		tagline: 'cultivating a culture of conversation',
+		// Rendered into the transactional email footers. Three lines:
+		// the closing supports the names; the names anchor the message;
+		// the brand foots, set small and quiet.
+		signature: {
+			closing: 'With care and joy,',
+			names: 'Luna and Fiore',
+			brand: 'dyad · berlin',
+		},
 	},
 } as const;
