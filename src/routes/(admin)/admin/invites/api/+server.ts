@@ -2,9 +2,9 @@ import { json, error } from '@sveltejs/kit';
 import { PUBLIC_SUPABASE_URL } from '$env/static/public';
 import { makeAdminClient } from '$lib/server/supabase-admin';
 import { sendEmail } from '$lib/server/email.js';
-import { escapeHtml } from '$lib/utils/escape-html.js';
 import { nanoid } from 'nanoid';
 import { copy } from '$lib/copy';
+import { renderInviteEmail } from './render-invite-email.js';
 import type { RequestHandler } from './$types';
 
 /**
@@ -26,48 +26,30 @@ const APP_ORIGIN =
 
 const INVITE_EXPIRY_DAYS = 14;
 const MAX_MESSAGE_LENGTH = 2000;
+const MAX_SIGNATURE_FIELD_LENGTH = 80;
 
-/**
- * Render the invitation email body.
- *
- * `opener` is the admin's own opening line — e.g. "Hey —" or "Hi friend,".
- * Rendered verbatim (no "Hi " prefix). Omit entirely when empty.
- *
- * `message` (when non-empty) is a quoted block beneath the opener.
- *
- * Both fields are escaped before interpolation; line breaks in the message
- * are preserved as <br> tags.
- */
-function renderInviteEmail(params: {
-	opener?: string;
-	inviteUrl: string;
-	message?: string;
-}): string {
-	const openerBlock = params.opener ? `\n\t\t\t\t<p>${params.opener}</p>` : '';
-	const personalBlock = params.message
-		? `
-				<blockquote style="margin: 0 0 24px; padding: 12px 16px; background: #f7f4ee; border-left: 3px solid #c8c2b6; font-style: italic; color: #3a3a3a; white-space: pre-wrap;">${escapeHtml(
-					params.message
-				).replace(/\n/g, '<br>')}</blockquote>`
-		: '';
-
-	return `
-			<div style="font-family: Helvetica, Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 40px 20px; color: #1a1a1a; line-height: 1.7;">${openerBlock}${personalBlock}
-				<p><a href="${params.inviteUrl}" style="color: #1a1a1a; font-weight: bold; text-decoration: underline;">Join dyad</a></p>
-				<p style="font-size: 14px; color: #666;">This link expires in ${INVITE_EXPIRY_DAYS} days.</p>
-				<hr style="border: none; border-top: 1px solid #e0ddd8; margin: 32px 0 16px;" />
-				<a href="https://dyad.berlin" style="display: inline-block;"><img src="https://dyad.berlin/images/logo-dark.png" alt="dyad" style="height: 32px; width: auto; margin-bottom: 8px;" /></a>
-				<p style="font-size: 12px; color: #999; margin: 0;">cultivating a culture of conversation</p>
-			</div>
-		`;
-}
-
-/** Build the escaped opener line from the admin's `name` input. Undefined when blank. */
+/** Return the trimmed opener line from the admin's `name` input. Undefined when blank.
+ *  Returns raw text — `renderInviteEmail` escapes at the interpolation point. */
 function buildOpener(name: unknown): string | undefined {
 	if (typeof name === 'string' && name.trim()) {
-		return escapeHtml(name.trim());
+		return name.trim();
 	}
 	return undefined;
+}
+
+/** Validate an optional short text field (signature override).
+ *  Returns the trimmed value, or `undefined` when omitted/empty/whitespace.
+ *  Throws an `error(400, …)` HttpError when the input is the wrong type or
+ *  exceeds `MAX_SIGNATURE_FIELD_LENGTH` — those branches never return. */
+function validateShortText(value: unknown, fieldName: string): string | undefined {
+	if (value === undefined || value === null || value === '') return undefined;
+	if (typeof value !== 'string') error(400, `${fieldName} must be a string`);
+	const trimmed = value.trim();
+	if (trimmed.length === 0) return undefined;
+	if (trimmed.length > MAX_SIGNATURE_FIELD_LENGTH) {
+		error(400, `${fieldName} must be at most ${MAX_SIGNATURE_FIELD_LENGTH} characters`);
+	}
+	return trimmed;
 }
 
 export const POST: RequestHandler = async ({ request }) => {
@@ -80,7 +62,7 @@ export const POST: RequestHandler = async ({ request }) => {
 	} catch {
 		return json({ error: 'Invalid JSON body' }, { status: 400 });
 	}
-	const { email, name, message, scope } = body;
+	const { email, name, message, scope, signatureClosing, signatureNames } = body;
 
 	if (!email || typeof email !== 'string') {
 		error(400, 'Email is required');
@@ -98,6 +80,11 @@ export const POST: RequestHandler = async ({ request }) => {
 		}
 		if (candidate.length > 0) trimmedMessage = candidate;
 	}
+
+	// Validate optional signature overrides. Both default to copy.email.signature.*
+	// in the renderer when omitted; empty strings are treated as omitted.
+	const validatedSignatureClosing = validateShortText(signatureClosing, 'signatureClosing');
+	const validatedSignatureNames = validateShortText(signatureNames, 'signatureNames');
 
 	// Validate optional scope. Must reference an existing, non-retired scope.
 	// FK enforces existence; we validate non-retired in app layer (FK doesn't
@@ -139,7 +126,14 @@ export const POST: RequestHandler = async ({ request }) => {
 		const delivered = await sendEmail({
 			to: email.trim(),
 			subject: copy.email.inviteSubject,
-			html: renderInviteEmail({ opener: buildOpener(name), inviteUrl, message: trimmedMessage })
+			html: renderInviteEmail({
+				opener: buildOpener(name),
+				inviteUrl,
+				message: trimmedMessage,
+				expiryDays: INVITE_EXPIRY_DAYS,
+				signatureClosing: validatedSignatureClosing,
+				signatureNames: validatedSignatureNames
+			})
 		});
 		return json({ ok: true, alreadyInvited: true, inviteUrl, delivered });
 	}
@@ -185,7 +179,14 @@ export const POST: RequestHandler = async ({ request }) => {
 	const delivered = await sendEmail({
 		to: email.trim(),
 		subject: copy.email.inviteSubject,
-		html: renderInviteEmail({ opener: buildOpener(name), inviteUrl, message: trimmedMessage })
+		html: renderInviteEmail({
+			opener: buildOpener(name),
+			inviteUrl,
+			message: trimmedMessage,
+			expiryDays: INVITE_EXPIRY_DAYS,
+			signatureClosing: validatedSignatureClosing,
+			signatureNames: validatedSignatureNames
+		})
 	});
 
 	return json({ ok: true, inviteUrl, delivered });
