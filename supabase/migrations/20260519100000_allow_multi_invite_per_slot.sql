@@ -19,7 +19,7 @@ DECLARE
   v_slot_id UUID;
   v_invitee_id UUID;
   v_inviter_id UUID;
-  v_prompt_id UUID;
+  v_prompt_id TEXT;
   v_slot_start TIMESTAMPTZ;
   v_meeting_id UUID;
   v_caller UUID := app.current_user_id();
@@ -165,16 +165,18 @@ BEGIN
   INSERT INTO cancellation_records (meeting_id, cancelled_by, tier, reason, free_pass_used)
   VALUES (p_meeting_id, v_caller, v_tier, p_reason, v_free_pass);
 
-  IF v_tier = 'early' THEN
-    SELECT COUNT(*) INTO v_remaining_active
-    FROM meetings
-    WHERE slot_id = v_meeting.slot_id
-      AND id != p_meeting_id
-      AND state IN ('scheduled', 'awaiting_feedback');
+  -- Take the slot lock so concurrent cancellations serialize and the
+  -- remaining-active count below is consistent under READ COMMITTED.
+  PERFORM 1 FROM time_slots WHERE id = v_meeting.slot_id FOR UPDATE;
 
-    IF v_remaining_active = 0 THEN
-      UPDATE time_slots SET accepted = FALSE WHERE id = v_meeting.slot_id;
-    END IF;
+  SELECT COUNT(*) INTO v_remaining_active
+  FROM meetings
+  WHERE slot_id = v_meeting.slot_id
+    AND id != p_meeting_id
+    AND state IN ('scheduled', 'awaiting_feedback');
+
+  IF v_remaining_active = 0 THEN
+    UPDATE time_slots SET accepted = FALSE WHERE id = v_meeting.slot_id;
   END IF;
 
   INSERT INTO notifications (user_id, type, data)
@@ -195,41 +197,44 @@ GRANT EXECUTE ON FUNCTION cancel_meeting TO authenticated;
 -- ============================================
 -- time_slots SELECT policy
 -- ============================================
--- Non-authors may see a slot of a published prompt unless they already have an
--- active meeting on it. Authors see all their own slots. Participants see slots
--- they have meetings on (existing behavior).
+-- Authors see all their own slots. Meeting participants see slots they are on.
+-- Other authenticated callers see slots of published, non-hidden prompts whose
+-- audience they belong to (commons or a granted scope). The 'accepted = FALSE'
+-- filter is dropped so multi-invite slots remain visible to additional inviters.
 
 DROP POLICY IF EXISTS "Authenticated users read slots with safeguarding" ON time_slots;
 CREATE POLICY "Authenticated users read slots with safeguarding"
-  ON time_slots FOR SELECT
+  ON time_slots FOR SELECT TO authenticated
   USING (
     EXISTS (
       SELECT 1 FROM prompts
       WHERE prompts.id = time_slots.prompt_id
         AND prompts.author_id = app.current_user_id()
     )
-    OR (
-      EXISTS (
-        SELECT 1 FROM prompts
-        WHERE prompts.id = time_slots.prompt_id
-          AND prompts.state = 'published'
-      )
-      AND NOT EXISTS (
-        SELECT 1 FROM meetings
-        WHERE meetings.slot_id = time_slots.id
-          AND app.current_user_id() IN (meetings.participant_a, meetings.participant_b)
-          AND meetings.state IN ('scheduled', 'awaiting_feedback', 'completed')
-      )
-    )
     OR EXISTS (
       SELECT 1 FROM meetings
       WHERE meetings.slot_id = time_slots.id
         AND app.current_user_id() IN (meetings.participant_a, meetings.participant_b)
     )
+    OR EXISTS (
+      SELECT 1 FROM prompts
+      WHERE prompts.id = time_slots.prompt_id
+        AND prompts.state = 'published'
+        AND prompts.hidden_at IS NULL
+        AND (
+          prompts.audience_scope IS NULL
+          OR EXISTS (
+            SELECT 1 FROM identity_scopes
+            WHERE identity_scopes.identity_id = app.current_user_id()
+              AND identity_scopes.scope = prompts.audience_scope
+              AND identity_scopes.revoked_at IS NULL
+          )
+        )
+    )
   );
 
--- anon sees any slot of a published prompt. Multi-accept means the "accepted"
--- flag no longer corresponds to "slot is closed to new invites."
+-- anon sees slots of published, non-hidden, public-audience prompts. The accept
+-- state of a slot no longer affects visibility.
 
 DROP POLICY IF EXISTS "Anon reads unaccepted slots of published prompts" ON time_slots;
 CREATE POLICY "Anon reads slots of published prompts"
@@ -239,5 +244,7 @@ CREATE POLICY "Anon reads slots of published prompts"
       SELECT 1 FROM prompts
       WHERE prompts.id = time_slots.prompt_id
         AND prompts.state = 'published'
+        AND prompts.hidden_at IS NULL
+        AND prompts.audience_scope IS NULL
     )
   );
