@@ -25,13 +25,9 @@ export async function getEmailNotificationsEnabled(): Promise<boolean> {
 	return data?.value === true;
 }
 
-/** Set the global notification kill switch. Writes via service-role and stamps
- *  `updated_by` when the caller passes a user id (Cloudflare Access identity
- *  is not currently surfaced into the admin plane, so this is optional). */
-export async function setEmailNotificationsEnabled(
-	enabled: boolean,
-	updatedBy?: string
-): Promise<void> {
+/** Set the global notification kill switch. Writes via service-role. Operator
+ *  attribution is intentionally not stored — see the comment in the migration. */
+export async function setEmailNotificationsEnabled(enabled: boolean): Promise<void> {
 	const admin = makeAdminClient();
 	const { error } = await admin
 		.from('app_settings')
@@ -39,8 +35,7 @@ export async function setEmailNotificationsEnabled(
 			{
 				key: EMAIL_NOTIFICATIONS_ENABLED_KEY,
 				value: enabled,
-				updated_at: new Date().toISOString(),
-				updated_by: updatedBy ?? null
+				updated_at: new Date().toISOString()
 			},
 			{ onConflict: 'key' }
 		);
