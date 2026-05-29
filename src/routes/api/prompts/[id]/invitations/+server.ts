@@ -64,13 +64,8 @@ export const POST: RequestHandler = async ({ params, request, locals, platform }
 	// Occupancy comes from the viewer-safe RPC (responders cannot read meetings
 	// under RLS); we only block when capacity is set AND the slot is at capacity.
 	if (prompt.capacity != null) {
-		const { data: occupancyRows } = await locals.supabase.rpc('get_prompt_slot_occupancy', {
-			p_prompt_id: params.id
-		});
-		const slotRow = ((occupancyRows ?? []) as Array<{ slot_id: string; occupied: number }>).find(
-			(r) => r.slot_id === body.slotId
-		);
-		const occupied = slotRow?.occupied ?? 0;
+		const occupancy = await queryService.getSlotOccupancy(params.id);
+		const occupied = occupancy[body.slotId] ?? 0;
 		if (isSlotFull(occupied, prompt.capacity)) {
 			return json({ error: copy.conversation.timeFull }, { status: 409 });
 		}

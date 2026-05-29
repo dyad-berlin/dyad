@@ -62,6 +62,13 @@ export interface PromptQueryService {
 
 	getAvailableSlots(promptId: string, userId: string): Promise<TimeSlot[]>;
 
+	/** Per-slot confirmed-joiner count for a single prompt, keyed slotId →
+	 *  occupied count. Sourced from the viewer-safe SECURITY DEFINER RPC
+	 *  `get_prompt_slot_occupancy` — non-authors cannot read `meetings` under
+	 *  RLS, so this is the only path to a seat count. Count-only (no
+	 *  usernames/UUIDs/location). Unauthorized/empty prompts return {}. */
+	getSlotOccupancy(promptId: string): Promise<Record<string, number>>;
+
 	/** Returns a user's public profile (username, display name) and their
 	 *  published conversations. Null when no profile with the given username.
 	 *
@@ -93,17 +100,21 @@ export class SupabasePromptQueryService implements PromptQueryService {
 		const out = new Map<string, Map<string, number>>();
 		if (promptIds.length === 0) return out;
 		const results = await Promise.all(
-			promptIds.map(async (id) => {
-				const { data } = await this.supabase.rpc('get_prompt_slot_occupancy', {
-					p_prompt_id: id
-				});
-				return { id, rows: (data ?? []) as Array<{ slot_id: string; occupied: number }> };
-			})
+			promptIds.map(async (id) => ({ id, occupancy: await this.getSlotOccupancy(id) }))
 		);
-		for (const { id, rows } of results) {
-			const slotMap = new Map<string, number>();
-			for (const r of rows) slotMap.set(r.slot_id, r.occupied);
-			out.set(id, slotMap);
+		for (const { id, occupancy } of results) {
+			out.set(id, new Map(Object.entries(occupancy)));
+		}
+		return out;
+	}
+
+	async getSlotOccupancy(promptId: string): Promise<Record<string, number>> {
+		const { data } = await this.supabase.rpc('get_prompt_slot_occupancy', {
+			p_prompt_id: promptId
+		});
+		const out: Record<string, number> = {};
+		for (const r of (data ?? []) as Array<{ slot_id: string; occupied: number }>) {
+			out[r.slot_id] = r.occupied;
 		}
 		return out;
 	}

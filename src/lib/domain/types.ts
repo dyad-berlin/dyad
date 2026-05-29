@@ -80,11 +80,11 @@ export interface PromptSummary {
 	region: string;
 	audience_scope: string | null;
 	audience_scope_name: string | null;
-	// Max joiners per slot (mirrors Prompt.capacity). null = legacy unlimited;
-	// 1 = one-on-one; 2-7 = small group (up to 8 total incl. author). Optional
-	// because not every summary surface populates it (anon landing teaser leaves
-	// it undefined); detail and the authenticated feed always set it.
-	capacity?: number | null;
+	// Max joiners per slot (mirrors Prompt.capacity). null = legacy unlimited
+	// or a surface that does not derive capacity (anon landing teaser sets
+	// null); 1 = one-on-one; 2-7 = small group (up to 8 total incl. author).
+	// Required so every construction site is forced to make the choice explicit.
+	capacity: number | null;
 }
 
 export interface PromptDetail extends PromptSummary {
@@ -215,13 +215,14 @@ export interface GroupFeedback {
 	created_at: string;
 }
 
-export interface GateStatus {
-	gated: boolean;
-	feedbackFormId: string | null;
-	// Set when the gate is a group feedback form rather than a one-on-one
-	// feedback_forms row. Mutually exclusive with feedbackFormId in practice.
-	groupFeedbackFormId?: string | null;
-}
+// Discriminated union so invalid states (both form IDs set) are unrepresentable.
+// `kind` distinguishes the one-on-one feedback_forms gate (reveal-capable modal)
+// from the group_feedback gate (standalone redirect page). Mutually exclusive by
+// construction.
+export type GateStatus =
+	| { gated: false }
+	| { gated: true; kind: 'one_on_one'; formId: string }
+	| { gated: true; kind: 'group'; formId: string };
 
 export interface ReputationSignal {
 	id: string;

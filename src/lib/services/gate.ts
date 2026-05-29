@@ -21,11 +21,11 @@ export class SupabaseGateService implements GateService {
 
 		if (error) {
 			// Fail open — don't block on DB errors
-			return { gated: false, feedbackFormId: null, groupFeedbackFormId: null };
+			return { gated: false };
 		}
 
 		if (data) {
-			return { gated: true, feedbackFormId: data.id, groupFeedbackFormId: null };
+			return { gated: true, kind: 'one_on_one', formId: data.id };
 		}
 
 		// Group path (R5/U11): a due group_feedback row gates the user once per
@@ -42,13 +42,13 @@ export class SupabaseGateService implements GateService {
 
 		if (groupError) {
 			// Fail open — don't block on DB errors
-			return { gated: false, feedbackFormId: null, groupFeedbackFormId: null };
+			return { gated: false };
 		}
 
 		if (groupData) {
-			return { gated: true, feedbackFormId: null, groupFeedbackFormId: groupData.id };
+			return { gated: true, kind: 'group', formId: groupData.id };
 		}
 
-		return { gated: false, feedbackFormId: null, groupFeedbackFormId: null };
+		return { gated: false };
 	}
 }

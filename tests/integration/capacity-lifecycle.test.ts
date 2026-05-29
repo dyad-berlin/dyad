@@ -323,20 +323,19 @@ describe('Capacity + group feedback lifecycle', () => {
 			expect(reviewerIds).toEqual(new Set([SOPHIE.id, DIGIT.id, TOM.id]));
 		});
 
-		it('author group gate: gated=true with groupFeedbackFormId, feedbackFormId=null; submit clears it', async () => {
+		it('author group gate: gated=true with kind=group form id; submit clears it', async () => {
 			const gated = await sophieServices.gate.checkGate(SOPHIE.id);
 			expect(gated.gated).toBe(true);
-			expect(gated.groupFeedbackFormId).toBeTruthy();
-			expect(gated.feedbackFormId).toBeNull();
+			if (!gated.gated) throw new Error('expected gated');
+			expect(gated.kind).toBe('group');
+			expect(gated.formId).toBeTruthy();
 
-			await sophieServices.feedback.submitGroupFeedback(gated.groupFeedbackFormId!, {
+			await sophieServices.feedback.submitGroupFeedback(gated.formId, {
 				meet_again: true
 			});
 
 			const after = await sophieServices.gate.checkGate(SOPHIE.id);
 			expect(after.gated).toBe(false);
-			expect(after.groupFeedbackFormId).toBeNull();
-			expect(after.feedbackFormId).toBeNull();
 		});
 	});
 
