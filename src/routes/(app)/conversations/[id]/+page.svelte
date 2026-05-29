@@ -161,14 +161,17 @@
 		}
 	}
 
-	async function acceptInvitation(invitationId: string) {
+	async function acceptInvitation(invitationId: string, slotId: string) {
 		acceptingId = invitationId;
 		acceptError = '';
 		try {
 			const res = await fetch(`/api/invitations/${invitationId}/accept`, { method: 'POST' });
 			if (res.ok) {
 				const { meetingId } = await res.json();
-				capture('invitation_accepted');
+				// Carry the slot identity so realized group size per slot is derivable
+				// (a gathering is the set of accepted meetings sharing one slot).
+				// See docs/group-conversations-metrics.md.
+				capture('invitation_accepted', { slot_id: slotId });
 				goto(`/meetings/${meetingId}`);
 			} else {
 				const err = await res.json().catch(() => ({}));
@@ -573,7 +576,7 @@
 										<button class="btn-text btn-text--danger" onclick={() => openDecline(invitation.id)} disabled={acceptingId === invitation.id}>
 											{copy.conversation.decline}
 										</button>
-										<button class="btn-primary" onclick={() => acceptInvitation(invitation.id)} disabled={acceptingId === invitation.id}>
+										<button class="btn-primary" onclick={() => acceptInvitation(invitation.id, invitation.slot_id)} disabled={acceptingId === invitation.id}>
 											{acceptingId === invitation.id ? copy.common.accepting : copy.common.accept}
 										</button>
 									</div>
@@ -620,7 +623,7 @@
 									<button class="btn-text btn-text--danger" onclick={() => openDecline(inv.id)} disabled={acceptingId === inv.id}>
 										{copy.conversation.decline}
 									</button>
-									<button class="btn-primary" onclick={() => acceptInvitation(inv.id)} disabled={acceptingId === inv.id}>
+									<button class="btn-primary" onclick={() => acceptInvitation(inv.id, inv.slot_id)} disabled={acceptingId === inv.id}>
 										{acceptingId === inv.id ? copy.common.accepting : copy.common.accept}
 									</button>
 								</div>
