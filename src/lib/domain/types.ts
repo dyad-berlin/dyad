@@ -25,6 +25,9 @@ export interface Prompt {
 	published_at: string | null;
 	hidden_at: string | null;
 	audience_scope: string | null;
+	// Max joiners per slot. null = legacy unlimited; 1 = one-on-one; 2-7 = group
+	// (up to 8 total incl. author). Set at first publish, immutable thereafter.
+	capacity: number | null;
 	created_at: string;
 	updated_at: string;
 }
