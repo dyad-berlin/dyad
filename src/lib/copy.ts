@@ -155,10 +155,21 @@ export const copy = {
 		// Conversation size / capacity (shown to responders near the times).
 		sizeOneOnOne: 'one-on-one',
 		sizeGroup: (others: number) => `small group · up to ${others} other${others === 1 ? '' : 's'}`,
-		// Author's slot-centric participant view: who's nested under each offered time.
-		confirmedSublabel: 'confirmed',
+		// Author's response-spine view: each response carries a quiet status line,
+		// referencing its slot by day + neighbourhood only (the exact place lives
+		// once in "Times you offered"). slotRef is pre-formatted "day · neighbourhood".
+		responsesHeading: 'Responses',
+		statusConfirmed: (slotRef: string | null) => (slotRef ? `confirmed · ${slotRef}` : 'confirmed'),
+		statusWantsToMeet: (slotRef: string | null) => (slotRef ? `wants to meet · ${slotRef}` : 'wants to meet'),
+		statusNoTimeChosen: 'no time chosen yet',
 		participantCancelled: 'cancelled',
-		responsesNoTimeHeading: 'Responded, no time chosen',
+		// Fill summary beside each offered time. "open" when no one is on it yet.
+		slotFillLabel: (confirmed: number, pending: number) => {
+			const parts: string[] = [];
+			if (confirmed > 0) parts.push(`${confirmed} confirmed`);
+			if (pending > 0) parts.push(`${pending} pending`);
+			return parts.length ? parts.join(' · ') : 'open';
+		},
 		// Surfaced to the author when accepting a joiner fails because the slot
 		// is at capacity (or the invitation is otherwise no longer acceptable).
 		conversationFull: 'This conversation is full or no longer available.',

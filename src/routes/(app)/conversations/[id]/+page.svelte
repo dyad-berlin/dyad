@@ -309,45 +309,122 @@
 		} catch { actionError = copy.common.networkError; }
 	}
 
-	// ── Author view: slot-centric grouping ──────────────────────────────────
-	// Each offered time is shown once, with its participants nested under it.
-	// Unifies one-on-one (a slot with ≤1 participant) and small group (≤N) — no
-	// separate "meeting card per response" repeating the slot's time/place. A
-	// response (comment) attaches to the conversation, not a slot — the slot link
-	// comes via the invitation — so responders who haven't requested a time are
-	// listed on their own, below the times.
+	// ── Author view: response-spine model ───────────────────────────────────
+	// The author's page is the set of RESPONSES to their conversation; each
+	// response is the context for a (potential or actual) meeting. The schedule
+	// annotates each response with a status — it never becomes the spine, so a
+	// member's words stay visible whatever their meeting status. The exact
+	// time/place lives once in "Times you offered"; status lines reference a slot
+	// by day + neighbourhood only. One shape serves one-on-one and small group.
 	const ACTIVE_MEETING_STATES = ['scheduled', 'awaiting_feedback'];
-	function confirmedOnSlot(slotId: string) {
-		return (data.promptMeetings ?? []).filter(
-			(m) => m.slot_id === slotId && ACTIVE_MEETING_STATES.includes(m.state)
-		);
+
+	type ResponseRow = {
+		key: string;
+		username: string;
+		body: string | null;
+		createdAt: string;
+		status: 'pending' | 'confirmed' | 'cancelled' | 'responded';
+		slotRef: string | null; // pre-formatted "day · neighbourhood"
+		meetingId: string | null;
+		invitationId: string | null;
+		slotId: string | null;
+		cancellationReason: string | null;
+	};
+
+	// Compact slot reference for a status line — day + neighbourhood, never the
+	// exact address (that lives once in "Times you offered").
+	function slotRef(iso: string | undefined | null, area: string | null | undefined): string | null {
+		if (!iso) return null;
+		return area ? `${formatDate(iso)} · ${area}` : formatDate(iso);
 	}
-	function cancelledOnSlot(slotId: string) {
-		return (data.promptMeetings ?? []).filter(
-			(m) => m.slot_id === slotId && (m.state === 'cancelled_early' || m.state === 'cancelled_late')
-		);
+
+	// Fill summary per offered slot, shown beside the slot in "Times you offered".
+	function slotFill(slotId: string): { confirmed: number; pending: number } {
+		const meetings = data.promptMeetings ?? [];
+		const invites = data.receivedInvitations ?? [];
+		return {
+			confirmed: meetings.filter((m) => m.slot_id === slotId && ACTIVE_MEETING_STATES.includes(m.state)).length,
+			pending: invites.filter((inv) => inv.slot_id === slotId && inv.state === 'pending').length
+		};
 	}
-	function pendingOnSlot(slotId: string) {
-		return (data.receivedInvitations ?? []).filter((inv) => inv.slot_id === slotId && inv.state === 'pending');
-	}
-	function responseBodyFor(inviterId: string): string | null {
-		return data.comments.find((c) => c.author_id === inviterId)?.body ?? null;
-	}
-	// Responders who wrote a response but haven't requested any time (no invitation).
-	let respondersWithoutTime = $derived(
-		data.comments.filter(
-			(c) => !(data.receivedInvitations ?? []).some((inv) => inv.inviter_id === c.author_id)
-		)
-	);
-	// Pending invitations on a time the author no longer offers (slot removed or
-	// expired). They have no slot to nest under, but the author must still be able
-	// to accept/decline them — surface them in their own block rather than dropping.
-	let availableSlotIds = $derived(new Set(data.prompt.available_slots.map((s) => s.id)));
-	let orphanPending = $derived(
-		(data.receivedInvitations ?? []).filter(
-			(inv) => inv.state === 'pending' && !availableSlotIds.has(inv.slot_id)
-		)
-	);
+
+	// One row per responder, tagged with meeting status by precedence:
+	// active meeting → pending invitation → cancelled meeting → responded(no time).
+	// (Meetings carry partner_username, not an id, so confirmed/cancelled match by
+	// username; pending matches the invitation by inviter_id.)
+	let responseRows = $derived.by<ResponseRow[]>(() => {
+		const meetings = data.promptMeetings ?? [];
+		const invites = data.receivedInvitations ?? [];
+		const rows: ResponseRow[] = [];
+
+		for (const c of data.comments) {
+			const confirmed = meetings.find(
+				(m) => m.partner_username === c.author_username && ACTIVE_MEETING_STATES.includes(m.state)
+			);
+			const pending = invites.find((inv) => inv.inviter_id === c.author_id && inv.state === 'pending');
+			const cancelled = meetings.find(
+				(m) =>
+					m.partner_username === c.author_username &&
+					(m.state === 'cancelled_early' || m.state === 'cancelled_late')
+			);
+
+			const row: ResponseRow = {
+				key: c.author_id,
+				username: c.author_username ?? 'anonymous',
+				body: c.body,
+				createdAt: c.created_at,
+				status: 'responded',
+				slotRef: null,
+				meetingId: null,
+				invitationId: null,
+				slotId: null,
+				cancellationReason: null
+			};
+			if (confirmed) {
+				row.status = 'confirmed';
+				row.slotRef = slotRef(confirmed.scheduled_time, confirmed.general_area);
+				row.meetingId = confirmed.id;
+			} else if (pending) {
+				row.status = 'pending';
+				row.slotRef = slotRef(pending.slot_start_time, pending.slot_general_area);
+				row.invitationId = pending.id;
+				row.slotId = pending.slot_id;
+			} else if (cancelled) {
+				row.status = 'cancelled';
+				row.slotRef = slotRef(cancelled.scheduled_time, cancelled.general_area);
+				row.cancellationReason = cancelled.cancellation_reason;
+			}
+			rows.push(row);
+		}
+
+		// Edge: an invitation whose inviter wrote no comment (rare — response-first
+		// flow). Surface it so the author can still act on it.
+		for (const inv of invites) {
+			if (data.comments.some((c) => c.author_id === inv.inviter_id)) continue;
+			rows.push({
+				key: `inv:${inv.id}`,
+				username: inv.inviter_username,
+				body: inv.comment_body,
+				createdAt: inv.created_at,
+				status: inv.state === 'pending' ? 'pending' : 'confirmed',
+				slotRef: slotRef(inv.slot_start_time, inv.slot_general_area),
+				meetingId: null,
+				invitationId: inv.state === 'pending' ? inv.id : null,
+				slotId: inv.slot_id,
+				cancellationReason: null
+			});
+		}
+
+		// Actionable-first (pending), stable chronological within each group:
+		// pending oldest-first (longest-waiting on top); everyone else newest-first.
+		const rank = (r: ResponseRow) => (r.status === 'pending' ? 0 : 1);
+		return rows.sort((a, b) => {
+			if (rank(a) !== rank(b)) return rank(a) - rank(b);
+			const at = new Date(a.createdAt).getTime();
+			const bt = new Date(b.createdAt).getTime();
+			return rank(a) === 0 ? at - bt : bt - at;
+		});
+	});
 </script>
 
 <svelte:head>
@@ -426,17 +503,14 @@
 			{/if}
 		{/snippet}
 
-		<!-- Slot-centric author view: each offered time once, participants nested
-		     under it. Confirmed joiners link to their meeting; pending requests get
-		     accept/decline inline; the meeting time/place is never repeated per
-		     participant. Same shape serves one-on-one (≤1 joiner) and small group. -->
+		<!-- Times you offered: the schedule reference. Each offered time is shown
+		     once (the exact place lives here, never per response) with a quiet fill
+		     summary. Editing happens via the FloatingNav "change times" action. -->
 		{#if data.prompt.available_slots.length > 0}
 			<section class="my-summary">
 				<p class="section-label">{copy.conversation.myOfferedTimes}</p>
-				{#each data.prompt.available_slots as slot}
-					{@const confirmed = confirmedOnSlot(slot.id)}
-					{@const pending = pendingOnSlot(slot.id)}
-					{@const cancelled = cancelledOnSlot(slot.id)}
+				{#each data.prompt.available_slots as slot (slot.id)}
+					{@const fill = slotFill(slot.id)}
 					<div class="slot-group">
 						<SlotCard
 							startTime={slot.start_time}
@@ -447,64 +521,39 @@
 							occupied={occupiedOn(slot.id)}
 							capacity={data.prompt.capacity}
 						/>
-						{#if confirmed.length > 0 || pending.length > 0 || cancelled.length > 0}
-							<div class="slot-participants">
-								{#if confirmed.length > 0}
-									<p class="slot-confirmed">
-										<span class="participant-sublabel">{copy.conversation.confirmedSublabel}</span>
-										{#each confirmed as m, i}<a href="/meetings/{m.id}" class="participant-link">@{m.partner_username}</a>{#if i < confirmed.length - 1}, {/if}{/each}
-									</p>
-								{/if}
-								{#each pending as inv}
-									<div class="slot-pending">
-										<span class="response-meta">{copy.conversation.respondedBy(inv.inviter_username, formatDate(inv.created_at))}</span>
-										{#if responseBodyFor(inv.inviter_id) ?? inv.comment_body}<p class="participant-response">{responseBodyFor(inv.inviter_id) ?? inv.comment_body}</p>{/if}
-										{#if inv.message}<p class="inv-message">{inv.message}</p>{/if}
-										{@render inviteActions(inv.id, inv.slot_id)}
-									</div>
-								{/each}
-								{#each cancelled as m}
-									<p class="slot-cancelled">@{m.partner_username} · {copy.conversation.participantCancelled}{#if m.cancellation_reason}: {m.cancellation_reason}{/if}</p>
-								{/each}
-							</div>
+						<p class="slot-fill">{copy.conversation.slotFillLabel(fill.confirmed, fill.pending)}</p>
+					</div>
+				{/each}
+			</section>
+		{/if}
+
+		<!-- Responses: the spine. Every responder's words stay visible whatever
+		     their meeting status; a quiet status line annotates that status, and
+		     the slot's time/place is referenced (day + neighbourhood) — never
+		     reprinted. Pending requests are actionable inline; pending-first, then
+		     most-recent. One shape serves one-on-one and small group. -->
+		{#if responseRows.length > 0}
+			<section class="responses-received">
+				<p class="section-label">{copy.conversation.responsesHeading}</p>
+				{#each responseRows as row (row.key)}
+					<div class="response-card">
+						<span class="response-meta">{copy.conversation.respondedBy(row.username, formatDate(row.createdAt))}</span>
+						{#if row.body}<p class="response-body">{row.body}</p>{/if}
+						{#if row.status === 'pending'}
+							<p class="response-status">{copy.conversation.statusWantsToMeet(row.slotRef)}</p>
+							{@render inviteActions(row.invitationId ?? '', row.slotId ?? '')}
+						{:else if row.status === 'confirmed' && row.meetingId}
+							<a href="/meetings/{row.meetingId}" class="response-status response-status--link">{copy.conversation.statusConfirmed(row.slotRef)} →</a>
+						{:else if row.status === 'confirmed'}
+							<p class="response-status">{copy.conversation.statusConfirmed(row.slotRef)}</p>
+						{:else if row.status === 'cancelled'}
+							<p class="response-status response-status--muted">{copy.conversation.participantCancelled}{#if row.cancellationReason}: {row.cancellationReason}{/if}</p>
+						{:else}
+							<p class="response-status response-status--muted">{copy.conversation.statusNoTimeChosen}</p>
 						{/if}
 					</div>
 				{/each}
 				{#if acceptError}<p class="field-error">{acceptError}</p>{/if}
-			</section>
-		{/if}
-
-		<!-- Pending requests on times no longer offered — no slot to nest under, but
-		     still actionable. -->
-		{#if orphanPending.length > 0}
-			<section class="my-summary">
-				{#each orphanPending as inv}
-					<div class="slot-group">
-						<SlotCard startTime={inv.slot_start_time} durationMinutes={inv.slot_duration_minutes ?? 60} area={inv.slot_general_area} past />
-						<div class="slot-participants">
-							<div class="slot-pending">
-								<span class="response-meta">{copy.conversation.respondedBy(inv.inviter_username, formatDate(inv.created_at))}</span>
-								{#if responseBodyFor(inv.inviter_id) ?? inv.comment_body}<p class="participant-response">{responseBodyFor(inv.inviter_id) ?? inv.comment_body}</p>{/if}
-								{#if inv.message}<p class="inv-message">{inv.message}</p>{/if}
-								{@render inviteActions(inv.id, inv.slot_id)}
-							</div>
-						</div>
-					</div>
-				{/each}
-			</section>
-		{/if}
-
-		<!-- Responders who haven't requested a time. A response attaches to the
-		     conversation, not a slot, so these have nowhere to nest. -->
-		{#if respondersWithoutTime.length > 0}
-			<section class="responses-no-time">
-				<p class="section-label">{copy.conversation.responsesNoTimeHeading}</p>
-				{#each respondersWithoutTime as comment}
-					<div class="response-card">
-						<span class="response-meta">{copy.conversation.respondedBy(comment.author_username ?? 'anonymous', formatDate(comment.created_at))}</span>
-						<p class="response-body">{comment.body}</p>
-					</div>
-				{/each}
 			</section>
 		{/if}
 
@@ -691,8 +740,8 @@
 	.slots-section { margin-top: var(--space-4); margin-bottom: var(--space-6); }
 	.response-section { margin-top: var(--space-6); padding-top: var(--space-6); border-top: 1px solid var(--border-link); }
 
-	/* Author's offered times + nested participants. Quiet typography to match the
-	   page idiom — the section label sits like the existing .meta line. */
+	/* "Times you offered" — the compact schedule reference. Quiet typography to
+	   match the page idiom; the section label sits like the existing .meta line. */
 	.my-summary { margin-top: var(--space-6); }
 	.my-summary:first-of-type { padding-top: var(--space-6); border-top: 1px solid var(--border-link); }
 	.section-label {
@@ -794,31 +843,26 @@
 	.response-body { font-size: var(--text-base); margin: 0 0 var(--space-1); line-height: var(--leading-normal); }
 	.inv-message { font-size: var(--text-sm); color: var(--text-secondary); font-style: italic; margin: var(--space-2) 0 var(--space-3); }
 
-	/* Slot-centric author view: participants nested under each offered time. */
-	.slot-group { margin-bottom: var(--space-5); }
-	.slot-participants {
-		margin: var(--space-2) 0 0 var(--space-2);
-		padding-left: var(--space-4);
-		border-left: 2px solid var(--border-link);
-	}
-	.slot-confirmed {
-		font-size: var(--text-sm);
-		color: var(--text-secondary);
-		margin: var(--space-2) 0;
-		line-height: var(--leading-relaxed);
-	}
-	.participant-sublabel {
+	/* "Times you offered": each slot once + a quiet fill summary beneath it. */
+	.slot-group { margin-bottom: var(--space-4); }
+	.slot-fill {
 		font-family: var(--font-mono);
 		font-size: var(--text-xs);
-		text-transform: uppercase;
-		letter-spacing: 0.04em;
 		color: var(--text-muted);
-		margin-right: var(--space-2);
+		margin: var(--space-1) 0 0 var(--space-1);
 	}
-	.participant-link { color: var(--text-link); text-decoration: none; }
-	.participant-link:hover { text-decoration: underline; }
-	.slot-pending { margin: var(--space-3) 0; }
-	.participant-response { font-size: var(--text-base); margin: var(--space-1) 0; line-height: var(--leading-normal); }
-	.slot-cancelled { font-size: var(--text-sm); font-style: italic; color: var(--text-muted); margin: var(--space-2) 0; }
-	.responses-no-time { margin-top: var(--space-6); padding-top: var(--space-6); border-top: 1px solid var(--border-link); }
+
+	/* Responses: the spine. Single list; words always visible; a quiet status
+	   line annotates meeting state (no coloured badges — the accept/decline
+	   buttons are the actionability signal). */
+	.responses-received { margin-top: var(--space-6); padding-top: var(--space-6); border-top: 1px solid var(--border-link); }
+	.response-status {
+		font-family: var(--font-mono);
+		font-size: var(--text-xs);
+		color: var(--text-secondary);
+		margin: var(--space-2) 0 0;
+	}
+	.response-status--muted { color: var(--text-muted); }
+	.response-status--link { display: inline-block; text-decoration: none; color: var(--text-link); }
+	.response-status--link:hover { text-decoration: underline; }
 </style>
