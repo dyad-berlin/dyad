@@ -12,6 +12,23 @@
  *        <p>{copy.conversation.responsePlaceholder}</p>
  */
 
+/**
+ * Format a list of usernames as an @-tagged, human-readable phrase:
+ *   []                      → ''
+ *   ['tom']                 → '@tom'
+ *   ['tom','sophie']        → '@tom and @sophie'
+ *   ['tom','sophie','kai']  → '@tom, @sophie and 1 other'
+ * Used where a single meeting slot hosts a small group (multiple co-participants).
+ */
+function formatNameList(usernames: string[]): string {
+	const tagged = usernames.map((u) => `@${u}`);
+	if (tagged.length === 0) return '';
+	if (tagged.length === 1) return tagged[0];
+	if (tagged.length === 2) return `${tagged[0]} and ${tagged[1]}`;
+	const others = tagged.length - 2;
+	return `${tagged[0]}, ${tagged[1]} and ${others} ${others === 1 ? 'other' : 'others'}`;
+}
+
 export const copy = {
 	// ── Common — shared across multiple pages ───────────────────────────
 	common: {
@@ -107,6 +124,8 @@ export const copy = {
 		youResponded: (date: string) => `${date === 'just now' ? 'just now' : `on ${date}`}, you responded`,
 		invitationPending: (authorUsername: string) => `You have invited @${authorUsername}, waiting for them to confirm.`,
 		youMet: (username: string) => `You met @${username}`,
+		// Group gathering: a slot hosting multiple co-participants ("You met @tom and @sophie").
+		youMetMany: (usernames: string[]) => `You met ${formatNameList(usernames)}`,
 		withdrawInvitation: 'Withdraw invitation',
 		withdrawing: 'Withdrawing...',
 		withdrawFailed: 'Couldn\u2019t withdraw. Please try again.',
@@ -218,6 +237,10 @@ export const copy = {
 		viewConversation: 'View conversation',
 		wantsToMeet: (username: string) => `@${username} wants to meet`,
 		meetingWith: (username: string) => `Meeting with @${username}`,
+		// Group gathering: a slot hosting multiple co-participants
+		// ("Meeting with @tom and @sophie"). The author of a small-group
+		// conversation sees everyone confirmed on the slot here.
+		meetingWithMany: (usernames: string[]) => `Meeting with ${formatNameList(usernames)}`,
 		meetingCancelled: 'Meeting cancelled',
 		meetingCancelledBy: (username: string) => `@${username} cancelled this meeting`,
 		meetingCancelledByYou: 'You cancelled this meeting',

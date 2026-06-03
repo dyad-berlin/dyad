@@ -139,7 +139,7 @@
 
 <div class="content">
 	<div class="meeting-header">
-		<span class="meeting-with">{copy.profile.meetingWith(data.otherUsername)}</span>
+		<span class="meeting-with">{data.coParticipants.length > 1 ? copy.profile.meetingWithMany(data.coParticipants) : copy.profile.meetingWith(data.otherUsername)}</span>
 		{#if data.meeting.state === 'scheduled'}
 			<button class="calendar-link" onclick={handleAddToCalendar}>{copy.meeting.addToCalendar}</button>
 		{/if}

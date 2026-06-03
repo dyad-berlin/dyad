@@ -105,6 +105,7 @@
 			duration_minutes: number;
 			general_area: string | null;
 			partner_username: string;
+			partner_usernames: string[];
 			state: string;
 			cancelled_by_me: boolean;
 			cancelled_by_username: string | null;
@@ -130,6 +131,7 @@
 			duration_minutes: m.duration_minutes,
 			general_area: m.general_area,
 			partner_username: m.partner_username,
+			partner_usernames: m.partner_usernames ?? [m.partner_username],
 			state: m.state,
 			cancelled_by_me: m.cancelled_by_me,
 			cancelled_by_username: m.cancelled_by_username
@@ -376,6 +378,7 @@
 								{@const isCancelled = item.meeting.state === 'cancelled_early' || item.meeting.state === 'cancelled_late'}
 								<MeetingCard
 									partnerUsername={item.meeting.partner_username}
+									partnerUsernames={item.meeting.partner_usernames}
 									scheduledTime={item.meeting.scheduled_time}
 									durationMinutes={item.meeting.duration_minutes}
 									generalArea={item.meeting.general_area}
@@ -409,6 +412,7 @@
 							{@const isCancelled = item.meeting.state === 'cancelled_early' || item.meeting.state === 'cancelled_late'}
 							<MeetingCard
 								partnerUsername={item.meeting.partner_username}
+								partnerUsernames={item.meeting.partner_usernames}
 								scheduledTime={item.meeting.scheduled_time}
 								durationMinutes={item.meeting.duration_minutes}
 								generalArea={item.meeting.general_area}
