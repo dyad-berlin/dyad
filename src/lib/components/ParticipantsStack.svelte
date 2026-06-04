@@ -93,8 +93,8 @@
 	class="avatar-row"
 	role="list"
 	aria-label={self
-		? `you and ${identified.length + anonymousCount - 1} other${identified.length + anonymousCount - 1 === 1 ? '' : 's'} joining`
-		: `${identified.length + anonymousCount} joining`}
+		? copy.common.roomWithYou(identified.length + anonymousCount - 1)
+		: copy.common.roomSize(identified.length + anonymousCount)}
 >
 	{#each visible as p, i (p.id)}
 		<!-- The self pin's circle says "you"; its hover handle shows the member's
@@ -146,7 +146,7 @@
 		<div
 			class="avatar-overflow"
 			style="z-index: 0;"
-			aria-label="{overflow} more joining"
+			aria-label={copy.common.moreJoining(overflow)}
 		>
 			<span>+{overflow}</span>
 		</div>

@@ -39,6 +39,10 @@ export const copy = {
 		you: 'you',
 		// Hover handle on the anonymised pins — how many, never who.
 		nOthers: (n: number) => `${n} other${n === 1 ? '' : 's'}`,
+		// Screen-reader labels for a participants stack.
+		roomWithYou: (others: number) => `you and ${others} other${others === 1 ? '' : 's'} joining`,
+		roomSize: (n: number) => `${n} joining`,
+		moreJoining: (n: number) => `${n} more joining`,
 		// Tail of a linkified name list ("@a, @b and 2 others") — the names are
 		// rendered as UserHandle links, so the string is decomposed into parts.
 		andNOthers: (n: number) => `and ${n} other${n === 1 ? '' : 's'}`,
