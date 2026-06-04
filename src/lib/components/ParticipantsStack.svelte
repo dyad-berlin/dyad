@@ -23,8 +23,9 @@
 	interface Props {
 		/** Identified pins — only ever passed when RLS yielded identities. */
 		participants?: StackParticipant[];
-		/** The viewer's own seat, rendered as their identified (non-link) pin. */
-		self?: { name: string } | null;
+		/** The viewer's own seat, rendered as their identified pin (linked when
+		 *  href is given — e.g. their own /users page). */
+		self?: { name: string; href?: string } | null;
 		/** Anonymised seats beyond the identified ones — count only, no identity. */
 		anonymousCount?: number;
 		maxVisible?: number;
@@ -39,7 +40,7 @@
 	// others; anonymous circles take whatever room remains; everything else
 	// folds into the "+N" overflow.
 	let identified = $derived(
-		self ? [{ id: 'self', name: self.name, isSelf: true }, ...participants] : participants
+		self ? [{ id: 'self', name: self.name, href: self.href, isSelf: true }, ...participants] : participants
 	);
 	let layout = $derived(deriveStackLayout(identified.length, anonymousCount, MAX_SHOWN));
 	let visible = $derived(identified.slice(0, layout.visibleCount));

@@ -374,21 +374,25 @@
 						>
 							{#if item.meeting}
 								{@const isCancelled = item.meeting.state === 'cancelled_early' || item.meeting.state === 'cancelled_late'}
-								<SlotCard
-									tone="meeting"
-									startTime={item.meeting.scheduled_time}
-									durationMinutes={item.meeting.duration_minutes}
-									area={item.meeting.general_area ?? ''}
-									exactLocation={item.meeting.exact_location}
-									cancelledByMe={isCancelled && item.meeting.cancelled_by_me}
-									cancelledByUsername={isCancelled && !item.meeting.cancelled_by_me ? (item.meeting.cancelled_by_username ?? item.meeting.partner_username) : null}
-								>
-									<ParticipantsStack
-										self={{ name: data.username || copy.common.you }}
-										participants={item.meeting.partner_usernames.map((name) => ({ id: name, name }))}
-										anonymousCount={item.meeting.anonymous_count}
-									/>
-								</SlotCard>
+								<!-- Renders outside the row's link (ConversationCard shell):
+								     the row opens the conversation, this card the meeting. -->
+								<a href="/meetings/{item.meeting.id}" class="meeting-card-link">
+									<SlotCard
+										tone="meeting"
+										startTime={item.meeting.scheduled_time}
+										durationMinutes={item.meeting.duration_minutes}
+										area={item.meeting.general_area ?? ''}
+										exactLocation={item.meeting.exact_location}
+										cancelledByMe={isCancelled && item.meeting.cancelled_by_me}
+										cancelledByUsername={isCancelled && !item.meeting.cancelled_by_me ? (item.meeting.cancelled_by_username ?? item.meeting.partner_username) : null}
+									>
+										<ParticipantsStack
+											self={{ name: data.username || copy.common.you }}
+											participants={item.meeting.partner_usernames.map((name) => ({ id: name, name }))}
+											anonymousCount={item.meeting.anonymous_count}
+										/>
+									</SlotCard>
+								</a>
 							{/if}
 						</ConversationCard>
 					</div>
@@ -414,21 +418,25 @@
 					>
 						{#if item.meeting}
 							{@const isCancelled = item.meeting.state === 'cancelled_early' || item.meeting.state === 'cancelled_late'}
-							<SlotCard
-								tone="meeting"
-								startTime={item.meeting.scheduled_time}
-								durationMinutes={item.meeting.duration_minutes}
-								area={item.meeting.general_area ?? ''}
-								exactLocation={item.meeting.exact_location}
-								cancelledByMe={isCancelled && item.meeting.cancelled_by_me}
-								cancelledByUsername={isCancelled && !item.meeting.cancelled_by_me ? (item.meeting.cancelled_by_username ?? item.meeting.partner_username) : null}
-							>
-								<ParticipantsStack
-									self={{ name: data.username || copy.common.you }}
-									participants={item.meeting.partner_usernames.map((name) => ({ id: name, name }))}
-									anonymousCount={item.meeting.anonymous_count}
-								/>
-							</SlotCard>
+							<!-- Renders outside the row's link (ConversationCard shell):
+							     the row opens the conversation, this card the meeting. -->
+							<a href="/meetings/{item.meeting.id}" class="meeting-card-link">
+								<SlotCard
+									tone="meeting"
+									startTime={item.meeting.scheduled_time}
+									durationMinutes={item.meeting.duration_minutes}
+									area={item.meeting.general_area ?? ''}
+									exactLocation={item.meeting.exact_location}
+									cancelledByMe={isCancelled && item.meeting.cancelled_by_me}
+									cancelledByUsername={isCancelled && !item.meeting.cancelled_by_me ? (item.meeting.cancelled_by_username ?? item.meeting.partner_username) : null}
+								>
+									<ParticipantsStack
+										self={{ name: data.username || copy.common.you }}
+										participants={item.meeting.partner_usernames.map((name) => ({ id: name, name }))}
+										anonymousCount={item.meeting.anonymous_count}
+									/>
+								</SlotCard>
+							</a>
 						{/if}
 					</ConversationCard>
 				{/each}
@@ -653,4 +661,14 @@
 		display: flex;
 		flex-direction: column;
 	}
+
+	/* Gathering card inside a row shell — its own link to the meeting, with
+	   the link chrome stripped so the card reads as a card. */
+	.meeting-card-link {
+		display: block;
+		text-decoration: none;
+		color: inherit;
+		transition: opacity 0.15s;
+	}
+	.meeting-card-link:hover { opacity: var(--opacity-hover-card); }
 </style>

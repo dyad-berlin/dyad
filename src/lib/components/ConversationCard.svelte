@@ -124,24 +124,30 @@
 			{/if}
 		</div>
 	</div>
+{/snippet}
+
+<!-- Children (e.g. the gathering card) render INSIDE the shell but OUTSIDE the
+     row's link, so nested content can carry its own link target — clicking the
+     row goes to the conversation; clicking the nested card goes wherever it
+     points. -->
+<div class="card-shell" class:profile={variant === 'profile'}>
+	{#if href}
+		<a {href} class="card" class:dimmed>
+			{@render inner()}
+		</a>
+	{:else if onclick}
+		<button type="button" class="card" class:dimmed {onclick}>
+			{@render inner()}
+		</button>
+	{:else}
+		<div class="card" class:dimmed>
+			{@render inner()}
+		</div>
+	{/if}
 	{#if children}
 		{@render children()}
 	{/if}
-{/snippet}
-
-{#if href}
-	<a {href} class="card" class:dimmed class:profile={variant === 'profile'}>
-		{@render inner()}
-	</a>
-{:else if onclick}
-	<button type="button" class="card" class:dimmed class:profile={variant === 'profile'} {onclick}>
-		{@render inner()}
-	</button>
-{:else}
-	<div class="card" class:dimmed class:profile={variant === 'profile'}>
-		{@render inner()}
-	</div>
-{/if}
+</div>
 
 <style>
 	.card {
@@ -157,10 +163,10 @@
 		font: inherit;
 		transition: opacity 0.15s;
 	}
-	.card.profile {
+	.card-shell.profile {
 		border-bottom: 1px solid var(--border-link);
 	}
-	.card.profile:last-child { border-bottom: none; }
+	.card-shell.profile:last-child { border-bottom: none; }
 	/* Hover affordance fades the row (thumb + title) only — nested content like
 	   the gathering card stays steady, so the whole block doesn't blink. */
 	a.card:hover .row,

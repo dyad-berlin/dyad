@@ -2,6 +2,8 @@
 	import { goto } from '$app/navigation';
 	import FloatingNav from '$lib/components/FloatingNav.svelte';
 	import ParticipantsStack from '$lib/components/ParticipantsStack.svelte';
+	import ConversationCard from '$lib/components/ConversationCard.svelte';
+	import UserHandle from '$lib/components/UserHandle.svelte';
 	import { generateICS, downloadICS } from '$lib/utils/calendar.js';
 	import { formatShortDate } from '$lib/utils/dates.js';
 	import { othersBeyond } from '$lib/domain/gathering.js';
@@ -10,6 +12,12 @@
 	import { copy } from '$lib/copy';
 
 	let { data }: { data: PageData } = $props();
+
+	// Heading name list — first two named, the rest folded (mirrors copy's
+	// formatNameList, but with linkable handles).
+	const shownNames = $derived(data.coParticipants.slice(0, 2));
+	const foldedCount = $derived(data.coParticipants.length - shownNames.length);
+
 	let cancelling = $state(false);
 	let cancelDialog = $state<HTMLDialogElement | undefined>();
 	let cancelReason = $state('');
@@ -137,24 +145,29 @@
 
 <div class="content">
 	<div class="meeting-header">
-		<span class="meeting-with">{data.coParticipants.length > 1 ? copy.profile.meetingWithMany(data.coParticipants) : copy.profile.meetingWith(data.otherUsername)}</span>
+		<!-- Same name-list shape as copy's formatNameList (first two named, the
+		     rest folded into "and N others"), with each handle linked. -->
+		<span class="meeting-with">
+			{copy.profile.meetingWithPrefix}
+			<UserHandle username={shownNames[0]} />{#if shownNames.length === 2}{#if foldedCount > 0},{:else}&nbsp;and{/if}
+				<UserHandle username={shownNames[1]} />{/if}
+			{#if foldedCount > 0}{copy.common.andNOthers(foldedCount)}{/if}
+		</span>
 	</div>
 
 	{#if data.prompt}
-		<a href="/conversations/{data.prompt.id}" class="prompt-item">
-			<div class="prompt-row">
-				<div class="row-thumb">
-					{#if data.prompt.cover_image_url}
-						<img src={data.prompt.cover_image_url} alt="" class="thumb-img" />
-					{:else}
-						<div class="thumb-placeholder"></div>
-					{/if}
-				</div>
-				<div class="row-body">
-					<h3 class="row-title">{data.prompt.title || copy.common.untitled}</h3>
-				</div>
-			</div>
-		</a>
+		<!-- Same row component as the conversation lists — one card, everywhere.
+		     The whole row is the link, so the author reads as text inside it. -->
+		{@const promptAuthor = data.isPromptAuthor ? data.username : data.otherUsername}
+		<div class="prompt-link">
+			<ConversationCard
+				variant="profile"
+				title={data.prompt.title || copy.common.untitled}
+				coverUrl={data.prompt.cover_image_url}
+				href="/conversations/{data.prompt.id}"
+				authorUsername={promptAuthor || null}
+			/>
+		</div>
 	{/if}
 
 	<!-- This page IS the meeting — details laid out as page content, not the
@@ -162,11 +175,14 @@
 	     inside its own destination reads as a circular link). -->
 	{#if data.cancellation}
 		<p class="cancelled-status">
-			{data.cancellation.cancelledByMe
-				? copy.profile.meetingCancelledByYou
-				: data.cancellation.cancelledByUsername
-					? copy.profile.meetingCancelledBy(data.cancellation.cancelledByUsername)
-					: copy.profile.meetingCancelled}
+			{#if data.cancellation.cancelledByMe}
+				{copy.profile.meetingCancelledByYou}
+			{:else if data.cancellation.cancelledByUsername}
+				<UserHandle username={data.cancellation.cancelledByUsername} />
+				{copy.profile.cancelledThisMeetingSuffix}
+			{:else}
+				{copy.profile.meetingCancelled}
+			{/if}
 		</p>
 		{#if data.cancellation.reason}
 			<blockquote class="cancelled-reason">{data.cancellation.reason}</blockquote>
@@ -211,15 +227,16 @@
 			<div class="detail-row detail-row--who">
 				<span class="label">{copy.meeting.who}</span>
 				<div class="value">
+					<!-- Pins link to member pages — usernames navigate consistently. -->
 					{#if data.isPromptAuthor}
 						<ParticipantsStack
-							self={{ name: data.username || copy.common.you }}
-							participants={data.gathering.map((p) => ({ id: p.meetingId, name: p.username, href: `/meetings/${p.meetingId}` }))}
+							self={{ name: data.username || copy.common.you, href: data.username ? `/users/${data.username}` : undefined }}
+							participants={data.gathering.map((p) => ({ id: p.meetingId, name: p.username, href: `/users/${p.username}` }))}
 						/>
 					{:else}
 						<ParticipantsStack
-							self={{ name: data.username || copy.common.you }}
-							participants={[{ id: 'host', name: data.otherUsername }]}
+							self={{ name: data.username || copy.common.you, href: data.username ? `/users/${data.username}` : undefined }}
+							participants={[{ id: 'host', name: data.otherUsername, href: `/users/${data.otherUsername}` }]}
 							anonymousCount={othersBeyond(data.slotOccupied, 1)}
 						/>
 					{/if}
@@ -232,9 +249,13 @@
 		<div class="invitation-note">
 			<!-- Same attribution idiom as the conversation page's response lines. -->
 			<span class="note-label">
-				{data.invitationFromMe
-					? copy.conversation.youWrote(formatShortDate(data.invitationCreatedAt ?? data.meeting.scheduled_time))
-					: copy.conversation.respondedBy(data.otherUsername, formatShortDate(data.invitationCreatedAt ?? data.meeting.scheduled_time))}
+				{#if data.invitationFromMe}
+					{copy.conversation.youWrote(formatShortDate(data.invitationCreatedAt ?? data.meeting.scheduled_time))}
+				{:else}
+					{copy.conversation.respondedByPrefix(formatShortDate(data.invitationCreatedAt ?? data.meeting.scheduled_time))}
+					<UserHandle username={data.otherUsername} />
+					{copy.conversation.wroteSuffix}
+				{/if}
 			</span>
 			<p class="note-body">{data.invitationMessage}</p>
 		</div>
@@ -417,11 +438,10 @@
 	.note-label { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--text-muted); display: block; margin-bottom: var(--space-1); }
 	.note-body { font-size: var(--text-md); line-height: var(--leading-normal); margin: 0; font-style: italic; color: var(--text-secondary); }
 
-	.prompt-item { display: block; border: 1px solid var(--border-link); border-radius: var(--radius-card); margin-bottom: var(--space-6); transition: opacity 0.15s; }
-	.prompt-item:hover { opacity: var(--opacity-hover-card); }
-	/* .row-thumb, .thumb-img, .row-body, .row-title, .row-status — shared.css */
-	.prompt-row { padding: var(--space-4); }
-	.thumb-placeholder { position: absolute; inset: 0; background: var(--bg-control); }
+	/* The conversation row (shared ConversationCard) gets breathing room and no
+	   list-row underline on this standalone surface. */
+	.prompt-link { margin-bottom: var(--space-4); }
+	.prompt-link :global(.card.profile) { border-bottom: none; }
 
 	/* Feedback status */
 	.feedback-status { margin-bottom: var(--space-6); padding: var(--space-4); border: 1px solid var(--border-link); border-radius: var(--radius-card); }

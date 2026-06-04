@@ -39,6 +39,9 @@ export const copy = {
 		you: 'you',
 		// Hover handle on the anonymised pins — how many, never who.
 		nOthers: (n: number) => `${n} other${n === 1 ? '' : 's'}`,
+		// Tail of a linkified name list ("@a, @b and 2 others") — the names are
+		// rendered as UserHandle links, so the string is decomposed into parts.
+		andNOthers: (n: number) => `and ${n} other${n === 1 ? '' : 's'}`,
 		save: 'Save',
 		send: 'Send',
 		back: 'Back',
@@ -120,6 +123,9 @@ export const copy = {
 		responseSent: 'response sent',
 		youWrote: (date: string) => `on ${date}, you wrote`,
 		respondedBy: (username: string, date: string) => `on ${date}, @${username} wrote`,
+		// Decomposed variant for linkified rendering: prefix + <UserHandle> + suffix.
+		respondedByPrefix: (date: string) => `on ${date},`,
+		wroteSuffix: 'wrote',
 		youResponded: (date: string) => `${date === 'just now' ? 'just now' : `on ${date}`}, you responded`,
 		invitationPending: (authorUsername: string) => `You have invited @${authorUsername}, waiting for them to confirm.`,
 		withdrawInvitation: 'Withdraw invitation',
@@ -236,6 +242,10 @@ export const copy = {
 		meetingCancelled: 'Meeting cancelled',
 		meetingCancelledBy: (username: string) => `@${username} cancelled this meeting`,
 		meetingCancelledByYou: 'You cancelled this meeting',
+		// Decomposed parts for linkified rendering: 'Meeting with' + <UserHandle>
+		// links, and <UserHandle> + 'cancelled this meeting'.
+		meetingWithPrefix: 'Meeting with',
+		cancelledThisMeetingSuffix: 'cancelled this meeting',
 		feedbackDue: 'Feedback due',
 		youStarted: 'You started',
 		youRespondedTab: 'You responded',

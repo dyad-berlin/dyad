@@ -9,6 +9,7 @@
 	import { capture } from '$lib/analytics';
 	import { copy } from '$lib/copy';
 	import ParticipantsStack from '$lib/components/ParticipantsStack.svelte';
+	import UserHandle from '$lib/components/UserHandle.svelte';
 	import { formatShortDate as formatDate } from '$lib/utils/dates.js';
 	import { buildResponseRows, ACTIVE_MEETING_STATES } from '$lib/domain/response-rows.js';
 
@@ -422,11 +423,13 @@
 							exactLocation={slot.exact_location ?? null}
 						>
 							{#if joining.length > 0}
+								<!-- Pins link to member pages; each pair's meeting stays
+								     reachable via the response rows' status links below. -->
 								<ParticipantsStack
 									participants={joining.map((m) => ({
 										id: m.id,
 										name: m.partner_username ?? 'anonymous',
-										href: `/meetings/${m.id}`
+										href: m.partner_username ? `/users/${m.partner_username}` : undefined
 									}))}
 								/>
 							{/if}
@@ -446,7 +449,11 @@
 				<p class="section-label">{copy.conversation.responsesHeading}</p>
 				{#each responseRows as row (row.key)}
 					<div class="response-card">
-						<span class="response-meta">{copy.conversation.respondedBy(row.username, formatDate(row.createdAt))}</span>
+						<span class="response-meta">
+							{copy.conversation.respondedByPrefix(formatDate(row.createdAt))}
+							<UserHandle username={row.username} />
+							{copy.conversation.wroteSuffix}
+						</span>
 						{#if row.body}<p class="response-body">{row.body}</p>{/if}
 						{#if row.status === 'pending'}
 							{#if row.message}<p class="inv-message">{row.message}</p>{/if}
