@@ -208,6 +208,27 @@ export async function notifyMeetingCancelled(params: {
 	});
 }
 
+/** Whole-gathering cancellation: the host called the time off — group-framed
+ *  body (the recipient's pair-meeting link still works for the record). */
+export async function notifyGatheringCancelled(params: {
+	joinerUserId: string;
+	meetingId: string;
+	reason?: string | null;
+}): Promise<void> {
+	const reasonBlock = params.reason
+		? `<blockquote style="margin: 0 0 ${space[6]}; padding: ${space[3]} ${space[4]}; background: #f7f4ee; border-left: 3px solid #c8c2b6; font-style: italic; color: ${color.textSecondary}; white-space: pre-wrap;">${escapeHtml(params.reason)}</blockquote>`
+		: '';
+	await dispatch({
+		userId: params.joinerUserId,
+		subject: 'A gathering was called off',
+		bodyHtml: `
+			<p>The host called off the gathering — this time is no longer happening.</p>
+			${reasonBlock}
+			<p><a href="${meetingLink(params.meetingId)}" style="color: ${color.textPrimary}; font-weight: bold; text-decoration: underline;">See the details</a></p>
+		`
+	});
+}
+
 // Multi-invite courtesy: when a new accept lands on a slot that already has
 // other accepted participants. Off by default. The flag stays unset until the
 // product decision is made.

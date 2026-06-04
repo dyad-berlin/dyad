@@ -24,6 +24,17 @@
 	let cancelError = $state('');
 	let cancelErrorRef = $state<string | null>(null);
 
+	// Group-aware cancellation. Three dialog shapes:
+	//   joiner in a group  — "leave" framing (the gathering continues);
+	//   author, ≥2 joiners — a scope choice: one seat vs the whole gathering;
+	//   1:1 (either role)  — today's pair framing.
+	// Scope defaults to the least destructive option (this seat only).
+	let cancelScope = $state<'pair' | 'gathering'>('pair');
+	const isGroupGathering = $derived(data.slotOccupied > 1);
+	const authorChoosesScope = $derived(data.isPromptAuthor && data.gathering.length >= 2);
+	const joinerLeaving = $derived(!data.isPromptAuthor && isGroupGathering);
+	const gatheringNames = $derived(data.gathering.map((p) => p.username));
+
 	// Interim safety floor: report a problem about this gathering to moderators.
 	let reportDialog = $state<HTMLDialogElement | undefined>();
 	let reportText = $state('');
@@ -44,6 +55,11 @@
 	// Button label adapts to social weight: late-without-note makes the social cost visible.
 	const cancelButtonLabel = $derived.by(() => {
 		if (cancelling) return copy.meeting.cancelling;
+		if (cancelScope === 'gathering') {
+			return isEarly
+				? copy.meeting.cancelConfirmGatheringEarly
+				: copy.meeting.cancelConfirmGatheringLate;
+		}
 		if (isEarly) return copy.meeting.cancelConfirmEarly;
 		return reasonTrimmed.length === 0
 			? copy.meeting.cancelConfirmLateNoNote
@@ -76,6 +92,7 @@
 		cancelReason = '';
 		cancelError = '';
 		cancelErrorRef = null;
+		cancelScope = 'pair';
 		cancelDialog?.showModal();
 	}
 
@@ -89,10 +106,13 @@
 			const res = await fetch(`/api/meetings/${data.meeting.id}/cancel`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(reason ? { reason } : {})
+				body: JSON.stringify({
+					...(reason ? { reason } : {}),
+					...(cancelScope === 'gathering' ? { scope: 'gathering' } : {})
+				})
 			});
 			if (res.ok) {
-				capture('meeting_cancelled', { tier: isEarly ? 'early' : 'late' });
+				capture('meeting_cancelled', { tier: isEarly ? 'early' : 'late', scope: cancelScope });
 				cancelDialog?.close();
 				goto('/profile');
 				return;
@@ -309,19 +329,57 @@
 	{#if data.meeting.state === 'scheduled'}
 		<dialog bind:this={cancelDialog} class="cancel-dialog" aria-labelledby="cancel-title">
 			<div class="cancel-inner">
-				<h3 id="cancel-title" class="cancel-title">{copy.meeting.cancelTitle(data.otherUsername)}</h3>
+				<h3 id="cancel-title" class="cancel-title">
+					{#if authorChoosesScope}
+						{copy.meeting.cancelTitleChoice}
+					{:else if joinerLeaving}
+						{copy.meeting.cancelTitleLeave}
+					{:else}
+						{copy.meeting.cancelTitle(data.otherUsername)}
+					{/if}
+				</h3>
 				<p class="cancel-when">{formatMeetingDate(data.meeting.scheduled_time)}</p>
+
+				{#if authorChoosesScope}
+					<!-- Scope choice: one seat or the whole gathering. Defaults to the
+					     least destructive option. -->
+					<div class="cancel-scope" role="radiogroup" aria-label={copy.meeting.cancelTitleChoice}>
+						<label class="scope-option">
+							<input type="radio" name="cancel-scope" value="pair" bind:group={cancelScope} />
+							<span>{copy.meeting.cancelScopeSeat(data.otherUsername)}</span>
+						</label>
+						<label class="scope-option">
+							<input type="radio" name="cancel-scope" value="gathering" bind:group={cancelScope} />
+							<span>{copy.meeting.cancelScopeGathering(gatheringNames)}</span>
+						</label>
+					</div>
+				{/if}
+
 				<p class="cancel-body" class:cancel-body--late={!isEarly}>
-					{isEarly
-						? copy.meeting.cancelBodyEarly(data.otherUsername)
-						: copy.meeting.cancelBodyLate(data.otherUsername)}
+					{#if cancelScope === 'gathering'}
+						{isEarly
+							? copy.meeting.cancelBodyGatheringEarly(gatheringNames.length)
+							: copy.meeting.cancelBodyGatheringLate(gatheringNames.length)}
+					{:else if joinerLeaving}
+						{isEarly
+							? copy.meeting.cancelBodyLeaveEarly(data.otherUsername)
+							: copy.meeting.cancelBodyLeaveLate(data.otherUsername)}
+					{:else}
+						{isEarly
+							? copy.meeting.cancelBodyEarly(data.otherUsername)
+							: copy.meeting.cancelBodyLate(data.otherUsername)}
+					{/if}
 				</p>
 
 				<div class="field">
 					<label for="cancel-reason">
-						{isEarly
-							? copy.meeting.cancelReasonLabelEarly(data.otherUsername)
-							: copy.meeting.cancelReasonLabelLate(data.otherUsername)}
+						{#if cancelScope === 'gathering'}
+							{copy.meeting.cancelReasonLabelGathering}
+						{:else}
+							{isEarly
+								? copy.meeting.cancelReasonLabelEarly(data.otherUsername)
+								: copy.meeting.cancelReasonLabelLate(data.otherUsername)}
+						{/if}
 					</label>
 					<textarea
 						id="cancel-reason"
@@ -479,6 +537,25 @@
 		color: var(--text-muted);
 		margin: calc(-1 * var(--space-2)) 0 0;
 	}
+
+	/* Scope choice (author of a group): quiet radios, no card chrome. */
+	.cancel-scope {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-2);
+	}
+	.scope-option {
+		display: flex;
+		align-items: baseline;
+		gap: var(--space-2);
+		font-size: var(--text-base);
+		color: var(--text-primary);
+		cursor: pointer;
+	}
+	.scope-option input {
+		accent-color: var(--text-primary);
+	}
+
 	.cancel-body {
 		font-size: var(--text-base);
 		color: var(--text-secondary);

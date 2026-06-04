@@ -7,6 +7,12 @@ export interface MeetingService {
 	getDetail(meetingId: string): Promise<MeetingDetail | null>;
 	getMyMeetings(userId: string): Promise<(Meeting & { general_area: string | null })[]>;
 	cancel(meetingId: string, reason?: string): Promise<CancellationTier>;
+	/** Host-only: cancel every live pair on the anchor meeting's slot in one
+	 *  act. Returns the tier plus the affected joiner ids for email fan-out. */
+	cancelGathering(
+		meetingId: string,
+		reason?: string
+	): Promise<{ tier: CancellationTier; joinerIds: string[] }>;
 }
 
 export class SupabaseMeetingService implements MeetingService {
@@ -63,5 +69,31 @@ export class SupabaseMeetingService implements MeetingService {
 			throw new Error(`Failed to cancel meeting: ${msg}`);
 		}
 		return data as CancellationTier;
+	}
+
+	async cancelGathering(
+		meetingId: string,
+		reason?: string
+	): Promise<{ tier: CancellationTier; joinerIds: string[] }> {
+		const { data, error } = await this.supabase.rpc('cancel_gathering', {
+			p_meeting_id: meetingId,
+			p_reason: reason ?? null
+		});
+
+		if (error) {
+			// cancel_gathering raises the same validation messages as cancel_meeting,
+			// plus 'Not authorized' for non-hosts.
+			const msg = error.message ?? '';
+			if (msg.includes('Meeting not found')) throw new DomainError(msg, 404);
+			if (msg.includes('Not authorized')) throw new DomainError(msg, 403);
+			if (msg.includes('Early cancellation requires an explanation')) throw new DomainError(msg, 400);
+			throw new Error(`Failed to cancel gathering: ${msg}`);
+		}
+
+		const rows = (data ?? []) as { tier: CancellationTier; joiner_id: string }[];
+		return {
+			tier: rows[0]?.tier ?? 'early',
+			joinerIds: rows.map((r) => r.joiner_id)
+		};
 	}
 }

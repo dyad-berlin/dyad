@@ -4,13 +4,25 @@ import { requireIdentity } from '$lib/services/identity.js';
 import { parseJsonBody } from '$lib/server/parse-body.js';
 import { SupabaseMeetingService } from '$lib/services/meeting.js';
 import { handleServiceError } from '$lib/server/handle-service-error.js';
-import { deferEmail, notifyMeetingCancelled } from '$lib/server/notification-emails.js';
+import {
+	deferEmail,
+	notifyMeetingCancelled,
+	notifyGatheringCancelled
+} from '$lib/server/notification-emails.js';
 
-/** POST /api/meetings/[id]/cancel — cancel with optional reason */
+/**
+ * POST /api/meetings/[id]/cancel — cancel with optional reason.
+ *
+ * scope: 'pair' (default) cancels this one pair-meeting (either participant);
+ * scope: 'gathering' is host-only and cancels every live pair on the slot in
+ * one act (one tier/reason/free-pass — see cancel_gathering RPC), retiring
+ * the slot. Authorization is enforced in the RPCs; this handler validates
+ * input and fans out emails per affected recipient.
+ */
 export const POST: RequestHandler = async ({ params, request, locals, platform }) => {
 	const upactor = requireIdentity(locals);
 
-	const [body, errorResponse] = await parseJsonBody<{ reason?: string }>(request);
+	const [body, errorResponse] = await parseJsonBody<{ reason?: string; scope?: string }>(request);
 	if (errorResponse) return errorResponse;
 
 	if (body.reason !== undefined) {
@@ -19,8 +31,30 @@ export const POST: RequestHandler = async ({ params, request, locals, platform }
 		}
 	}
 
+	const scope = body.scope ?? 'pair';
+	if (scope !== 'pair' && scope !== 'gathering') {
+		return json({ error: 'scope must be "pair" or "gathering"' }, { status: 400 });
+	}
+
 	const service = new SupabaseMeetingService(locals.supabase);
 	try {
+		if (scope === 'gathering') {
+			const { tier, joinerIds } = await service.cancelGathering(params.id, body.reason);
+			// One email per affected joiner — the kill switch and per-recipient
+			// preference are enforced inside dispatch() per call.
+			for (const joinerId of joinerIds) {
+				deferEmail(
+					platform,
+					notifyGatheringCancelled({
+						joinerUserId: joinerId,
+						meetingId: params.id,
+						reason: body.reason ?? null
+					})
+				);
+			}
+			return json({ ok: true, tier });
+		}
+
 		const { data: meeting } = await locals.supabase
 			.from('meetings')
 			.select('participant_a, participant_b')

@@ -168,6 +168,7 @@ export const copy = {
 		// at capacity (best-effort guard; accept-time enforcement is the source
 		// of truth and a TOCTOU fill between invite and accept is fine).
 		timeFull: 'This time is full.',
+		timeNoLongerOffered: 'This time is no longer offered.',
 		// Low-resolution "+N others joining" marker on a slot (excludes the viewer).
 		othersJoining: (n: number) => `+${n} other${n === 1 ? '' : 's'} joining`,
 		slotFull: 'Full',
@@ -303,6 +304,23 @@ export const copy = {
 		cancelConfirmEarly: 'Cancel meeting',
 		cancelConfirmLate: 'Cancel anyway',
 		cancelConfirmLateNoNote: 'Cancel without explanation',
+		// Group-aware cancellation. A joiner LEAVES (the gathering continues);
+		// the author either cancels one seat or calls the whole time off.
+		cancelTitleLeave: 'Leave this gathering?',
+		cancelBodyLeaveEarly: (username: string) =>
+			`The gathering continues without you. @${username} will see your note.`,
+		cancelBodyLeaveLate: (username: string) =>
+			`This is a late change — the gathering continues, but @${username} won't have much time to adjust. A real explanation matters here.`,
+		cancelTitleChoice: 'What would you like to cancel?',
+		cancelScopeSeat: (username: string) => `Just your meeting with @${username}`,
+		cancelScopeGathering: (names: string[]) => `The whole gathering — ${formatNameList(names)}`,
+		cancelBodyGatheringEarly: (count: number) =>
+			`This calls the time off for ${count === 1 ? 'your one confirmed joiner' : `all ${count} people`}. Everyone is notified, the time is withdrawn, and your note travels with the cancellation.`,
+		cancelBodyGatheringLate: (count: number) =>
+			`This is a late cancellation for ${count === 1 ? 'your one confirmed joiner' : `all ${count} people`} — they won't have much time to make other plans. A real explanation matters here.`,
+		cancelReasonLabelGathering: 'A message to everyone',
+		cancelConfirmGatheringEarly: 'Call off the gathering',
+		cancelConfirmGatheringLate: 'Call it off anyway',
 		when: 'When',
 		duration: 'Duration',
 		area: 'Area',
