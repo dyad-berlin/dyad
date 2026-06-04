@@ -346,7 +346,7 @@
 			{copy.conversation.youWrote(formatDate(data.prompt.published_at))}
 		{:else}
 			on {formatDate(data.prompt.published_at)},
-			<a href="/users/{data.prompt.author_username}" class="meta-author">
+			<a href="/users/{data.prompt.author_username}" class="meta-author user-handle">
 				{data.prompt.author_display_name ?? '@' + data.prompt.author_username}
 			</a>
 			wrote
@@ -513,7 +513,10 @@
 			     the other joiners (count from the viewer-safe occupancy RPC,
 			     never who). -->
 			<section class="slots-section">
-				<a href="/meetings/{data.myMeeting.id}" class="meeting-card-link">
+				<!-- Stretched-overlay link: the card opens the meeting while the
+				     pins and the location link stay independently clickable
+				     (positioned above the overlay — no nested anchors). -->
+				<div class="meeting-card-wrap">
 					<SlotCard
 						tone="meeting"
 						startTime={data.myMeeting.scheduled_time}
@@ -522,12 +525,13 @@
 						exactLocation={data.myMeeting.exact_location}
 					>
 						<ParticipantsStack
-							participants={[{ id: 'host', name: data.prompt.author_username }]}
-							self={{ name: data.username || copy.common.you }}
+							participants={[{ id: 'host', name: data.prompt.author_username, href: `/users/${data.prompt.author_username}` }]}
+							self={{ name: data.username || copy.common.you, href: data.username ? `/users/${data.username}` : undefined }}
 							anonymousCount={othersBeyond(occupiedOn(data.myMeeting.slot_id), 1)}
 						/>
 					</SlotCard>
-				</a>
+					<a class="meeting-card-overlay" href="/meetings/{data.myMeeting.id}" aria-label={copy.common.openMeeting}></a>
+				</div>
 			</section>
 		{:else}
 			<section class="slots-section">
@@ -640,8 +644,8 @@
 		color: var(--text-muted);
 		margin: 0 0 var(--space-6);
 	}
-	.meta-author { color: var(--text-muted); text-decoration: none; }
-	.meta-author:hover { color: var(--text-primary); }
+	/* Base tint only — hover comes from the shared .user-handle treatment. */
+	.meta-author { color: var(--text-muted); }
 	.body { font-size: var(--text-md); line-height: var(--leading-relaxed); margin-bottom: var(--space-10); }
 	.body :global(p) { margin: 0 0 0.75em; }
 	.body :global(h1), .body :global(h2) { margin: 1.2em 0 0.5em; font-weight: 500; }
@@ -688,15 +692,20 @@
 		100% { opacity: 0; }
 	}
 
-	/* Gathering card inside an <a> — strip link chrome so the card reads cleanly,
-	 * but keep it hoverable/clickable for navigation to the meeting detail page. */
-	.meeting-card-link {
-		display: block;
-		text-decoration: none;
-		color: inherit;
+	/* Gathering card with a stretched overlay link to the meeting: the overlay
+	 * catches clicks on the card surface while positioned children (pins,
+	 * location link) stay clickable above it. Hover dims only when the overlay
+	 * itself is hovered — not when a pin is. */
+	.meeting-card-wrap {
+		position: relative;
 		transition: opacity 0.15s;
 	}
-	.meeting-card-link:hover { opacity: var(--opacity-hover-card); }
+	.meeting-card-wrap:has(> .meeting-card-overlay:hover) { opacity: var(--opacity-hover-card); }
+	.meeting-card-overlay {
+		position: absolute;
+		inset: 0;
+		border-radius: var(--radius-card);
+	}
 
 	/* Invitation flow */
 	.invite-question { font-size: var(--text-md); color: var(--text-muted); margin: 0 0 var(--space-4); }

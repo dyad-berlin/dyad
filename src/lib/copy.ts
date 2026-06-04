@@ -42,6 +42,8 @@ export const copy = {
 		// Tail of a linkified name list ("@a, @b and 2 others") — the names are
 		// rendered as UserHandle links, so the string is decomposed into parts.
 		andNOthers: (n: number) => `and ${n} other${n === 1 ? '' : 's'}`,
+		// Accessible name for the stretched overlay link on a gathering card.
+		openMeeting: 'Open meeting',
 		save: 'Save',
 		send: 'Send',
 		back: 'Back',

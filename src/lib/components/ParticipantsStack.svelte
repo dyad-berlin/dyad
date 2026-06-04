@@ -59,14 +59,30 @@
 		'#c9bcb5', // peach
 	];
 
-	// Hash by name so a member keeps the same colour wherever they appear.
-	function avatarBg(name: string): string {
+	// Hash by name so a member keeps a stable anchor colour wherever they
+	// appear; within one stack, a hash collision walks to the next free
+	// palette slot so neighbouring circles never share a colour (the palette
+	// has 8 entries ≥ maxVisible, so a slot is always free).
+	function hashIdx(name: string): number {
 		let h = 0;
 		for (let i = 0; i < name.length; i++) {
 			h = name.charCodeAt(i) + ((h << 5) - h);
 		}
-		return AVATAR_PALETTE[Math.abs(h) % AVATAR_PALETTE.length];
+		return Math.abs(h) % AVATAR_PALETTE.length;
 	}
+	let colourById = $derived.by(() => {
+		const taken = new Set<number>();
+		const map = new Map<string, string>();
+		for (const p of visible) {
+			let idx = hashIdx(p.name);
+			if (taken.size < AVATAR_PALETTE.length) {
+				while (taken.has(idx)) idx = (idx + 1) % AVATAR_PALETTE.length;
+			}
+			taken.add(idx);
+			map.set(p.id, AVATAR_PALETTE[idx]);
+		}
+		return map;
+	});
 
 	function initials(name: string): string {
 		return name[0]?.toUpperCase() ?? '?';
@@ -90,7 +106,7 @@
 				role="listitem"
 				href={p.href}
 				aria-label={handle}
-				style="--avatar-bg: {avatarBg(p.name)}; --stagger: {i * 60}ms; z-index: {visible.length + anonShown - i};"
+				style="--avatar-bg: {colourById.get(p.id)}; --stagger: {i * 60}ms; z-index: {visible.length + anonShown - i};"
 			>
 				<span class="avatar-initials" class:avatar-initials--you={p.isSelf} aria-hidden="true">{p.isSelf ? copy.common.you : initials(p.name)}</span>
 				<span class="participant-card" role="tooltip" aria-hidden="true">{handle}</span>
@@ -100,7 +116,7 @@
 				class="participant-avatar"
 				role="listitem"
 				aria-label={handle}
-				style="--avatar-bg: {avatarBg(p.name)}; --stagger: {i * 60}ms; z-index: {visible.length + anonShown - i};"
+				style="--avatar-bg: {colourById.get(p.id)}; --stagger: {i * 60}ms; z-index: {visible.length + anonShown - i};"
 			>
 				<span class="avatar-initials" class:avatar-initials--you={p.isSelf} aria-hidden="true">{p.isSelf ? copy.common.you : initials(p.name)}</span>
 				<span class="participant-card" role="tooltip" aria-hidden="true">{handle}</span>
@@ -262,6 +278,9 @@
 		position: relative;
 		display: flex;
 		align-items: center;
+		/* Above a card-level stretched overlay, so the shared hover handle
+		   still opens when sweeping the neutral circles. */
+		z-index: 1;
 	}
 	.anon-group > .participant-avatar--anon:first-child {
 		margin-left: -10px; /* continue the row's overlap into the group */

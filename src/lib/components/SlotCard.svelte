@@ -141,17 +141,19 @@
 			     content (the joining avatar stack) or the withdraw action right. -->
 			<div class="slot-foot">
 				{#if exactLocation}
-					{#if exactLocation.lat}
-						<a class="slot-location" href="https://www.openstreetmap.org/?mlat={exactLocation.lat}&mlon={exactLocation.lng}&zoom=17" target="_blank" rel="noopener">
+					<div class="slot-location">
+						{#if exactLocation.lat}
+							<!-- The link hugs the text — clicking the empty space next to
+							     a short name shouldn't open the map. -->
+							<a class="slot-location-link" href="https://www.openstreetmap.org/?mlat={exactLocation.lat}&mlon={exactLocation.lng}&zoom=17" target="_blank" rel="noopener">
+								<span class="slot-location-name">{exactLocation.name}</span>
+								<span class="slot-location-address">{exactLocation.address}</span>
+							</a>
+						{:else}
 							<span class="slot-location-name">{exactLocation.name}</span>
 							<span class="slot-location-address">{exactLocation.address}</span>
-						</a>
-					{:else}
-						<div class="slot-location">
-							<span class="slot-location-name">{exactLocation.name}</span>
-							<span class="slot-location-address">{exactLocation.address}</span>
-						</div>
-					{/if}
+						{/if}
+					</div>
 				{/if}
 				{#if children}
 					<div class="slot-aside">{@render children()}</div>
@@ -325,12 +327,6 @@
 		flex-shrink: 0;
 	}
 
-	a.slot-location {
-		text-decoration: none;
-		color: inherit;
-	}
-	a.slot-location:hover .slot-location-name { text-decoration: underline; }
-
 	.slot-location {
 		display: flex;
 		flex-direction: column;
@@ -338,6 +334,21 @@
 		flex: 1;
 		min-width: 0;
 	}
+
+	/* Text-hugging link inside the layout column; positioned so it stays
+	   clickable above a card-level stretched overlay link. */
+	.slot-location-link {
+		display: inline-flex;
+		flex-direction: column;
+		gap: var(--space-1);
+		align-self: flex-start;
+		max-width: 100%;
+		text-decoration: none;
+		color: inherit;
+		position: relative;
+		z-index: 1;
+	}
+	.slot-location-link:hover .slot-location-name { text-decoration: underline; }
 
 	.slot-location-name {
 		font-size: var(--text-sm);
