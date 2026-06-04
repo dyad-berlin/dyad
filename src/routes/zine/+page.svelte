@@ -77,8 +77,8 @@
 		<div class="prose">
 			<p>
 				The zine is the document of dyad's first year: what we learned about why social platforms
-				fail the people who use them, and the plan we are building instead — a social network owned
-				by its community.
+				fail the people who use them, and our plan for building social technology owned by its
+				community.
 			</p>
 			<p>
 				Inside: a diagnosis of the platform economy and its harms, what happened to Meetup, the case
