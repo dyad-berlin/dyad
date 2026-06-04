@@ -112,8 +112,8 @@
 			{/if}
 
 			<p class="fulfillment-note">
-				Ships from Berlin within 5–7 days. Write to
-				<a href="mailto:hello@dyad.berlin">hello@dyad.berlin</a> for bulk orders or questions.
+				Copies change hands in person — in Berlin, and wherever dyad travels. Write to
+				<a href="mailto:hello@dyad.berlin">hello@dyad.berlin</a> to find one.
 			</p>
 		</div>
 	</section>
