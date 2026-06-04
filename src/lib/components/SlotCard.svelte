@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { Snippet } from 'svelte';
 	import { formatHybridDate, formatSlotTimeRange } from '$lib/utils/dates.js';
 	import { isSlotFull } from '$lib/domain/time-slot.js';
 	import { copy } from '$lib/copy.js';
@@ -13,6 +14,9 @@
 		exactLocation?: { name: string; address: string; lat?: number; lng?: number } | null;
 		past?: boolean;
 		vague?: boolean;
+		/** Optional right-hand content nested inside the card (e.g. the avatar
+		 *  stack of who's joining this time). Static variant only. */
+		children?: Snippet;
 		// Capacity-aware fullness + "who's joining" marker. `occupied` is the
 		// count of confirmed joiners on this slot (from the viewer-safe occupancy
 		// RPC), used for the full/capacity derivation; `capacity` is the prompt's
@@ -25,7 +29,7 @@
 		onclick?: () => void;
 	}
 
-	let { startTime, durationMinutes, area, selected = false, invited = false, invitedNote, exactLocation, past = false, vague = false, occupied = 0, capacity = null, othersJoining = 0, onclick }: Props = $props();
+	let { startTime, durationMinutes, area, selected = false, invited = false, invitedNote, exactLocation, past = false, vague = false, occupied = 0, capacity = null, othersJoining = 0, onclick, children }: Props = $props();
 
 	let full = $derived(isSlotFull(occupied, capacity));
 	// A full slot is not invitable — drop interactivity even if an onclick was
@@ -76,28 +80,33 @@
 		{/if}
 	</button>
 {:else}
-	<div class="slot-card" class:selected class:invited class:past class:full>
-		<div class="slot-row">
-			<span class="slot-date">{formatSlotDateFull(startTime)} · {formatSlotTimeRange(startTime, durationMinutes)}</span>
-			<span class="slot-details">
-				{area}{#if full}<span class="slot-status">{copy.conversation.slotFull}</span>{:else if invitedNote}<span class="slot-status">{invitedNote}</span>{/if}
-			</span>
-		</div>
-		{#if showOthers}
-			<p class="slot-others">{copy.conversation.othersJoining(othersJoining)}</p>
-		{/if}
-		{#if exactLocation}
-			{#if exactLocation.lat}
-				<a class="slot-location" href="https://www.openstreetmap.org/?mlat={exactLocation.lat}&mlon={exactLocation.lng}&zoom=17" target="_blank" rel="noopener">
-					<span class="slot-location-name">{exactLocation.name}</span>
-					<span class="slot-location-address">{exactLocation.address}</span>
-				</a>
-			{:else}
-				<div class="slot-location">
-					<span class="slot-location-name">{exactLocation.name}</span>
-					<span class="slot-location-address">{exactLocation.address}</span>
-				</div>
+	<div class="slot-card" class:selected class:invited class:past class:full class:has-aside={!!children}>
+		<div class="slot-main">
+			<div class="slot-row">
+				<span class="slot-date">{formatSlotDateFull(startTime)} · {formatSlotTimeRange(startTime, durationMinutes)}</span>
+				<span class="slot-details">
+					{area}{#if full}<span class="slot-status">{copy.conversation.slotFull}</span>{:else if invitedNote}<span class="slot-status">{invitedNote}</span>{/if}
+				</span>
+			</div>
+			{#if showOthers}
+				<p class="slot-others">{copy.conversation.othersJoining(othersJoining)}</p>
 			{/if}
+			{#if exactLocation}
+				{#if exactLocation.lat}
+					<a class="slot-location" href="https://www.openstreetmap.org/?mlat={exactLocation.lat}&mlon={exactLocation.lng}&zoom=17" target="_blank" rel="noopener">
+						<span class="slot-location-name">{exactLocation.name}</span>
+						<span class="slot-location-address">{exactLocation.address}</span>
+					</a>
+				{:else}
+					<div class="slot-location">
+						<span class="slot-location-name">{exactLocation.name}</span>
+						<span class="slot-location-address">{exactLocation.address}</span>
+					</div>
+				{/if}
+			{/if}
+		</div>
+		{#if children}
+			<div class="slot-aside">{@render children()}</div>
 		{/if}
 	</div>
 {/if}
@@ -156,6 +165,25 @@
 		opacity: 0.45;
 		pointer-events: none;
 		user-select: none;
+	}
+
+	/* Optional right-hand nested content (e.g. the joining avatar stack).
+	   The card becomes a row: existing content keeps its column layout in
+	   .slot-main; the aside sits vertically centred on the right. */
+	.slot-card.has-aside {
+		flex-direction: row;
+		align-items: center;
+	}
+	.slot-main {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-2);
+		flex: 1;
+		min-width: 0;
+	}
+	.slot-aside {
+		flex-shrink: 0;
+		margin-left: var(--space-3);
 	}
 
 	.slot-row {

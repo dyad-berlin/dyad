@@ -57,11 +57,11 @@
 			class="participant-avatar"
 			role="listitem"
 			href={p.href}
-			title="@{p.name}"
 			aria-label="@{p.name}"
 			style="--avatar-bg: {avatarBg(p.name)}; --stagger: {i * 60}ms; z-index: {MAX_SHOWN - i};"
 		>
 			<span class="avatar-initials" aria-hidden="true">{initials(p.name)}</span>
+			<span class="participant-card" role="tooltip" aria-hidden="true">@{p.name}</span>
 		</a>
 	{/each}
 
@@ -108,14 +108,57 @@
 		margin-left: 0;
 	}
 
-	.participant-avatar:hover {
+	.participant-avatar:hover,
+	.participant-avatar:focus-visible {
 		transform: translateY(-2px);
 		opacity: var(--opacity-hover-btn);
+		/* Lift above neighbouring circles so the handle card isn't clipped. */
+		z-index: 50;
 	}
 
 	.participant-avatar:focus-visible {
 		outline: 2px solid var(--text-muted);
 		outline-offset: 2px;
+	}
+
+	/* Hover/focus handle display — the original glass card, shown without a
+	   click since the circle itself now navigates to the meeting. */
+	.participant-card {
+		display: none;
+		position: absolute;
+		bottom: calc(100% + var(--space-2));
+		left: 50%;
+		transform: translateX(-50%);
+		background: var(--bg-glass);
+		border: 1px solid var(--border-subtle);
+		border-radius: var(--radius-card);
+		padding: var(--space-2) var(--space-3);
+		white-space: nowrap;
+		font-family: var(--font-mono);
+		font-size: var(--text-xs);
+		color: var(--text-primary);
+		backdrop-filter: blur(8px);
+		-webkit-backdrop-filter: blur(8px);
+		box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+		z-index: 100;
+		pointer-events: none;
+	}
+
+	.participant-avatar:hover .participant-card,
+	.participant-avatar:focus-visible .participant-card {
+		display: block;
+		animation: card-appear 150ms var(--ease-ink) both;
+	}
+
+	@keyframes card-appear {
+		from {
+			opacity: 0;
+			transform: translateX(-50%) translateY(4px);
+		}
+		to {
+			opacity: 1;
+			transform: translateX(-50%) translateY(0);
+		}
 	}
 
 	@keyframes avatar-appear {

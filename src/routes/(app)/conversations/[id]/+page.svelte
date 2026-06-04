@@ -547,9 +547,8 @@
 							durationMinutes={slot.duration_minutes}
 							area={slot.general_area}
 							exactLocation={slot.exact_location ?? null}
-						/>
-						{#if joining.length > 0}
-							<div class="slot-joining">
+						>
+							{#if joining.length > 0}
 								<ParticipantsStack
 									participants={joining.map((m) => ({
 										id: m.id,
@@ -557,8 +556,8 @@
 										href: `/meetings/${m.id}`
 									}))}
 								/>
-							</div>
-						{/if}
+							{/if}
+						</SlotCard>
 					</div>
 				{/each}
 			</section>
@@ -882,10 +881,10 @@
 	.response-body { font-size: var(--text-base); margin: 0 0 var(--space-1); line-height: var(--leading-normal); }
 	.inv-message { font-size: var(--text-sm); color: var(--text-secondary); font-style: italic; margin: var(--space-2) 0 var(--space-3); }
 
-	/* "Times you offered": each slot once, with who's joining as an overlapping
-	   avatar stack beneath it (each circle links to its meeting). Never dimmed. */
+	/* "Times you offered": each slot once, with who's joining nested inside the
+	   card on the right as an overlapping avatar stack (each circle links to its
+	   meeting; hover/focus reveals the handle). Never dimmed. */
 	.slot-group { margin-bottom: var(--space-4); }
-	.slot-joining { margin: var(--space-2) 0 0 var(--space-1); }
 
 	/* Responses: the spine. Single list; words always visible; a quiet status
 	   line annotates meeting state (no coloured badges — the accept/decline
