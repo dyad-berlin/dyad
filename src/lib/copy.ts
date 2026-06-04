@@ -164,13 +164,6 @@ export const copy = {
 		statusWantsToMeet: (slotRef: string | null) => (slotRef ? `wants to meet · ${slotRef}` : 'wants to meet'),
 		statusNoTimeChosen: 'no time chosen yet',
 		participantCancelled: 'cancelled',
-		// Fill summary beside each offered time. "open" when no one is on it yet.
-		slotFillLabel: (confirmed: number, pending: number) => {
-			const parts: string[] = [];
-			if (confirmed > 0) parts.push(`${confirmed} confirmed`);
-			if (pending > 0) parts.push(`${pending} pending`);
-			return parts.length ? parts.join(' · ') : 'open';
-		},
 		// Surfaced to the author when accepting a joiner fails because the slot
 		// is at capacity (or the invitation is otherwise no longer acceptable).
 		conversationFull: 'This conversation is full or no longer available.',

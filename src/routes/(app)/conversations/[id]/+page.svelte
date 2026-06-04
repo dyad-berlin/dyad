@@ -341,14 +341,12 @@
 		return area ? `${formatDate(iso)} · ${area}` : formatDate(iso);
 	}
 
-	// Fill summary per offered slot, shown beside the slot in "Times you offered".
-	function slotFill(slotId: string): { confirmed: number; pending: number } {
-		const meetings = data.promptMeetings ?? [];
-		const invites = data.receivedInvitations ?? [];
-		return {
-			confirmed: meetings.filter((m) => m.slot_id === slotId && ACTIVE_MEETING_STATES.includes(m.state)).length,
-			pending: invites.filter((inv) => inv.slot_id === slotId && inv.state === 'pending').length
-		};
+	// Who's joining a slot — the active meetings on it. Rendered as tappable
+	// name-buttons on the "Times you offered" card (each links to its meeting).
+	function joiningOnSlot(slotId: string) {
+		return (data.promptMeetings ?? []).filter(
+			(m) => m.slot_id === slotId && ACTIVE_MEETING_STATES.includes(m.state)
+		);
 	}
 
 	// One row per responder, tagged with meeting status by precedence:
@@ -538,18 +536,24 @@
 			<section class="my-summary">
 				<p class="section-label">{copy.conversation.myOfferedTimes}</p>
 				{#each data.prompt.available_slots as slot (slot.id)}
-					{@const fill = slotFill(slot.id)}
+					{@const joining = joiningOnSlot(slot.id)}
+					<!-- No invited/occupied/capacity props here: those dim the card, and the
+					     author's own offered times should never render greyed out. Who's on
+					     the slot is shown as name-buttons, not a count. -->
 					<div class="slot-group">
 						<SlotCard
 							startTime={slot.start_time}
 							durationMinutes={slot.duration_minutes}
 							area={slot.general_area}
 							exactLocation={slot.exact_location ?? null}
-							invited={slot.accepted}
-							occupied={occupiedOn(slot.id)}
-							capacity={data.prompt.capacity}
 						/>
-						<p class="slot-fill">{copy.conversation.slotFillLabel(fill.confirmed, fill.pending)}</p>
+						{#if joining.length > 0}
+							<div class="slot-joining">
+								{#each joining as m (m.id)}
+									<a href="/meetings/{m.id}" class="participant-chip">@{m.partner_username}</a>
+								{/each}
+							</div>
+						{/if}
 					</div>
 				{/each}
 			</section>
@@ -873,14 +877,26 @@
 	.response-body { font-size: var(--text-base); margin: 0 0 var(--space-1); line-height: var(--leading-normal); }
 	.inv-message { font-size: var(--text-sm); color: var(--text-secondary); font-style: italic; margin: var(--space-2) 0 var(--space-3); }
 
-	/* "Times you offered": each slot once + a quiet fill summary beneath it. */
+	/* "Times you offered": each slot once, with who's joining as tappable
+	   name-buttons beneath it (each links to its meeting). Never dimmed. */
 	.slot-group { margin-bottom: var(--space-4); }
-	.slot-fill {
+	.slot-joining {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-2);
+		margin: var(--space-2) 0 0 var(--space-1);
+	}
+	.participant-chip {
 		font-family: var(--font-mono);
 		font-size: var(--text-xs);
-		color: var(--text-muted);
-		margin: var(--space-1) 0 0 var(--space-1);
+		color: var(--text-primary);
+		text-decoration: none;
+		border: 1px solid var(--border-link);
+		border-radius: var(--radius-input);
+		padding: var(--space-1) var(--space-2);
+		transition: border-color 0.15s;
 	}
+	.participant-chip:hover { border-color: var(--text-primary); }
 
 	/* Responses: the spine. Single list; words always visible; a quiet status
 	   line annotates meeting state (no coloured badges — the accept/decline
