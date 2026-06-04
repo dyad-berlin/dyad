@@ -76,19 +76,16 @@
 	<section class="body-section">
 		<div class="prose">
 			<p>
-				We made a zine because some things deserve paper. The conversations that stayed with us,
-				the questions we kept returning to, the city as we have come to know it through strangers —
-				none of it felt right on a screen.
+				The zine is the document of dyad's first year: what we learned about why social platforms
+				fail the people who use them, and the plan we are building instead — a social network owned
+				by its community.
 			</p>
 			<p>
-				Issue 001 collects writing from the first year of dyad. Prompts that sparked something.
-				Reflections on what it means to sit across from someone you have never met and mean it.
-				Notes from Berlin.
+				Inside: a diagnosis of the platform economy and its harms, what happened to Meetup, the case
+				for steward ownership and collective governance, our approach to trust and safety, the
+				execution plan, and what becomes possible if it works.
 			</p>
-			<p>
-				Printed in a small run. Black and white. Staple-bound. The kind of thing you leave on a table
-				for someone else to find.
-			</p>
+			<p>A hundred pages, A5, black and white, printed in a small run.</p>
 		</div>
 	</section>
 
