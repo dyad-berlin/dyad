@@ -8,7 +8,7 @@
 	import type { SubmitSlot } from '$lib/domain/types';
 	import { capture } from '$lib/analytics';
 	import { copy } from '$lib/copy';
-	import ParticipantsStack from '$lib/components/ParticipantsStack.svelte';
+	import GatheringCard from '$lib/components/GatheringCard.svelte';
 	import UserHandle from '$lib/components/UserHandle.svelte';
 	import { formatShortDate as formatDate } from '$lib/utils/dates.js';
 	import { buildResponseRows, ACTIVE_MEETING_STATES } from '$lib/domain/response-rows.js';
@@ -416,24 +416,31 @@
 					     author's own offered times should never render greyed out. Who's on
 					     the slot is shown as name-buttons, not a count. -->
 					<div class="slot-group">
-						<SlotCard
-							startTime={slot.start_time}
-							durationMinutes={slot.duration_minutes}
-							area={slot.general_area}
-							exactLocation={slot.exact_location ?? null}
-						>
-							{#if joining.length > 0}
-								<!-- Pins link to member pages; each pair's meeting stays
-								     reachable via the response rows' status links below. -->
-								<ParticipantsStack
-									participants={joining.map((m) => ({
-										id: m.id,
-										name: m.partner_username ?? 'anonymous',
-										href: m.partner_username ? `/users/${m.partner_username}` : undefined
-									}))}
-								/>
-							{/if}
-						</SlotCard>
+						{#if joining.length > 0}
+							<!-- A slot with confirmed joiners IS a gathering — same card,
+							     same meeting tone, same click-through as everywhere else.
+							     Pins link to member pages; the card opens the meeting
+							     (any pair shows the whole gathering). -->
+							<GatheringCard
+								startTime={slot.start_time}
+								durationMinutes={slot.duration_minutes}
+								area={slot.general_area}
+								exactLocation={slot.exact_location ?? null}
+								participants={joining.map((m) => ({
+									id: m.id,
+									name: m.partner_username ?? 'anonymous',
+									href: m.partner_username ? `/users/${m.partner_username}` : undefined
+								}))}
+								meetingHref="/meetings/{joining[0].id}"
+							/>
+						{:else}
+							<SlotCard
+								startTime={slot.start_time}
+								durationMinutes={slot.duration_minutes}
+								area={slot.general_area}
+								exactLocation={slot.exact_location ?? null}
+							/>
+						{/if}
 					</div>
 				{/each}
 			</section>
@@ -513,25 +520,16 @@
 			     the other joiners (count from the viewer-safe occupancy RPC,
 			     never who). -->
 			<section class="slots-section">
-				<!-- Stretched-overlay link: the card opens the meeting while the
-				     pins and the location link stay independently clickable
-				     (positioned above the overlay — no nested anchors). -->
-				<div class="meeting-card-wrap">
-					<SlotCard
-						tone="meeting"
-						startTime={data.myMeeting.scheduled_time}
-						durationMinutes={data.myMeeting.duration_minutes}
-						area={data.myMeeting.general_area}
-						exactLocation={data.myMeeting.exact_location}
-					>
-						<ParticipantsStack
-							participants={[{ id: 'host', name: data.prompt.author_username, href: `/users/${data.prompt.author_username}` }]}
-							self={{ name: data.username || copy.common.you, href: data.username ? `/users/${data.username}` : undefined }}
-							anonymousCount={othersBeyond(occupiedOn(data.myMeeting.slot_id), 1)}
-						/>
-					</SlotCard>
-					<a class="meeting-card-overlay" href="/meetings/{data.myMeeting.id}" aria-label={copy.common.openMeeting}></a>
-				</div>
+				<GatheringCard
+					startTime={data.myMeeting.scheduled_time}
+					durationMinutes={data.myMeeting.duration_minutes}
+					area={data.myMeeting.general_area}
+					exactLocation={data.myMeeting.exact_location}
+					participants={[{ id: 'host', name: data.prompt.author_username, href: `/users/${data.prompt.author_username}` }]}
+					self={{ name: data.username || copy.common.you, href: data.username ? `/users/${data.username}` : undefined }}
+					anonymousCount={othersBeyond(occupiedOn(data.myMeeting.slot_id), 1)}
+					meetingHref="/meetings/{data.myMeeting.id}"
+				/>
 			</section>
 		{:else}
 			<section class="slots-section">
@@ -692,20 +690,7 @@
 		100% { opacity: 0; }
 	}
 
-	/* Gathering card with a stretched overlay link to the meeting: the overlay
-	 * catches clicks on the card surface while positioned children (pins,
-	 * location link) stay clickable above it. Hover dims only when the overlay
-	 * itself is hovered — not when a pin is. */
-	.meeting-card-wrap {
-		position: relative;
-		transition: opacity 0.15s;
-	}
-	.meeting-card-wrap:has(> .meeting-card-overlay:hover) { opacity: var(--opacity-hover-card); }
-	.meeting-card-overlay {
-		position: absolute;
-		inset: 0;
-		border-radius: var(--radius-card);
-	}
+	/* Gathering-card chrome (overlay link, hover) lives in GatheringCard. */
 
 	/* Invitation flow */
 	.invite-question { font-size: var(--text-md); color: var(--text-muted); margin: 0 0 var(--space-4); }

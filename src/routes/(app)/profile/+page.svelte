@@ -6,8 +6,7 @@
 	import { page } from '$app/state';
 	import FloatingNav from '$lib/components/FloatingNav.svelte';
 	import ConversationCard from '$lib/components/ConversationCard.svelte';
-	import SlotCard from '$lib/components/SlotCard.svelte';
-	import ParticipantsStack from '$lib/components/ParticipantsStack.svelte';
+	import GatheringCard from '$lib/components/GatheringCard.svelte';
 	import { copy } from '$lib/copy';
 	import { formatRelativePast, formatShortDate as formatDate } from '$lib/utils/dates';
 
@@ -374,27 +373,20 @@
 						>
 							{#if item.meeting}
 								{@const isCancelled = item.meeting.state === 'cancelled_early' || item.meeting.state === 'cancelled_late'}
-								<!-- Renders outside the row's link (ConversationCard shell);
-								     the stretched overlay opens the meeting while the pins
-								     stay independently clickable. -->
-								<div class="meeting-card-wrap">
-									<SlotCard
-										tone="meeting"
-										startTime={item.meeting.scheduled_time}
-										durationMinutes={item.meeting.duration_minutes}
-										area={item.meeting.general_area ?? ''}
-										exactLocation={item.meeting.exact_location}
-										cancelledByMe={isCancelled && item.meeting.cancelled_by_me}
-										cancelledByUsername={isCancelled && !item.meeting.cancelled_by_me ? (item.meeting.cancelled_by_username ?? item.meeting.partner_username) : null}
-									>
-										<ParticipantsStack
-											self={{ name: data.username || copy.common.you, href: data.username ? `/users/${data.username}` : undefined }}
-											participants={item.meeting.partner_usernames.map((name) => ({ id: name, name, href: `/users/${name}` }))}
-											anonymousCount={item.meeting.anonymous_count}
-										/>
-									</SlotCard>
-									<a class="meeting-card-overlay" href="/meetings/{item.meeting.id}" aria-label={copy.common.openMeeting}></a>
-								</div>
+								<!-- Renders outside the row's link (ConversationCard shell):
+								     the row opens the conversation, the card the meeting. -->
+								<GatheringCard
+									startTime={item.meeting.scheduled_time}
+									durationMinutes={item.meeting.duration_minutes}
+									area={item.meeting.general_area ?? ''}
+									exactLocation={item.meeting.exact_location}
+									cancelledByMe={isCancelled && item.meeting.cancelled_by_me}
+									cancelledByUsername={isCancelled && !item.meeting.cancelled_by_me ? (item.meeting.cancelled_by_username ?? item.meeting.partner_username) : null}
+									self={{ name: data.username || copy.common.you, href: data.username ? `/users/${data.username}` : undefined }}
+									participants={item.meeting.partner_usernames.map((name) => ({ id: name, name, href: `/users/${name}` }))}
+									anonymousCount={item.meeting.anonymous_count}
+									meetingHref="/meetings/{item.meeting.id}"
+								/>
 							{/if}
 						</ConversationCard>
 					</div>
@@ -420,27 +412,20 @@
 					>
 						{#if item.meeting}
 							{@const isCancelled = item.meeting.state === 'cancelled_early' || item.meeting.state === 'cancelled_late'}
-							<!-- Renders outside the row's link (ConversationCard shell);
-							     the stretched overlay opens the meeting while the pins
-							     stay independently clickable. -->
-							<div class="meeting-card-wrap">
-								<SlotCard
-									tone="meeting"
-									startTime={item.meeting.scheduled_time}
-									durationMinutes={item.meeting.duration_minutes}
-									area={item.meeting.general_area ?? ''}
-									exactLocation={item.meeting.exact_location}
-									cancelledByMe={isCancelled && item.meeting.cancelled_by_me}
-									cancelledByUsername={isCancelled && !item.meeting.cancelled_by_me ? (item.meeting.cancelled_by_username ?? item.meeting.partner_username) : null}
-								>
-									<ParticipantsStack
-										self={{ name: data.username || copy.common.you, href: data.username ? `/users/${data.username}` : undefined }}
-										participants={item.meeting.partner_usernames.map((name) => ({ id: name, name, href: `/users/${name}` }))}
-										anonymousCount={item.meeting.anonymous_count}
-									/>
-								</SlotCard>
-								<a class="meeting-card-overlay" href="/meetings/{item.meeting.id}" aria-label={copy.common.openMeeting}></a>
-							</div>
+							<!-- Renders outside the row's link (ConversationCard shell):
+							     the row opens the conversation, the card the meeting. -->
+							<GatheringCard
+								startTime={item.meeting.scheduled_time}
+								durationMinutes={item.meeting.duration_minutes}
+								area={item.meeting.general_area ?? ''}
+								exactLocation={item.meeting.exact_location}
+								cancelledByMe={isCancelled && item.meeting.cancelled_by_me}
+								cancelledByUsername={isCancelled && !item.meeting.cancelled_by_me ? (item.meeting.cancelled_by_username ?? item.meeting.partner_username) : null}
+								self={{ name: data.username || copy.common.you, href: data.username ? `/users/${data.username}` : undefined }}
+								participants={item.meeting.partner_usernames.map((name) => ({ id: name, name, href: `/users/${name}` }))}
+								anonymousCount={item.meeting.anonymous_count}
+								meetingHref="/meetings/{item.meeting.id}"
+							/>
 						{/if}
 					</ConversationCard>
 				{/each}
@@ -666,17 +651,5 @@
 		flex-direction: column;
 	}
 
-	/* Gathering card inside a row shell — stretched overlay link opens the
-	   meeting; positioned children (pins, location link) stay clickable above
-	   it. Dim only when the overlay itself is hovered. */
-	.meeting-card-wrap {
-		position: relative;
-		transition: opacity 0.15s;
-	}
-	.meeting-card-wrap:has(> .meeting-card-overlay:hover) { opacity: var(--opacity-hover-card); }
-	.meeting-card-overlay {
-		position: absolute;
-		inset: 0;
-		border-radius: var(--radius-card);
-	}
+	/* Gathering-card chrome (overlay link, hover) lives in GatheringCard. */
 </style>
