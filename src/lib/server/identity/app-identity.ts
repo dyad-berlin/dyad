@@ -30,33 +30,39 @@ export interface AppIdentity {
 export async function buildAppIdentity(sessions: ScopeSession[]): Promise<AppIdentity | null> {
 	if (!claimInjectionEnabled() || sessions.length === 0) return null;
 
-	// All sessions here belong to the same visitor (one provider session in
-	// practice). Provision the identity once; grant every active scope.
-	const primary = sessions[0];
-	const scopes = [...new Set(sessions.map((s) => s.scope))];
+	// Fail safe: any misconfiguration (missing JWT secret, migration not applied,
+	// RPC error) leaves the visitor anonymous rather than 500-ing the request.
+	try {
+		// All sessions here belong to the same visitor (one provider session in
+		// practice). Provision the identity once; grant every active scope.
+		const primary = sessions[0];
+		const scopes = [...new Set(sessions.map((s) => s.scope))];
 
-	const anon = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
-		auth: { autoRefreshToken: false, persistSession: false }
-	});
-	const { data, error } = await anon.rpc('ensure_identity', {
-		p_substrate: primary.substrate,
-		p_substrate_id: primary.memberId
-	});
-	if (error || typeof data !== 'string') return null;
-	const identityId = data;
+		const anon = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
+			auth: { autoRefreshToken: false, persistSession: false }
+		});
+		const { data, error } = await anon.rpc('ensure_identity', {
+			p_substrate: primary.substrate,
+			p_substrate_id: primary.memberId
+		});
+		if (error || typeof data !== 'string') return null;
+		const identityId = data;
 
-	const jwt = await mintIdentityJwt({ identityId, scopes });
-	const client = createClaimClient(jwt);
+		const jwt = await mintIdentityJwt({ identityId, scopes });
+		const client = createClaimClient(jwt);
 
-	// Synthetic user: the app reads only `.id` for authorization and ownership,
-	// and that id is the member's identities.id — the same value RLS authorizes
-	// on via the claim. No email/profile; the app must not depend on those for
-	// an account-less identity (it does not, for reading and responding).
-	const user = { id: identityId } as unknown as User;
-	const upactor: Upactor = {
-		id: identityId,
-		capabilities: new Set(),
-		...(primary.displayHint ? { display_hint: primary.displayHint } : {})
-	};
-	return { client, user, upactor };
+		// Synthetic user: the app reads only `.id` for authorization and ownership,
+		// and that id is the member's identities.id — the same value RLS authorizes
+		// on via the claim. No email/profile; the app must not depend on those for
+		// an account-less identity (it does not, for reading and responding).
+		const user = { id: identityId } as unknown as User;
+		const upactor: Upactor = {
+			id: identityId,
+			capabilities: new Set(),
+			...(primary.displayHint ? { display_hint: primary.displayHint } : {})
+		};
+		return { client, user, upactor };
+	} catch {
+		return null;
+	}
 }
