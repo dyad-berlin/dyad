@@ -23,6 +23,13 @@ const CRED_COOKIE_CAP_S = 30 * 24 * 60 * 60;
 interface EmberConfig {
 	trustedGenesis: Uint8Array;
 	scope: string;
+	/**
+	 * This deployment's audience identifier (its origin). When set, a presence
+	 * proof is accepted only if it was addressed to this audience, so a proof
+	 * captured by another relying party cannot be relayed here. Unset leaves
+	 * verification open (the in-person QR case, where co-presence is the bind).
+	 */
+	audience?: string;
 }
 
 function readConfig(): EmberConfig | null {
@@ -30,7 +37,7 @@ function readConfig(): EmberConfig | null {
 	const scope = env.EMBER_SCOPE_SLUG;
 	if (!genesis || !scope) return null;
 	try {
-		return { trustedGenesis: b64uDecode(genesis), scope };
+		return { trustedGenesis: b64uDecode(genesis), scope, audience: env.EMBER_AUD || undefined };
 	} catch {
 		return null;
 	}
@@ -48,7 +55,9 @@ export function emberProvider(): IdentityProvider | null {
 	// Each call gets a fresh adapter so the active-membership closure does not
 	// leak across requests.
 	const newPort = () =>
-		createEmberAdapter(createEmberVerifierClient({ trustedGenesis: config.trustedGenesis }));
+		createEmberAdapter(
+			createEmberVerifierClient({ trustedGenesis: config.trustedGenesis, audience: config.audience })
+		);
 
 	return {
 		id: 'ember',
@@ -58,7 +67,11 @@ export function emberProvider(): IdentityProvider | null {
 			const nonce = crypto.getRandomValues(new Uint8Array(8));
 			const nonceB64 = b64uEncode(nonce);
 			cookies.set(NONCE_COOKIE, nonceB64, { path: '/', httpOnly: true, sameSite: 'lax', maxAge: NONCE_TTL_S });
-			return { nonce: nonceB64 };
+			// The keyring echoes `aud` and `iat` into the proof it builds, so the
+			// proof is bound to this verifier and to a freshness window.
+			const challenge: Record<string, unknown> = { nonce: nonceB64, iat: Math.floor(Date.now() / 1000) };
+			if (config.audience) challenge.aud = config.audience;
+			return challenge;
 		},
 
 		async establish(cookies: Cookies, evidence: unknown): Promise<EstablishResult> {
