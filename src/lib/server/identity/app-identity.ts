@@ -15,8 +15,7 @@
 
 import type { User, SupabaseClient } from '@supabase/supabase-js';
 import type { Upactor } from '@prefig/upact';
-import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
-import { createClient } from '@supabase/supabase-js';
+import { makeAdminClient } from '$lib/server/supabase-admin.js';
 import { mintIdentityJwt, createClaimClient } from './claims.js';
 import { claimInjectionEnabled } from './data-access.js';
 import type { ScopeSession } from './types.js';
@@ -38,10 +37,10 @@ export async function buildAppIdentity(sessions: ScopeSession[]): Promise<AppIde
 		const primary = sessions[0];
 		const scopes = [...new Set(sessions.map((s) => s.scope))];
 
-		const anon = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
-			auth: { autoRefreshToken: false, persistSession: false }
-		});
-		const { data, error } = await anon.rpc('ensure_identity', {
+		// Provisioning an identity row is privileged; do it with the service role,
+		// never the public anon key. The claim client minted below is what then
+		// authorizes the request under RLS.
+		const { data, error } = await makeAdminClient().rpc('ensure_identity', {
 			p_substrate: primary.substrate,
 			p_substrate_id: primary.memberId
 		});

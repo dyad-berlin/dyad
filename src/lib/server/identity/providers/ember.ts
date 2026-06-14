@@ -10,6 +10,7 @@
  */
 
 import type { Cookies } from '@sveltejs/kit';
+import { dev } from '$app/environment';
 import { env } from '$env/dynamic/private';
 import { createEmberAdapter, createEmberVerifierClient } from '@prefig/upact-ember';
 import { b64uDecode, b64uEncode, parseProof } from '@prefig/ember';
@@ -18,7 +19,12 @@ import type { EstablishResult, IdentityProvider, ScopeSession } from '../types.j
 const CRED_COOKIE = 'ember_cred';
 const NONCE_COOKIE = 'ember_nonce';
 const NONCE_TTL_S = 120;
-const CRED_COOKIE_CAP_S = 30 * 24 * 60 * 60;
+// Cap how long the credential cookie may persist. It is re-verified against the
+// credential's own expiry on every request, so this is only a ceiling on a
+// possession-unverified bearer cookie. Kept short (a week) because represence
+// credentials are themselves short-lived and renewed in person; binding the
+// cookie to key possession and adding revocation is tracked in U7/U9.
+const CRED_COOKIE_CAP_S = 7 * 24 * 60 * 60;
 
 interface EmberConfig {
 	trustedGenesis: Uint8Array;
@@ -66,7 +72,7 @@ export function emberProvider(): IdentityProvider | null {
 		async challenge(cookies: Cookies): Promise<Record<string, unknown>> {
 			const nonce = crypto.getRandomValues(new Uint8Array(8));
 			const nonceB64 = b64uEncode(nonce);
-			cookies.set(NONCE_COOKIE, nonceB64, { path: '/', httpOnly: true, sameSite: 'lax', maxAge: NONCE_TTL_S });
+			cookies.set(NONCE_COOKIE, nonceB64, { path: '/', httpOnly: true, sameSite: 'lax', secure: !dev, maxAge: NONCE_TTL_S });
 			// The keyring echoes `aud` and `iat` into the proof it builds, so the
 			// proof is bound to this verifier and to a freshness window.
 			const challenge: Record<string, unknown> = { nonce: nonceB64, iat: Math.floor(Date.now() / 1000) };
@@ -112,6 +118,7 @@ export function emberProvider(): IdentityProvider | null {
 				path: '/',
 				httpOnly: true,
 				sameSite: 'lax',
+				secure: !dev,
 				maxAge: Math.min(remaining, CRED_COOKIE_CAP_S)
 			});
 

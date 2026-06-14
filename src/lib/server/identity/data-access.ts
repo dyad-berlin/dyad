@@ -16,20 +16,13 @@
  */
 
 import { env } from '$env/dynamic/private';
-import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { type SupabaseClient } from '@supabase/supabase-js';
 import { makeAdminClient } from '$lib/server/supabase-admin.js';
 import { mintIdentityJwt, createClaimClient } from './claims.js';
 import { resolveIdentityId } from './identities.js';
 
 export function claimInjectionEnabled(): boolean {
 	return env.EMBER_RLS_NATIVE === '1';
-}
-
-function anonClient(): SupabaseClient {
-	return createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
-		auth: { autoRefreshToken: false, persistSession: false }
-	});
 }
 
 /** Read-only client scoped to one corner. */
@@ -50,7 +43,10 @@ export async function scopedWriteContext(
 		const authorId = await resolveIdentityId(admin, substrate, memberId);
 		return { client: admin, authorId };
 	}
-	const { data, error } = await anonClient().rpc('ensure_identity', {
+	// Provisioning is privileged: call ensure_identity with the service role,
+	// not the public anon key. The minted claim client below is what does the
+	// actual scoped write under RLS.
+	const { data, error } = await makeAdminClient().rpc('ensure_identity', {
 		p_substrate: substrate,
 		p_substrate_id: memberId
 	});
