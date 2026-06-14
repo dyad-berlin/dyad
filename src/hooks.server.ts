@@ -121,7 +121,6 @@ export const handle: Handle = async ({ event, resolve }) => {
 	const { session, user } = await event.locals.safeGetSession();
 	event.locals.session = session;
 	event.locals.user = user;
-	event.locals.scopes = [];
 	event.locals.homeScope = null;
 	event.locals.homeRegion = null;
 	event.locals.accessExpiresAt = null;
@@ -129,6 +128,32 @@ export const handle: Handle = async ({ event, resolve }) => {
 	// — it's purely the hostname — so loaders can switch a member's region
 	// context to match the domain they arrived on.
 	event.locals.hostRegion = HOST_REGIONS[event.url.hostname.replace(/\.$/, '')] ?? null;
+
+	// Ephemeral scope sessions from any configured identity provider (additive;
+	// no-op unless a provider is configured and a valid credential cookie is
+	// present). Substrate-agnostic: dyad core names no substrate here. Sessions
+	// lapse with their credential and are stored in no identity_scopes row.
+	// See src/lib/server/identity.
+	const { loadScopeSessions, buildAppIdentity } = await import('$lib/server/identity/index.js');
+	const ephemeral = await loadScopeSessions(event.cookies, Math.floor(Date.now() / 1000));
+	event.locals.scopes = [...ephemeral.scopes];
+	event.locals.scopeSessions = ephemeral.sessions;
+	event.locals.upactor = null;
+
+	// Account-less app access: a visitor with a provider scope session but no
+	// Supabase account is authorized through the whole app as their identity,
+	// via a claim-injected client (RLS sees their identity + scopes). This is
+	// what makes a provider login a way *into the app*. Gated on the claim seam;
+	// a no-op (visitor stays anonymous) when the flag/migration are absent, and
+	// never touches the logged-in Supabase path (guarded on `!user`).
+	if (!user && ephemeral.sessions.length > 0) {
+		const appIdentity = await buildAppIdentity(ephemeral.sessions);
+		if (appIdentity) {
+			event.locals.supabase = appIdentity.client;
+			event.locals.user = appIdentity.user;
+			event.locals.upactor = appIdentity.upactor;
+		}
+	}
 
 	// Redirect old /prompts/ URLs to /conversations/
 	if (event.url.pathname.startsWith('/prompts/')) {
@@ -201,7 +226,8 @@ export const handle: Handle = async ({ event, resolve }) => {
 				console.error('[hooks] get_my_access_context failed:', ctxError.message);
 			}
 			const ctx = firstAccessContextRow(ctxRows);
-			event.locals.scopes = ctx?.scopes ?? [];
+			// Merge permanent grants with any ephemeral provider scope sessions.
+			event.locals.scopes = [...new Set([...(ctx?.scopes ?? []), ...ephemeral.scopes])];
 			event.locals.homeScope = ctx?.home_scope ?? null;
 			event.locals.homeRegion = ctx?.home_region ?? null;
 			event.locals.accessExpiresAt = ctx?.access_expires_at ?? null;
