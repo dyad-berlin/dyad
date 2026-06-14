@@ -59,5 +59,20 @@ const { error } = await svc.from('prompts').insert({
 });
 if (error) throw new Error(`prompt insert failed: ${error.message}`);
 
-console.log(`Seeded conversation ${id} in corner "${slug}".`);
-console.log(`Open: /c/${slug}/${id}`);
+// Discover only shows conversations with available (future, unbooked) time
+// slots — the core 1:1 mechanic. Without slots the conversation never appears.
+const slots = [3, 6].map((daysOut) => ({
+	prompt_id: id,
+	start_time: new Date(Date.now() + daysOut * 86400_000).toISOString(),
+	duration_minutes: 60,
+	exact_location: { place_id: 'demo', name: 'A quiet café', address: 'Berlin', lat: 52.4996, lng: 13.403 },
+	general_area: 'Kreuzberg',
+	general_area_lat: 52.4996,
+	general_area_lng: 13.403,
+	accepted: false
+}));
+const { error: slotErr } = await svc.from('time_slots').insert(slots);
+if (slotErr) throw new Error(`time_slots insert failed: ${slotErr.message}`);
+
+console.log(`Seeded conversation ${id} (with ${slots.length} time slots) in corner "${slug}".`);
+console.log(`It will appear on /discover for a member of "${slug}".`);

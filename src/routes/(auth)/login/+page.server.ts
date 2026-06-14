@@ -43,7 +43,7 @@ export const actions: Actions = {
 		redirect(302, '/discover');
 	},
 
-	logout: async ({ locals }) => {
+	logout: async ({ locals, cookies }) => {
 		// Both the Supabase and OIDC adapters ignore the passed Session —
 		// each reads its own cookie state to know what to clear.
 		// If a future adapter requires a real Session here, thread it from authenticate().
@@ -52,6 +52,13 @@ export const actions: Actions = {
 		} catch {
 			// Fail open: redirect even if the substrate is unavailable.
 			// The cookie will expire naturally; the user is effectively logged out.
+		}
+		// Also clear any account-less provider scope session (e.g. ember).
+		try {
+			const { getProviders } = await import('$lib/server/identity/index.js');
+			for (const provider of getProviders()) provider.clear(cookies);
+		} catch {
+			// no providers configured — nothing to clear
 		}
 		redirect(302, '/login');
 	},
