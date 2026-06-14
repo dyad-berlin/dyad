@@ -18,7 +18,8 @@ declare global {
 			 * in hooks.server.ts via get_my_access_context() and read by
 			 * prompt-query.ts listing methods to gate scoped prompts. Carries both
 			 * permanent grants and any ephemeral provider scope sessions (see
-			 * `scopeSessions`). See migrations 20260508180000 and 20260605100400.
+			 * `scopeSessions`). See migrations 20260508180000 and 20260605100400,
+			 * and src/lib/server/identity.
 			 */
 			scopes: string[];
 			/**
