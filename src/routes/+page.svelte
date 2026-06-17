@@ -2,6 +2,10 @@
 	import type { PageData } from './$types';
 	import type { PromptSummary, TimeSlot } from '$lib/domain/types';
 	import AuthDialog from '$lib/components/AuthDialog.svelte';
+	import { copy } from '$lib/copy';
+
+	const og = copy.landing;
+	const ogImage = `${og.ogUrl}/images/og-card.png`;
 
 	let { data }: { data: PageData } = $props();
 
@@ -35,8 +39,22 @@
 </script>
 
 <svelte:head>
-	<title>dyad.</title>
-	<meta name="description" content="The offline social network owned by its community." />
+	<title>{og.title}</title>
+	<meta name="description" content={og.metaDescription} />
+
+	<!-- Open Graph (Facebook, LinkedIn, Slack, iMessage, Discord, Signal, …) -->
+	<meta property="og:title" content={og.title} />
+	<meta property="og:description" content={og.metaDescription} />
+	<meta property="og:url" content={og.ogUrl} />
+	<meta property="og:type" content="website" />
+	<meta property="og:image" content={ogImage} />
+	<meta property="og:site_name" content={og.ogSiteName} />
+
+	<!-- Twitter / X -->
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content={og.title} />
+	<meta name="twitter:description" content={og.metaDescription} />
+	<meta name="twitter:image" content={ogImage} />
 </svelte:head>
 
 <!-- ── Two-pane shell: conversations on the left, map on the right (Airbnb model) ── -->
@@ -70,7 +88,9 @@
 	<aside class="right">
 		<div class="map-frame">
 			<div class="map-inner">
-				{#await import('$lib/components/MapView.svelte') then { default: MapView }}
+				{#await import('$lib/components/MapView.svelte')}
+					<div class="map-placeholder"></div>
+				{:then { default: MapView }}
 					<MapView
 						prompts={conversations}
 						initialCenter={data.mapCenter}
@@ -80,6 +100,8 @@
 						scrollWheelZoom={true}
 						zoomControl={false}
 					/>
+				{:catch}
+					<div class="map-placeholder"></div>
 				{/await}
 			</div>
 
@@ -91,11 +113,11 @@
 					</button>
 					{#if selected.cover_image_url}
 						<div class="map-card-cover">
-							<img src={selected.cover_image_url} alt="" />
+							<img src={selected.cover_image_url} alt={selected.title ? `Cover image for ${selected.title}` : ''} />
 						</div>
 					{/if}
 					<div class="map-card-body">
-						<h3 class="map-card-title">{selected.title}</h3>
+						<h3 class="map-card-title">{selected.title ?? 'Untitled'}</h3>
 						<div class="map-card-meta">
 							{#if areaOf(selected)}<span>{areaOf(selected)}</span>{/if}
 							{#if selected.soonest_slot}<span>{formatDate(selected.soonest_slot)}</span>{/if}
@@ -155,7 +177,7 @@
 
 	/* dice-style hierarchy: a large, heavy headline that dominates the column. */
 	.left-title {
-		font-family: 'SangBleu Sunrise', Georgia, 'Times New Roman', serif;
+		font-family: var(--font-serif);
 		font-size: clamp(2rem, 4.4vw, 3rem);
 		font-weight: 700;
 		color: rgba(255, 255, 255, 0.97);
@@ -166,7 +188,7 @@
 
 	/* Secondary supporting line — clearly below the headline in the hierarchy. */
 	.left-sub {
-		font-family: 'SF Mono', 'Fira Code', Menlo, monospace;
+		font-family: var(--font-mono);
 		font-size: 0.82rem;
 		line-height: 1.6;
 		color: rgba(255, 255, 255, 0.55);
@@ -181,7 +203,7 @@
 		background: none;
 		border: none;
 		cursor: pointer;
-		font-family: 'SF Mono', 'Fira Code', Menlo, monospace;
+		font-family: var(--font-mono);
 		font-size: 0.82rem;
 		color: rgba(255, 255, 255, 0.5);
 		padding: 0;
@@ -272,7 +294,7 @@
 	.map-card-meta {
 		display: flex;
 		gap: var(--space-3);
-		font-family: 'SF Mono', 'Fira Code', Menlo, monospace;
+		font-family: var(--font-mono);
 		font-size: 0.68rem;
 		letter-spacing: 0.03em;
 		color: #717171;
@@ -296,7 +318,7 @@
 		background: #111;
 		border: none;
 		cursor: pointer;
-		font-family: 'SF Mono', 'Fira Code', Menlo, monospace;
+		font-family: var(--font-mono);
 		font-size: 0.74rem;
 		letter-spacing: 0.05em;
 		color: #fff;
@@ -313,6 +335,13 @@
 		border-radius: calc(var(--radius-card) - 6px);
 	}
 
+	/* Shown while the map chunk loads, or if it fails to load. */
+	.map-placeholder {
+		width: 100%;
+		height: 100%;
+		background: #0a0a0d;
+	}
+
 	/* ── Footer (left column flow) ── */
 	.site-footer {
 		display: flex;
@@ -325,7 +354,7 @@
 	}
 
 	.footer-link {
-		font-family: 'SF Mono', 'Fira Code', Menlo, monospace;
+		font-family: var(--font-mono);
 		font-size: 0.6rem;
 		letter-spacing: 0.06em;
 		color: rgba(255, 255, 255, 0.25);
@@ -336,7 +365,7 @@
 	.footer-link:hover { color: rgba(255, 255, 255, 0.6); }
 
 	.footer-sep {
-		font-family: 'SF Mono', 'Fira Code', Menlo, monospace;
+		font-family: var(--font-mono);
 		font-size: 0.6rem;
 		color: rgba(255, 255, 255, 0.12);
 		padding: 0 10px;
@@ -355,7 +384,7 @@
 	}
 
 	.wordmark {
-		font-family: 'SangBleu Sunrise', Georgia, 'Times New Roman', serif;
+		font-family: var(--font-serif);
 		font-size: 22px;
 		font-weight: 700;
 		letter-spacing: 0.06em;
@@ -370,7 +399,7 @@
 		background: none;
 		border: none;
 		cursor: pointer;
-		font-family: 'SF Mono', 'Fira Code', Menlo, monospace;
+		font-family: var(--font-mono);
 		font-size: 11px;
 		letter-spacing: 0.06em;
 		color: rgba(255, 255, 255, 0.45);
@@ -385,7 +414,7 @@
 		background: rgba(255, 255, 255, 0.1);
 		border: 1px solid rgba(255, 255, 255, 0.18);
 		cursor: pointer;
-		font-family: 'SF Mono', 'Fira Code', Menlo, monospace;
+		font-family: var(--font-mono);
 		font-size: 11px;
 		letter-spacing: 0.08em;
 		color: rgba(255, 255, 255, 0.75);

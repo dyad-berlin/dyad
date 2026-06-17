@@ -90,7 +90,7 @@ export const copy = {
 		_routes: ['/'],
 		_description: 'Landing page for unauthenticated visitors.',
 		title: 'dyad.',
-		metaDescription: 'A network for face to face sensemaking, in Berlin.',
+		metaDescription: 'The offline social network owned by its community.',
 		ogSiteName: 'dyad',
 		ogUrl: 'https://dyad.berlin',
 		rotatingWords: ['writers', 'parents', 'artists', 'neighbours', 'strangers', 'night owls', 'commuters', 'berliners', 'listeners', 'you'],
