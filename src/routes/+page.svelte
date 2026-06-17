@@ -81,12 +81,9 @@
 
 			<!-- ── Footer (in the left scroll flow) ── -->
 			<footer class="site-footer">
-				<a href="/steward-ownership" class="footer-link">Steward ownership</a>
-				<span class="footer-sep">·</span>
-				<a href="/governance" class="footer-link">Participatory governance</a>
-				<span class="footer-sep">·</span>
-				<a href="/community-care" class="footer-link">Trust, safety &amp; community care</a>
-				<span class="footer-sep">·</span>
+				<!-- Resources (steward ownership · participatory governance · trust, safety & community care)
+				     hidden until the zine content is ready to surface. Pages still exist at /steward-ownership,
+				     /governance, /community-care; re-add the links here when we're ready to show them. -->
 				<a href="/impressum" class="footer-link">Terms</a>
 				<span class="footer-sep">·</span>
 				<a href="/datenschutz" class="footer-link">Privacy</a>
