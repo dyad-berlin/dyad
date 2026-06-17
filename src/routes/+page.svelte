@@ -62,7 +62,7 @@
 	<!-- LEFT: intro + footer -->
 	<section class="left">
 			<header class="left-head">
-				<h1 class="left-title">Collectively Owned<br />Offline Social Network</h1>
+				<h1 class="left-title">Collectively owned<br />offline social network</h1>
 				<p class="left-sub">A place online to find conversations, people and communities offline. Open source. Steward-owned. Governed by the communities who use it.</p>
 				<div class="left-links">
 					<button class="text-link text-link--strong" onclick={() => openAuth('waitlist')}>Join</button>
@@ -72,11 +72,11 @@
 
 			<!-- ── Footer (in the left scroll flow) ── -->
 			<footer class="site-footer">
-				<a href="/steward-ownership" class="footer-link">Steward Ownership</a>
+				<a href="/steward-ownership" class="footer-link">Steward ownership</a>
 				<span class="footer-sep">·</span>
-				<a href="/governance" class="footer-link">Participatory Governance</a>
+				<a href="/governance" class="footer-link">Participatory governance</a>
 				<span class="footer-sep">·</span>
-				<a href="/community-care" class="footer-link">Trust, Safety &amp; Community Care</a>
+				<a href="/community-care" class="footer-link">Trust, safety &amp; community care</a>
 				<span class="footer-sep">·</span>
 				<a href="/impressum" class="footer-link">Terms</a>
 				<span class="footer-sep">·</span>

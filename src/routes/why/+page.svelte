@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { env } from '$env/dynamic/public';
+	import ZineFooter from '$lib/components/ZineFooter.svelte';
 
 	// Base URL for page imagery. Falls back to the current Supabase bucket URL
 	// so deployments without the env var set keep rendering identically. Set
@@ -14,7 +15,7 @@
 	<title>Why</title>
 </svelte:head>
 
-<div class="page">
+<div class="page" data-theme="dark">
 
 	<div class="snap-intro">
 		<header class="header">
@@ -101,6 +102,8 @@
 			<img class="sc sc-lg" style="--x: 48%; --y: 42%; --r: 3deg"  src="{ASSETS}/whyteam2.png" alt="" />
 		</div>
 	</div>
+
+	<ZineFooter />
 </div>
 
 <style>
