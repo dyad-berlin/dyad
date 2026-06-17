@@ -19,7 +19,7 @@
 
 	<div class="snap-intro">
 		<header class="header">
-			<a href="/"><img src="/images/logo.png" alt="dyad." class="logo" /></a>
+			<a href="/" class="wordmark" aria-label="DYAD">DYAD</a>
 		</header>
 
 		<div class="hero">
@@ -216,11 +216,14 @@
 		flex-shrink: 0;
 	}
 
-	.logo {
-		height: 24px;
-		width: auto;
-		display: block;
-		opacity: 0.85;
+	.wordmark {
+		font-family: 'SangBleu Sunrise', Georgia, 'Times New Roman', serif;
+		font-size: 22px;
+		font-weight: 700;
+		letter-spacing: 0.06em;
+		color: rgba(255, 255, 255, 0.85);
+		text-decoration: none;
+		line-height: 1;
 	}
 
 	/* Hero — first viewport */
