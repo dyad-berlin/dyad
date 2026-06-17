@@ -62,25 +62,25 @@
 	<!-- LEFT: intro + footer -->
 	<section class="left">
 			<header class="left-head">
-				<h1 class="left-title">collectively owned<br />offline social network</h1>
+				<h1 class="left-title">Collectively Owned<br />Offline Social Network</h1>
 				<p class="left-sub">A place online to find conversations, people and communities offline. Open source. Steward-owned. Governed by the communities who use it.</p>
 				<div class="left-links">
-					<button class="text-link text-link--strong" onclick={() => openAuth('waitlist')}>join</button>
-					<a href="/steward-ownership" class="text-link">explore</a>
+					<button class="text-link text-link--strong" onclick={() => openAuth('waitlist')}>Join</button>
+					<a href="/steward-ownership" class="text-link">Explore</a>
 				</div>
 			</header>
 
 			<!-- ── Footer (in the left scroll flow) ── -->
 			<footer class="site-footer">
-				<a href="/steward-ownership" class="footer-link">steward ownership</a>
+				<a href="/steward-ownership" class="footer-link">Steward Ownership</a>
 				<span class="footer-sep">·</span>
-				<a href="/governance" class="footer-link">participatory governance</a>
+				<a href="/governance" class="footer-link">Participatory Governance</a>
 				<span class="footer-sep">·</span>
-				<a href="/community-care" class="footer-link">trust, safety &amp; community care</a>
+				<a href="/community-care" class="footer-link">Trust, Safety &amp; Community Care</a>
 				<span class="footer-sep">·</span>
-				<a href="/impressum" class="footer-link">terms</a>
+				<a href="/impressum" class="footer-link">Terms</a>
 				<span class="footer-sep">·</span>
-				<a href="/datenschutz" class="footer-link">privacy</a>
+				<a href="/datenschutz" class="footer-link">Privacy</a>
 			</footer>
 	</section>
 
@@ -125,7 +125,7 @@
 						{#if selected.body_snippet}
 							<p class="map-card-snippet">{selected.body_snippet}</p>
 						{/if}
-						<button class="map-card-cta" onclick={() => openAuth('waitlist')}>join to read &amp; meet</button>
+						<button class="map-card-cta" onclick={() => openAuth('waitlist')}>Join to read &amp; meet</button>
 					</div>
 				</div>
 			{/if}
@@ -137,8 +137,8 @@
 <header class="hdr">
 	<a href="/" class="wordmark" aria-label="DYAD">DYAD</a>
 	<nav class="hdr-nav">
-		<a href="/login" class="nav-link" onclick={(e) => { e.preventDefault(); openAuth('login'); }}>log in</a>
-		<button class="btn-join" onclick={() => openAuth('waitlist')}>join</button>
+		<a href="/login" class="nav-link" onclick={(e) => { e.preventDefault(); openAuth('login'); }}>Log in</a>
+		<button class="btn-join" onclick={() => openAuth('waitlist')}>Join</button>
 	</nav>
 </header>
 
