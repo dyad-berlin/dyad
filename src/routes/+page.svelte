@@ -63,20 +63,20 @@
 	<section class="left">
 			<header class="left-head">
 				<h1 class="left-title">collectively owned<br />offline social network</h1>
-				<p class="left-sub">a place online to find conversations, people and communities offline. Open source. Steward-owned. Governed by the communities who use it.</p>
+				<p class="left-sub">A place online to find conversations, people and communities offline. Open source. Steward-owned. Governed by the communities who use it.</p>
 				<div class="left-links">
 					<button class="text-link text-link--strong" onclick={() => openAuth('waitlist')}>join</button>
-					<a href="/why" class="text-link">explore</a>
+					<a href="/steward-ownership" class="text-link">explore</a>
 				</div>
 			</header>
 
 			<!-- ── Footer (in the left scroll flow) ── -->
 			<footer class="site-footer">
-				<a href="/why" class="footer-link">steward ownership</a>
+				<a href="/steward-ownership" class="footer-link">steward ownership</a>
 				<span class="footer-sep">·</span>
-				<a href="/why" class="footer-link">participatory governance</a>
+				<a href="/governance" class="footer-link">participatory governance</a>
 				<span class="footer-sep">·</span>
-				<a href="/why" class="footer-link">community care</a>
+				<a href="/community-care" class="footer-link">trust, safety &amp; community care</a>
 				<span class="footer-sep">·</span>
 				<a href="/impressum" class="footer-link">terms</a>
 				<span class="footer-sep">·</span>
