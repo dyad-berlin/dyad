@@ -63,6 +63,7 @@ function requireConfig() {
 }
 
 const RESEND_API = 'https://api.resend.com';
+const DRY_RUN = process.argv.includes('--dry-run');
 
 /** Segment add (POST) / remove (DELETE) — no request body needed. */
 async function segmentCall(path: string, method: 'POST' | 'DELETE'): Promise<Response> {
@@ -84,6 +85,10 @@ async function ensureContact(email: string) {
 }
 
 async function reconcile(email: string, segment: string) {
+	if (DRY_RUN) {
+		console.log(`  [dry-run] ${email} -> ${segment}`);
+		return;
+	}
 	await ensureContact(email);
 	for (const [seg, id] of Object.entries(SEGMENT_IDS)) {
 		if (!id) continue;
@@ -110,7 +115,7 @@ async function main() {
 	for (const r of contacts ?? []) if (r.email) emails.add(String(r.email).trim().toLowerCase());
 	for (const r of invitations ?? []) if (r.email) emails.add(String(r.email).trim().toLowerCase());
 
-	console.log(`Reconciling ${emails.size} contacts...`);
+	console.log(`Reconciling ${emails.size} contacts${DRY_RUN ? ' (dry run — no Resend writes)' : ''}...`);
 	const counts: Record<string, number> = { waitlist: 0, invited: 0, member: 0, unknown: 0 };
 
 	for (const email of emails) {
