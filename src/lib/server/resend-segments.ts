@@ -71,17 +71,42 @@ function splitName(name?: string): { first_name?: string; last_name?: string } {
 	return { first_name: parts[0], last_name: parts.slice(1).join(' ') || undefined };
 }
 
-/** Ensure the contact exists with its name. Resend 409/422 on an already-present
- *  contact is fine — but POST won't update an existing contact's name, so PATCH
- *  it too so names stay current (and backfill onto contacts Resend already had). */
-async function ensureContact(email: string, name?: string): Promise<void> {
+/** The `city` contact property (from the waitlist "where are you based?"
+ *  answer) must be defined in Resend once before it can be set on contacts.
+ *  Guarded so we only attempt the definition once per process/isolate. */
+let cityPropertyEnsured = false;
+async function ensureCityProperty(): Promise<void> {
+	if (cityPropertyEnsured) return;
+	cityPropertyEnsured = true;
+	const res = await rf('/contact-properties', 'POST', { key: 'city', type: 'string' });
+	// 409/422 = already defined, which is the desired state.
+	if (res && !res.ok && res.status !== 409 && res.status !== 422) {
+		console.error('[resend-segments] ensureCityProperty:', res.status, await res.text());
+	}
+}
+
+/** Ensure the contact exists with its name and city. Resend 409/422 on an
+ *  already-present contact is fine — but POST won't update an existing contact,
+ *  so PATCH it too so name/city stay current (and backfill onto contacts Resend
+ *  already had). `city` is the waitlist `based_in` answer. */
+async function ensureContact(email: string, name?: string, city?: string): Promise<void> {
+	if (city) await ensureCityProperty();
 	const nameFields = splitName(name);
-	const res = await rf('/contacts', 'POST', { email, unsubscribed: false, ...nameFields });
+	const properties = city ? { city } : undefined;
+	const res = await rf('/contacts', 'POST', {
+		email,
+		unsubscribed: false,
+		...nameFields,
+		...(properties ? { properties } : {})
+	});
 	if (res && !res.ok && res.status !== 409 && res.status !== 422) {
 		console.error('[resend-segments] ensureContact:', res.status, await res.text());
 	}
-	if (name) {
-		await rf(`/contacts/${encodeURIComponent(email)}`, 'PATCH', nameFields);
+	if (name || properties) {
+		await rf(`/contacts/${encodeURIComponent(email)}`, 'PATCH', {
+			...nameFields,
+			...(properties ? { properties } : {})
+		});
 	}
 }
 
@@ -110,7 +135,7 @@ async function removeFromSegment(email: string, id: string): Promise<void> {
 export async function syncContactSegment(
 	email: string,
 	target: Segment,
-	opts: { name?: string } = {}
+	opts: { name?: string; city?: string } = {}
 ): Promise<boolean> {
 	if (!resendSegmentsConfigured()) {
 		console.error('[resend-segments] skipped: RESEND_API_KEY / RESEND_SEGMENT_* not configured');
@@ -124,7 +149,7 @@ export async function syncContactSegment(
 		return false;
 	}
 
-	await ensureContact(normalized, opts.name);
+	await ensureContact(normalized, opts.name, opts.city);
 	await addToSegment(normalized, targetId);
 
 	// Strip membership from the other two segments so the contact lands in

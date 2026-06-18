@@ -81,33 +81,47 @@ function splitName(name?: string): { first_name?: string; last_name?: string } {
 	return { first_name: parts[0], last_name: parts.slice(1).join(' ') || undefined };
 }
 
-async function ensureContact(email: string, name?: string) {
+/** Define the `city` contact property once (from the waitlist based_in answer),
+ *  so it can be set on contacts. 409/422 = already defined. */
+async function ensureCityProperty() {
+	const res = await fetch(`${RESEND_API}/contact-properties`, {
+		method: 'POST',
+		headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+		body: JSON.stringify({ key: 'city', type: 'string' })
+	});
+	if (!res.ok && res.status !== 409 && res.status !== 422) {
+		console.warn(`  ensureCityProperty: ${res.status}`);
+	}
+}
+
+async function ensureContact(email: string, name?: string, city?: string) {
+	const properties = city ? { city } : undefined;
 	const res = await fetch(`${RESEND_API}/contacts`, {
 		method: 'POST',
 		headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-		body: JSON.stringify({ email, unsubscribed: false, ...splitName(name) })
+		body: JSON.stringify({ email, unsubscribed: false, ...splitName(name), ...(properties ? { properties } : {}) })
 	});
 	if (!res.ok && res.status !== 409 && res.status !== 422) {
 		console.warn(`  ensureContact ${email}: ${res.status}`);
 		return;
 	}
-	// POST won't overwrite an existing contact's name, so PATCH it too — this is
-	// what backfills names onto the contacts Resend already had.
-	if (name) {
+	// POST won't overwrite an existing contact, so PATCH name + city too — this is
+	// what backfills them onto the contacts Resend already had.
+	if (name || properties) {
 		await fetch(`${RESEND_API}/contacts/${encodeURIComponent(email)}`, {
 			method: 'PATCH',
 			headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-			body: JSON.stringify(splitName(name))
+			body: JSON.stringify({ ...splitName(name), ...(properties ? { properties } : {}) })
 		});
 	}
 }
 
-async function reconcile(email: string, segment: string, name?: string) {
+async function reconcile(email: string, segment: string, name?: string, city?: string) {
 	if (DRY_RUN) {
-		console.log(`  [dry-run] ${email} -> ${segment}${name ? ` (${name})` : ''}`);
+		console.log(`  [dry-run] ${email} -> ${segment}${name ? ` (${name})` : ''}${city ? ` [${city}]` : ''}`);
 		return;
 	}
-	await ensureContact(email, name);
+	await ensureContact(email, name, city);
 	for (const [seg, id] of Object.entries(SEGMENT_IDS)) {
 		if (!id) continue;
 		const method = seg === segment ? 'POST' : 'DELETE';
@@ -125,21 +139,27 @@ async function main() {
 	});
 
 	const [{ data: contacts }, { data: invitations }] = await Promise.all([
-		supabase.from('contacts').select('email, name'),
+		supabase.from('contacts').select('email, name, based_in'),
 		supabase.from('invitations').select('email')
 	]);
 
-	// Names only live on the contacts (waitlist) table — invitations carry no
-	// name. Build a lookup so we can attach it when upserting to Resend.
+	// Name and city (based_in, the waitlist "where are you based?" answer) only
+	// live on the contacts (waitlist) table — invitations carry neither. Build
+	// lookups so we can attach them when upserting to Resend.
 	const nameByEmail = new Map<string, string>();
+	const cityByEmail = new Map<string, string>();
 	const emails = new Set<string>();
 	for (const r of contacts ?? []) {
 		if (!r.email) continue;
 		const email = String(r.email).trim().toLowerCase();
 		emails.add(email);
 		if (r.name) nameByEmail.set(email, String(r.name));
+		if (r.based_in) cityByEmail.set(email, String(r.based_in));
 	}
 	for (const r of invitations ?? []) if (r.email) emails.add(String(r.email).trim().toLowerCase());
+
+	// Define the `city` property once up front (no-op if it already exists).
+	if (!DRY_RUN) await ensureCityProperty();
 
 	console.log(`Reconciling ${emails.size} contacts${DRY_RUN ? ' (dry run — no Resend writes)' : ''}...`);
 	const counts: Record<string, number> = { waitlist: 0, invited: 0, member: 0, unknown: 0 };
@@ -154,7 +174,7 @@ async function main() {
 			counts.unknown++;
 			continue;
 		}
-		await reconcile(email, segment as string, nameByEmail.get(email));
+		await reconcile(email, segment as string, nameByEmail.get(email), cityByEmail.get(email));
 		counts[segment as string] = (counts[segment as string] ?? 0) + 1;
 	}
 

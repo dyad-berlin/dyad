@@ -93,6 +93,20 @@ export const POST: RequestHandler = async ({ request }) => {
 		return json({ ok: true, skipped: 'no email resolved' });
 	}
 
+	// Enrich from the contacts (waitlist) row, which is the only place name and
+	// city (`based_in`, the "where are you based?" answer) live. Doing this by
+	// email means name + city sync no matter which table triggered the webhook.
+	let city: string | undefined;
+	const { data: contactRow } = await supabase
+		.from('contacts')
+		.select('name, based_in')
+		.eq('email', email)
+		.maybeSingle();
+	if (contactRow) {
+		if (!name && typeof contactRow.name === 'string') name = contactRow.name;
+		if (typeof contactRow.based_in === 'string') city = contactRow.based_in;
+	}
+
 	const { data: segment, error: rpcError } = await supabase.rpc('contact_segment', {
 		p_email: email
 	});
@@ -107,6 +121,6 @@ export const POST: RequestHandler = async ({ request }) => {
 		return json({ ok: true, email, segment: null });
 	}
 
-	await syncContactSegment(email, segment as Segment, { name });
+	await syncContactSegment(email, segment as Segment, { name, city });
 	return json({ ok: true, email, segment });
 };

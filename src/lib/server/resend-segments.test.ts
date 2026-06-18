@@ -107,6 +107,32 @@ describe('resend-segments', () => {
 		expect(calls.some((c) => String(c.url).endsWith('/emails'))).toBe(false);
 	});
 
+	it('defines the city property and attaches it to the contact when given', async () => {
+		Object.assign(mockEnv, FULL_CONFIG);
+		configureFetchOk(fetchMock);
+
+		await syncContactSegment('a@example.com', 'waitlist', { city: 'Berlin' });
+
+		const calls = fetchMock.mock.calls.map(([url, init]) => ({
+			url,
+			method: init.method,
+			body: init.body ? JSON.parse(init.body) : undefined
+		}));
+
+		// The city property is defined first (idempotent).
+		expect(calls).toContainEqual(
+			expect.objectContaining({
+				url: 'https://api.resend.com/contact-properties',
+				method: 'POST',
+				body: { key: 'city', type: 'string' }
+			})
+		);
+
+		// And the value rides on the contact upsert as properties.city.
+		const upsert = calls.find((c) => c.url === 'https://api.resend.com/contacts');
+		expect(upsert?.body.properties).toEqual({ city: 'Berlin' });
+	});
+
 	it('tolerates an already-present contact (409) and a not-in-segment remove (404)', async () => {
 		Object.assign(mockEnv, FULL_CONFIG);
 		fetchMock
