@@ -311,8 +311,7 @@ export const copy = {
 		// notification moment. {link} marks where notificationHintLink renders as a
 		// link to /profile/preferences. Possibility, not instruction; never says "email".
 		notificationHintLink: 'get notified',
-		notificationHintInvited: (username: string) => `You can {link} when @${username} replies.`,
-		notificationHintResponses: 'You can {link} when someone responds.',
+		notificationHintInvited: (username: string) => `You can {link} if @${username} accepts.`,
 		notificationHintMeeting: 'You can {link} if this meeting changes.',
 		// Onboarding step (U5) + preferences-page note (U6). By-choice, default-off,
 		// channel-agnostic; {link} renders notificationPrefsLink → /profile/preferences.
