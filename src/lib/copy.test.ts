@@ -11,6 +11,7 @@ describe('notification hint copy contract', () => {
 
 	const contextualHints = {
 		invited: p.notificationHintInvited('mara'),
+		inviteReceived: p.notificationHintInviteReceived,
 		meeting: p.notificationHintMeeting
 	};
 

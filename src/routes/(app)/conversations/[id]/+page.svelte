@@ -479,6 +479,12 @@
 					</div>
 				{/each}
 				{#if acceptError}<p class="field-error">{acceptError}</p>{/if}
+				<!-- The author's notification moment: people are responding, so an
+				     invitation to meet may come — offer to be notified of it.
+				     Self-silences once an address is set. -->
+				{#if !data.hasNotificationEmail}
+					<NotificationHint message={copy.preferences.notificationHintInviteReceived} />
+				{/if}
 			</section>
 		{/if}
 
