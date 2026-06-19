@@ -7,8 +7,6 @@
 	const totalSteps = 5;
 	const isLast = $derived(step === totalSteps - 1);
 
-	const stepNames = ['welcome', 'how_it_works', 'take_it_offline', 'notifications', 'your_move'];
-
 	// The optional notifications step renders notificationOnboarding with
 	// "preferences" as an inline link; split the copy on its {link} marker.
 	const onboardingBefore = copy.preferences.notificationOnboarding.split('{link}')[0] ?? '';
