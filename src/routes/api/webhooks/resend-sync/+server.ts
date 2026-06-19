@@ -23,7 +23,7 @@ import type { RequestHandler } from './$types';
  *
  * Auth: shared secret in the `x-webhook-secret` header (RESEND_SYNC_SECRET).
  * Responses carry NO email/segment — Supabase stores delivery history, so a
- * reflected email would be member PII in that log. See docs/resend-segment-sync.md.
+ * reflected email would be member PII in that log. See ./README.md for wiring.
  */
 
 interface WebhookPayload {
