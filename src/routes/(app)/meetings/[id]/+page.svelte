@@ -4,6 +4,7 @@
 	import ParticipantsStack from '$lib/components/ParticipantsStack.svelte';
 	import ConversationCard from '$lib/components/ConversationCard.svelte';
 	import UserHandle from '$lib/components/UserHandle.svelte';
+	import NotificationHint from '$lib/components/NotificationHint.svelte';
 	import { generateICS, downloadICS } from '$lib/utils/calendar.js';
 	import { formatShortDate } from '$lib/utils/dates.js';
 	import { othersBeyond } from '$lib/domain/gathering.js';
@@ -229,6 +230,13 @@
 		{#if data.cancellation.reason}
 			<blockquote class="cancelled-reason">{data.cancellation.reason}</blockquote>
 		{/if}
+	{/if}
+
+	<!-- An upcoming meeting is a notification moment: offer to be notified if it
+	     changes. Scheduled-only (a cancelled/past meeting has nothing to notify
+	     about) and self-silencing once an address is set. -->
+	{#if data.meeting.state === 'scheduled' && !data.hasNotificationEmail}
+		<NotificationHint message={copy.preferences.notificationHintMeeting} />
 	{/if}
 
 	<div class="detail-grid">
