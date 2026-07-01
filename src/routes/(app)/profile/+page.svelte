@@ -278,6 +278,7 @@
 		<div class="profile-handle">@{data.username}</div>
 		<div class="profile-actions">
 			<a href="/profile/preferences" class="profile-action-link">{copy.profile.preferencesLink}</a>
+			<a href="/profile/membership" class="profile-action-link">{copy.profile.membershipLink}</a>
 			<form method="POST" action="/logout" class="sign-out-form">
 				<button type="submit" class="sign-out-link">{copy.nav.signOut}</button>
 			</form>
