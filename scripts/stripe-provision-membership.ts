@@ -2,9 +2,14 @@
  * Provision the membership Products & Prices in Stripe via the API — so the
  * five fixed tiers live as code, not as manual dashboard clicks.
  *
+ * Reads STRIPE_SECRET_PROVISION_KEY — a key with Products + Prices write, kept
+ * separate from the app's runtime STRIPE_SECRET_KEY. Set it in .env.local (loaded
+ * here via dotenv) or pass it inline for one run.
+ *
  * Usage:
- *   STRIPE_SECRET_KEY=sk_test_... npx tsx scripts/stripe-provision-membership.ts
- *   STRIPE_SECRET_KEY=sk_live_... npx tsx scripts/stripe-provision-membership.ts --live
+ *   npx tsx scripts/stripe-provision-membership.ts --dry-run   # preview only, no Stripe calls / no key needed
+ *   npm run stripe:provision                                    # reads STRIPE_SECRET_PROVISION_KEY from .env.local
+ *   STRIPE_SECRET_PROVISION_KEY=rk_live_... npm run stripe:provision -- --live
  *
  * Creates one Product per tier (separate Products so Stripe reports subscriber
  * counts per tier) and one FIXED-price Price each, then prints the
@@ -18,8 +23,13 @@
  * src/lib/copy.ts (cadenceMonthlyPrice / monthlySolidarityPrice / etc.).
  */
 
-import 'dotenv/config';
+import dotenv from 'dotenv';
 import Stripe from 'stripe';
+
+// Local secrets live in .env.local; plain `dotenv/config` only reads `.env`.
+// Load .env.local first, then .env as fallback (dotenv never overrides a set var).
+dotenv.config({ path: '.env.local' });
+dotenv.config();
 
 interface Tier {
 	key: string; // metadata marker on the Product
@@ -59,7 +69,7 @@ async function findOrCreateProduct(stripe: Stripe, tier: Tier): Promise<string> 
 
 async function findOrCreatePrice(stripe: Stripe, tier: Tier, productId: string): Promise<string> {
 	// lookup_key is unique per account — the idempotency handle for a re-run.
-	const existing = await stripe.prices.list({ lookup_key: tier.envVar, active: true, limit: 1 });
+	const existing = await stripe.prices.list({ lookup_keys: [tier.envVar], active: true, limit: 1 });
 	if (existing.data[0]) {
 		console.log(`  price exists:   ${existing.data[0].id} [${tier.envVar}]`);
 		return existing.data[0].id;
@@ -76,13 +86,30 @@ async function findOrCreatePrice(stripe: Stripe, tier: Tier, productId: string):
 	return price.id;
 }
 
+function euro(cents: number): string {
+	return `€${(cents / 100).toFixed(2).replace(/\.00$/, '')}`;
+}
+
 async function main() {
-	const key = process.env.STRIPE_SECRET_KEY;
+	if (process.argv.includes('--dry-run')) {
+		console.log('DRY RUN — no Stripe calls, no key needed. Would create these fixed-price Products/Prices:\n');
+		for (const t of TIERS) {
+			const cadence = t.interval ? `recurring · ${t.interval}` : 'one-time';
+			console.log(`  ${t.productName}`);
+			console.log(`    ${euro(t.amountCents)} ${CURRENCY.toUpperCase()}  ·  ${cadence}  ·  lookup_key & env: ${t.envVar}`);
+		}
+		console.log('\nEach Price is a FIXED unit_amount (no custom_unit_amount). Idempotent by lookup_key.');
+		console.log('To create for real: set STRIPE_SECRET_PROVISION_KEY, then npm run stripe:provision');
+		return;
+	}
+
+	const key = process.env.STRIPE_SECRET_PROVISION_KEY;
 	if (!key) {
-		console.error('STRIPE_SECRET_KEY is not set. Pass a test key first:\n  STRIPE_SECRET_KEY=sk_test_... npx tsx scripts/stripe-provision-membership.ts');
+		console.error('STRIPE_SECRET_PROVISION_KEY is not set (a Stripe key with Products + Prices write).\nSet it in .env.local, or pass inline:\n  STRIPE_SECRET_PROVISION_KEY=rk_test_... npm run stripe:provision');
 		process.exit(1);
 	}
-	const isLive = key.startsWith('sk_live_');
+	// Live keys are sk_live_ (full) or rk_live_ (restricted) — catch both.
+	const isLive = /_live_/.test(key);
 	if (isLive && !process.argv.includes('--live')) {
 		console.error('Refusing to run against a LIVE key without --live. Provision in test mode first, verify, then re-run with --live.');
 		process.exit(1);

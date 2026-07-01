@@ -7,11 +7,21 @@
 	import FloatingNav from '$lib/components/FloatingNav.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import PublishSheet from '$lib/components/PublishSheet.svelte';
+	import MembershipPaywallModal from '$lib/components/MembershipPaywallModal.svelte';
+	import { isMembershipGate, gateModeFrom, type GateReason } from '$lib/utils/membership-error.js';
 	import type { SubmitSlot } from '$lib/domain/types';
 	import { capture } from '$lib/analytics';
 	import { copy } from '$lib/copy';
 
 	let { data }: { data: PageData } = $props();
+
+	// ── Membership paywall ──────────────────────────────────────────────────
+	// Creating a conversation is a gated action. The lazy-create POST in save()
+	// can return the membership 403; without this, it fell through to
+	// saveStatus='error', which the publish path later mistranslated into the
+	// misleading "cover image required" message (AE1). Open the same modal here.
+	let paywallOpen = $state(false);
+	let paywallMode = $state<GateReason>('join');
 
 	// Tracks the prompt id locally so lazy-create can flip it from 'new' to a
 	// real UUID without fighting Svelte 5's readonly $props.
@@ -70,7 +80,18 @@
 					replaceState(`/conversations/${created.id}/edit`, {});
 					saveStatus = 'saved';
 				} else {
-					saveStatus = 'error';
+					const err = await res.json().catch(() => ({}));
+					if (isMembershipGate(err)) {
+						// Creating is gated. Open the paywall rather than surfacing a
+						// bare 'error' dot. That error later mistranslated into the
+						// misleading "cover image required" message on publish. The
+						// draft stays in local state, so a "Not now" dismiss loses nothing.
+						saveStatus = 'idle';
+						paywallMode = gateModeFrom(err);
+						paywallOpen = true;
+					} else {
+						saveStatus = 'error';
+					}
 				}
 				return;
 			}
@@ -495,6 +516,15 @@
 		showSizePicker={data.prompt.published_at == null}
 	/>
 {/if}
+
+<!-- Creating a conversation is gated; a lazy-create 403 opens this instead of a
+     stray save error. returnTo brings the member back to a fresh editor after
+     they join. The draft in local state survives a "Not now" dismiss. -->
+<MembershipPaywallModal
+	bind:open={paywallOpen}
+	mode={paywallMode}
+	returnTo="/conversations/new"
+/>
 
 <style>
 	.floating-nav-wrapper { display: block; }

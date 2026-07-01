@@ -52,6 +52,8 @@ export const copy = {
 		send: 'Send',
 		back: 'Back',
 		cancel: 'Cancel',
+		close: 'Close',
+		notNow: 'Not now',
 		accept: 'Accept',
 		accepting: 'Accepting...',
 		loading: 'Loading...',
@@ -645,31 +647,31 @@ export const copy = {
 		_description:
 			'Join/upgrade page and the inline prompts shown when a gated action needs an active membership.',
 		pageTitle: 'Membership',
+		// Accessible name for the paywall modal dialog (screen readers).
+		dialogLabel: 'Membership',
 
 		guestHeading: 'Become a Member',
 		guestIntro:
 			'Membership keeps dyad collectively owned and ad-free. Choose the plan that feels right.',
 		lapsedHeading: 'Renew Your Membership',
 		lapsedIntro:
-			'Your membership has lapsed, so the member-only actions are paused. Renewing turns them back on — you keep everything you’ve already made, and you can stop any time.',
+			'Your membership has lapsed, so the member-only actions are paused for now. Renewing turns them back on. Everything you have already made stays exactly as it is, and you can stop any time.',
 		grantEndedHeading: 'Your Access Has Ended',
 		grantEndedIntro:
-			'Your complimentary membership has ended, so the member-only actions are paused. You can become a member any time to turn them back on — you keep everything you’ve already made.',
+			'Your complimentary membership has ended, so the member-only actions are paused for now. You can become a member any time to turn them back on. Everything you have already made stays exactly as it is.',
 
-		lapsedBanner: 'Your membership has lapsed — renew to respond, invite, or accept.',
 		cadenceMonthly: 'Monthly',
 		cadenceAnnual: 'Yearly',
 		cadenceLifetime: 'Lifetime',
-		cadenceMonthlyHint: 'A recurring monthly contribution. Cancel whenever you like.',
-		cadenceAnnualHint: 'A recurring yearly contribution. Cancel whenever you like.',
-		cadenceLifetimeHint: 'A one-time contribution for a membership that never lapses.',
 		cadenceMonthlyPrice: '€12',
 		cadenceMonthlyPeriod: 'per month',
 		cadenceAnnualPrice: '€100',
 		cadenceAnnualPeriod: 'per year',
 		cadenceLifetimePrice: '€400',
 		cadenceLifetimePeriod: 'one-time',
-		annualBadge: 'Best value',
+		cadenceAriaLabel: 'Billing cadence',
+		tierAriaLabel: 'Contribution tier',
+		tierPrompt: 'Choose a tier',
 		monthlySolidarityName: 'Solidarity',
 		monthlySolidarityPrice: '€7',
 		monthlySolidarityNote: 'A lower rate.',
