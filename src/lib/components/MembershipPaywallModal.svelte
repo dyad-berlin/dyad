@@ -3,6 +3,7 @@
 	import { fade, fly } from 'svelte/transition';
 	import { copy } from '$lib/copy';
 	import MembershipOffer from './MembershipOffer.svelte';
+	import type { GateReason } from '$lib/utils/membership-error.js';
 
 	// The paywall modal: a calm overlay laid over the current page (Option A,
 	// where the context dims behind and nothing is lost). It wraps the shared
@@ -13,7 +14,6 @@
 	// page the member was on is still there behind the dim, and on the
 	// conversation page their half-written words are held so a dismiss loses
 	// nothing.
-	type Mode = 'join' | 'renew' | 'ended';
 
 	let {
 		open = $bindable(false),
@@ -22,7 +22,7 @@
 		onclose
 	}: {
 		open?: boolean;
-		mode?: Mode;
+		mode?: GateReason;
 		returnTo?: string | null;
 		onclose?: () => void;
 	} = $props();

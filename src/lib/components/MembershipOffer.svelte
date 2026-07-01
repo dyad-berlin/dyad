@@ -1,15 +1,15 @@
 <script lang="ts">
 	import { copy } from '$lib/copy';
+	import type { GateReason } from '$lib/utils/membership-error.js';
 
 	// The join/renew offer body — cadence first, then (for monthly) a tier.
 	// Shared by the paywall modal and the /membership page so they never diverge.
 	// The wrapper owns the active/confirming states and any "not now" exit; this
 	// component only renders the offer for a non-member, lapsed, or ended-grant.
-	type Mode = 'join' | 'renew' | 'ended';
 	type Cadence = 'monthly' | 'annual' | 'lifetime';
 	type Tier = 'solidarity' | 'standard' | 'supporter';
 
-	let { mode = 'join', returnTo = null }: { mode?: Mode; returnTo?: string | null } = $props();
+	let { mode = 'join', returnTo = null }: { mode?: GateReason; returnTo?: string | null } = $props();
 
 	const c = copy.membership;
 

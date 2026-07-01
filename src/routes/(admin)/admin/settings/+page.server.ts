@@ -1,15 +1,10 @@
-import {
-	getEmailNotificationsEnabled,
-	getMembershipGating,
-	getFreeInteractionQuota
-} from '$lib/server/app-settings';
+import { getEmailNotificationsEnabled, getMembershipGating } from '$lib/server/app-settings';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
-	const [emailNotificationsEnabled, membershipGating, freeInteractionQuota] = await Promise.all([
+	const [emailNotificationsEnabled, membershipGating] = await Promise.all([
 		getEmailNotificationsEnabled(),
-		getMembershipGating(),
-		getFreeInteractionQuota()
+		getMembershipGating()
 	]);
-	return { emailNotificationsEnabled, membershipGating, freeInteractionQuota };
+	return { emailNotificationsEnabled, membershipGating };
 };

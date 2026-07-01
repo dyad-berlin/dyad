@@ -61,7 +61,14 @@
 		let elapsed = 0;
 		const iv = setInterval(async () => {
 			elapsed += 3000;
-			await invalidate('membership:status');
+			// A transient network error on invalidate must not throw an unhandled
+			// rejection every tick — swallow it and let the next tick retry (or the
+			// 30s fallback take over).
+			try {
+				await invalidate('membership:status');
+			} catch {
+				/* transient — retry next tick */
+			}
 			if (data.membership?.active) {
 				clearInterval(iv);
 				if (returnTo) goto(returnTo);

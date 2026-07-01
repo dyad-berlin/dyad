@@ -12,10 +12,12 @@ const MEMBERSHIP_GATING_KEY = 'membership_gating';
 const FREE_INTERACTION_QUOTA_KEY = 'free_interaction_quota';
 
 /** Default free-interaction quota when the key is absent, non-integer, or a read
- *  fails: one free gated interaction before membership is required. Must match
- *  the COALESCE fallback in app.gating_allows (the SQL safety net) so the app
- *  gate and the RLS net never disagree on the same actor. */
-export const DEFAULT_FREE_INTERACTION_QUOTA = 1;
+ *  fails: 0 — the gate is pure members-only from the first gated action, and the
+ *  free-quota machinery ships DORMANT. An operator can raise N later (once the
+ *  live-count delete/recreate + cross-transaction concurrency properties are
+ *  settled). Must match the COALESCE fallback in app.gating_allows (the SQL
+ *  safety net) so the app gate and the RLS net never disagree on the same actor. */
+export const DEFAULT_FREE_INTERACTION_QUOTA = 0;
 const MAX_FREE_INTERACTION_QUOTA = 99;
 
 /** Clamp a candidate quota to a valid integer in [0, 99]. A non-integer (NaN,
@@ -119,7 +121,7 @@ export async function setMembershipGating(gating: MembershipGating): Promise<voi
 
 /** Read the free-interaction quota N: how many gated actions a registered guest
  *  may perform before a membership is required. Absent / non-integer / any error
- *  yields DEFAULT_FREE_INTERACTION_QUOTA (1), matching the COALESCE in
+ *  yields DEFAULT_FREE_INTERACTION_QUOTA (0), matching the COALESCE in
  *  app.gating_allows so the app gate and the RLS safety net agree on the same N. */
 export async function getFreeInteractionQuota(): Promise<number> {
 	const admin = makeAdminClient();
@@ -134,23 +136,4 @@ export async function getFreeInteractionQuota(): Promise<number> {
 		return DEFAULT_FREE_INTERACTION_QUOTA;
 	}
 	return normalizeQuota(data?.value);
-}
-
-/** Set the free-interaction quota N (service-role). Clamps to an integer in
- *  [0, 99]; a non-integer input falls back to the default. Stored as a JSONB
- *  number so the SQL side reads it with `(value #>> '{}')::int`. */
-export async function setFreeInteractionQuota(n: number): Promise<void> {
-	const value = normalizeQuota(n);
-	const admin = makeAdminClient();
-	const { error } = await admin
-		.from('app_settings')
-		.upsert(
-			{ key: FREE_INTERACTION_QUOTA_KEY, value, updated_at: new Date().toISOString() },
-			{ onConflict: 'key' }
-		);
-
-	if (error) {
-		console.error('[app-settings] write free_interaction_quota failed:', error);
-		throw error;
-	}
 }

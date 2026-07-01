@@ -660,13 +660,9 @@ export const copy = {
 		grantEndedIntro:
 			'Your complimentary membership has ended, so the member-only actions are paused for now. You can become a member any time to turn them back on. Everything you have already made stays exactly as it is.',
 
-		lapsedBanner: 'Your membership has lapsed. Renew to respond, invite, or accept.',
 		cadenceMonthly: 'Monthly',
 		cadenceAnnual: 'Yearly',
 		cadenceLifetime: 'Lifetime',
-		cadenceMonthlyHint: 'A recurring monthly contribution. Cancel whenever you like.',
-		cadenceAnnualHint: 'A recurring yearly contribution. Cancel whenever you like.',
-		cadenceLifetimeHint: 'A one-time contribution for a membership that never lapses.',
 		cadenceMonthlyPrice: '€12',
 		cadenceMonthlyPeriod: 'per month',
 		cadenceAnnualPrice: '€100',
@@ -676,7 +672,6 @@ export const copy = {
 		cadenceAriaLabel: 'Billing cadence',
 		tierAriaLabel: 'Contribution tier',
 		tierPrompt: 'Choose a tier',
-		annualBadge: 'Best value',
 		monthlySolidarityName: 'Solidarity',
 		monthlySolidarityPrice: '€7',
 		monthlySolidarityNote: 'If money is tight.',

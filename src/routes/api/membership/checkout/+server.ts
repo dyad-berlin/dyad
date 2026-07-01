@@ -76,11 +76,17 @@ export const POST: RequestHandler = async ({ request, locals, url }) => {
 
 	// Cross-cadence collision: buying lifetime while a live subscription exists
 	// would orphan that subscription. Block — the member cancels in the portal first.
-	const { data: existing } = await admin
+	const { data: existing, error: existingError } = await admin
 		.from('memberships')
 		.select('stripe_subscription_id, active')
 		.eq('identity_id', actor.id)
 		.maybeSingle();
+	if (existingError) {
+		// Can't read the current membership state — fail closed rather than proceed
+		// to Stripe with an unknown state (which could orphan a live subscription).
+		console.error('[membership/checkout] membership read error:', existingError.message);
+		return json({ error: 'Could not start checkout' }, { status: 500 });
+	}
 	if (cadence === 'lifetime' && existing?.stripe_subscription_id && existing.active) {
 		return json({ error: 'cancel_subscription_first' }, { status: 409 });
 	}

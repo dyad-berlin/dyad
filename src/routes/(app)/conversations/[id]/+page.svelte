@@ -12,20 +12,10 @@
 	import UserHandle from '$lib/components/UserHandle.svelte';
 	import NotificationHint from '$lib/components/NotificationHint.svelte';
 	import { formatShortDate as formatDate } from '$lib/utils/dates.js';
-	import { isMembershipGate } from '$lib/utils/membership-error.js';
+	import { isMembershipGate, gateModeFrom, type GateReason } from '$lib/utils/membership-error.js';
 	import { buildResponseRows, ACTIVE_MEETING_STATES } from '$lib/domain/response-rows.js';
 	import MembershipPaywallModal from '$lib/components/MembershipPaywallModal.svelte';
 	import { onMount } from 'svelte';
-
-	// Map a gated 403 body to the modal's mode. The backend returns
-	// `reason ∈ 'join'|'renew'|'ended'`; if absent, fall back to had_membership
-	// (had one → renew, never had one → join). Kept as a page-local helper so the
-	// frontend chain touches no shared util the backend chain may be editing.
-	function gateModeFrom(err: { reason?: string; had_membership?: boolean } | null | undefined): 'join' | 'renew' | 'ended' {
-		const reason = err?.reason;
-		if (reason === 'join' || reason === 'renew' || reason === 'ended') return reason;
-		return err?.had_membership === true ? 'renew' : 'join';
-	}
 
 	import { isSlotFull } from '$lib/domain/time-slot.js';
 	import { othersBeyond } from '$lib/domain/gathering.js';
@@ -42,40 +32,67 @@
 	// scattering inline gate links and a lapsed banner. The member's context and
 	// their half-written response both stay intact behind the dim.
 	let paywallOpen = $state(false);
-	let paywallMode = $state<'join' | 'renew' | 'ended'>('join');
+	let paywallMode = $state<GateReason>('join');
 
 	// Draft persistence across the Stripe redirect. The composer is a plain
 	// textarea; we stash its text in sessionStorage keyed by conversation id so a
 	// full-page redirect to Stripe (or a "Not now" dismiss) never loses it.
 	const draftKey = `dyad:draft:response:${data.prompt.id}`;
 
-	function persistResponseDraft() {
-		if (typeof sessionStorage === 'undefined') return;
-		if (responseText.trim()) sessionStorage.setItem(draftKey, responseText);
+	// sessionStorage access is best-effort: it can throw (Firefox private-mode
+	// SecurityError, QuotaExceededError). Draft persistence must NEVER block the
+	// paywall from opening or break the composer, so every call is swallowed.
+	function safeSessionGet(key: string): string | null {
+		if (typeof sessionStorage === 'undefined') return null;
+		try {
+			return sessionStorage.getItem(key);
+		} catch {
+			return null;
+		}
 	}
-	function clearResponseDraft() {
+	function safeSessionSet(key: string, value: string) {
 		if (typeof sessionStorage === 'undefined') return;
-		sessionStorage.removeItem(draftKey);
+		try {
+			sessionStorage.setItem(key, value);
+		} catch {
+			/* private mode / quota — draft persistence is best-effort */
+		}
+	}
+	function safeSessionRemove(key: string) {
+		if (typeof sessionStorage === 'undefined') return;
+		try {
+			sessionStorage.removeItem(key);
+		} catch {
+			/* private mode / quota — draft persistence is best-effort */
+		}
 	}
 
-	// Open the paywall for a gated 403, persisting the in-progress response first
-	// so the checkout redirect can't drop it.
-	function openPaywall(err: { reason?: string; had_membership?: boolean }) {
-		paywallMode = gateModeFrom(err);
-		persistResponseDraft();
-		paywallOpen = true;
+	function persistResponseDraft() {
+		if (responseText.trim()) safeSessionSet(draftKey, responseText);
+	}
+	function clearResponseDraft() {
+		safeSessionRemove(draftKey);
 	}
 
 	// Restore a stashed draft on return (the member lands back here after Stripe
 	// via return-to) and on a plain "Not now" dismiss. Only restore into an empty
 	// composer so a server-loaded response is never clobbered.
-	onMount(() => {
-		if (typeof sessionStorage === 'undefined') return;
-		const saved = sessionStorage.getItem(draftKey);
+	function restoreResponseDraft() {
+		const saved = safeSessionGet(draftKey);
 		if (saved && !data.myComment && !responseText.trim()) {
 			responseText = saved;
 		}
-	});
+	}
+
+	// Open the paywall for a gated 403, persisting the in-progress response first
+	// so the checkout redirect can't drop it.
+	function openPaywall(err: { reason?: GateReason; had_membership?: boolean }) {
+		paywallMode = gateModeFrom(err);
+		persistResponseDraft();
+		paywallOpen = true;
+	}
+
+	onMount(restoreResponseDraft);
 
 	// Conversation size label shown near the times. capacity is the per-slot
 	// joiner cap: 1 = one-on-one, ≥2 = small group (up to N others), null = no
@@ -720,14 +737,7 @@
 	bind:open={paywallOpen}
 	mode={paywallMode}
 	returnTo={returnPath}
-	onclose={() => {
-		// Restore the stashed draft into an empty composer (a full-page redirect
-		// never happened, but this keeps dismiss and return symmetric).
-		if (typeof sessionStorage !== 'undefined') {
-			const saved = sessionStorage.getItem(draftKey);
-			if (saved && !data.myComment && !responseText.trim()) responseText = saved;
-		}
-	}}
+	onclose={restoreResponseDraft}
 />
 
 <style>

@@ -8,7 +8,7 @@
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import PublishSheet from '$lib/components/PublishSheet.svelte';
 	import MembershipPaywallModal from '$lib/components/MembershipPaywallModal.svelte';
-	import { isMembershipGate } from '$lib/utils/membership-error.js';
+	import { isMembershipGate, gateModeFrom, type GateReason } from '$lib/utils/membership-error.js';
 	import type { SubmitSlot } from '$lib/domain/types';
 	import { capture } from '$lib/analytics';
 	import { copy } from '$lib/copy';
@@ -21,15 +21,7 @@
 	// saveStatus='error', which the publish path later mistranslated into the
 	// misleading "cover image required" message (AE1). Open the same modal here.
 	let paywallOpen = $state(false);
-	let paywallMode = $state<'join' | 'renew' | 'ended'>('join');
-
-	// Map a gated 403 body to the modal's mode. Backend returns
-	// `reason ∈ 'join'|'renew'|'ended'`; fall back to had_membership when absent.
-	function gateModeFrom(err: { reason?: string; had_membership?: boolean } | null | undefined): 'join' | 'renew' | 'ended' {
-		const reason = err?.reason;
-		if (reason === 'join' || reason === 'renew' || reason === 'ended') return reason;
-		return err?.had_membership === true ? 'renew' : 'join';
-	}
+	let paywallMode = $state<GateReason>('join');
 
 	// Tracks the prompt id locally so lazy-create can flip it from 'new' to a
 	// real UUID without fighting Svelte 5's readonly $props.
