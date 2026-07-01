@@ -98,6 +98,13 @@ describe('loadLayoutData — membership', () => {
 		expect(data.membership).toBeNull();
 	});
 
+	it('treats a never-activated paid row (abandoned checkout) as a non-member', async () => {
+		const data = await loadLayoutData(
+			makeLocals({ data: null, error: null }, { data: { active: false, cadence: null, source: 'paid' }, error: null })
+		);
+		expect(data.membership).toBeNull();
+	});
+
 	it('fails safe to null (and logs) when the membership read errors', async () => {
 		const data = await loadLayoutData(
 			makeLocals({ data: null, error: null }, { data: null, error: { message: 'boom' } })

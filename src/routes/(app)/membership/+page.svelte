@@ -8,17 +8,16 @@
 
 	const c = copy.membership;
 	type Cadence = 'monthly' | 'annual' | 'lifetime';
-	type Plan = { id: string; cadence: Cadence; name: string; price: string; period: string; icon: string; note?: string; badge?: string; save?: string };
+	type Plan = { id: string; cadence: Cadence; name: string; price: string; period: string; note?: string; badge?: string };
 	const PLANS: Plan[] = [
-		{ id: 'solidarity', cadence: 'monthly', name: c.monthlySolidarityName, price: c.monthlySolidarityPrice, period: c.cadenceMonthlyPeriod, note: c.monthlySolidarityNote, icon: '🌱' },
-		{ id: 'standard', cadence: 'monthly', name: c.monthlyStandardName, price: c.cadenceMonthlyPrice, period: c.cadenceMonthlyPeriod, note: c.monthlyStandardNote, icon: '🌿' },
-		{ id: 'supporter', cadence: 'monthly', name: c.monthlySupporterName, price: c.monthlySupporterPrice, period: c.cadenceMonthlyPeriod, note: c.monthlySupporterNote, icon: '🌳' },
-		{ id: 'annual', cadence: 'annual', name: c.cadenceAnnual, price: c.cadenceAnnualPrice, period: c.cadenceAnnualPeriod, badge: c.annualBadge, save: c.annualSave, icon: '⭐️' },
-		{ id: 'lifetime', cadence: 'lifetime', name: c.cadenceLifetime, price: c.cadenceLifetimePrice, period: c.cadenceLifetimePeriod, icon: '♾️' }
+		{ id: 'solidarity', cadence: 'monthly', name: c.monthlySolidarityName, price: c.monthlySolidarityPrice, period: c.cadenceMonthlyPeriod, note: c.monthlySolidarityNote },
+		{ id: 'standard', cadence: 'monthly', name: c.monthlyStandardName, price: c.cadenceMonthlyPrice, period: c.cadenceMonthlyPeriod, note: c.monthlyStandardNote },
+		{ id: 'supporter', cadence: 'monthly', name: c.monthlySupporterName, price: c.monthlySupporterPrice, period: c.cadenceMonthlyPeriod, note: c.monthlySupporterNote },
+		{ id: 'annual', cadence: 'annual', name: c.cadenceAnnual, price: c.cadenceAnnualPrice, period: c.cadenceAnnualPeriod, badge: c.annualBadge },
+		{ id: 'lifetime', cadence: 'lifetime', name: c.cadenceLifetime, price: c.cadenceLifetimePrice, period: c.cadenceLifetimePeriod }
 	];
 
 	let selected = $state('standard');
-	const selectedCadence = $derived(PLANS.find((p) => p.id === selected)?.cadence ?? 'monthly');
 	const monthlyPlans = PLANS.filter((p) => p.cadence === 'monthly');
 	const otherPlans = PLANS.filter((p) => p.cadence !== 'monthly');
 	let busy = $state(false);
@@ -29,18 +28,29 @@
 	const status = $derived($page.url.searchParams.get('status'));
 	const isActive = $derived(membership?.active === true);
 	const isLifetime = $derived(isActive && membership?.cadence === 'lifetime');
-	const isLapsed = $derived(!isActive && membership !== null);
+	// A non-active row is either a genuinely lapsed paid membership or a revoked
+	// operator grant (comp/founding/grandfathered). Never-activated rows are
+	// already mapped to null upstream, so any non-null row here really lapsed.
+	const isEndedGrant = $derived(!isActive && membership !== null && membership.source !== 'paid');
+	const isLapsedPaid = $derived(!isActive && membership !== null && membership.source === 'paid');
 	// While confirming a just-completed checkout the webhook may not have landed.
 	const confirming = $derived(status === 'success' && !isActive && !pollFallback);
 
-	async function startCheckout(cadence: Cadence) {
+	async function startCheckout() {
+		const plan = PLANS.find((p) => p.id === selected);
+		if (!plan) return;
 		busy = true;
 		error = '';
 		try {
+			// Monthly carries the chosen solidarity tier; annual/lifetime don't.
+			const payload =
+				plan.cadence === 'monthly'
+					? { cadence: 'monthly', tier: plan.id }
+					: { cadence: plan.cadence };
 			const res = await fetch('/api/membership/checkout', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ cadence })
+				body: JSON.stringify(payload)
 			});
 			const body = await res.json().catch(() => ({}));
 			if (res.ok && body.url) {
@@ -111,7 +121,6 @@
 		</span>
 		<span class="plan-price">{p.price} <span class="plan-period">{p.period}</span></span>
 		{#if p.note}<span class="plan-note">{p.note}</span>{/if}
-		{#if p.save}<span class="plan-save">{p.save}</span>{/if}
 	</button>
 {/snippet}
 
@@ -133,8 +142,8 @@
 		{:else if status === 'cancelled'}
 			<p class="lead notice">{c.cancelled}</p>
 		{/if}
-		<h1>{isLapsed ? c.lapsedHeading : c.guestHeading}</h1>
-		<p class="lead">{isLapsed ? c.lapsedIntro : c.guestIntro}</p>
+		<h1>{isEndedGrant ? c.grantEndedHeading : isLapsedPaid ? c.lapsedHeading : c.guestHeading}</h1>
+		<p class="lead">{isEndedGrant ? c.grantEndedIntro : isLapsedPaid ? c.lapsedIntro : c.guestIntro}</p>
 
 		<div class="plans" role="radiogroup" aria-label="Membership plans">
 			<div class="fan">
@@ -153,16 +162,11 @@
 			{/each}
 		</ul>
 
-		<button class="primary block" disabled={busy} onclick={() => startCheckout(selectedCadence)}>
-			{isLapsed ? c.gateCta(true) : c.becomeMemberCta}
+		<button class="primary block" disabled={busy} onclick={startCheckout}>
+			{isLapsedPaid ? c.gateCta(true) : c.becomeMemberCta}
 		</button>
+		<p class="billing-note">{c.amountNote}</p>
 		<p class="billing-note">{c.billingNote}</p>
-
-		{#if !isLapsed}
-			<div class="or"><span>{c.orLabel}</span></div>
-			<a class="visitor" href="/discover">{c.visitorCta}</a>
-			<p class="visitor-note">{c.visitorNote}</p>
-		{/if}
 	{/if}
 
 	{#if error}
@@ -297,10 +301,6 @@
 		font-weight: 400;
 		color: var(--text-muted);
 	}
-	.plan-save {
-		font-size: var(--text-sm);
-		color: var(--text-muted);
-	}
 	.plan-note {
 		font-size: var(--text-sm);
 		color: var(--text-muted);
@@ -356,7 +356,7 @@
 	}
 	.error {
 		font-size: var(--text-sm);
-		color: var(--text-danger, #b03a2e);
+		color: var(--color-danger);
 		margin: var(--space-3) 0 0;
 	}
 	.busy {
@@ -367,44 +367,5 @@
 	.spinner {
 		font-size: var(--text-xl);
 		color: var(--text-muted);
-	}
-	.or {
-		display: flex;
-		align-items: center;
-		gap: var(--space-3);
-		margin: var(--space-5) 0;
-		color: var(--text-muted);
-		font-size: var(--text-sm);
-	}
-	.or::before,
-	.or::after {
-		content: '';
-		flex: 1;
-		height: 1px;
-		background: var(--border-link);
-	}
-	.visitor {
-		display: block;
-		width: 100%;
-		max-width: 30rem;
-		margin-inline: auto;
-		text-align: center;
-		padding: var(--space-4);
-		border: 1px solid var(--text-primary);
-		border-radius: var(--radius-card);
-		background: var(--bg-canvas);
-		color: var(--text-primary);
-		text-decoration: none;
-		font-weight: 500;
-	}
-	.visitor:hover {
-		background: var(--text-primary);
-		color: var(--bg-canvas);
-	}
-	.visitor-note {
-		font-size: var(--text-sm);
-		color: var(--text-muted);
-		margin: var(--space-3) 0 0;
-		text-align: center;
 	}
 </style>

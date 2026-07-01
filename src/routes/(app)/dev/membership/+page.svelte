@@ -5,10 +5,12 @@
 	// Each opens the REAL /membership page in that state (dev preview data).
 	const states = [
 		{ label: 'Guest — never a member', href: '/membership?preview=guest' },
-		{ label: 'Lapsed — had a membership', href: '/membership?preview=lapsed' },
+		{ label: 'Pending — checkout abandoned (should read as guest, not lapsed)', href: '/membership?preview=pending' },
+		{ label: 'Lapsed — had a paid membership', href: '/membership?preview=lapsed' },
 		{ label: 'Active — subscription', href: '/membership?preview=active' },
 		{ label: 'Lifetime', href: '/membership?preview=lifetime' },
 		{ label: 'Comp / granted (no Stripe)', href: '/membership?preview=comp' },
+		{ label: 'Ended grant — comp revoked (should read as "access ended")', href: '/membership?preview=ended_comp' },
 		{ label: 'Confirming — just paid', href: '/membership?preview=guest&status=success' },
 		{ label: 'Cancelled checkout', href: '/membership?preview=guest&status=cancelled' }
 	];

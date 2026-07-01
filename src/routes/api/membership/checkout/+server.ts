@@ -6,13 +6,24 @@ import { parseJsonBody } from '$lib/server/parse-body.js';
 import { createStripeClient } from '$lib/server/stripe.js';
 import { makeAdminClient } from '$lib/server/supabase-admin.js';
 import { ensurePaymentRef } from '$lib/server/stripe-customer.js';
-import { MEMBERSHIP_CADENCES, type MembershipCadence } from '$lib/domain/types.js';
+import {
+	MEMBERSHIP_CADENCES,
+	MEMBERSHIP_MONTHLY_TIERS,
+	type MembershipMonthlyTier
+} from '$lib/domain/types.js';
 import { handleServiceError } from '$lib/server/handle-service-error.js';
 
-const PRICE_ENV: Record<MembershipCadence, string> = {
-	monthly: 'STRIPE_PRICE_ID_MONTHLY',
+// Annual/lifetime each map to a single Price. Monthly is a solidarity scale, so
+// each tier is its own Price (see MONTHLY_TIER_PRICE_ENV).
+const PRICE_ENV: Record<'annual' | 'lifetime', string> = {
 	annual: 'STRIPE_PRICE_ID_ANNUAL',
 	lifetime: 'STRIPE_PRICE_ID_LIFETIME'
+};
+
+const MONTHLY_TIER_PRICE_ENV: Record<MembershipMonthlyTier, string> = {
+	solidarity: 'STRIPE_PRICE_ID_MONTHLY_SOLIDARITY',
+	standard: 'STRIPE_PRICE_ID_MONTHLY_STANDARD',
+	supporter: 'STRIPE_PRICE_ID_MONTHLY_SUPPORTER'
 };
 
 /**
@@ -20,23 +31,37 @@ const PRICE_ENV: Record<MembershipCadence, string> = {
  * return its URL for a full-page redirect (no embedded Stripe.js).
  *
  * The Session is bound to the actor via an opaque payment_ref (NOT the actor
- * id). The sliding-scale amount is entered by the buyer on Stripe's hosted page
- * (the cadence's Price has custom_unit_amount enabled). Entitlement is set by
- * the webhook, never here — success_url lands on /membership which polls the row.
+ * id). Each Price has custom_unit_amount enabled: the tier the member picks
+ * sets the Price (so the suggested amount pre-fills), and the buyer can still
+ * adjust it on Stripe's hosted page. Entitlement is set by the webhook, never
+ * here — success_url lands on /membership which polls the row.
  */
 export const POST: RequestHandler = async ({ request, locals, url }) => {
 	const actor = requireIdentity(locals);
 
-	const [body, errorResponse] = await parseJsonBody<{ cadence?: string }>(request);
+	const [body, errorResponse] = await parseJsonBody<{ cadence?: string; tier?: string }>(request);
 	if (errorResponse) return errorResponse;
 
 	const cadence = body.cadence;
 	if (typeof cadence !== 'string' || !(MEMBERSHIP_CADENCES as readonly string[]).includes(cadence)) {
 		return json({ error: 'invalid_cadence' }, { status: 400 });
 	}
-	const priceId = env[PRICE_ENV[cadence as MembershipCadence]];
+
+	// Monthly requires a solidarity tier (each tier is its own Price); annual and
+	// lifetime resolve directly from the cadence.
+	let priceEnvKey: string;
+	if (cadence === 'monthly') {
+		const tier = body.tier;
+		if (typeof tier !== 'string' || !(MEMBERSHIP_MONTHLY_TIERS as readonly string[]).includes(tier)) {
+			return json({ error: 'invalid_tier' }, { status: 400 });
+		}
+		priceEnvKey = MONTHLY_TIER_PRICE_ENV[tier as MembershipMonthlyTier];
+	} else {
+		priceEnvKey = PRICE_ENV[cadence as 'annual' | 'lifetime'];
+	}
+	const priceId = env[priceEnvKey];
 	if (!priceId) {
-		// Valid cadence, but not offered on this deploy (no Price configured).
+		// Valid cadence/tier, but not offered on this deploy (no Price configured).
 		return json({ error: 'cadence_unavailable' }, { status: 400 });
 	}
 

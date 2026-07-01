@@ -257,6 +257,12 @@ export interface ReputationSignal {
 export const MEMBERSHIP_CADENCES = ['monthly', 'annual', 'lifetime'] as const;
 export type MembershipCadence = (typeof MEMBERSHIP_CADENCES)[number];
 
+// Monthly is a solidarity scale: three named suggested contributions, each a
+// distinct Stripe Price (custom_unit_amount, so the amount pre-fills but the
+// buyer can still adjust it on Stripe). Annual/lifetime have a single Price.
+export const MEMBERSHIP_MONTHLY_TIERS = ['solidarity', 'standard', 'supporter'] as const;
+export type MembershipMonthlyTier = (typeof MEMBERSHIP_MONTHLY_TIERS)[number];
+
 // How the entitlement was obtained. `paid` flows through Stripe; the others are
 // operator grants with no Stripe record but an equivalent active entitlement.
 export const MEMBERSHIP_SOURCES = ['paid', 'comp', 'founding', 'grandfathered'] as const;

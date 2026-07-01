@@ -1,19 +1,21 @@
 import { dev } from '$app/environment';
 import { requireIdentity } from '$lib/services/identity.js';
+import { toMembershipDisplay, type MembershipRow } from '$lib/domain/membership.js';
 import type { PageServerLoad } from './$types';
 
-// Dev-only preview fixtures so the membership surfaces can be viewed in every
-// state without real Stripe data (see /dev/membership). `dev` is false in a
-// production build, so this branch is inert and never returns a fixture in prod.
-const PREVIEW_STATES: Record<
-	string,
-	{ active: boolean; cadence: string | null; source: string; currentPeriodEnd: string | null } | null
-> = {
+// Dev-only preview fixtures. Raw rows, run through the SAME toMembershipDisplay
+// mapper as production, so /dev/membership shows exactly what each real state
+// renders as — including that a never-activated "pending" checkout reads as a
+// non-member (not "lapsed"), and a revoked grant reads as "access ended".
+// `dev` is false in a production build, so this branch is inert in prod.
+const PREVIEW_ROWS: Record<string, MembershipRow | null> = {
 	guest: null,
-	lapsed: { active: false, cadence: 'annual', source: 'paid', currentPeriodEnd: null },
-	active: { active: true, cadence: 'annual', source: 'paid', currentPeriodEnd: null },
-	lifetime: { active: true, cadence: 'lifetime', source: 'paid', currentPeriodEnd: null },
-	comp: { active: true, cadence: null, source: 'comp', currentPeriodEnd: null }
+	pending: { active: false, cadence: null, source: 'paid' }, // abandoned checkout -> non-member
+	lapsed: { active: false, cadence: 'annual', source: 'paid', current_period_end: null },
+	active: { active: true, cadence: 'annual', source: 'paid', current_period_end: null },
+	lifetime: { active: true, cadence: 'lifetime', source: 'paid', current_period_end: null },
+	comp: { active: true, cadence: null, source: 'comp', current_period_end: null },
+	ended_comp: { active: false, cadence: null, source: 'comp' } // revoked grant -> "access ended"
 };
 
 export const load: PageServerLoad = async ({ locals, url, depends }) => {
@@ -23,8 +25,8 @@ export const load: PageServerLoad = async ({ locals, url, depends }) => {
 
 	if (dev) {
 		const preview = url.searchParams.get('preview');
-		if (preview && preview in PREVIEW_STATES) {
-			return { membership: PREVIEW_STATES[preview] };
+		if (preview && preview in PREVIEW_ROWS) {
+			return { membership: toMembershipDisplay(PREVIEW_ROWS[preview]) };
 		}
 	}
 
@@ -39,13 +41,6 @@ export const load: PageServerLoad = async ({ locals, url, depends }) => {
 		.maybeSingle();
 
 	return {
-		membership: data
-			? {
-					active: data.active as boolean,
-					cadence: data.cadence as string | null,
-					source: data.source as string,
-					currentPeriodEnd: data.current_period_end as string | null
-				}
-			: null
+		membership: toMembershipDisplay(data as MembershipRow | null)
 	};
 };

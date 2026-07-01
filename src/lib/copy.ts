@@ -329,6 +329,7 @@ export const copy = {
 		membershipJoin: 'become a member',
 		membershipNone: 'You’re not a member yet.',
 		membershipLapsed: 'Your membership has lapsed.',
+		membershipEnded: 'Your complimentary access has ended.',
 		planMonthly: 'Monthly membership',
 		planAnnual: 'Yearly membership',
 		planLifetime: 'Lifetime membership',
@@ -651,6 +652,9 @@ export const copy = {
 		lapsedHeading: 'Renew Your Membership',
 		lapsedIntro:
 			'Your membership has lapsed, so the member-only actions are paused. Renewing turns them back on — you keep everything you’ve already made, and you can stop any time.',
+		grantEndedHeading: 'Your Access Has Ended',
+		grantEndedIntro:
+			'Your complimentary membership has ended, so the member-only actions are paused. You can become a member any time to turn them back on — you keep everything you’ve already made.',
 
 		lapsedBanner: 'Your membership has lapsed — renew to respond, invite, or accept.',
 		cadenceMonthly: 'Monthly',
@@ -666,7 +670,6 @@ export const copy = {
 		cadenceLifetimePrice: '€400',
 		cadenceLifetimePeriod: 'one-time',
 		annualBadge: 'Best value',
-		annualSave: 'Save 30%',
 		monthlySolidarityName: 'Solidarity',
 		monthlySolidarityPrice: '€7',
 		monthlySolidarityNote: 'If money is tight.',
@@ -683,12 +686,8 @@ export const copy = {
 			'Join every group conversation',
 			'Keep dyad collectively owned and ad-free'
 		],
-		amountNote: 'You choose the amount on Stripe’s secure page — pay what feels right.',
+		amountNote: 'The amount you pick pre-fills on Stripe’s secure page — you can adjust it there.',
 		continueCta: 'continue to payment',
-		orLabel: 'or',
-		visitorCta: 'be our guest and join a group conversation',
-		visitorNote:
-			'No payment needed — visitors can join a group conversation. Become a member any time to start your own and meet one to one.',
 		continuing: 'taking you to payment…',
 
 		activeHeading: 'You’re a Member',

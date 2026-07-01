@@ -1,5 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import { userToUpactor } from '@prefig/upact-supabase';
+import { toMembershipDisplay, type MembershipRow } from '$lib/domain/membership.js';
 
 /**
  * Shared layout data loader for authenticated route groups.
@@ -69,13 +70,7 @@ export async function loadLayoutData(locals: App.Locals) {
 		attentionCount: (invitationCount ?? 0) + (feedbackCount ?? 0) + (groupFeedbackCount ?? 0),
 		pendingFeedback,
 		hasNotificationEmail: notifError ? true : !!notif?.email,
-		membership: membershipRow
-			? {
-					active: membershipRow.active as boolean,
-					cadence: membershipRow.cadence as string | null,
-					source: membershipRow.source as string
-				}
-			: null
+		membership: toMembershipDisplay(membershipRow as MembershipRow | null)
 	};
 }
 

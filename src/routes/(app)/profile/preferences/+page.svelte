@@ -122,6 +122,9 @@
 			{#if manageError}
 				<p class="manage-error" role="alert">{manageError}</p>
 			{/if}
+		{:else if m && m.source !== 'paid'}
+			<p class="plan-name">{copy.preferences.membershipEnded}</p>
+			<a href="/membership" class="manage-link">{copy.preferences.membershipJoin}</a>
 		{:else if m}
 			<p class="plan-name">{copy.preferences.membershipLapsed}</p>
 			<a href="/membership" class="manage-link">{copy.preferences.membershipRenew}</a>
