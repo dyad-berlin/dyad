@@ -5,8 +5,8 @@ import { EMAIL_NOTIFICATIONS_DEFAULT } from '$lib/domain/types.js';
 export const load: PageServerLoad = async ({ locals }) => {
 	const upactor = requireIdentity(locals);
 
-	// Membership state is provided by the (app) layout loader (data.membership);
-	// this page reads it from there, so no separate memberships query is needed.
+	// This page only loads notification settings. Membership management moved to
+	// /profile/membership, which reads membership state from the (app) layout loader.
 	const { data, error } = await locals.supabase
 		.from('notification_settings')
 		.select('email, invitation_received, invitation_answered, meeting_cancelled')

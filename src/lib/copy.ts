@@ -290,6 +290,7 @@ export const copy = {
 			`@${username} cancelled this meeting on ${date}`,
 		// Quiet action row in the profile card, next to sign out.
 		preferencesLink: 'preferences',
+		membershipLink: 'Membership',
 	},
 
 	// ── Preferences ────────────────────────────────────────────────────
@@ -334,6 +335,20 @@ export const copy = {
 		planAnnual: 'Yearly membership',
 		planLifetime: 'Lifetime membership',
 		planComp: 'Complimentary membership',
+	},
+
+	// ── Membership area (profile) ──────────────────────────────────────
+	// The member-facing view for reviewing and managing an existing
+	// membership, extracted out of Preferences into /profile/membership.
+	// TODO: the membership state/plan/manage strings this view renders still
+	// live under copy.preferences.membership* — a later cleanup can move them
+	// into this section. Reusing them for now keeps the extraction functional.
+	membershipArea: {
+		_routes: ['/profile/membership'],
+		_description:
+			'Standalone membership management view, sibling to Preferences. Shows the current plan and a manage link (Stripe portal) for active members, and the ended/lapsed/none states pointing at /membership. Copy for those states is reused from copy.preferences.membership* for now.',
+		title: 'Membership',
+		backToProfile: '← profile',
 	},
 
 	// ── Meeting detail ─────────────────────────────────────────────────
