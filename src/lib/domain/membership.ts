@@ -31,11 +31,21 @@ export interface MembershipDisplay {
  * ("renew to…") never fire for someone who never joined. Genuinely lapsed
  * subscriptions keep their cadence; revoked grants keep a non-'paid' source.
  */
+/**
+ * Was this row ever a real membership? False for no row and for the abandoned
+ * checkout (paid, inactive, null cadence — see toMembershipDisplay). The single
+ * source of truth for "never a member" so display copy and the gate's
+ * join-vs-renew wording (require-membership.ts `had_membership`) never disagree.
+ */
+export function wasEverAMember(row: MembershipRow | null | undefined): boolean {
+	if (!row) return false;
+	return !(row.active === false && row.cadence === null && row.source === 'paid');
+}
+
 export function toMembershipDisplay(
 	row: MembershipRow | null | undefined
 ): MembershipDisplay | null {
-	if (!row) return null;
-	if (row.active === false && row.cadence === null && row.source === 'paid') return null;
+	if (!row || !wasEverAMember(row)) return null;
 	const display: MembershipDisplay = {
 		active: row.active,
 		cadence: row.cadence,

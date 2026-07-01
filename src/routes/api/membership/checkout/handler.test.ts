@@ -91,6 +91,18 @@ describe('POST /api/membership/checkout', () => {
 		expect(arg.line_items).toEqual([{ price: 'price_m_sol', quantity: 1 }]);
 	});
 
+	it('monthly standard tier → resolves to the standard Price', async () => {
+		const res = await call({ cadence: 'monthly', tier: 'standard' });
+		expect(res.status).toBe(200);
+		expect(sessionCreate.mock.calls[0][0].line_items).toEqual([{ price: 'price_m_std', quantity: 1 }]);
+	});
+
+	it('monthly supporter tier → resolves to the supporter Price', async () => {
+		const res = await call({ cadence: 'monthly', tier: 'supporter' });
+		expect(res.status).toBe(200);
+		expect(sessionCreate.mock.calls[0][0].line_items).toEqual([{ price: 'price_m_sup', quantity: 1 }]);
+	});
+
 	it('monthly without a tier → 400 invalid_tier', async () => {
 		const res = await call({ cadence: 'monthly' });
 		expect(res.status).toBe(400);

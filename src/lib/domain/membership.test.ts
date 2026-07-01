@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { toMembershipDisplay } from './membership.js';
+import { toMembershipDisplay, wasEverAMember } from './membership.js';
 
 describe('toMembershipDisplay', () => {
 	it('returns null for no row', () => {
@@ -52,5 +52,21 @@ describe('toMembershipDisplay', () => {
 		expect(toMembershipDisplay({ active: true, cadence: 'annual', source: 'paid' })).not.toHaveProperty(
 			'currentPeriodEnd'
 		);
+	});
+});
+
+describe('wasEverAMember', () => {
+	// The predicate behind both toMembershipDisplay and require-membership's
+	// had_membership — so /membership and the inline gate agree on join-vs-renew.
+	it('is false for no row and for the never-activated abandoned checkout', () => {
+		expect(wasEverAMember(null)).toBe(false);
+		expect(wasEverAMember({ active: false, cadence: null, source: 'paid' })).toBe(false);
+	});
+
+	it('is true for active, lapsed, and granted rows', () => {
+		expect(wasEverAMember({ active: true, cadence: 'annual', source: 'paid' })).toBe(true);
+		expect(wasEverAMember({ active: false, cadence: 'monthly', source: 'paid' })).toBe(true); // lapsed
+		expect(wasEverAMember({ active: true, cadence: null, source: 'comp' })).toBe(true); // active grant
+		expect(wasEverAMember({ active: false, cadence: null, source: 'comp' })).toBe(true); // revoked grant
 	});
 });

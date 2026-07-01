@@ -1,6 +1,7 @@
 import { json } from '@sveltejs/kit';
 import { requireIdentity } from '$lib/services/identity.js';
 import { getMembershipGating } from '$lib/server/app-settings.js';
+import { wasEverAMember } from '$lib/domain/membership.js';
 import type { ProtectedAction } from '$lib/domain/gating.js';
 
 /**
@@ -36,11 +37,13 @@ export async function requireMembershipForAction(
 	}
 	if (!gated) return null;
 
-	// Read the actor's own row (RLS SELECT-own). Select only `active` so this
-	// never depends on the opaque-ref columns' grant.
+	// Read the actor's own row (RLS SELECT-own). Safe display columns only — never
+	// the opaque-ref columns. `cadence`/`source` let had_membership use the same
+	// "was ever a member" rule as the display mapper, so an abandoned checkout
+	// (never-activated paid row) reads "become a member", not "renew".
 	const { data, error } = await locals.supabase
 		.from('memberships')
-		.select('active')
+		.select('active, cadence, source')
 		.eq('identity_id', actor.id)
 		.maybeSingle();
 	if (error) {
@@ -50,7 +53,7 @@ export async function requireMembershipForAction(
 	if (data?.active === true) return null;
 
 	return json(
-		{ error: 'membership_required', action, had_membership: data !== null },
+		{ error: 'membership_required', action, had_membership: wasEverAMember(data) },
 		{ status: 403 }
 	);
 }

@@ -103,7 +103,7 @@ Navigation is via `FloatingNav` on every page that needs it; there is no shared 
 | `CF_ACCESS_AUD` | Yes (admin plane) | Per-application audience tag from the Cloudflare Access dashboard. Used to verify the `aud` claim on admin-plane JWTs. |
 | `STRIPE_SECRET_KEY` | When membership is live | Stripe secret key for the membership Checkout/Portal/webhook endpoints. Read via `$env/dynamic/private` (server-only); on Cloudflare it lives in the Pages env. Constructed lazily through `createStripeClient()` in `src/lib/server/stripe.ts`. |
 | `STRIPE_WEBHOOK_SECRET` | When membership is live | Signing secret for `/api/stripe/webhook`; `constructEventAsync` verifies every event against it. |
-| `STRIPE_PRICE_ID_MONTHLY` / `STRIPE_PRICE_ID_ANNUAL` / `STRIPE_PRICE_ID_LIFETIME` | Per offered cadence | Sliding-scale custom-amount Stripe Price IDs (created with `custom_unit_amount` enabled), one per cadence. A cadence is offered only when its Price ID is set. |
+| `STRIPE_PRICE_ID_MONTHLY_SOLIDARITY` / `_STANDARD` / `_SUPPORTER` / `STRIPE_PRICE_ID_ANNUAL` / `STRIPE_PRICE_ID_LIFETIME` | Per offered cadence/tier | Sliding-scale custom-amount Stripe Price IDs (created with `custom_unit_amount` enabled). Monthly is a solidarity scale — three tiers, each its own Price; annual/lifetime one each. A cadence/tier is offered only when its Price ID is set. |
 | `STRIPE_PORTAL_RETURN_URL` | No | Where the Stripe Customer Portal returns a member after managing billing. Defaults to the `/membership` page. |
 
 Admin authentication is gated by Cloudflare Access at the edge — operator identity lives in Cloudflare's identity layer, not in dyad. See `src/lib/server/admin-auth.ts` for the implementation and `SECURITY.md` for the threat model.
