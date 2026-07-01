@@ -39,7 +39,7 @@ const MONTHLY_TIER_PRICE_ENV: Record<MembershipMonthlyTier, string> = {
 export const POST: RequestHandler = async ({ request, locals, url }) => {
 	const actor = requireIdentity(locals);
 
-	const [body, errorResponse] = await parseJsonBody<{ cadence?: string; tier?: string }>(request);
+	const [body, errorResponse] = await parseJsonBody<{ cadence?: string; tier?: string; returnTo?: string }>(request);
 	if (errorResponse) return errorResponse;
 
 	const cadence = body.cadence;
@@ -92,14 +92,19 @@ export const POST: RequestHandler = async ({ request, locals, url }) => {
 		return handleServiceError(err, '[membership/checkout:payment_ref]');
 	}
 
+	// Return the member to the page they were paywalled on. Internal paths only —
+	// prevents success_url being turned into an open redirect.
+	const rt = typeof body.returnTo === 'string' && /^\/[A-Za-z0-9]/.test(body.returnTo) ? body.returnTo : null;
+	const ret = rt ? `&return=${encodeURIComponent(rt)}` : '';
+
 	const isLifetime = cadence === 'lifetime';
 	try {
 		const session = await stripe.checkout.sessions.create({
 			mode: isLifetime ? 'payment' : 'subscription',
 			line_items: [{ price: priceId, quantity: 1 }],
 			client_reference_id: paymentRef, // opaque pseudonym, never the actor id
-			success_url: `${url.origin}/membership?status=success`,
-			cancel_url: `${url.origin}/membership?status=cancelled`,
+			success_url: `${url.origin}/membership?status=success${ret}`,
+			cancel_url: `${url.origin}/membership?status=cancelled${ret}`,
 			automatic_tax: { enabled: true },
 			// Lifetime (payment mode): force a Customer so refund/dispute events
 			// carry a customer id the webhook can resolve. Subscription mode always

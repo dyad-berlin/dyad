@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
-	import { invalidate } from '$app/navigation';
+	import { invalidate, goto } from '$app/navigation';
 	import { copy } from '$lib/copy';
 
 	let { data } = $props();
@@ -26,6 +26,10 @@
 
 	const membership = $derived(data.membership);
 	const status = $derived($page.url.searchParams.get('status'));
+	// Where to send the member after they join — the page they were paywalled on,
+	// passed as ?return=. Guard against open redirects: internal paths only.
+	const rawReturn = $derived($page.url.searchParams.get('return'));
+	const returnTo = $derived(rawReturn && /^\/[A-Za-z0-9]/.test(rawReturn) ? rawReturn : null);
 	const isActive = $derived(membership?.active === true);
 	const isLifetime = $derived(isActive && membership?.cadence === 'lifetime');
 	// A non-active row is either a genuinely lapsed paid membership or a revoked
@@ -43,10 +47,11 @@
 		error = '';
 		try {
 			// Monthly carries the chosen solidarity tier; annual/lifetime don't.
-			const payload =
+			const payload: Record<string, string> =
 				plan.cadence === 'monthly'
 					? { cadence: 'monthly', tier: plan.id }
 					: { cadence: plan.cadence };
+			if (returnTo) payload.returnTo = returnTo;
 			const res = await fetch('/api/membership/checkout', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
@@ -85,13 +90,19 @@
 
 	// Poll for the webhook to flip `active` after a successful checkout return.
 	onMount(() => {
-		if (status !== 'success' || isActive) return;
+		if (status !== 'success') return;
+		// Fast webhook: already active on return — go straight back to context.
+		if (isActive) {
+			if (returnTo) goto(returnTo);
+			return;
+		}
 		let elapsed = 0;
 		const iv = setInterval(async () => {
 			elapsed += 3000;
 			await invalidate('membership:status');
 			if (data.membership?.active) {
 				clearInterval(iv);
+				if (returnTo) goto(returnTo);
 			} else if (elapsed >= 30000) {
 				clearInterval(iv);
 				pollFallback = true;

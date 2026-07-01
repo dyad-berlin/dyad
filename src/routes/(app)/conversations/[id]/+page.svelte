@@ -20,6 +20,13 @@
 
 	let { data }: { data: PageData } = $props();
 
+	// When a gated action (respond / invite / accept) is blocked, send the member
+	// to /membership with a return path so they land back on this conversation
+	// after they join, instead of being stranded on the membership page.
+	const membershipHref = $derived(
+		`/membership?return=${encodeURIComponent(`/conversations/${data.prompt.id}`)}`
+	);
+
 	// Conversation size label shown near the times. capacity is the per-slot
 	// joiner cap: 1 = one-on-one, ≥2 = small group (up to N others), null = no
 	// label (legacy unlimited).
@@ -348,7 +355,7 @@
 
 <div class="content">
 	{#if data.membership && !data.membership.active}
-		<a href="/membership" class="lapsed-banner">{copy.membership.lapsedBanner}</a>
+		<a href={membershipHref} class="lapsed-banner">{copy.membership.lapsedBanner}</a>
 	{/if}
 	{#if data.prompt.cover_image_url}
 		<img src={data.prompt.cover_image_url} alt="" class="cover" loading="lazy" />
@@ -491,7 +498,7 @@
 						<!-- 'responded' (no time chosen): just the words, no status line. -->
 					</div>
 				{/each}
-				{#if acceptError}<p class="field-error">{acceptError}{#if acceptGate} <a href="/membership">{copy.membership.pageTitle}</a>{/if}</p>{/if}
+				{#if acceptError}<p class="field-error">{acceptError}{#if acceptGate} <a href={membershipHref}>{copy.membership.pageTitle}</a>{/if}</p>{/if}
 				<!-- The author's notification moment: people are responding, so an
 				     invitation to meet may come — offer to be notified of it.
 				     Self-silences once an address is set. -->
@@ -524,7 +531,7 @@
 					rows={3}
 					disabled={responseStatus === 'sending'}
 				></textarea>
-				{#if responseError}<p class="field-error">{responseError}{#if responseGate} <a href="/membership">{copy.membership.pageTitle}</a>{/if}</p>{/if}
+				{#if responseError}<p class="field-error">{responseError}{#if responseGate} <a href={membershipHref}>{copy.membership.pageTitle}</a>{/if}</p>{/if}
 				<button class="btn-secondary" onclick={submitResponse} disabled={responseStatus === 'sending' || !responseText.trim()}>
 					{responseStatus === 'sending' ? copy.conversation.sending : copy.common.send}
 				</button>
@@ -609,7 +616,7 @@
 					{/each}
 
 					{#if selectedSlotId}
-						{#if inviteError}<p class="field-error">{inviteError}{#if inviteGate} <a href="/membership">{copy.membership.pageTitle}</a>{/if}</p>{/if}
+						{#if inviteError}<p class="field-error">{inviteError}{#if inviteGate} <a href={membershipHref}>{copy.membership.pageTitle}</a>{/if}</p>{/if}
 						<textarea
 							class="invite-message-textarea"
 							placeholder={copy.conversation.inviteNotePlaceholder}
