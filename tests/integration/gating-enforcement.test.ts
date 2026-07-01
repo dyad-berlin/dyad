@@ -132,3 +132,105 @@ describe('membership gating enforcement (RLS + accept RPC)', () => {
 		expect(error?.message ?? '').toContain('membership_required');
 	});
 });
+
+/**
+ * Free-interaction quota (2b / U2) at the RLS safety net — the KTD2 consistency
+ * proof. The endpoint gate (require-membership.ts) and app.gating_allows must
+ * make the SAME decision, so both count the actor's gated artifacts the SAME way
+ * (prompts.author_id + prompt_comments.author_id + prompt_invitations.inviter_id)
+ * with NO mutable counter. The critical, must-verify-empirically question: does
+ * the RLS FOR INSERT WITH CHECK see the in-flight row when it self-counts? If it
+ * did, the first free action (which the endpoint pre-check allows at used=B<N)
+ * would be REJECTED at the net (used=B+1==N) — the exact app-vs-RLS split KTD2
+ * warns about. This test proves it does NOT: baseline B is allowed, B+1 blocked.
+ *
+ * Quota is set RELATIVE to marco's live baseline so the test never depends on (or
+ * clobbers) seed-row counts other integration files rely on.
+ */
+describe('free-interaction quota — RLS net consistency (KTD2)', () => {
+	const admin = createAdminClient();
+	let marco: SupabaseClient;
+	const MARCO = TEST_USERS.marco.id;
+	const createdPromptIds: string[] = [];
+
+	async function setGating(gating: Record<string, boolean>) {
+		await admin
+			.from('app_settings')
+			.upsert(
+				{ key: 'membership_gating', value: gating, updated_at: new Date().toISOString() },
+				{ onConflict: 'key' }
+			);
+	}
+	async function setQuota(n: number) {
+		await admin
+			.from('app_settings')
+			.upsert(
+				{ key: 'free_interaction_quota', value: n, updated_at: new Date().toISOString() },
+				{ onConflict: 'key' }
+			);
+	}
+	/** Leave app_settings as found: gating off, quota back to the seeded default (1). */
+	async function restoreDefaults() {
+		await admin.from('app_settings').delete().eq('key', 'membership_gating');
+		await setQuota(1);
+	}
+	/** The live baseline — the identical three-table sum the gate computes on both
+	 *  layers. Setting the quota to baseline+k gives the actor exactly k free actions. */
+	async function usedCount(): Promise<number> {
+		const [p, c, i] = await Promise.all([
+			admin.from('prompts').select('*', { count: 'exact', head: true }).eq('author_id', MARCO),
+			admin.from('prompt_comments').select('*', { count: 'exact', head: true }).eq('author_id', MARCO),
+			admin.from('prompt_invitations').select('*', { count: 'exact', head: true }).eq('inviter_id', MARCO)
+		]);
+		return (p.count ?? 0) + (c.count ?? 0) + (i.count ?? 0);
+	}
+
+	beforeAll(async () => {
+		marco = await createAuthenticatedClient(TEST_USERS.marco.email, TEST_USERS.marco.password);
+		await admin.from('memberships').delete().eq('identity_id', MARCO); // inactive guest
+		await setGating({ create_conversation: true });
+	});
+
+	afterAll(async () => {
+		if (createdPromptIds.length) await admin.from('prompts').delete().in('id', createdPromptIds);
+		await admin.from('memberships').delete().eq('identity_id', MARCO);
+		await restoreDefaults();
+	});
+
+	it('under quota the net ALLOWS the free action, at the quota it REJECTS — WITH CHECK excludes the in-flight row (no off-by-one)', async () => {
+		const baseline = await usedCount();
+		await setQuota(baseline + 1); // exactly one free gated action remaining
+
+		const id1 = `quota-free-${Date.now()}`;
+		const first = await marco.from('prompts').insert({ id: id1, author_id: MARCO });
+		expect(first.error, 'used (baseline) < N → the free action is allowed at the net').toBeNull();
+		createdPromptIds.push(id1);
+
+		const id2 = `quota-over-${Date.now()}`;
+		const second = await marco.from('prompts').insert({ id: id2, author_id: MARCO });
+		expect(second.error, 'used (baseline+1) == N → the net rejects').not.toBeNull();
+	});
+
+	it('quota equal to the current used count → members-only (zero free actions)', async () => {
+		const baseline = await usedCount();
+		await setQuota(baseline); // 0 free remaining
+
+		const id = `quota-none-${Date.now()}`;
+		const res = await marco.from('prompts').insert({ id, author_id: MARCO });
+		expect(res.error, 'used == N with no membership → rejected').not.toBeNull();
+	});
+
+	it('an active member is allowed even with the quota exhausted (membership short-circuits)', async () => {
+		const baseline = await usedCount();
+		await setQuota(baseline); // 0 free remaining
+		await admin.from('memberships').insert({ identity_id: MARCO, source: 'comp', active: true });
+		try {
+			const id = `quota-member-${Date.now()}`;
+			const res = await marco.from('prompts').insert({ id, author_id: MARCO });
+			expect(res.error, 'active membership passes the gate regardless of quota').toBeNull();
+			if (!res.error) createdPromptIds.push(id);
+		} finally {
+			await admin.from('memberships').delete().eq('identity_id', MARCO);
+		}
+	});
+});
