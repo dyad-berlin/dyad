@@ -44,7 +44,9 @@ export const actions: Actions = {
 		const password = formData.get('password');
 		const ref = formData.get('ref');
 		const motivation = formData.get('motivation');
-		const berlinBased = formData.get('berlin_based') === 'on';
+		// Berlin is implicit for commons signups (dyad.berlin) — we no longer
+		// ask; the metadata field stays well-defined and defaults to true.
+		const berlinBased = true;
 
 		if (typeof email !== 'string' || email.length < 1) {
 			return fail(400, { username: username?.toString(), error: 'Email is required' });

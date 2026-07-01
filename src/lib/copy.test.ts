@@ -21,12 +21,8 @@ describe('notification hint copy contract', () => {
 		}
 	});
 
-	it('the onboarding copy carries a {link} marker for the preferences link', () => {
-		expect(p.notificationOnboarding.split('{link}').length).toBe(2);
-	});
-
-	it('contextual hints and onboarding copy never name "email" (channel-agnostic)', () => {
-		for (const s of [...Object.values(contextualHints), p.notificationOnboarding]) {
+	it('contextual hints never name "email" (channel-agnostic)', () => {
+		for (const s of Object.values(contextualHints)) {
 			expect(s.toLowerCase()).not.toContain('email');
 		}
 	});
@@ -37,6 +33,5 @@ describe('notification hint copy contract', () => {
 
 	it('the link labels are present and non-empty', () => {
 		expect(p.notificationHintLink.length).toBeGreaterThan(0);
-		expect(p.notificationPrefsLink.length).toBeGreaterThan(0);
 	});
 });

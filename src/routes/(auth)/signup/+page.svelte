@@ -183,13 +183,6 @@
 				/>
 			</div>
 
-			<div class="form-group checkbox-group">
-				<label class="checkbox-label">
-					<input type="checkbox" name="berlin_based" checked disabled={loading} />
-					<span>{copy.auth.berlinBased}</span>
-				</label>
-			</div>
-
 			<button type="submit" class="btn-primary btn-primary--block" disabled={loading}>
 				{loading ? copy.auth.creatingAccount : copy.auth.createAccount}
 			</button>
@@ -271,25 +264,6 @@
 		margin: var(--space-2) 0 0 0;
 		font-size: var(--text-sm);
 		color: var(--text-muted);
-	}
-
-	.checkbox-group {
-		margin-top: var(--space-2);
-	}
-
-	.checkbox-label {
-		display: flex;
-		align-items: center;
-		gap: var(--space-2);
-		cursor: pointer;
-		font-size: var(--text-md);
-		color: var(--text-primary);
-	}
-
-	.checkbox-label input[type='checkbox'] {
-		width: auto;
-		margin: 0;
-		cursor: pointer;
 	}
 
 	/* ── OTP digits ── */
