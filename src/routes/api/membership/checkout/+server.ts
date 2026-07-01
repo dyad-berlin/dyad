@@ -31,10 +31,10 @@ const MONTHLY_TIER_PRICE_ENV: Record<MembershipMonthlyTier, string> = {
  * return its URL for a full-page redirect (no embedded Stripe.js).
  *
  * The Session is bound to the actor via an opaque payment_ref (NOT the actor
- * id). Each Price has custom_unit_amount enabled: the tier the member picks
- * sets the Price (so the suggested amount pre-fills), and the buyer can still
- * adjust it on Stripe's hosted page. Entitlement is set by the webhook, never
- * here — success_url lands on /membership which polls the row.
+ * id). Each monthly tier is its own fixed-price Stripe Price (solidarity €7 /
+ * standard €12 / supporter €17), so the tier the member picks is the amount
+ * charged — and Stripe reports subscriber counts per tier. Entitlement is set
+ * by the webhook, never here — success_url lands on /membership which polls the row.
  */
 export const POST: RequestHandler = async ({ request, locals, url }) => {
 	const actor = requireIdentity(locals);

@@ -165,7 +165,6 @@
 		<button class="primary block" disabled={busy} onclick={startCheckout}>
 			{isLapsedPaid ? c.gateCta(true) : c.becomeMemberCta}
 		</button>
-		<p class="billing-note">{c.amountNote}</p>
 		<p class="billing-note">{c.billingNote}</p>
 	{/if}
 

@@ -686,7 +686,6 @@ export const copy = {
 			'Join every group conversation',
 			'Keep dyad collectively owned and ad-free'
 		],
-		amountNote: 'The amount you pick pre-fills on Stripe’s secure page — you can adjust it there.',
 		continueCta: 'continue to payment',
 		continuing: 'taking you to payment…',
 
