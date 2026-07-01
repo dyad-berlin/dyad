@@ -147,8 +147,12 @@
 }
 
 [data-theme='dark'] {
-	--bg-canvas: #000000;
-	--bg-glass: rgba(10, 10, 10, 0.96);
+	/* Warm near-black rather than pure #000: the paper brand's dark counterpart.
+	 * Pure black against the warm off-white text (#f5f3f0) reads as harsh, high-
+	 * contrast glare; a soft warm near-black calms it while staying clearly dark.
+	 * Glass sits a touch lighter so floating panels still read as raised. */
+	--bg-canvas: #141210;
+	--bg-glass: rgba(30, 27, 23, 0.96);
 	--bg-code: rgba(255, 255, 255, 0.08);
 	--bg-code-block: rgba(255, 255, 255, 0.05);
 	--bg-control: rgba(255, 255, 255, 0.05);
