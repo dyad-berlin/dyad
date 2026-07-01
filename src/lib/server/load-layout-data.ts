@@ -12,7 +12,7 @@ export async function loadLayoutData(locals: App.Locals) {
 
 	const pendingFormId = (locals as any).pendingFeedbackFormId as string | undefined;
 
-	const [{ data: profile }, { count: invitationCount }, { count: feedbackCount }, { count: groupFeedbackCount }, pendingFeedback, { data: notif, error: notifError }, { data: membershipRow }] = await Promise.all([
+	const [{ data: profile }, { count: invitationCount }, { count: feedbackCount }, { count: groupFeedbackCount }, pendingFeedback, { data: notif, error: notifError }, { data: membershipRow, error: membershipError }] = await Promise.all([
 		locals.supabase
 			.from('profiles')
 			.select('username')
@@ -56,6 +56,11 @@ export async function loadLayoutData(locals: App.Locals) {
 
 	if (notifError) {
 		console.error('[layout loader] notification_settings fetch failed:', notifError);
+	}
+	// Fails safe to null (member appears non-member, no lapsed nudge). Log so a
+	// transient error masking membership state isn't silent — mirrors notifError.
+	if (membershipError) {
+		console.error('[layout loader] memberships fetch failed:', membershipError);
 	}
 
 	return {

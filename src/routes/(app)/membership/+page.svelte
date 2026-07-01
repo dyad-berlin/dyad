@@ -210,7 +210,7 @@
 	}
 	.fan .plan {
 		transform-origin: bottom center;
-		transition: transform 0.15s ease;
+		transition: transform var(--duration-fast) var(--ease-ink);
 	}
 	.fan .plan:first-child {
 		transform: rotate(-8deg);
@@ -283,7 +283,7 @@
 		text-transform: uppercase;
 		letter-spacing: 0.04em;
 		padding: 0.15em 0.6em;
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--text-primary);
 		color: var(--bg-canvas);
 	}

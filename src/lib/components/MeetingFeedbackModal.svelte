@@ -146,7 +146,7 @@
 			{#if lapsed}
 				<button class="btn-primary flex-1" onclick={goToMembership}>{copy.membership.gateCta(true)}</button>
 			{:else}
-				<button class="btn-primary flex-1" onclick={dismiss}>Continue</button>
+				<button class="btn-primary flex-1" onclick={dismiss}>{copy.feedback.continue}</button>
 			{/if}
 
 		{:else if effectiveStep === 'waiting'}
@@ -156,7 +156,7 @@
 			{#if lapsed}
 				<button class="btn-primary flex-1" onclick={goToMembership}>{copy.membership.gateCta(true)}</button>
 			{:else}
-				<button class="btn-primary flex-1" onclick={dismiss}>Continue to discover</button>
+				<button class="btn-primary flex-1" onclick={dismiss}>{copy.feedback.continueToDiscover}</button>
 			{/if}
 
 		{:else if effectiveStep === 'met'}

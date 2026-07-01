@@ -5,7 +5,9 @@ type Theme = 'light' | 'dark';
 function getInitialTheme(): Theme {
 	if (typeof window === 'undefined') return 'light';
 
-	// Default to dark (black background) per design direction.
+	// Intentionally always dark: the light theme is retired pending a redesign, so
+	// getInitialTheme ignores any stored preference and returns dark. toggle() and
+	// persist() are kept dormant for when a theme-preference UI returns.
 	return 'dark';
 }
 

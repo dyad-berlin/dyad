@@ -26,7 +26,7 @@
 	const planName = $derived(
 		!m
 			? ''
-			: m.source === 'comp'
+			: m.source !== 'paid'
 				? copy.preferences.planComp
 				: m.cadence === 'lifetime'
 					? copy.preferences.planLifetime
@@ -35,8 +35,10 @@
 						: copy.preferences.planMonthly
 	);
 	let managing = $state(false);
+	let manageError = $state<string | null>(null);
 	async function manageMembership() {
 		managing = true;
+		manageError = null;
 		try {
 			const res = await fetch('/api/membership/portal', { method: 'POST' });
 			const body = await res.json().catch(() => ({}));
@@ -44,6 +46,9 @@
 				window.location.href = body.url;
 				return;
 			}
+			manageError = copy.preferences.membershipManageError;
+		} catch {
+			manageError = copy.preferences.membershipManageError;
 		} finally {
 			managing = false;
 		}
@@ -114,6 +119,9 @@
 			<button type="button" class="manage-link" disabled={managing} onclick={manageMembership}>
 				{copy.preferences.membershipManage}
 			</button>
+			{#if manageError}
+				<p class="manage-error" role="alert">{manageError}</p>
+			{/if}
 		{:else if m}
 			<p class="plan-name">{copy.preferences.membershipLapsed}</p>
 			<a href="/membership" class="manage-link">{copy.preferences.membershipRenew}</a>
@@ -297,5 +305,10 @@
 	}
 	.manage-link:hover {
 		color: var(--text-link-hover);
+	}
+	.manage-error {
+		margin: var(--space-2) 0 0;
+		font-size: var(--text-sm);
+		color: var(--color-danger);
 	}
 </style>
