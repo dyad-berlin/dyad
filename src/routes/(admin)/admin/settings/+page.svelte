@@ -13,6 +13,12 @@
 	let gatingSaving = $state<string | null>(null);
 	let gatingError = $state<string | null>(null);
 
+	// Free-interaction quota: how many gated actions a guest may perform before a
+	// membership is required. Shares the gating section (one unified interface).
+	let freeQuota = $state<number>(data.freeInteractionQuota);
+	let quotaSaving = $state(false);
+	let quotaError = $state<string | null>(null);
+
 	async function toggleEmailNotifications(event: Event) {
 		const target = event.target as HTMLInputElement;
 		const next = target.checked;
@@ -71,6 +77,41 @@
 			target.checked = !next;
 		} finally {
 			gatingSaving = null;
+		}
+	}
+
+	async function saveQuota(event: Event) {
+		const target = event.target as HTMLInputElement;
+		const next = Math.trunc(Number(target.value));
+		if (!Number.isInteger(next) || next < 0 || next > 99) {
+			quotaError = 'Enter a whole number between 0 and 99.';
+			target.value = String(freeQuota);
+			return;
+		}
+		if (next === freeQuota) return;
+
+		quotaSaving = true;
+		quotaError = null;
+		try {
+			const res = await fetch('/admin/settings/api', {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ free_interaction_quota: next })
+			});
+			if (res.ok) {
+				const body = await res.json().catch(() => ({}));
+				freeQuota = body.free_interaction_quota ?? next;
+				target.value = String(freeQuota);
+			} else {
+				const body = await res.json().catch(() => ({}));
+				quotaError = body.error ?? 'Failed to update quota.';
+				target.value = String(freeQuota);
+			}
+		} catch {
+			quotaError = 'Network error.';
+			target.value = String(freeQuota);
+		} finally {
+			quotaSaving = false;
 		}
 	}
 </script>
@@ -136,6 +177,32 @@
 	</div>
 	{#if gatingError}
 		<p class="setting-error">{gatingError}</p>
+	{/if}
+
+	<div class="quota-row">
+		<label class="setting-body" for="free-quota">
+			<span class="setting-label">Free interactions before membership</span>
+			<span class="setting-hint">
+				How many gated actions a registered guest may perform before a
+				membership is required (counted live across conversations,
+				responses, and invitations). Applies only to actions toggled on
+				above; 0 means the first gated action already requires membership.
+			</span>
+		</label>
+		<input
+			id="free-quota"
+			class="quota-input"
+			type="number"
+			min="0"
+			max="99"
+			step="1"
+			value={freeQuota}
+			disabled={quotaSaving}
+			onchange={saveQuota}
+		/>
+	</div>
+	{#if quotaError}
+		<p class="setting-error">{quotaError}</p>
 	{/if}
 </section>
 
@@ -207,5 +274,32 @@
 		font-size: var(--text-sm);
 		color: var(--text-danger, #b03a2e);
 		margin: var(--space-3) 0 0;
+	}
+
+	.quota-row {
+		display: flex;
+		gap: var(--space-4);
+		align-items: flex-start;
+		justify-content: space-between;
+		margin-top: var(--space-5);
+		padding-top: var(--space-5);
+		border-top: 1px solid var(--border-link);
+	}
+
+	.quota-input {
+		width: var(--space-10);
+		flex: none;
+		padding: var(--space-2) var(--space-3);
+		font-size: var(--text-base);
+		color: var(--text-primary);
+		background: var(--bg-canvas);
+		border: 1px solid var(--border-link);
+		border-radius: var(--radius-input);
+		text-align: right;
+	}
+
+	.quota-input:disabled {
+		cursor: progress;
+		opacity: 0.6;
 	}
 </style>
