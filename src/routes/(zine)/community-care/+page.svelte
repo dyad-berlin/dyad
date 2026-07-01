@@ -8,7 +8,7 @@
 </script>
 
 <svelte:head>
-	<title>Community Care — dyad.</title>
+	<title>Community Care · dyad.</title>
 	<meta name="description" content="Trust, safety, and community care at Dyad. We begin with responsibility, not certainty." />
 </svelte:head>
 

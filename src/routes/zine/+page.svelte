@@ -56,7 +56,7 @@
 </script>
 
 <svelte:head>
-	<title>The Dyad Zine — dyad.berlin</title>
+	<title>The Dyad Zine · dyad.berlin</title>
 	<meta name="description" content="A zine about conversation, connection, and the city. Made in Berlin." />
 	<!-- The masthead is an 11rem Light serif: with font-display swap the
 	     fallback→serif reflow is a visible flash. Preloading the two weights

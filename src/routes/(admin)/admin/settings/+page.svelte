@@ -76,7 +76,7 @@
 </script>
 
 <svelte:head>
-	<title>Settings — Admin</title>
+	<title>Settings · Admin</title>
 </svelte:head>
 
 <h1 class="admin-title">Settings</h1>

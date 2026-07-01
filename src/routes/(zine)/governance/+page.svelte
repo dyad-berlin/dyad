@@ -10,7 +10,7 @@
 </script>
 
 <svelte:head>
-	<title>Participatory Governance — dyad.</title>
+	<title>Participatory Governance · dyad.</title>
 	<meta name="description" content="Online spaces have become places we live in, but not places we govern. Dyad is building governance people can actually participate in." />
 </svelte:head>
 

@@ -8,7 +8,7 @@
 </script>
 
 <svelte:head>
-	<title>Steward Ownership — dyad.</title>
+	<title>Steward Ownership · dyad.</title>
 	<meta name="description" content="Dyad is committed to transitioning into steward ownership — separating control from capital so the company's purpose cannot be overridden by investor interests." />
 </svelte:head>
 
