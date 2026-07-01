@@ -16,7 +16,7 @@ export async function loadLayoutData(locals: App.Locals) {
 	const [{ data: profile }, { count: invitationCount }, { count: feedbackCount }, { count: groupFeedbackCount }, pendingFeedback, { data: notif, error: notifError }, { data: membershipRow, error: membershipError }] = await Promise.all([
 		locals.supabase
 			.from('profiles')
-			.select('username')
+			.select('username, onboarded')
 			.eq('id', locals.user.id)
 			.single(),
 		locals.supabase
@@ -67,6 +67,11 @@ export async function loadLayoutData(locals: App.Locals) {
 	return {
 		identity: userToUpactor(locals.user),
 		username: profile?.username ?? '',
+		// Per-user durable onboarding flag (profiles.onboarded). The discover
+		// welcome modal gates on this, not a browser-global localStorage flag —
+		// otherwise a second account on the same browser is wrongly treated as
+		// already onboarded and never sees the welcome flow.
+		onboarded: profile?.onboarded ?? false,
 		attentionCount: (invitationCount ?? 0) + (feedbackCount ?? 0) + (groupFeedbackCount ?? 0),
 		pendingFeedback,
 		hasNotificationEmail: notifError ? true : !!notif?.email,

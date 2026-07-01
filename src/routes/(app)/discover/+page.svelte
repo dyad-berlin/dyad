@@ -39,7 +39,12 @@
 	const isWelcome = browser && new URLSearchParams(window.location.search).get('welcome') === '1';
 	// Guests (corner-exclusive members) skip the commons onboarding — its
 	// framing is written for the Berlin commons, not a conference corner.
-	let showOnboarding = $state(isWelcome && !data.isGuest && !localStorage.getItem(ONBOARDING_KEY));
+	//
+	// Gate on the per-user durable flag (data.onboarded, from profiles.onboarded
+	// via the layout loader), NOT the browser-global localStorage flag: the
+	// latter is set once per browser, so a second account on the same browser
+	// would be wrongly treated as already onboarded and never see ?welcome=1.
+	let showOnboarding = $state(isWelcome && !data.isGuest && !data.onboarded);
 
 	// Persist onboarding completion to the DB (profiles.onboarded = true) — the
 	// durable signal downstream consumers key off. Not fire-and-forget: a dropped
