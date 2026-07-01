@@ -7,7 +7,7 @@ const { requireMembershipForAction } = await import('./require-membership.js');
 
 interface LocalsOpts {
 	user?: { id: string } | null;
-	row?: { active: boolean } | null;
+	row?: { active: boolean; cadence?: string | null; source?: string } | null;
 	readError?: { message: string } | null;
 }
 
@@ -54,6 +54,17 @@ describe('requireMembershipForAction', () => {
 
 	it('403s a never-member guest with had_membership:false', async () => {
 		const res = await requireMembershipForAction('create_conversation', makeLocals({ row: null }));
+		expect(res?.status).toBe(403);
+		expect(await res?.json()).toMatchObject({ error: 'membership_required', had_membership: false });
+	});
+
+	it('403s an abandoned-checkout row (never activated) with had_membership:false', async () => {
+		// Matches toMembershipDisplay: a paid row with no cadence never activated,
+		// so the inline gate says "become a member", not "renew".
+		const res = await requireMembershipForAction(
+			'create_conversation',
+			makeLocals({ row: { active: false, cadence: null, source: 'paid' } })
+		);
 		expect(res?.status).toBe(403);
 		expect(await res?.json()).toMatchObject({ error: 'membership_required', had_membership: false });
 	});

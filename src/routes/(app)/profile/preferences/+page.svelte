@@ -21,6 +21,39 @@
 	let saving = $state(false);
 	let emailError = $state<string | null>(null);
 
+	// Membership (display-only). Manage → Stripe portal for now (in-app manage page is a later, backend-dependent step).
+	const m = $derived(data.membership);
+	const planName = $derived(
+		!m
+			? ''
+			: m.source !== 'paid'
+				? copy.preferences.planComp
+				: m.cadence === 'lifetime'
+					? copy.preferences.planLifetime
+					: m.cadence === 'annual'
+						? copy.preferences.planAnnual
+						: copy.preferences.planMonthly
+	);
+	let managing = $state(false);
+	let manageError = $state<string | null>(null);
+	async function manageMembership() {
+		managing = true;
+		manageError = null;
+		try {
+			const res = await fetch('/api/membership/portal', { method: 'POST' });
+			const body = await res.json().catch(() => ({}));
+			if (res.ok && body.url) {
+				window.location.href = body.url;
+				return;
+			}
+			manageError = copy.preferences.membershipManageError;
+		} catch {
+			manageError = copy.preferences.membershipManageError;
+		} finally {
+			managing = false;
+		}
+	}
+
 	const emailDirty = $derived(emailInput.trim() !== (savedEmail ?? ''));
 
 	async function patch(payload: Record<string, unknown>): Promise<boolean> {
@@ -78,6 +111,28 @@
 <div class="content">
 	<a href="/profile" class="back-link">{copy.preferences.backToProfile}</a>
 	<h1 class="page-title">{copy.preferences.title}</h1>
+
+	<section class="membership-pref">
+		<p class="section-label">{copy.preferences.membershipHeading}</p>
+		{#if m?.active}
+			<p class="plan-name">{planName}</p>
+			<button type="button" class="manage-link" disabled={managing} onclick={manageMembership}>
+				{copy.preferences.membershipManage}
+			</button>
+			{#if manageError}
+				<p class="manage-error" role="alert">{manageError}</p>
+			{/if}
+		{:else if m && m.source !== 'paid'}
+			<p class="plan-name">{copy.preferences.membershipEnded}</p>
+			<a href="/membership" class="manage-link">{copy.preferences.membershipJoin}</a>
+		{:else if m}
+			<p class="plan-name">{copy.preferences.membershipLapsed}</p>
+			<a href="/membership" class="manage-link">{copy.preferences.membershipRenew}</a>
+		{:else}
+			<p class="plan-name muted">{copy.preferences.membershipNone}</p>
+			<a href="/membership" class="manage-link">{copy.preferences.membershipJoin}</a>
+		{/if}
+	</section>
 
 	<form class="email-row" onsubmit={saveEmail}>
 		<input
@@ -228,5 +283,35 @@
 
 	.pref-row input[type='checkbox']:disabled {
 		cursor: default;
+	}
+
+	.membership-pref {
+		margin-bottom: var(--space-5);
+	}
+	.plan-name {
+		font-size: var(--text-base);
+		color: var(--text-primary);
+		margin: var(--space-2) 0;
+	}
+	.plan-name.muted {
+		color: var(--text-muted);
+	}
+	.manage-link {
+		display: inline-block;
+		font-size: var(--text-sm);
+		color: var(--text-link);
+		text-decoration: underline;
+		background: none;
+		border: none;
+		padding: 0;
+		cursor: pointer;
+	}
+	.manage-link:hover {
+		color: var(--text-link-hover);
+	}
+	.manage-error {
+		margin: var(--space-2) 0 0;
+		font-size: var(--text-sm);
+		color: var(--color-danger);
 	}
 </style>

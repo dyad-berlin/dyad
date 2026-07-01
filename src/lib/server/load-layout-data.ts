@@ -1,5 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import { userToUpactor } from '@prefig/upact-supabase';
+import { toMembershipDisplay, type MembershipRow } from '$lib/domain/membership.js';
 
 /**
  * Shared layout data loader for authenticated route groups.
@@ -12,7 +13,7 @@ export async function loadLayoutData(locals: App.Locals) {
 
 	const pendingFormId = (locals as any).pendingFeedbackFormId as string | undefined;
 
-	const [{ data: profile }, { count: invitationCount }, { count: feedbackCount }, { count: groupFeedbackCount }, pendingFeedback, { data: notif, error: notifError }] = await Promise.all([
+	const [{ data: profile }, { count: invitationCount }, { count: feedbackCount }, { count: groupFeedbackCount }, pendingFeedback, { data: notif, error: notifError }, { data: membershipRow, error: membershipError }] = await Promise.all([
 		locals.supabase
 			.from('profiles')
 			.select('username')
@@ -44,11 +45,23 @@ export async function loadLayoutData(locals: App.Locals) {
 			.from('notification_settings')
 			.select('email')
 			.eq('user_id', locals.user.id)
+			.maybeSingle(),
+		// Display-only: lets the (app) UI reflect membership state (lapsed nudge
+		// before a 403, post-feedback CTA). Safe columns only — no payment_ref/stripe_*.
+		locals.supabase
+			.from('memberships')
+			.select('active, cadence, source')
+			.eq('identity_id', locals.user.id)
 			.maybeSingle()
 	]);
 
 	if (notifError) {
 		console.error('[layout loader] notification_settings fetch failed:', notifError);
+	}
+	// Fails safe to null (member appears non-member, no lapsed nudge). Log so a
+	// transient error masking membership state isn't silent — mirrors notifError.
+	if (membershipError) {
+		console.error('[layout loader] memberships fetch failed:', membershipError);
 	}
 
 	return {
@@ -56,7 +69,8 @@ export async function loadLayoutData(locals: App.Locals) {
 		username: profile?.username ?? '',
 		attentionCount: (invitationCount ?? 0) + (feedbackCount ?? 0) + (groupFeedbackCount ?? 0),
 		pendingFeedback,
-		hasNotificationEmail: notifError ? true : !!notif?.email
+		hasNotificationEmail: notifError ? true : !!notif?.email,
+		membership: toMembershipDisplay(membershipRow as MembershipRow | null)
 	};
 }
 

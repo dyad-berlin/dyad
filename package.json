@@ -36,7 +36,8 @@
 		"setup": "npx supabase start && npx supabase db reset && npm run db:env",
 		"reset": "npx supabase db reset",
 		"feedback": "npx tsx scripts/fetch-feedback.ts",
-		"sync:resend": "npx tsx scripts/sync-resend-segments.ts"
+		"sync:resend": "npx tsx scripts/sync-resend-segments.ts",
+		"stripe:provision": "npx tsx scripts/stripe-provision-membership.ts"
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",

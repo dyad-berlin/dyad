@@ -5,9 +5,10 @@ type Theme = 'light' | 'dark';
 function getInitialTheme(): Theme {
 	if (typeof window === 'undefined') return 'light';
 
-	// Dark mode disabled until redesigned — always light.
-	// Restore localStorage read here when dark mode is ready.
-	return 'light';
+	// Intentionally always dark: the light theme is retired pending a redesign, so
+	// getInitialTheme ignores any stored preference and returns dark. toggle() and
+	// persist() are kept dormant for when a theme-preference UI returns.
+	return 'dark';
 }
 
 class ThemeStore {

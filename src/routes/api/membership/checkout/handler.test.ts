@@ -52,7 +52,9 @@ describe('POST /api/membership/checkout', () => {
 		vi.spyOn(console, 'error').mockImplementation(() => {});
 		for (const k of Object.keys(mockEnv)) delete mockEnv[k];
 		mockEnv.STRIPE_SECRET_KEY = 'sk_test_x';
-		mockEnv.STRIPE_PRICE_ID_MONTHLY = 'price_m';
+		mockEnv.STRIPE_PRICE_ID_MONTHLY_SOLIDARITY = 'price_m_sol';
+		mockEnv.STRIPE_PRICE_ID_MONTHLY_STANDARD = 'price_m_std';
+		mockEnv.STRIPE_PRICE_ID_MONTHLY_SUPPORTER = 'price_m_sup';
 		mockEnv.STRIPE_PRICE_ID_ANNUAL = 'price_a';
 		mockEnv.STRIPE_PRICE_ID_LIFETIME = 'price_l';
 		adminState.existing = null;
@@ -81,8 +83,41 @@ describe('POST /api/membership/checkout', () => {
 		expect(arg.subscription_data).toBeUndefined();
 	});
 
+	it('monthly → the selected tier resolves to that tier\'s Price', async () => {
+		const res = await call({ cadence: 'monthly', tier: 'solidarity' });
+		expect(res.status).toBe(200);
+		const arg = sessionCreate.mock.calls[0][0];
+		expect(arg.mode).toBe('subscription');
+		expect(arg.line_items).toEqual([{ price: 'price_m_sol', quantity: 1 }]);
+	});
+
+	it('monthly standard tier → resolves to the standard Price', async () => {
+		const res = await call({ cadence: 'monthly', tier: 'standard' });
+		expect(res.status).toBe(200);
+		expect(sessionCreate.mock.calls[0][0].line_items).toEqual([{ price: 'price_m_std', quantity: 1 }]);
+	});
+
+	it('monthly supporter tier → resolves to the supporter Price', async () => {
+		const res = await call({ cadence: 'monthly', tier: 'supporter' });
+		expect(res.status).toBe(200);
+		expect(sessionCreate.mock.calls[0][0].line_items).toEqual([{ price: 'price_m_sup', quantity: 1 }]);
+	});
+
+	it('monthly without a tier → 400 invalid_tier', async () => {
+		const res = await call({ cadence: 'monthly' });
+		expect(res.status).toBe(400);
+		expect(await res.json()).toMatchObject({ error: 'invalid_tier' });
+		expect(sessionCreate).not.toHaveBeenCalled();
+	});
+
+	it('monthly with an unknown tier → 400 invalid_tier', async () => {
+		const res = await call({ cadence: 'monthly', tier: 'platinum' });
+		expect(res.status).toBe(400);
+		expect(await res.json()).toMatchObject({ error: 'invalid_tier' });
+	});
+
 	it('never sends the actor id to Stripe (pseudonym only)', async () => {
-		await call({ cadence: 'monthly' }, { id: 'actor-1' });
+		await call({ cadence: 'monthly', tier: 'standard' }, { id: 'actor-1' });
 		expect(JSON.stringify(sessionCreate.mock.calls[0][0])).not.toContain('actor-1');
 	});
 
