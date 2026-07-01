@@ -74,7 +74,7 @@
 </script>
 
 <svelte:head>
-	<title>Waitlist — Admin</title>
+	<title>Waitlist · Admin</title>
 </svelte:head>
 
 <h1 class="admin-title">Waitlist</h1>

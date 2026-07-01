@@ -268,7 +268,7 @@
 </script>
 
 <svelte:head>
-	<title>Profile - dyad.berlin</title>
+	<title>Profile · dyad.berlin</title>
 </svelte:head>
 
 <div class="content">

@@ -244,7 +244,7 @@
 </script>
 
 <svelte:head>
-	<title>{data.scope.name} — Admin Scopes</title>
+	<title>{data.scope.name} · Admin Scopes</title>
 </svelte:head>
 
 <a class="back-link" href="/admin/scopes">← All corners</a>

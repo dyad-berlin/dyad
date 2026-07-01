@@ -24,7 +24,7 @@
 	const gatedActions = PROTECTED_ACTIONS.map((a) => PROTECTED_ACTION_META[a].label);
 </script>
 
-<svelte:head><title>Membership states — dev</title></svelte:head>
+<svelte:head><title>Membership states · dev</title></svelte:head>
 
 <main class="dev">
 	<p class="tag">dev only · 404 in production</p>
@@ -39,7 +39,7 @@
 	</ul>
 
 	<h2>Gated-action prompt</h2>
-	<p class="note">Shown inline (replacing the submit button) when a non-member attempts a gated action. The half-written input is preserved.</p>
+	<p class="note">Shown inline (replacing the submit button) when a non-member attempts a gated action.</p>
 	<ul class="list">
 		{#each gatePrompts as p (p.when)}
 			<li><strong>{p.when}:</strong> &ldquo;{p.msg}&rdquo;</li>

@@ -3,7 +3,7 @@
 </script>
 
 <svelte:head>
-	<title>Sign out — dyad.</title>
+	<title>Sign out · dyad.</title>
 </svelte:head>
 
 <div class="page">

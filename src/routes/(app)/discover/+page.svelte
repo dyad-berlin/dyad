@@ -195,7 +195,7 @@
 </script>
 
 <svelte:head>
-	<title>Discover - dyad.berlin</title>
+	<title>Discover · dyad.berlin</title>
 </svelte:head>
 
 {#if viewMode === 'map'}

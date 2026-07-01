@@ -72,7 +72,7 @@
 </script>
 
 <svelte:head>
-	<title>{copy.preferences.title} - dyad.berlin</title>
+	<title>{copy.preferences.title} · dyad.berlin</title>
 </svelte:head>
 
 <div class="content">

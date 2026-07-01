@@ -20,7 +20,7 @@
 </script>
 
 <svelte:head>
-	<title>Feedback — Admin</title>
+	<title>Feedback · Admin</title>
 </svelte:head>
 
 <h1 class="admin-title">App Feedback</h1>

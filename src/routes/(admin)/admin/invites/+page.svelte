@@ -237,7 +237,7 @@
 </script>
 
 <svelte:head>
-	<title>Invites — Admin</title>
+	<title>Invites · Admin</title>
 </svelte:head>
 
 <h1 class="admin-title">Invites</h1>

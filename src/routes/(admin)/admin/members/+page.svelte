@@ -103,7 +103,7 @@
 </script>
 
 <svelte:head>
-	<title>Members — Admin</title>
+	<title>Members · Admin</title>
 </svelte:head>
 
 <h1 class="admin-title">Members</h1>

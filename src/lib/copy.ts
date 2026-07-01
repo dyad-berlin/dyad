@@ -284,7 +284,7 @@ export const copy = {
 		meetingCount: (n: number) => (n === 1 ? '1 meeting' : `${n} meetings`),
 		editedRelative: (when: string) => `edited ${when}`,
 		respondedRelative: (when: string) => `responded ${when}`,
-		invitedWaiting: (authorUsername: string) => `invited — waiting for @${authorUsername}`,
+		invitedWaiting: (authorUsername: string) => `invited, waiting for @${authorUsername}`,
 		invitationDeclined: 'invitation declined',
 		invitationExpired: 'invitation expired',
 		// Attention-card sentence: "@marco cancelled this meeting on Fri, 20 Apr"
@@ -365,11 +365,11 @@ export const copy = {
 		cancelBodyEarly: (username: string) =>
 			`You're cancelling more than 12 hours out, so the slot goes back to discover. @${username} will see your note on the conversation.`,
 		cancelBodyLate: (username: string) =>
-			`This is a late cancellation — @${username} won't have much time to make other plans. A real explanation matters here.`,
+			`This is a late cancellation. @${username} won't have much time to make other plans, so a real explanation matters here.`,
 		cancelReasonLabelEarly: (username: string) => `A message to @${username}`,
 		cancelReasonLabelLate: (username: string) => `Tell @${username} what happened`,
 		cancelReasonPlaceholderEarly: 'A sentence or two.',
-		cancelReasonPlaceholderLate: 'Be honest — it helps.',
+		cancelReasonPlaceholderLate: 'Be honest. It helps.',
 		cancelGenericError: 'Couldn\'t cancel the meeting. Please try again.',
 		cancelKeep: 'Keep meeting',
 		cancelConfirmEarly: 'Cancel meeting',
@@ -381,25 +381,25 @@ export const copy = {
 		cancelBodyLeaveEarly: (username: string) =>
 			`The gathering continues without you. @${username} will see your note.`,
 		cancelBodyLeaveLate: (username: string) =>
-			`This is a late change — the gathering continues, but @${username} won't have much time to adjust. A real explanation matters here.`,
+			`This is a late change. The gathering continues, but @${username} won't have much time to adjust, so a real explanation matters here.`,
 		cancelTitleChoice: 'What would you like to cancel?',
 		// The author picks people (checkboxes) or the entirety. Cancelling
 		// people keeps the time open; the entirety withdraws it.
-		cancelScopeGathering: 'The whole gathering — this time is withdrawn',
+		cancelScopeGathering: 'The whole gathering (this time is withdrawn)',
 		cancelBodySelectionEarly: (n: number) =>
 			n === 1
 				? 'Their meeting is cancelled and they’re notified. The time stays open for everyone else.'
 				: 'Their meetings are cancelled and they’re notified. The time stays open for everyone else.',
 		cancelBodySelectionLate: (n: number) =>
 			n === 1
-				? 'This is a late cancellation — they won’t have much time to make other plans. The time stays open for everyone else.'
-				: 'This is a late cancellation for them — they won’t have much time to make other plans. The time stays open for everyone else.',
+				? 'This is a late cancellation. They won’t have much time to make other plans. The time stays open for everyone else.'
+				: 'This is a late cancellation for them. They won’t have much time to make other plans. The time stays open for everyone else.',
 		cancelReasonLabelSelection: 'A message to them',
 		cancelConfirmSelection: (n: number) => (n === 1 ? 'Cancel for one person' : `Cancel for ${n} people`),
 		cancelBodyGatheringEarly: (count: number) =>
 			`This calls the time off for ${count === 1 ? 'your one confirmed joiner' : `all ${count} people`}. Everyone is notified, the time is withdrawn, and your note travels with the cancellation.`,
 		cancelBodyGatheringLate: (count: number) =>
-			`This is a late cancellation for ${count === 1 ? 'your one confirmed joiner' : `all ${count} people`} — they won't have much time to make other plans. A real explanation matters here.`,
+			`This is a late cancellation for ${count === 1 ? 'your one confirmed joiner' : `all ${count} people`}. They won't have much time to make other plans, so a real explanation matters here.`,
 		cancelReasonLabelGathering: 'A message to everyone',
 		cancelConfirmGatheringEarly: 'Call off the gathering',
 		cancelConfirmGatheringLate: 'Call it off anyway',
@@ -412,7 +412,7 @@ export const copy = {
 		// Feedback-status block on the meeting detail page.
 		feedbackDue: 'You have feedback to submit',
 		giveFeedback: 'Give feedback',
-		feedbackWaitingForOther: 'Feedback submitted — waiting for the other person',
+		feedbackWaitingForOther: 'Feedback submitted. Waiting for the other person.',
 		revealedTitle: 'What they shared with you',
 		revealedNoShow: 'They reported you didn\u2019t meet',
 		// .ics calendar event metadata
@@ -423,11 +423,11 @@ export const copy = {
 		reportTitle: 'Report a problem',
 		reportBody: 'If something felt unsafe or off about this gathering, tell us. A moderator will read it.',
 		reportLabel: 'What happened?',
-		reportPlaceholder: 'A few sentences. Be honest — it helps us look into it.',
+		reportPlaceholder: 'A few sentences. Be honest. It helps us look into it.',
 		reportSubmit: 'Send report',
 		reportSubmitting: 'Sending...',
 		reportCancel: 'Cancel',
-		reportThankYou: 'Thanks — a moderator will look into this.',
+		reportThankYou: 'Thanks. A moderator will look into this.',
 		reportGenericError: 'Couldn’t send the report. Please try again.',
 	},
 
@@ -503,12 +503,12 @@ export const copy = {
 		referralOtherPlaceholder: 'Tell us where',
 		// Newsletter: the opt-in happens ON Substack (they are the controller —
 		// see 20260417110000_drop_newsletter_subscribers). We hold nothing.
-		newsletterInvite: 'We also write a newsletter — hosted on Substack.',
+		newsletterInvite: 'We also write a newsletter, hosted on Substack.',
 		newsletterCta: 'Subscribe on Substack',
 		cityExpansionNote: 'We\'re currently active in Berlin and will expand to other cities soon.',
 
 		// /waitlist page
-		pageTitle: 'join - dyad. cultivating a culture of conversation',
+		pageTitle: 'join · dyad. cultivating a culture of conversation',
 		heading: 'Request to join',
 		subtitle: 'For those who seek conversation for its own sake and meet others with humility, critical thinking and deep listening.',
 		successMessage: "Thank you. We'll be in touch.",
@@ -557,9 +557,9 @@ export const copy = {
 		emailPlaceholder: 'Email',
 
 		// <title> variants for the login page
-		pageTitleLogin: 'login - dyad. cultivating a culture of conversation',
-		pageTitleReset: 'reset password - dyad. cultivating a culture of conversation',
-		pageTitleUpdate: 'set new password - dyad. cultivating a culture of conversation',
+		pageTitleLogin: 'login · dyad. cultivating a culture of conversation',
+		pageTitleReset: 'reset password · dyad. cultivating a culture of conversation',
+		pageTitleUpdate: 'set new password · dyad. cultivating a culture of conversation',
 
 		// Signup / OTP page
 		signupPageTitle: 'Join dyad.',
@@ -581,7 +581,7 @@ export const copy = {
 		createAccount: 'Create account',
 
 		// Invitation-based join page
-		joinPageTitle: 'Join dyad. - cultivating a culture of conversation',
+		joinPageTitle: 'Join dyad. · cultivating a culture of conversation',
 		welcomeToDyad: 'Welcome to dyad.',
 		invitationExpired: 'Invitation expired',
 		invitationExpiredSubtitle: 'This invitation link is no longer valid. It may have expired or already been used.',
@@ -595,19 +595,19 @@ export const copy = {
 		groupLinkClosed: 'Joining has closed',
 		groupLinkClosedSubtitle: 'This corner is no longer taking new members through this link.',
 		groupLinkFull: 'This corner is full',
-		groupLinkFullSubtitle: 'All the places through this link are taken — ask the organizers.',
+		groupLinkFullSubtitle: 'All the places through this link are taken. Ask the organizers.',
 		groupLinkRevoked: 'This link is no longer available',
 		groupLinkRevokedSubtitle: 'The organizers have switched this link off. Ask them for a current one.',
 		groupAlreadyMember: 'You already have an account',
-		groupAlreadyMemberSubtitle: 'You\'re signed in — corner access is granted by the organizers.',
+		groupAlreadyMemberSubtitle: 'You\'re signed in. Corner access is granted by the organizers.',
 		groupGoToDiscover: 'Go to discover',
 		groupEmailRegistered: 'An account with this email already exists. Log in instead.',
-		groupTooManyAttempts: 'Too many attempts — wait a moment and try again.',
+		groupTooManyAttempts: 'Too many attempts. Wait a moment and try again.',
 		groupSetupFailed: 'Could not finish setting up your account. Please try again.',
 		// Action-time redemption failures (link state changed between page
 		// load and submit). Compact inline-error variants of the page states.
 		groupJoinErrors: {
-			full: 'This corner is full — ask the organizers.',
+			full: 'This corner is full. Ask the organizers.',
 			closed: 'Joining through this link has closed.',
 			revoked: 'This link is no longer available.',
 			unknown: 'This link isn\'t valid.'
@@ -618,7 +618,7 @@ export const copy = {
 		accessEndedSubtitleWithCorner: 'Your time in {name} has come to an end. Thank you for being part of it.',
 		accessEndedSubtitle: 'Your guest access has come to an end. Thank you for being part of it.',
 		accessEndedForwardPath: 'Want to keep using dyad? Ask the organizers about staying on.',
-		accessEndedPageTitle: 'access ended - dyad',
+		accessEndedPageTitle: 'access ended · dyad',
 		logOut: 'log out',
 	},
 
@@ -709,19 +709,19 @@ export const copy = {
 		activeHeading: 'You’re a Member',
 		activeSubscription: 'Your membership is active. Thank you for keeping dyad alive.',
 		lifetimeConfirmation:
-			'You have a lifetime membership — it never lapses and there’s nothing more to do. Thank you.',
+			'You have a lifetime membership. It never lapses and there’s nothing more to do. Thank you.',
 		manageCta: 'manage membership',
 
-		finishingUp: 'We’re confirming your membership — this usually takes a few seconds.',
+		finishingUp: 'We’re confirming your membership. This usually takes a few seconds.',
 		finishingUpFallback:
-			'Still confirming. You can keep browsing — your membership will appear here and on your profile once it’s through. No need to pay again.',
+			'Still confirming. You can keep browsing; your membership will appear here and on your profile once it’s through. No need to pay again.',
 		cancelled: 'No payment was made. You can come back whenever you’re ready.',
 
 		// Inline gated-action prompts. `hadMembership` chooses renew vs join wording.
 		gatePrompt: (hadMembership: boolean): string =>
 			hadMembership
-				? 'Renew your membership to do this — your half-written words are kept.'
-				: 'Become a member to do this — your half-written words are kept.',
+				? 'Renew your membership to do this.'
+				: 'Become a member to do this.',
 		gateCta: (hadMembership: boolean): string =>
 			hadMembership ? 'renew membership' : 'become a member',
 
@@ -738,11 +738,11 @@ export const copy = {
 		waitlistSubject: "What's in a conversation?",
 		membershipActivatedSubject: 'Your membership is active',
 		membershipActivatedBody:
-			'Thank you for becoming a member — your membership is active. It keeps dyad collectively owned and ad-free, and it’s what lets you start conversations, respond, and meet. You can review or manage it any time.',
+			'Thank you for becoming a member. Your membership is active. It keeps dyad collectively owned and ad-free, and it’s what lets you start conversations, respond, and meet. You can review or manage it any time.',
 		// Lapsed / renewal reminder — COPY ONLY; no dispatcher wired yet (backend).
 		membershipLapsedSubject: 'Your dyad membership has lapsed',
 		membershipLapsedBody:
-			'Your membership has lapsed, so the member-only actions — starting conversations, responding, and meeting — are paused. Everything you’ve made is still here. Whenever you’re ready, renewing turns it all back on.',
+			'Your membership has lapsed, so the member-only actions (starting conversations, responding, and meeting) are paused. Everything you’ve made is still here. Whenever you’re ready, renewing turns it all back on.',
 		tagline: 'cultivating a culture of conversation',
 		// Rendered into the transactional email footers. Three lines:
 		// the closing supports the names; the names anchor the message;

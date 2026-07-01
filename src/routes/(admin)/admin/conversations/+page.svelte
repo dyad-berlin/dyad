@@ -52,7 +52,7 @@
 </script>
 
 <svelte:head>
-	<title>Conversations — Admin</title>
+	<title>Conversations · Admin</title>
 </svelte:head>
 
 <h1 class="admin-title">{copy.admin.conversations}</h1>

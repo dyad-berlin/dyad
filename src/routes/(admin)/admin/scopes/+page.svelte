@@ -66,7 +66,7 @@
 </script>
 
 <svelte:head>
-	<title>Scopes — Admin</title>
+	<title>Scopes · Admin</title>
 </svelte:head>
 
 <h1 class="admin-title">Scopes</h1>
