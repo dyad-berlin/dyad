@@ -12,20 +12,70 @@
 	import UserHandle from '$lib/components/UserHandle.svelte';
 	import NotificationHint from '$lib/components/NotificationHint.svelte';
 	import { formatShortDate as formatDate } from '$lib/utils/dates.js';
-	import { membershipErrorMessage, isMembershipGate } from '$lib/utils/membership-error.js';
+	import { isMembershipGate } from '$lib/utils/membership-error.js';
 	import { buildResponseRows, ACTIVE_MEETING_STATES } from '$lib/domain/response-rows.js';
+	import MembershipPaywallModal from '$lib/components/MembershipPaywallModal.svelte';
+	import { onMount } from 'svelte';
+
+	// Map a gated 403 body to the modal's mode. The backend returns
+	// `reason ∈ 'join'|'renew'|'ended'`; if absent, fall back to had_membership
+	// (had one → renew, never had one → join). Kept as a page-local helper so the
+	// frontend chain touches no shared util the backend chain may be editing.
+	function gateModeFrom(err: { reason?: string; had_membership?: boolean } | null | undefined): 'join' | 'renew' | 'ended' {
+		const reason = err?.reason;
+		if (reason === 'join' || reason === 'renew' || reason === 'ended') return reason;
+		return err?.had_membership === true ? 'renew' : 'join';
+	}
 
 	import { isSlotFull } from '$lib/domain/time-slot.js';
 	import { othersBeyond } from '$lib/domain/gathering.js';
 
 	let { data }: { data: PageData } = $props();
 
-	// When a gated action (respond / invite / accept) is blocked, send the member
-	// to /membership with a return path so they land back on this conversation
-	// after they join, instead of being stranded on the membership page.
-	const membershipHref = $derived(
-		`/membership?return=${encodeURIComponent(`/conversations/${data.prompt.id}`)}`
-	);
+	// The path the member should land back on after a Stripe round-trip — the
+	// conversation they were paywalled on. Passed to the paywall modal as returnTo.
+	const returnPath = $derived(`/conversations/${data.prompt.id}`);
+
+	// ── Membership paywall modal ────────────────────────────────────────────
+	// A gated action (respond / invite / accept) returns a 403 with a `reason`
+	// (join | renew | ended). We open one calm modal over the page rather than
+	// scattering inline gate links and a lapsed banner. The member's context and
+	// their half-written response both stay intact behind the dim.
+	let paywallOpen = $state(false);
+	let paywallMode = $state<'join' | 'renew' | 'ended'>('join');
+
+	// Draft persistence across the Stripe redirect. The composer is a plain
+	// textarea; we stash its text in sessionStorage keyed by conversation id so a
+	// full-page redirect to Stripe (or a "Not now" dismiss) never loses it.
+	const draftKey = `dyad:draft:response:${data.prompt.id}`;
+
+	function persistResponseDraft() {
+		if (typeof sessionStorage === 'undefined') return;
+		if (responseText.trim()) sessionStorage.setItem(draftKey, responseText);
+	}
+	function clearResponseDraft() {
+		if (typeof sessionStorage === 'undefined') return;
+		sessionStorage.removeItem(draftKey);
+	}
+
+	// Open the paywall for a gated 403, persisting the in-progress response first
+	// so the checkout redirect can't drop it.
+	function openPaywall(err: { reason?: string; had_membership?: boolean }) {
+		paywallMode = gateModeFrom(err);
+		persistResponseDraft();
+		paywallOpen = true;
+	}
+
+	// Restore a stashed draft on return (the member lands back here after Stripe
+	// via return-to) and on a plain "Not now" dismiss. Only restore into an empty
+	// composer so a server-loaded response is never clobbered.
+	onMount(() => {
+		if (typeof sessionStorage === 'undefined') return;
+		const saved = sessionStorage.getItem(draftKey);
+		if (saved && !data.myComment && !responseText.trim()) {
+			responseText = saved;
+		}
+	});
 
 	// Conversation size label shown near the times. capacity is the per-slot
 	// joiner cap: 1 = one-on-one, ≥2 = small group (up to N others), null = no
@@ -59,7 +109,6 @@
 	let responseText = $state(data.myComment?.body ?? '');
 	let responseStatus = $state<'idle' | 'sending' | 'sent' | 'error'>('idle');
 	let responseError = $state('');
-	let responseGate = $state(false);
 	let hasResponse = $derived(!!data.myComment || responseStatus === 'sent');
 
 	// Invitation flow
@@ -67,7 +116,6 @@
 	let inviteMessage = $state('');
 	let inviteStatus = $state<'idle' | 'sending' | 'sent' | 'error'>('idle');
 	let inviteError = $state('');
-	let inviteGate = $state(false);
 	// svelte-ignore state_referenced_locally — intentional initial-value capture for local tracking
 	let invitedSlotIds = $state(new Set(data.invitedSlotIds ?? []));
 	// svelte-ignore state_referenced_locally
@@ -78,7 +126,6 @@
 	// Author: accept invitation
 	let acceptingId = $state<string | null>(null);
 	let acceptError = $state('');
-	let acceptGate = $state(false);
 
 	// Author: decline invitation (with optional message)
 	let decliningId = $state<string | null>(null);
@@ -90,7 +137,6 @@
 		if (!responseText.trim()) return;
 		responseStatus = 'sending';
 		responseError = '';
-		responseGate = false;
 		try {
 			const res = await fetch(`/api/prompts/${data.prompt.id}/comments`, {
 				method: 'POST',
@@ -99,12 +145,18 @@
 			});
 			if (res.ok) {
 				capture('response_sent');
+				clearResponseDraft();
 				responseStatus = 'sent';
 			} else {
 				const err = await res.json().catch(() => ({}));
-				responseError = membershipErrorMessage(err, copy.common.sendFailed);
-				responseGate = isMembershipGate(err);
-				responseStatus = 'error';
+				if (isMembershipGate(err)) {
+					// The paywall carries the ask; the composer keeps its words.
+					responseStatus = 'idle';
+					openPaywall(err);
+				} else {
+					responseError = (err as { error?: string }).error ?? copy.common.sendFailed;
+					responseStatus = 'error';
+				}
 			}
 		} catch {
 			responseError = copy.common.networkError;
@@ -116,7 +168,6 @@
 		if (!selectedSlotId) return;
 		inviteStatus = 'sending';
 		inviteError = '';
-		inviteGate = false;
 		try {
 			const res = await fetch(`/api/prompts/${data.prompt.id}/invitations`, {
 				method: 'POST',
@@ -135,9 +186,13 @@
 				inviteStatus = 'sent';
 			} else {
 				const err = await res.json().catch(() => ({}));
-				inviteError = membershipErrorMessage(err, copy.common.sendFailed);
-				inviteGate = isMembershipGate(err);
-				inviteStatus = 'error';
+				if (isMembershipGate(err)) {
+					inviteStatus = 'idle';
+					openPaywall(err);
+				} else {
+					inviteError = (err as { error?: string }).error ?? copy.common.sendFailed;
+					inviteStatus = 'error';
+				}
 			}
 		} catch {
 			inviteError = copy.common.networkError;
@@ -182,7 +237,6 @@
 	async function acceptInvitation(invitationId: string, slotId: string) {
 		acceptingId = invitationId;
 		acceptError = '';
-		acceptGate = false;
 		try {
 			const res = await fetch(`/api/invitations/${invitationId}/accept`, { method: 'POST' });
 			if (res.ok) {
@@ -194,8 +248,11 @@
 				goto(`/meetings/${meetingId}`);
 			} else {
 				const err = await res.json().catch(() => ({}));
-				acceptError = membershipErrorMessage(err, copy.common.genericError);
-				acceptGate = isMembershipGate(err);
+				if (isMembershipGate(err)) {
+					openPaywall(err);
+				} else {
+					acceptError = (err as { error?: string }).error ?? copy.common.genericError;
+				}
 			}
 		} catch {
 			acceptError = copy.common.networkError;
@@ -354,9 +411,6 @@
      not as separate fixed-position pills. -->
 
 <div class="content">
-	{#if data.membership && !data.membership.active}
-		<a href={membershipHref} class="lapsed-banner">{copy.membership.lapsedBanner}</a>
-	{/if}
 	{#if data.prompt.cover_image_url}
 		<img src={data.prompt.cover_image_url} alt="" class="cover" loading="lazy" />
 	{/if}
@@ -498,7 +552,7 @@
 						<!-- 'responded' (no time chosen): just the words, no status line. -->
 					</div>
 				{/each}
-				{#if acceptError}<p class="field-error">{acceptError}{#if acceptGate} <a href={membershipHref}>{copy.membership.pageTitle}</a>{/if}</p>{/if}
+				{#if acceptError}<p class="field-error">{acceptError}</p>{/if}
 				<!-- The author's notification moment: people are responding, so an
 				     invitation to meet may come — offer to be notified of it.
 				     Self-silences once an address is set. -->
@@ -531,7 +585,7 @@
 					rows={3}
 					disabled={responseStatus === 'sending'}
 				></textarea>
-				{#if responseError}<p class="field-error">{responseError}{#if responseGate} <a href={membershipHref}>{copy.membership.pageTitle}</a>{/if}</p>{/if}
+				{#if responseError}<p class="field-error">{responseError}</p>{/if}
 				<button class="btn-secondary" onclick={submitResponse} disabled={responseStatus === 'sending' || !responseText.trim()}>
 					{responseStatus === 'sending' ? copy.conversation.sending : copy.common.send}
 				</button>
@@ -616,7 +670,7 @@
 					{/each}
 
 					{#if selectedSlotId}
-						{#if inviteError}<p class="field-error">{inviteError}{#if inviteGate} <a href={membershipHref}>{copy.membership.pageTitle}</a>{/if}</p>{/if}
+						{#if inviteError}<p class="field-error">{inviteError}</p>{/if}
 						<textarea
 							class="invite-message-textarea"
 							placeholder={copy.conversation.inviteNotePlaceholder}
@@ -658,6 +712,23 @@
 		submittingLabel={copy.editor.saving}
 	/>
 {/if}
+
+<!-- The one paywall surface: a gated respond / invite / accept opens this over
+     the page. On dismiss ("Not now", Escape, scrim) the composer keeps whatever
+     was stashed, so nothing the member wrote is lost. -->
+<MembershipPaywallModal
+	bind:open={paywallOpen}
+	mode={paywallMode}
+	returnTo={returnPath}
+	onclose={() => {
+		// Restore the stashed draft into an empty composer (a full-page redirect
+		// never happened, but this keeps dismiss and return symmetric).
+		if (typeof sessionStorage !== 'undefined') {
+			const saved = sessionStorage.getItem(draftKey);
+			if (saved && !data.myComment && !responseText.trim()) responseText = saved;
+		}
+	}}
+/>
 
 <style>
 	.content { width: 100%; max-width: var(--content-standard); padding-bottom: var(--nav-clearance); }
@@ -814,16 +885,4 @@
 	.response-status--link { display: inline-block; text-decoration: none; color: var(--text-link); }
 	.response-status--link::after { content: ' →'; } /* nav affordance — decorative, not copy */
 	.response-status--link:hover { text-decoration: underline; }
-	.lapsed-banner {
-		display: block;
-		padding: var(--space-3) var(--space-4);
-		margin-bottom: var(--space-4);
-		border: 1px solid var(--border-link);
-		border-radius: var(--radius-card);
-		background: var(--bg-canvas);
-		color: var(--text-primary);
-		font-size: var(--text-sm);
-		text-decoration: none;
-	}
-	.lapsed-banner:hover { border-color: var(--text-primary); }
 </style>
