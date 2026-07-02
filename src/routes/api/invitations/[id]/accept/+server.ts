@@ -2,6 +2,8 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { requireIdentity } from '$lib/services/identity.js';
 import { requireMembershipForAction } from '$lib/server/require-membership.js';
+import { resolvePromptCapacity } from '$lib/server/resolve-capacity.js';
+import { gatingActionForCapacity } from '$lib/domain/gating.js';
 import { SupabaseInvitationService } from '$lib/services/invitation.js';
 import { handleServiceError } from '$lib/server/handle-service-error.js';
 import { makeAdminClient } from '$lib/server/supabase-admin.js';
@@ -15,9 +17,23 @@ import {
 export const POST: RequestHandler = async ({ params, locals, platform }) => {
 	const upactor = requireIdentity(locals);
 
-	// Taking a slot is a gated action ("respond_take_slot"). Primary check here;
-	// the accept_invitation RPC body is the safety net for a direct-RPC bypass.
-	const gate = await requireMembershipForAction('respond_take_slot', locals);
+	// Taking a slot is a gated action ("respond_take_slot_*"), scoped to the
+	// target conversation's size (one-on-one vs group). Resolve the invitation's
+	// prompt to read its capacity (a read blip ⇒ null ⇒ group). Primary check
+	// here; the accept_invitation RPC body is the safety net for a direct-RPC
+	// bypass, and it re-derives the same size-scoped action inside its body.
+	const { data: inviteRow } = await locals.supabase
+		.from('prompt_invitations')
+		.select('prompt_id')
+		.eq('id', params.id)
+		.maybeSingle();
+	const capacity = inviteRow?.prompt_id
+		? await resolvePromptCapacity(locals.supabase, inviteRow.prompt_id)
+		: null;
+	const gate = await requireMembershipForAction(
+		gatingActionForCapacity('respond_take_slot', capacity),
+		locals
+	);
 	if (gate) return gate;
 
 	const service = new SupabaseInvitationService(locals.supabase);

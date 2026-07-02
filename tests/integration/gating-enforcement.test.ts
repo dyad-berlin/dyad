@@ -57,7 +57,13 @@ describe('membership gating enforcement (RLS + accept RPC)', () => {
 	});
 
 	it('reads are never gated — an inactive guest lists published conversations under full gating (AE3/R11)', async () => {
-		await setGating({ create_conversation: true, respond_take_slot: true, invite_to_meet: true });
+		await setGating({
+			create_conversation: true,
+			respond_take_slot_1on1: true,
+			respond_take_slot_group: true,
+			invite_to_meet_1on1: true,
+			invite_to_meet_group: true
+		});
 		const { data, error } = await marco
 			.from('prompts')
 			.select('id')
@@ -87,7 +93,9 @@ describe('membership gating enforcement (RLS + accept RPC)', () => {
 	});
 
 	it('per-action independence — respond gated, create off (AE2)', async () => {
-		await setGating({ respond_take_slot: true });
+		// Gate both size variants so the assertion holds regardless of the target
+		// conversation's capacity (the split is exercised in its own describe).
+		await setGating({ respond_take_slot_1on1: true, respond_take_slot_group: true });
 
 		const id = `gate-indep-${Date.now()}`;
 		createdPromptIds.push(id);
@@ -101,7 +109,7 @@ describe('membership gating enforcement (RLS + accept RPC)', () => {
 	});
 
 	it('respond gated → inactive member can EDIT an existing response but not CREATE a new one', async () => {
-		await setGating({ respond_take_slot: true });
+		await setGating({ respond_take_slot_1on1: true, respond_take_slot_group: true });
 		const comments = new SupabaseCommentService(marco);
 
 		// Seed an existing response (admin bypasses RLS) so the next write is an edit.
@@ -122,7 +130,10 @@ describe('membership gating enforcement (RLS + accept RPC)', () => {
 	});
 
 	it('respond gated → inactive guest cannot accept an invitation (accept_invitation RPC gate)', async () => {
-		await setGating({ respond_take_slot: true });
+		// Gate both size variants: the seed invitation is on a NULL-capacity (group)
+		// conversation, so gating _group is what matters, but gating both keeps this
+		// order-independent of any capacity mutation elsewhere in the file.
+		await setGating({ respond_take_slot_1on1: true, respond_take_slot_group: true });
 		// marco is the invitee; the gate RAISEs before any write, so the seed
 		// invitation stays pending.
 		const { error } = await marco.rpc('accept_invitation', {
@@ -130,6 +141,151 @@ describe('membership gating enforcement (RLS + accept RPC)', () => {
 		});
 		expect(error).not.toBeNull();
 		expect(error?.message ?? '').toContain('membership_required');
+	});
+});
+
+/**
+ * Capacity-aware gating at the RLS net — the two meeting-flow actions split by
+ * the TARGET conversation's size (prompts.capacity: 1 = one-on-one; NULL/>=2 =
+ * group). With ONLY the one-on-one variant gated, an inactive guest is rejected
+ * on a capacity=1 conversation but ALLOWED on a capacity>=2 one, and vice versa —
+ * proving the FOR INSERT policies derive the size-scoped action from the inserted
+ * row's prompt_id via app.gating_action_for_capacity(app.prompt_capacity(...)).
+ *
+ * The target is lisa's published seed prompt; we flip its capacity via the admin
+ * client per case. marco stays an inactive guest (no membership row). The quota
+ * is forced to 0 so the gating flag alone decides (no free-quota bleed-through).
+ */
+describe('capacity-aware gating enforcement (RLS net)', () => {
+	const admin = createAdminClient();
+	let marco: SupabaseClient;
+	const MARCO = TEST_USERS.marco.id;
+	const LISA = TEST_USERS.lisa.id;
+	const PUBLISHED = SEED_PROMPTS.published;
+	const PUBLISHED_SLOT = 'a0000001-0000-0000-0000-000000000001';
+	const OTHER_SLOT = 'a0000001-0000-0000-0000-000000000002';
+	const createdInvitationIds: string[] = [];
+
+	async function setGating(gating: Record<string, boolean>) {
+		await admin
+			.from('app_settings')
+			.upsert(
+				{ key: 'membership_gating', value: gating, updated_at: new Date().toISOString() },
+				{ onConflict: 'key' }
+			);
+	}
+	async function setCapacity(cap: number | null) {
+		await admin.from('prompts').update({ capacity: cap }).eq('id', PUBLISHED);
+	}
+	async function clearMarcoResponse() {
+		await admin.from('prompt_comments').delete().eq('author_id', MARCO).eq('prompt_id', PUBLISHED);
+	}
+	async function clearMarcoInvitations() {
+		await admin.from('prompt_invitations').delete().eq('inviter_id', MARCO).eq('prompt_id', PUBLISHED);
+	}
+
+	beforeAll(async () => {
+		marco = await createAuthenticatedClient(TEST_USERS.marco.email, TEST_USERS.marco.password);
+		await admin.from('memberships').delete().eq('identity_id', MARCO); // inactive guest
+		// Quota off so the size-scoped gating flag is the ONLY thing deciding.
+		await admin
+			.from('app_settings')
+			.upsert(
+				{ key: 'free_interaction_quota', value: 0, updated_at: new Date().toISOString() },
+				{ onConflict: 'key' }
+			);
+	});
+
+	beforeEach(async () => {
+		await clearMarcoResponse();
+		await clearMarcoInvitations();
+	});
+
+	afterAll(async () => {
+		await clearMarcoResponse();
+		if (createdInvitationIds.length)
+			await admin.from('prompt_invitations').delete().in('id', createdInvitationIds);
+		await clearMarcoInvitations();
+		await setCapacity(null); // restore the seed's default (legacy unlimited)
+		await admin.from('app_settings').delete().eq('key', 'membership_gating');
+		await admin
+			.from('app_settings')
+			.upsert(
+				{ key: 'free_interaction_quota', value: 0, updated_at: new Date().toISOString() },
+				{ onConflict: 'key' }
+			);
+		await admin.from('memberships').delete().eq('identity_id', MARCO);
+	});
+
+	// ── respond_take_slot: prompt_comments INSERT, size-scoped ──
+
+	it('respond_take_slot_1on1 gated only → guest BLOCKED on a capacity=1 conversation', async () => {
+		await setGating({ respond_take_slot_1on1: true }); // group variant OFF
+		await setCapacity(1);
+		const res = await marco
+			.from('prompt_comments')
+			.insert({ prompt_id: PUBLISHED, author_id: MARCO, body: 'one-on-one response' });
+		expect(res.error, 'capacity=1 → the gated _1on1 action rejects the inactive guest').not.toBeNull();
+	});
+
+	it('respond_take_slot_1on1 gated only → guest ALLOWED on a capacity>=2 conversation', async () => {
+		await setGating({ respond_take_slot_1on1: true }); // group variant OFF
+		await setCapacity(3);
+		const res = await marco
+			.from('prompt_comments')
+			.insert({ prompt_id: PUBLISHED, author_id: MARCO, body: 'group response' });
+		expect(res.error, 'capacity>=2 → the ungated _group action lets the guest respond').toBeNull();
+	});
+
+	it('respond_take_slot_group gated only → mirror: blocked on group, allowed on one-on-one', async () => {
+		await setGating({ respond_take_slot_group: true }); // 1on1 variant OFF
+
+		await setCapacity(2);
+		const grouped = await marco
+			.from('prompt_comments')
+			.insert({ prompt_id: PUBLISHED, author_id: MARCO, body: 'group blocked' });
+		expect(grouped.error, 'capacity=2 → the gated _group action rejects the guest').not.toBeNull();
+
+		await clearMarcoResponse();
+		await setCapacity(1);
+		const oneOnOne = await marco
+			.from('prompt_comments')
+			.insert({ prompt_id: PUBLISHED, author_id: MARCO, body: 'one-on-one allowed' });
+		expect(oneOnOne.error, 'capacity=1 → the ungated _1on1 action allows the guest').toBeNull();
+	});
+
+	// ── invite_to_meet: prompt_invitations INSERT, size-scoped ──
+	// marco invites lisa (the prompt author, per the invitee trigger) on her slot.
+
+	it('invite_to_meet_1on1 gated only → guest BLOCKED inviting on a capacity=1 conversation', async () => {
+		await setGating({ invite_to_meet_1on1: true }); // group variant OFF
+		await setCapacity(1);
+		const res = await marco.from('prompt_invitations').insert({
+			prompt_id: PUBLISHED,
+			slot_id: PUBLISHED_SLOT,
+			inviter_id: MARCO,
+			invitee_id: LISA,
+			state: 'pending'
+		});
+		expect(res.error, 'capacity=1 → the gated invite _1on1 action rejects the guest').not.toBeNull();
+	});
+
+	it('invite_to_meet_1on1 gated only → guest ALLOWED inviting on a capacity>=2 conversation', async () => {
+		await setGating({ invite_to_meet_1on1: true }); // group variant OFF
+		await setCapacity(4);
+		const res = await marco
+			.from('prompt_invitations')
+			.insert({
+				prompt_id: PUBLISHED,
+				slot_id: OTHER_SLOT,
+				inviter_id: MARCO,
+				invitee_id: LISA,
+				state: 'pending'
+			})
+			.select('id')
+			.single();
+		expect(res.error, 'capacity>=2 → the ungated invite _group action lets the guest invite').toBeNull();
+		if (res.data?.id) createdInvitationIds.push(res.data.id);
 	});
 });
 
@@ -253,7 +409,8 @@ describe('free-interaction quota — RLS net consistency (KTD2)', () => {
 	// respond_take_slot → prompt_comments (author_id = actor).
 
 	it('prompt_comments: under quota the net ALLOWS, at the quota it REJECTS (no off-by-one)', async () => {
-		await setGating({ respond_take_slot: true });
+		// The published seed prompt is NULL-capacity → group; gate that size variant.
+		await setGating({ respond_take_slot_group: true });
 		// Clean any prior response from marco so the boundary starts from the
 		// live baseline (one comment per user per prompt — a stale row would block).
 		await admin
@@ -291,7 +448,8 @@ describe('free-interaction quota — RLS net consistency (KTD2)', () => {
 	// (the published prompt's author, as the invitee trigger requires) on her slot.
 
 	it('prompt_invitations: under quota the net ALLOWS, at the quota it REJECTS (no off-by-one)', async () => {
-		await setGating({ invite_to_meet: true });
+		// The published seed prompt is NULL-capacity → group; gate that size variant.
+		await setGating({ invite_to_meet_group: true });
 		// Clear any pending invitation from marco on this slot (the partial unique
 		// index allows only one pending per slot+inviter — a stale row would block
 		// the INSERT for a non-gating reason).
