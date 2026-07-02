@@ -74,21 +74,21 @@
 				<p class="left-sub">{og.subcopy}</p>
 				<div class="left-links">
 					<!-- href fallbacks so each action degrades without JS -->
-					<a href="/waitlist" class="btn-join" data-testid="join-cta" onclick={(e) => { e.preventDefault(); openAuth('waitlist'); }}>Join</a>
-					<a href="/login" class="text-link" onclick={(e) => { e.preventDefault(); openAuth('login'); }}>Log in</a>
+					<a href="/waitlist" class="btn-join" data-testid="join-cta" onclick={(e) => { e.preventDefault(); openAuth('waitlist'); }}>{og.joinWaitlist}</a>
+					<a href="/login" class="text-link" onclick={(e) => { e.preventDefault(); openAuth('login'); }}>{og.logIn}</a>
 				</div>
 			</header>
 
 			<!-- ── Footer (in the left scroll flow) ── -->
 			<footer class="site-footer">
-				<a href="/steward-ownership" class="footer-link">Ownership</a>
-				<a href="/governance" class="footer-link">Governance</a>
-				<a href="/community-care" class="footer-link">Community care</a>
-				<!-- Terms + Privacy stay together so a wrap never orphans one of the
-				     legal links on its own line — they break as a pair. -->
+				<a href="/steward-ownership" class="footer-link">{og.footerOwnership}</a>
+				<a href="/governance" class="footer-link">{og.footerGovernance}</a>
+				<a href="/community-care" class="footer-link">{og.footerCommunityCare}</a>
+				<!-- Impressum + Privacy stay together so a wrap never orphans one of
+				     the legal links on its own line — they break as a pair. -->
 				<span class="footer-legal">
-					<a href="/impressum" class="footer-link">Terms</a>
-					<a href="/datenschutz" class="footer-link">Privacy</a>
+					<a href="/impressum" class="footer-link">{og.footerImpressum}</a>
+					<a href="/datenschutz" class="footer-link">{og.footerPrivacy}</a>
 				</span>
 			</footer>
 	</section>

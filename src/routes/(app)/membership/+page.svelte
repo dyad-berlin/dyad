@@ -82,7 +82,7 @@
 </script>
 
 <svelte:head>
-	<title>{c.pageTitle} · dyad</title>
+	<title>{c.pageTitle} · dyad.berlin</title>
 </svelte:head>
 
 <main class="membership">
