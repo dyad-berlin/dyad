@@ -141,7 +141,7 @@ describe('groupJoin action', () => {
 		const result = await actions.groupJoin(event as never);
 
 		expect(result?.status).toBe(400);
-		expect(result?.data?.error).toContain('Log in instead');
+		expect(result?.data?.error).toContain('Sign in instead');
 		expect(rpcCallNames()).toEqual(['email_is_registered']);
 		expect(createUserMock).not.toHaveBeenCalled();
 	});
@@ -151,7 +151,7 @@ describe('groupJoin action', () => {
 			['group_link_full', 'full'],
 			['group_link_closed', 'closed'],
 			['group_link_revoked', 'no longer available'],
-			['group_link_not_found', "isn't valid"]
+			['group_link_not_found', 'isn’t valid']
 		] as const) {
 			adminFromMock.mockReturnValueOnce(chain(null));
 			adminRpcMock

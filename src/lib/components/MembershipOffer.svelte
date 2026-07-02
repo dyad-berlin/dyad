@@ -124,7 +124,7 @@
 	<button class="primary" disabled={busy} onclick={startCheckout}>
 		{ctaLabel} · {shownPrice}{shownPeriod ? ' ' + shownPeriod : ''}
 	</button>
-	<p class="billing-note">{c.billingNote}</p>
+	<p class="billing-note">{cadence === 'lifetime' ? c.billingNoteLifetime : c.billingNote}</p>
 
 	{#if error}<p class="error" role="alert">{error}</p>{/if}
 	{#if busy}<p class="busy" aria-live="polite">{c.continuing}</p>{/if}

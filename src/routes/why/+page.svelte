@@ -12,7 +12,8 @@
 </script>
 
 <svelte:head>
-	<title>Why</title>
+	<title>Why · dyad.</title>
+	<meta name="description" content="Why we are building dyad." />
 </svelte:head>
 
 <div class="page" data-theme="dark">
@@ -28,7 +29,7 @@
 
 			<p>Over the past two years now, we have been meticulously at work. Working first to understand how we arrived at a digital environment that feels so intrusive, hostile, exhausting, and then, working on something precious, full of life by virtue of serving the life within. Dyad is the product of such care and intention.</p>
 
-			<p>We did not like how being social online felt. We lacked the humanity the platforms we meet on allowed for. We are stripped down to a certain version of ourselves, and not the version we wanted come forth. The complexity of our experiences, the intricacy of making sense of them, and with that, discovering and nurturing the meaning of our lives. Where do you go online to expand, deepen, texture?</p>
+			<p>We did not like how being social online felt. The platforms we meet on left little room for our humanity. We are stripped down to a certain version of ourselves, and not the version we wanted to come forth. There was no room for the complexity of our experiences, the intricacy of making sense of them, and with that, discovering and nurturing the meaning of our lives. Where do you go online to expand, deepen, texture?</p>
 
 			<p>A face to face conversation is part of the oral culture we only recently parted ways with. Stories and conversations have so long been how we weave parts of us together. And we wanted to give way to more of them.</p>
 
@@ -42,11 +43,11 @@
 
 	<div class="snap-dare">
 		<div class="dare-body">
-			<p>Dyad started as Dare. We designed an ugly duckling version of what we had in mind online and invited people to curated conversations. A topic, a question and four to eight people who wanted to meet for that. Our first users, two hundred of them, have taken something so humble, that was the private alpha of our product, and turned it into something extraordinary.</p>
+			<p>Dyad started as Dare. We designed an ugly duckling version of what we had in mind online and invited people to curated conversations. A topic, a question and four to eight people who wanted to meet for that. Our first users, two hundred of them, have taken something so humble, the private alpha of our product, and turned it into something extraordinary.</p>
 
-			<p>Over a hundred conversations, all across Berlin. We flooded with people who had felt what we felt to begin with. We connected, conversed, and brought layers to our thinking behind the product.</p>
+			<p>Over a hundred conversations, all across Berlin. We were flooded with people who had felt what we felt to begin with. We connected, conversed, and brought layers to our thinking behind the product.</p>
 
-			<p>Dyad is now on its private beta and opens in Berlin for one on one conversations. We have a vision for an ecosystem in service to connection and collective sensemaking that brightens up our eyes every time we zoom out and circle back. That is to say, Dyad, the app to start and surface face to face conversations is only the beginning.</p>
+			<p>Dyad is now in its private beta and opens in Berlin for one-on-one conversations. We have a vision for an ecosystem in service to connection and collective sensemaking that brightens up our eyes every time we zoom out and circle back. That is to say, Dyad, the app to start and surface face to face conversations is only the beginning.</p>
 		</div>
 
 		<div class="scattered">
@@ -72,7 +73,7 @@
 
 	<div class="snap-section">
 		<div class="section-body">
-			<p>Dyad is set to transition into steward ownership. A root cause that takes a big part in explaining how social platforms begin with a niche, do great service, and end up as extractive technologies with agendas of their own lies in their corporate ownership structure. Traditional corporate models, by design, do not allow operational decision making to sit separate from shareholder interests, interests that are solely monetary. With that, the mission is diluted in the pursuit of ever greater profits. Steward ownership offers a different foundation. It is grounded in self governance and treats profit as a means in service of purpose. In practice, our investors do not hold equity, nor do they have a say in our operational decision making. We believe it is our acts rather than our words that does the difference with such critical considerations. The choice of steward ownership is one of those acts.</p>
+			<p>Dyad is set to transition into steward ownership. A root cause that takes a big part in explaining how social platforms begin with a niche, do great service, and end up as extractive technologies with agendas of their own lies in their corporate ownership structure. Traditional corporate models, by design, do not allow operational decision making to sit separate from shareholder interests, interests that are solely monetary. With that, the mission is diluted in the pursuit of ever greater profits. Steward ownership offers a different foundation. It is grounded in self-governance and treats profit as a means in service of purpose. In practice, our investors do not hold equity, nor do they have a say in our operational decision making. We believe it is our acts rather than our words that make the difference with such critical considerations. The choice of steward ownership is one of those acts.</p>
 		</div>
 		<div class="scattered">
 			<img class="sc sc-full" style="--x: 32%; --y: 12%; --r: 2deg"   src="{ASSETS}/steward2.png" alt="" />
@@ -85,7 +86,7 @@
 
 	<div class="snap-rest">
 		<div class="section-body">
-			<p>Dyad is built on a framework that follows the open and decentralised original intentions of the web. The fact that we do not yet own the data we create online and how little we know and can affect of the collection, archival, and usage of this information is absolutely bonkers. We nest ourselves in the movement towards open, decentralised infrastructure that makes these matters right. With that, we follow the lineage of internet's architects.</p>
+			<p>Dyad is built on a framework that follows the open and decentralised original intentions of the web. The fact that we do not yet own the data we create online and how little we know and can affect of the collection, archival, and usage of this information is absolutely bonkers. We nest ourselves in the movement towards open, decentralised infrastructure that makes these matters right. With that, we follow the lineage of the internet's architects.</p>
 
 			<p>We feel that in speaking our minds as we build Dyad, we give the most honest insider view into what is happening inside the community.</p>
 
