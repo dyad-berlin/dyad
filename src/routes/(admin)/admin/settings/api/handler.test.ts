@@ -29,7 +29,7 @@ describe('admin settings API — membership gating', () => {
 	beforeEach(() => {
 		getEmail.mockReset().mockResolvedValue(false);
 		setEmail.mockReset().mockResolvedValue(undefined);
-		getGating.mockReset().mockResolvedValue({ respond_take_slot: true });
+		getGating.mockReset().mockResolvedValue({ respond_take_slot_1on1: true });
 		setGating.mockReset().mockResolvedValue(undefined);
 	});
 
@@ -37,18 +37,43 @@ describe('admin settings API — membership gating', () => {
 		const res = await GET({} as unknown as Parameters<typeof GET>[0]);
 		expect(await res.json()).toEqual({
 			email_notifications_enabled: false,
-			membership_gating: { respond_take_slot: true }
+			membership_gating: { respond_take_slot_1on1: true }
 		});
 	});
 
 	it('PATCH accepts a valid gating map and persists it', async () => {
-		const res = await patch({ membership_gating: { create_conversation: true, invite_to_meet: false } });
+		const res = await patch({
+			membership_gating: { create_conversation: true, invite_to_meet_group: false }
+		});
 		expect(res.status).toBe(200);
-		expect(setGating).toHaveBeenCalledWith({ create_conversation: true, invite_to_meet: false });
+		expect(setGating).toHaveBeenCalledWith({
+			create_conversation: true,
+			invite_to_meet_group: false
+		});
+	});
+
+	it('PATCH accepts all five size-scoped keys', async () => {
+		const full = {
+			create_conversation: true,
+			respond_take_slot_1on1: true,
+			respond_take_slot_group: false,
+			invite_to_meet_1on1: true,
+			invite_to_meet_group: false
+		};
+		const res = await patch({ membership_gating: full });
+		expect(res.status).toBe(200);
+		expect(setGating).toHaveBeenCalledWith(full);
 	});
 
 	it('PATCH rejects an unknown action key with 400', async () => {
 		const res = await patch({ membership_gating: { read_feed: true } });
+		expect(res.status).toBe(400);
+		expect(setGating).not.toHaveBeenCalled();
+	});
+
+	it('PATCH rejects the retired size-blind keys with 400', async () => {
+		// respond_take_slot / invite_to_meet were split into _1on1 / _group.
+		const res = await patch({ membership_gating: { respond_take_slot: true } });
 		expect(res.status).toBe(400);
 		expect(setGating).not.toHaveBeenCalled();
 	});

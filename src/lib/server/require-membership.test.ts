@@ -64,8 +64,25 @@ describe('requireMembershipForAction', () => {
 	});
 
 	it('allows when the action is not gated', async () => {
-		getMembershipGating.mockResolvedValue({ respond_take_slot: true }); // create off
+		getMembershipGating.mockResolvedValue({ respond_take_slot_1on1: true }); // create off
 		expect(await requireMembershipForAction('create_conversation', makeLocals({}))).toBeNull();
+	});
+
+	it('gates the size-scoped action independently (group gated, 1-on-1 off)', async () => {
+		// Only the group response is gated; the one-on-one action is off. The gate
+		// keys off the exact size-scoped string it is passed, so a 1-on-1 responder
+		// (never a member, quota exhausted) still passes while the group one is 403'd.
+		getMembershipGating.mockResolvedValue({ respond_take_slot_group: true });
+		getFreeInteractionQuota.mockResolvedValue(0); // quota off so the flag decides
+		expect(
+			await requireMembershipForAction('respond_take_slot_1on1', makeLocals({ row: null }))
+		).toBeNull();
+		const denied = await requireMembershipForAction(
+			'respond_take_slot_group',
+			makeLocals({ row: null })
+		);
+		expect(denied?.status).toBe(403);
+		expect(await denied?.json()).toMatchObject({ action: 'respond_take_slot_group' });
 	});
 
 	it('allows an active member', async () => {

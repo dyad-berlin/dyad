@@ -1,8 +1,17 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import { PROTECTED_ACTIONS, PROTECTED_ACTION_META, type ProtectedAction } from '$lib/domain/gating';
+	import { PROTECTED_ACTION_META, type ProtectedAction } from '$lib/domain/gating';
 
 	let { data }: { data: PageData } = $props();
+
+	// Group the five toggles for the operator: create (size-agnostic), then the
+	// two meeting-flow actions each split one-on-one vs group. Every action listed
+	// is a member of PROTECTED_ACTIONS (checked at build time by the type).
+	const GATING_GROUPS: { title: string; actions: ProtectedAction[] }[] = [
+		{ title: 'Create', actions: ['create_conversation'] },
+		{ title: 'Respond and take a time', actions: ['respond_take_slot_1on1', 'respond_take_slot_group'] },
+		{ title: 'Invite to meet', actions: ['invite_to_meet_1on1', 'invite_to_meet_group'] }
+	];
 
 	let emailNotificationsEnabled = $state(data.emailNotificationsEnabled);
 	let saving = $state(false);
@@ -119,19 +128,24 @@
 		</span>
 	</div>
 	<div class="gating-list">
-		{#each PROTECTED_ACTIONS as action (action)}
-			<label class="setting-row gating-row">
-				<input
-					type="checkbox"
-					checked={gating[action] ?? false}
-					disabled={gatingSaving !== null}
-					onchange={(e) => toggleGating(action, e)}
-				/>
-				<div class="setting-body">
-					<span class="setting-label">{PROTECTED_ACTION_META[action].label}</span>
-					<span class="setting-hint">{PROTECTED_ACTION_META[action].hint}</span>
-				</div>
-			</label>
+		{#each GATING_GROUPS as group (group.title)}
+			<div class="gating-group">
+				<span class="gating-group-title">{group.title}</span>
+				{#each group.actions as action (action)}
+					<label class="setting-row gating-row">
+						<input
+							type="checkbox"
+							checked={gating[action] ?? false}
+							disabled={gatingSaving !== null}
+							onchange={(e) => toggleGating(action, e)}
+						/>
+						<div class="setting-body">
+							<span class="setting-label">{PROTECTED_ACTION_META[action].label}</span>
+							<span class="setting-hint">{PROTECTED_ACTION_META[action].hint}</span>
+						</div>
+					</label>
+				{/each}
+			</div>
 		{/each}
 	</div>
 	{#if gatingError}
@@ -199,8 +213,22 @@
 	.gating-list {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-4);
+		gap: var(--space-5);
 		margin-top: var(--space-4);
+	}
+
+	.gating-group {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-4);
+	}
+
+	.gating-group-title {
+		font-size: var(--text-sm);
+		font-weight: 500;
+		color: var(--text-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
 	}
 
 	.setting-error {
