@@ -23,7 +23,7 @@
 -- and NO auth.uid() in the body — mirrors the sibling gate functions
 -- (has_active_membership / gating_allows / free_gated_actions_used). No row =>
 -- NULL, which app.gating_action_for_capacity maps to the GROUP action.
-CREATE OR REPLACE FUNCTION app.prompt_capacity(p_prompt_id UUID)
+CREATE OR REPLACE FUNCTION app.prompt_capacity(p_prompt_id TEXT)
 RETURNS INT
 LANGUAGE sql
 STABLE
@@ -33,8 +33,8 @@ AS $$
 	SELECT capacity FROM prompts WHERE id = p_prompt_id
 $$;
 
-REVOKE EXECUTE ON FUNCTION app.prompt_capacity(UUID) FROM public;
-GRANT EXECUTE ON FUNCTION app.prompt_capacity(UUID) TO authenticated, service_role;
+REVOKE EXECUTE ON FUNCTION app.prompt_capacity(TEXT) FROM public;
+GRANT EXECUTE ON FUNCTION app.prompt_capacity(TEXT) TO authenticated, service_role;
 
 -- ── app.gating_action_for_capacity(base, cap) — SQL twin of the TS mapper ──
 -- Returns the size-scoped action string: capacity 1 => '<base>_1on1'; anything
