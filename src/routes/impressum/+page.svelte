@@ -29,6 +29,8 @@
 
 	<section>
 		<h2>Handelsregister</h2>
+		<!-- TODO(operator): echte HRB-Nummer eintragen — ein Platzhalter macht
+		     das Impressum unvollständig (§ 5 DDG) und ist abmahnfähig. -->
 		<p>
 			Amtsgericht Charlottenburg<br />
 			HRB XXXXX
@@ -44,6 +46,9 @@
 
 	<section>
 		<h2>Umsatzsteuer-ID</h2>
+		<!-- TODO(operator): echte USt-IdNr. eintragen — oder diesen Abschnitt
+		     ersatzlos entfernen, falls (noch) keine USt-IdNr. vergeben ist;
+		     § 27a UStG verlangt die Angabe nur, wenn eine existiert. -->
 		<p>
 			Umsatzsteuer-Identifikationsnummer gem&auml;&szlig; &sect; 27a UStG:<br />
 			DE XXXXXXXXX
@@ -57,6 +62,14 @@
 			c/o tuesday coworking<br />
 			Belziger Str. 69&ndash;71<br />
 			10823 Berlin
+		</p>
+	</section>
+
+	<section>
+		<h2>Verbraucherstreitbeilegung</h2>
+		<p>
+			Wir sind nicht bereit und nicht verpflichtet, an Streitbeilegungsverfahren vor einer
+			Verbraucherschlichtungsstelle teilzunehmen (&sect; 36 VSBG).
 		</p>
 	</section>
 

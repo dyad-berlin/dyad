@@ -104,6 +104,7 @@ export const copy = {
 		footerGovernance: 'Governance',
 		footerCommunityCare: 'Community care',
 		footerImpressum: 'Impressum',
+		footerAgb: 'AGB',
 		footerPrivacy: 'Privacy',
 		// Hero headline + supporting line (display copy; sentence case is the
 		// intentional brand styling — see CLAUDE.md § UI conventions).

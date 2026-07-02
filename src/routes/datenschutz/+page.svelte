@@ -9,7 +9,7 @@
 	</a>
 
 	<h1>Datenschutzerkl&auml;rung</h1>
-	<p class="subtitle">Stand: Mai 2026</p>
+	<p class="subtitle">Stand: Juli 2026</p>
 
 	<section>
 		<h2>1. Verantwortlicher</h2>
@@ -34,19 +34,26 @@
 	<section>
 		<h2>3. Hosting</h2>
 		<p>
-			Unsere Webseite wird bei Cloudflare, Inc. gehostet. Beim Besuch unserer Seite werden
-			automatisch Informationen (Server-Logfiles) erfasst, die Ihr Browser &uuml;bermittelt.
-			Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an einem
-			zuverl&auml;ssigen Betrieb).
+			Unsere Webseite wird bei Cloudflare, Inc. (USA) gehostet. Beim Besuch unserer Seite
+			werden automatisch Informationen (Server-Logfiles) erfasst, die Ihr Browser
+			&uuml;bermittelt. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO (berechtigtes
+			Interesse an einem zuverl&auml;ssigen Betrieb). Soweit dabei personenbezogene Daten in
+			die USA &uuml;bermittelt werden, erfolgt dies auf Grundlage der
+			EU-Standardvertragsklauseln sowie &ndash; soweit einschl&auml;gig &ndash; des EU-US
+			Data Privacy Framework.
 		</p>
 	</section>
 
 	<section>
 		<h2>4. Datenbank und Authentifizierung</h2>
+		<!-- TODO(operator): Hosting-Region des Supabase-Projekts bestätigen und
+		     hier ergänzen (z. B. „gehostet in einem Rechenzentrum in der EU“). -->
 		<p>
-			Wir nutzen Supabase f&uuml;r die Datenspeicherung und Authentifizierung. Bei der
-			Registrierung werden E-Mail-Adresse und ggf. weitere Angaben gespeichert.
-			Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO (Vertragserf&uuml;llung).
+			Wir nutzen Supabase (Anbieter: Supabase, Inc., USA) f&uuml;r die Datenspeicherung und
+			Authentifizierung. Bei der Registrierung werden E-Mail-Adresse und ggf. weitere
+			Angaben gespeichert. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO
+			(Vertragserf&uuml;llung). Soweit dabei personenbezogene Daten in Drittl&auml;nder
+			&uuml;bermittelt werden, erfolgt dies auf Grundlage der EU-Standardvertragsklauseln.
 		</p>
 		<p>
 			Wenn Sie zur Plattform eingeladen werden, speichern wir Ihre E-Mail-Adresse
@@ -70,6 +77,15 @@
 				gespeichert und mit dem Konto gel&ouml;scht.
 			</li>
 		</ul>
+		<p>
+			<strong>Warteliste:</strong> Wenn Sie sich &uuml;ber unsere Warteliste anmelden,
+			speichern wir Ihren Namen, Ihre E-Mail-Adresse, Ihre Antwort auf die Frage nach Ihrer
+			Motivation sowie &ndash; freiwillig &ndash; Ihre Angabe, wie Sie auf uns aufmerksam
+			geworden sind. Diese Daten dienen ausschlie&szlig;lich der Bearbeitung Ihrer
+			Beitrittsanfrage und der Kuratierung der Mitgliederbasis; ein Tracking findet nicht
+			statt. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO (vorvertragliche
+			Ma&szlig;nahmen). Eine L&ouml;schung erfolgt auf Anfrage.
+		</p>
 	</section>
 
 	<section>
@@ -132,9 +148,9 @@
 	<section>
 		<h2>8. Ihre Rechte</h2>
 		<p>
-			Sie haben das Recht auf Auskunft (&sect; 15 DSGVO), Berichtigung (&sect; 16 DSGVO),
-			L&ouml;schung (&sect; 17 DSGVO), Einschr&auml;nkung der Verarbeitung (&sect; 18 DSGVO),
-			Daten&uuml;bertragbarkeit (&sect; 20 DSGVO) und Widerspruch (&sect; 21 DSGVO).
+			Sie haben das Recht auf Auskunft (Art. 15 DSGVO), Berichtigung (Art. 16 DSGVO),
+			L&ouml;schung (Art. 17 DSGVO), Einschr&auml;nkung der Verarbeitung (Art. 18 DSGVO),
+			Daten&uuml;bertragbarkeit (Art. 20 DSGVO) und Widerspruch (Art. 21 DSGVO).
 		</p>
 		<p>
 			Zur Aus&uuml;bung Ihrer Rechte wenden Sie sich bitte an:
