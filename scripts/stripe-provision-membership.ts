@@ -41,11 +41,11 @@ interface Tier {
 
 // Keep in sync with copy.ts and src/routes/api/membership/checkout/+server.ts.
 const TIERS: Tier[] = [
-	{ key: 'monthly_solidarity', envVar: 'STRIPE_PRICE_ID_MONTHLY_SOLIDARITY', productName: 'dyad Membership — Solidarity (monthly)', amountCents: 700, interval: 'month' },
-	{ key: 'monthly_standard', envVar: 'STRIPE_PRICE_ID_MONTHLY_STANDARD', productName: 'dyad Membership — Standard (monthly)', amountCents: 1200, interval: 'month' },
-	{ key: 'monthly_supporter', envVar: 'STRIPE_PRICE_ID_MONTHLY_SUPPORTER', productName: 'dyad Membership — Supporter (monthly)', amountCents: 1700, interval: 'month' },
-	{ key: 'annual', envVar: 'STRIPE_PRICE_ID_ANNUAL', productName: 'dyad Membership — Yearly', amountCents: 10000, interval: 'year' },
-	{ key: 'lifetime', envVar: 'STRIPE_PRICE_ID_LIFETIME', productName: 'dyad Membership — Lifetime', amountCents: 40000, interval: null }
+	{ key: 'monthly_solidarity', envVar: 'STRIPE_PRICE_ID_MONTHLY_SOLIDARITY', productName: 'dyad monthly membership (solidarity)', amountCents: 700, interval: 'month' },
+	{ key: 'monthly_standard', envVar: 'STRIPE_PRICE_ID_MONTHLY_STANDARD', productName: 'dyad monthly membership (standard)', amountCents: 1200, interval: 'month' },
+	{ key: 'monthly_supporter', envVar: 'STRIPE_PRICE_ID_MONTHLY_SUPPORTER', productName: 'dyad monthly membership (supporter)', amountCents: 1700, interval: 'month' },
+	{ key: 'annual', envVar: 'STRIPE_PRICE_ID_ANNUAL', productName: 'dyad yearly membership', amountCents: 10000, interval: 'year' },
+	{ key: 'lifetime', envVar: 'STRIPE_PRICE_ID_LIFETIME', productName: 'dyad lifetime membership', amountCents: 40000, interval: null }
 ];
 
 const CURRENCY = 'eur';
