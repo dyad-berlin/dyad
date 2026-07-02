@@ -117,7 +117,10 @@ export const actions: Actions = {
 		const username = formData.get('username');
 		const email = formData.get('email');
 		const password = formData.get('password');
-		const berlinBased = formData.get('berlin_based') === 'on';
+		// Berlin is implicit for commons invite signups — we no longer ask; the
+		// metadata field stays well-defined and defaults to true. (Corner guests
+		// carry berlin_based: false explicitly in the groupJoin path below.)
+		const berlinBased = true;
 
 		if (typeof token !== 'string' || !token) {
 			return fail(400, { username: username?.toString(), error: 'Invalid invitation token' });

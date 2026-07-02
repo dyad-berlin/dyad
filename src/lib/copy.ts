@@ -299,7 +299,7 @@ export const copy = {
 	preferences: {
 		_routes: ['/profile/preferences', '/conversations/[id]', '/meetings/[id]', '/discover'],
 		_description:
-			'Notification settings. Email is strictly opt-in: members add an address to receive notification emails; per-event toggles refine which events. No address, no mail. The notificationHint*/notificationOnboarding strings surface this opt-in elsewhere (conversation, meeting, onboarding) — channel-agnostic, possibility-framed, never naming email; {link} marks where the linked words render and point to /profile/preferences.',
+			'Notification settings. Email is strictly opt-in: members add an address to receive notification emails; per-event toggles refine which events. No address, no mail. The notificationHint* strings surface this opt-in elsewhere (conversation, meeting) — channel-agnostic, possibility-framed, never naming email; {link} marks where the linked words render and point to /profile/preferences.',
 		title: 'Preferences',
 		backToProfile: '← profile',
 		emailPlaceholder: 'Add an email address to turn on notifications',
@@ -317,12 +317,8 @@ export const copy = {
 		notificationHintInvited: (username: string) => `You can {link} if @${username} accepts.`,
 		notificationHintInviteReceived: 'You can {link} if someone invites you to meet.',
 		notificationHintMeeting: 'You can {link} if this meeting changes.',
-		// Onboarding step (U5) + preferences-page note (U6). By-choice, default-off,
-		// channel-agnostic; {link} renders notificationPrefsLink → /profile/preferences.
+		// Preferences-page note (U6). By-choice, default-off, channel-agnostic.
 		// Must not reference a sign-up/account email or treat contact as identity.
-		notificationPrefsLink: 'preferences',
-		notificationOnboarding:
-			"You can get notified when someone responds to you, or when a meeting is confirmed or changes. By default we don't send you notifications. If you'd like to receive them, you can choose which ones and how in your {link}. You can always change this later.",
 		notificationPrefsNote:
 			"By default, dyad doesn't send notifications. Choose what you'd like to receive; you can change this anytime.",
 		membershipHeading: 'Membership',
@@ -576,7 +572,6 @@ export const copy = {
 		usernameHintShort: 'Your public URL: dyad.berlin/',
 		usernameHintLong: 'This will be your public URL: dyad.berlin/',
 		passwordWithMinPlaceholder: 'Password (at least 8 characters)',
-		berlinBased: "I'm based in Berlin",
 		creatingAccount: 'Creating account...',
 		createAccount: 'Create account',
 
