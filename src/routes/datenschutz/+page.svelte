@@ -2,7 +2,7 @@
 	<title>datenschutz · dyad. cultivating a culture of conversation</title>
 </svelte:head>
 
-<main class="legal-page">
+<main class="legal-page" lang="de">
 	<a href="/" class="back-link">
 		<svg width="16" height="16" viewBox="0 0 20 20" fill="none" style="vertical-align:middle;margin-right:4px"><path d="M12 15l-5-5 5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
 		dyad.berlin
@@ -15,10 +15,9 @@
 		<h2>1. Verantwortlicher</h2>
 		<p>
 			Monad Engineering UG (haftungsbeschr&auml;nkt)<br />
-			c/o tuesday coworking<br />
-			Belziger Str. 69&ndash;71<br />
-			10823 Berlin<br />
-			E-Mail: <a href="mailto:hello@dyad.berlin">hello@dyad.berlin</a>
+			Richard-Sorge-Stra&szlig;e 24<br />
+			10249 Berlin<br />
+			E-Mail: <a href="mailto:legal@dyad.berlin">legal@dyad.berlin</a>
 		</p>
 	</section>
 
@@ -154,7 +153,7 @@
 		</p>
 		<p>
 			Zur Aus&uuml;bung Ihrer Rechte wenden Sie sich bitte an:
-			<a href="mailto:hello@dyad.berlin">hello@dyad.berlin</a>
+			<a href="mailto:legal@dyad.berlin">legal@dyad.berlin</a>
 		</p>
 	</section>
 

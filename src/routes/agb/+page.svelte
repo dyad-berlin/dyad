@@ -9,7 +9,7 @@
 	<title>agb · dyad. cultivating a culture of conversation</title>
 </svelte:head>
 
-<main class="legal-page">
+<main class="legal-page" lang="de">
 	<a href="/" class="back-link">
 		<svg width="16" height="16" viewBox="0 0 20 20" fill="none" style="vertical-align:middle;margin-right:4px"><path d="M12 15l-5-5 5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
 		dyad.berlin
@@ -26,9 +26,9 @@
 			des Zines über den Dienst.
 		</p>
 		<p>
-			(2) Anbieter ist die Monad Engineering UG (haftungsbeschränkt), c/o tuesday coworking,
-			Belziger Str. 69–71, 10823 Berlin („wir“). Kontakt:
-			<a href="mailto:hello@dyad.berlin">hello@dyad.berlin</a>.
+			(2) Anbieter ist die Monad Engineering UG (haftungsbeschränkt), Richard-Sorge-Straße 24,
+			10249 Berlin („wir“). Kontakt:
+			<a href="mailto:legal@dyad.berlin">legal@dyad.berlin</a>.
 		</p>
 		<p>
 			(3) Unser Angebot richtet sich ausschließlich an Verbraucherinnen und Verbraucher im
@@ -112,7 +112,7 @@
 		</p>
 		<p>
 			(2) Die Kündigung ist jederzeit möglich: über die Mitgliedschaftsverwaltung im Profil
-			oder in Textform an <a href="mailto:hello@dyad.berlin">hello@dyad.berlin</a>. Sie wirkt
+			oder in Textform an <a href="mailto:legal@dyad.berlin">legal@dyad.berlin</a>. Sie wirkt
 			zum Ende des laufenden Abrechnungszeitraums; bis dahin bleiben die Mitgliedsfunktionen
 			nutzbar.
 		</p>
@@ -169,7 +169,7 @@
 		</p>
 		<p>
 			(2) Betroffene werden über Maßnahme und Grund informiert und können der Entscheidung
-			widersprechen (<a href="mailto:hello@dyad.berlin">hello@dyad.berlin</a>). Der
+			widersprechen (<a href="mailto:legal@dyad.berlin">legal@dyad.berlin</a>). Der
 			Widerspruch wird nach Möglichkeit von einer anderen Person geprüft als der, die
 			entschieden hat.
 		</p>
@@ -281,8 +281,8 @@
 		</ul>
 		<p>
 			Um Ihr Widerrufsrecht auszuüben, müssen Sie uns (Monad Engineering UG
-			(haftungsbeschränkt), c/o tuesday coworking, Belziger Str. 69–71, 10823 Berlin,
-			E-Mail: <a href="mailto:hello@dyad.berlin">hello@dyad.berlin</a>) mittels einer
+			(haftungsbeschränkt), Richard-Sorge-Straße 24, 10249 Berlin,
+			E-Mail: <a href="mailto:legal@dyad.berlin">legal@dyad.berlin</a>) mittels einer
 			eindeutigen Erklärung (z.&nbsp;B. per E-Mail oder per Post versandter Brief) über
 			Ihren Entschluss, diesen Vertrag zu widerrufen, informieren. Sie können dafür das
 			beigefügte Muster-Widerrufsformular verwenden, das jedoch nicht vorgeschrieben ist.
@@ -327,8 +327,8 @@
 			senden Sie es zurück.)
 		</p>
 		<p>
-			An: Monad Engineering UG (haftungsbeschränkt), c/o tuesday coworking, Belziger Str.
-			69–71, 10823 Berlin, <a href="mailto:hello@dyad.berlin">hello@dyad.berlin</a>
+			An: Monad Engineering UG (haftungsbeschränkt), Richard-Sorge-Straße 24,
+			10249 Berlin, <a href="mailto:legal@dyad.berlin">legal@dyad.berlin</a>
 		</p>
 		<ul>
 			<li>
