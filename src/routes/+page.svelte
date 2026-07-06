@@ -88,6 +88,7 @@
 				     the legal links on its own line — they break as a pair. -->
 				<span class="footer-legal">
 					<a href="/impressum" class="footer-link">{og.footerImpressum}</a>
+					<a href="/agb" class="footer-link">{og.footerAgb}</a>
 					<a href="/datenschutz" class="footer-link">{og.footerPrivacy}</a>
 				</span>
 			</footer>
