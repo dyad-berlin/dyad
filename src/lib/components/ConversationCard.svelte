@@ -253,7 +253,7 @@
 	.meta-row {
 		display: flex;
 		gap: var(--space-3);
-		align-items: baseline;
+		align-items: center;
 		margin-bottom: var(--space-1);
 	}
 
