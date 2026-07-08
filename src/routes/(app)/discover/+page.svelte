@@ -284,6 +284,7 @@
 								snippet={prompt.body_snippet}
 								metaLeft={slotDates(prompt.available_slots)}
 								metaRight={uniqueAreas(prompt.available_slots)}
+								conversationType={prompt.capacity === 1 ? '1on1' : 'group'}
 								href={`/conversations/${prompt.id}`}
 								audienceScopeName={prompt.audience_scope_name}
 							/>
