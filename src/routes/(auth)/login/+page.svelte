@@ -43,6 +43,9 @@
 			};
 		}}
 	>
+		{#if data.redirectTo}
+			<input type="hidden" name="redirectTo" value={data.redirectTo} />
+		{/if}
 		{#if mode !== 'update'}
 			<div class="form-group">
 				<label for="email" class="sr-only">{copy.auth.email}</label>
