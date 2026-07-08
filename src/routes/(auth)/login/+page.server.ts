@@ -1,21 +1,23 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Session } from '@prefig/upact';
+import { safeLocalPath } from '$lib/utils/safe-redirect';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
 	const { session } = await locals.safeGetSession();
 	const mode = url.searchParams.get('mode');
+	const redirectTo = safeLocalPath(url.searchParams.get('redirectTo'));
 
 	// Allow update password mode even if logged in (for recovery flow)
 	if (session && mode !== 'update') {
-		redirect(302, '/discover');
+		redirect(302, redirectTo ?? '/discover');
 	}
 
-	return { mode };
+	return { mode, redirectTo };
 };
 
 export const actions: Actions = {
-	login: async ({ request, locals }) => {
+	login: async ({ request, locals, url }) => {
 		const data = await request.formData();
 		const email = data.get('email');
 		const password = data.get('password');
@@ -40,7 +42,14 @@ export const actions: Actions = {
 			return fail(503, { email: email.toString(), error: 'Service temporarily unavailable — please try again' });
 		}
 
-		redirect(302, '/discover');
+		// The form posts to `?/login`, a query-only action URL that drops the
+		// page's ?redirectTo — so the hidden form field is the reliable carrier.
+		// The url param is a defensive fallback. Both are re-validated (never
+		// trust the client-supplied field beyond safeLocalPath).
+		const redirectTo =
+			safeLocalPath(data.get('redirectTo')?.toString()) ??
+			safeLocalPath(url.searchParams.get('redirectTo'));
+		redirect(302, redirectTo ?? '/discover');
 	},
 
 	logout: async ({ locals }) => {
