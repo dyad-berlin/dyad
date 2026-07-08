@@ -699,6 +699,10 @@ export const copy = {
 		monthlySupporterPrice: '€17',
 		monthlySupporterNote: 'A higher rate that helps fund the lower one.',
 		becomeMemberCta: 'become a member',
+		// Membership is currently open to people based in Berlin. Self-declared at
+		// the paywall — the only place location is asked about.
+		berlinConfirmLabel: 'I’m based in Berlin. Membership is open to Berlin residents for now.',
+		berlinRequired: 'Membership is currently open to people based in Berlin.',
 		billingNote: 'Billed securely via Stripe. Cancel anytime.',
 		// Lifetime is a one-time payment — there is no subscription to cancel,
 		// so the note drops "Cancel anytime" for that cadence.
