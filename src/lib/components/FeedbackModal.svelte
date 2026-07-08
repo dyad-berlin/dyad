@@ -25,7 +25,8 @@
 		error = '';
 		const context = {
 			page_url: window.location.href,
-			user_agent: navigator.userAgent
+			user_agent: navigator.userAgent,
+			app_version: __APP_VERSION__
 		};
 		try {
 			const res = await fetch('/api/feedback/app', {
