@@ -544,6 +544,9 @@
 		cursor: pointer;
 	}
 	.filter-select:focus-visible { outline: 2px solid var(--text-primary); outline-offset: 1px; }
+	/* The native option popup ignores the translucent control bg — give it a
+	   solid, theme-correct pair so the open list is readable (not light-on-white). */
+	.filter-select option { background: var(--bg-canvas); color: var(--text-primary); }
 	.filter-select-chevron {
 		position: absolute;
 		right: var(--space-3);
