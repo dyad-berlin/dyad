@@ -137,10 +137,8 @@ export const copy = {
 		filterAnywhere: 'Anywhere',
 		filterTypeLabel: 'Type',
 		filterCornerLabel: 'Corner',
-		filterAll: 'Any',
 		filterOneOnOne: '1-on-1',
 		filterGroup: 'Group',
-		filterAllCorners: 'All',
 		filterClearAll: 'clear all',
 	},
 

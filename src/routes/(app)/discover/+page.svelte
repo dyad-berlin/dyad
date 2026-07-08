@@ -125,10 +125,11 @@
 	let selectedDates = $state<Set<string>>(new Set());
 	// Where filter — single neighbourhood (dropdown), null = anywhere.
 	let selectedArea = $state<string | null>(null);
-	// Conversation-level filter: 1-on-1 (capacity === 1) vs group (capacity null or >= 2).
-	let selectedMode = $state<'all' | '1on1' | 'group'>('all');
-	// Corner (scope) filter — client-side, derived from what's in the feed.
-	let selectedScope = $state<string | null>(null);
+	// Type filter — toggles, like the day cells. Empty = any. 1-on-1 = capacity 1;
+	// group = capacity null (legacy) or >= 2.
+	let selectedTypes = $state<Set<'1on1' | 'group'>>(new Set());
+	// Corner (scope) filter — toggles too. Empty = all corners.
+	let selectedScopes = $state<Set<string>>(new Set());
 
 	// Distinct corner names present in the feed (commons prompts carry no name).
 	const availableScopes = $derived.by(() => {
@@ -138,19 +139,19 @@
 	});
 
 	let hasFilters = $derived(
-		selectedDates.size > 0 || selectedArea !== null || selectedMode !== 'all' || selectedScope !== null
+		selectedDates.size > 0 || selectedArea !== null || selectedTypes.size > 0 || selectedScopes.size > 0
 	);
 
-	/** Prompt-level: match the selected 1-on-1/group mode. Group = null (legacy) or >= 2. */
+	/** Prompt-level: match a toggled type (none toggled = any). */
 	function promptMatchesMode(p: PromptSummary): boolean {
-		if (selectedMode === 'all') return true;
-		const isOneOnOne = p.capacity === 1;
-		return selectedMode === '1on1' ? isOneOnOne : !isOneOnOne;
+		if (selectedTypes.size === 0) return true;
+		return selectedTypes.has(p.capacity === 1 ? '1on1' : 'group');
 	}
 
-	/** Prompt-level: match the selected corner (null = all corners). */
+	/** Prompt-level: match a toggled corner (none toggled = all corners). */
 	function promptMatchesScope(p: PromptSummary): boolean {
-		return selectedScope === null || p.audience_scope_name === selectedScope;
+		if (selectedScopes.size === 0) return true;
+		return p.audience_scope_name !== null && selectedScopes.has(p.audience_scope_name);
 	}
 
 	/** Check if a slot falls on one of the selected dates */
@@ -198,19 +199,25 @@
 		selectedArea = area;
 	}
 
-	function setMode(mode: 'all' | '1on1' | 'group') {
-		selectedMode = mode;
+	function toggleType(type: '1on1' | 'group') {
+		const next = new Set(selectedTypes);
+		if (next.has(type)) next.delete(type);
+		else next.add(type);
+		selectedTypes = next;
 	}
 
-	function setScope(scope: string | null) {
-		selectedScope = scope;
+	function toggleScope(scope: string) {
+		const next = new Set(selectedScopes);
+		if (next.has(scope)) next.delete(scope);
+		else next.add(scope);
+		selectedScopes = next;
 	}
 
 	function clearFilters() {
 		selectedDates = new Set();
 		selectedArea = null;
-		selectedMode = 'all';
-		selectedScope = null;
+		selectedTypes = new Set();
+		selectedScopes = new Set();
 	}
 
 	// Reset the BottomSheet selection whenever the filter state changes — otherwise
@@ -219,7 +226,7 @@
 	// into the sheet. Reading the Sets directly tracks identity reassignment
 	// (toggleDate/clearFilters create new Set instances each time).
 	$effect(() => {
-		if (selectedDates && selectedMode && selectedArea !== undefined && selectedScope !== undefined) {
+		if (selectedDates && selectedTypes && selectedScopes && selectedArea !== undefined) {
 			selectedPinItems = [];
 		}
 	});
@@ -298,11 +305,11 @@
 		{availableAreas}
 		{selectedArea}
 		onSetArea={setArea}
-		{selectedMode}
-		onSetMode={setMode}
+		{selectedTypes}
+		onToggleType={toggleType}
 		{availableScopes}
-		{selectedScope}
-		onSetScope={setScope}
+		{selectedScopes}
+		onToggleScope={toggleScope}
 		showFilters={true}
 		filtersActive={hasFilters}
 		onClearFilters={clearFilters}

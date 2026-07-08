@@ -39,11 +39,11 @@
 		availableAreas = [],
 		selectedArea = null,
 		onSetArea,
-		selectedMode = 'all',
-		onSetMode,
+		selectedTypes = new Set<string>(),
+		onToggleType,
 		availableScopes = [],
-		selectedScope = null,
-		onSetScope,
+		selectedScopes = new Set<string>(),
+		onToggleScope,
 		showFilters = false,
 		filtersActive = false,
 		onClearFilters,
@@ -63,11 +63,11 @@
 		availableAreas?: string[];
 		selectedArea?: string | null;
 		onSetArea?: (area: string | null) => void;
-		selectedMode?: 'all' | '1on1' | 'group';
-		onSetMode?: (mode: 'all' | '1on1' | 'group') => void;
+		selectedTypes?: Set<string>;
+		onToggleType?: (type: '1on1' | 'group') => void;
 		availableScopes?: string[];
-		selectedScope?: string | null;
-		onSetScope?: (scope: string | null) => void;
+		selectedScopes?: Set<string>;
+		onToggleScope?: (scope: string) => void;
 		showFilters?: boolean;
 		filtersActive?: boolean;
 		onClearFilters?: () => void;
@@ -301,9 +301,8 @@
 		<section class="filter-section">
 			<div class="filter-eyebrow">{copy.discover.filterTypeLabel}</div>
 			<div class="seg" role="group" aria-label={copy.discover.filterTypeLabel}>
-				<button class="seg-btn" class:selected={selectedMode === 'all'} aria-pressed={selectedMode === 'all'} onclick={() => onSetMode?.('all')}>{copy.discover.filterAll}</button>
-				<button class="seg-btn" class:selected={selectedMode === '1on1'} aria-pressed={selectedMode === '1on1'} onclick={() => onSetMode?.('1on1')}>{copy.discover.filterOneOnOne}</button>
-				<button class="seg-btn" class:selected={selectedMode === 'group'} aria-pressed={selectedMode === 'group'} onclick={() => onSetMode?.('group')}>{copy.discover.filterGroup}</button>
+				<button class="seg-btn" class:selected={selectedTypes.has('1on1')} aria-pressed={selectedTypes.has('1on1')} onclick={() => onToggleType?.('1on1')}>{copy.discover.filterOneOnOne}</button>
+				<button class="seg-btn" class:selected={selectedTypes.has('group')} aria-pressed={selectedTypes.has('group')} onclick={() => onToggleType?.('group')}>{copy.discover.filterGroup}</button>
 			</div>
 		</section>
 
@@ -311,9 +310,8 @@
 			<section class="filter-section">
 				<div class="filter-eyebrow">{copy.discover.filterCornerLabel}</div>
 				<div class="seg seg-wrap" role="group" aria-label={copy.discover.filterCornerLabel}>
-					<button class="seg-btn" class:selected={selectedScope === null} aria-pressed={selectedScope === null} onclick={() => onSetScope?.(null)}>{copy.discover.filterAllCorners}</button>
 					{#each availableScopes as scope}
-						<button class="seg-btn" class:selected={selectedScope === scope} aria-pressed={selectedScope === scope} onclick={() => onSetScope?.(scope)}>{scope}</button>
+						<button class="seg-btn" class:selected={selectedScopes.has(scope)} aria-pressed={selectedScopes.has(scope)} onclick={() => onToggleScope?.(scope)}>{scope}</button>
 					{/each}
 				</div>
 			</section>
