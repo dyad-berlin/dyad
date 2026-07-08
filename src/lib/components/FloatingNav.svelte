@@ -282,6 +282,7 @@
 				<div class="filter-select-wrap">
 					<select
 						class="filter-select"
+						class:is-active={selectedArea !== null}
 						aria-label={copy.discover.filterWhereLabel}
 						value={selectedArea ?? ''}
 						onchange={(e) => onSetArea?.(e.currentTarget.value || null)}
@@ -548,8 +549,12 @@
 		cursor: pointer;
 	}
 	.filter-select:focus-visible { outline: 2px solid var(--text-primary); outline-offset: 1px; }
-	/* The native option popup ignores the translucent control bg — give it a
-	   solid, theme-correct pair so the open list is readable (not light-on-white). */
+	/* Active state mirrors the toggles: invert to dark-on-light when a
+	   neighbourhood is chosen (light-on-dark = no filter). */
+	.filter-select.is-active { background: var(--text-primary); color: var(--bg-canvas); }
+	.filter-select.is-active + .filter-select-chevron { color: var(--bg-canvas); }
+	/* The native option popup ignores the control bg — give the list a solid,
+	   theme-correct pair so it's always readable regardless of the active state. */
 	.filter-select option { background: var(--bg-canvas); color: var(--text-primary); }
 	.filter-select-chevron {
 		position: absolute;
