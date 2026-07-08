@@ -495,7 +495,9 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
+		justify-content: center;
 		gap: 1px;
+		min-height: 2.75rem;
 		padding: var(--space-2) 0;
 		flex: 1;
 		background: color-mix(in srgb, var(--text-primary) 6%, transparent);
@@ -515,6 +517,10 @@
 	.seg-wrap { flex-wrap: wrap; }
 	.seg-btn {
 		flex: 1 1 auto;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		min-height: 2.75rem;
 		padding: var(--space-2) var(--space-3);
 		background: color-mix(in srgb, var(--text-primary) 6%, transparent);
 		border: none;
