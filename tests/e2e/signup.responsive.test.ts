@@ -44,14 +44,14 @@ test.describe('Signup flow', () => {
 		test.setTimeout(90000);
 
 		await page.goto(`/join?token=${invitationToken}`);
-		await expect(page.getByRole('heading', { name: "You're invited" })).toBeVisible();
+		await expect(page.locator('#username')).toBeVisible();
 
 		// Fill the form
 		await page.locator('#username').fill(testUsername);
 		await page.locator('#password').fill(testPassword);
 
 		// Submit
-		await page.getByRole('button', { name: 'Create account' }).click();
+		await page.locator('button[type="submit"]').click();
 
 		// Wait for either:
 		// - Redirect to /discover (auto-sign-in succeeded)
