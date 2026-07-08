@@ -78,6 +78,7 @@
 				snippet={item.prompt.body_snippet}
 				metaLeft={slotsLabel ?? fallbackLabel}
 				metaRight={areaLabel}
+				conversationType={item.prompt.capacity === 1 ? '1on1' : 'group'}
 				authorUsername={item.prompt.author_username}
 				anonymiseAuthor={hideAuthor}
 				audienceScopeName={item.prompt.audience_scope_name}

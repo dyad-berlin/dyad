@@ -123,9 +123,36 @@
 
 	// Filter state
 	let selectedDates = $state<Set<string>>(new Set());
-	let selectedAreas = $state<Set<string>>(new Set());
+	// Where filter — single neighbourhood (dropdown), null = anywhere.
+	let selectedArea = $state<string | null>(null);
+	// Type filter — toggles, like the day cells. Empty = any. 1-on-1 = capacity 1;
+	// group = capacity null (legacy) or >= 2.
+	let selectedTypes = $state<Set<'1on1' | 'group'>>(new Set());
+	// Corner (scope) filter — toggles too. Empty = all corners.
+	let selectedScopes = $state<Set<string>>(new Set());
 
-	let hasFilters = $derived(selectedDates.size > 0 || selectedAreas.size > 0);
+	// Distinct corner names present in the feed (commons prompts carry no name).
+	const availableScopes = $derived.by(() => {
+		const names = new Set<string>();
+		for (const p of data.prompts) if (p.audience_scope_name) names.add(p.audience_scope_name);
+		return [...names].sort();
+	});
+
+	let hasFilters = $derived(
+		selectedDates.size > 0 || selectedArea !== null || selectedTypes.size > 0 || selectedScopes.size > 0
+	);
+
+	/** Prompt-level: match a toggled type (none toggled = any). */
+	function promptMatchesMode(p: PromptSummary): boolean {
+		if (selectedTypes.size === 0) return true;
+		return selectedTypes.has(p.capacity === 1 ? '1on1' : 'group');
+	}
+
+	/** Prompt-level: match a toggled corner (none toggled = all corners). */
+	function promptMatchesScope(p: PromptSummary): boolean {
+		if (selectedScopes.size === 0) return true;
+		return p.audience_scope_name !== null && selectedScopes.has(p.audience_scope_name);
+	}
 
 	/** Check if a slot falls on one of the selected dates */
 	function slotMatchesDate(slot: TimeSlot, dates: Set<string>): boolean {
@@ -134,18 +161,20 @@
 		return dates.has(slotDate);
 	}
 
-	/** Check if a slot is in one of the selected areas */
-	function slotMatchesArea(slot: TimeSlot, areas: Set<string>): boolean {
-		if (areas.size === 0) return true;
-		return areas.has(slot.general_area);
+	/** Check if a slot is in the selected neighbourhood (null = anywhere). */
+	function slotMatchesArea(slot: TimeSlot, area: string | null): boolean {
+		return area === null || slot.general_area === area;
 	}
 
 	let filteredPrompts = $derived.by(() => {
 		if (!hasFilters) return data.prompts;
-		return data.prompts.filter((p) =>
-			p.available_slots.some(
-				(s) => slotMatchesDate(s, selectedDates) && slotMatchesArea(s, selectedAreas)
-			)
+		return data.prompts.filter(
+			(p) =>
+				promptMatchesMode(p) &&
+				promptMatchesScope(p) &&
+				p.available_slots.some(
+					(s) => slotMatchesDate(s, selectedDates) && slotMatchesArea(s, selectedArea)
+				)
 		);
 	});
 
@@ -155,7 +184,7 @@
 	// narrows the pin set within each conversation.
 	let mapSlotFilter = $derived(
 		hasFilters
-			? (slot: TimeSlot) => slotMatchesDate(slot, selectedDates) && slotMatchesArea(slot, selectedAreas)
+			? (slot: TimeSlot) => slotMatchesDate(slot, selectedDates) && slotMatchesArea(slot, selectedArea)
 			: undefined
 	);
 
@@ -166,9 +195,29 @@
 		selectedDates = next;
 	}
 
+	function setArea(area: string | null) {
+		selectedArea = area;
+	}
+
+	function toggleType(type: '1on1' | 'group') {
+		const next = new Set(selectedTypes);
+		if (next.has(type)) next.delete(type);
+		else next.add(type);
+		selectedTypes = next;
+	}
+
+	function toggleScope(scope: string) {
+		const next = new Set(selectedScopes);
+		if (next.has(scope)) next.delete(scope);
+		else next.add(scope);
+		selectedScopes = next;
+	}
+
 	function clearFilters() {
 		selectedDates = new Set();
-		selectedAreas = new Set();
+		selectedArea = null;
+		selectedTypes = new Set();
+		selectedScopes = new Set();
 	}
 
 	// Reset the BottomSheet selection whenever the filter state changes — otherwise
@@ -177,7 +226,7 @@
 	// into the sheet. Reading the Sets directly tracks identity reassignment
 	// (toggleDate/clearFilters create new Set instances each time).
 	$effect(() => {
-		if (selectedDates && selectedAreas) {
+		if (selectedDates && selectedTypes && selectedScopes && selectedArea !== undefined) {
 			selectedPinItems = [];
 		}
 	});
@@ -235,6 +284,7 @@
 								snippet={prompt.body_snippet}
 								metaLeft={slotDates(prompt.available_slots)}
 								metaRight={uniqueAreas(prompt.available_slots)}
+								conversationType={prompt.capacity === 1 ? '1on1' : 'group'}
 								href={`/conversations/${prompt.id}`}
 								audienceScopeName={prompt.audience_scope_name}
 							/>
@@ -253,7 +303,17 @@
 		{weekDates}
 		selectedDays={selectedDates}
 		onToggleDay={toggleDate}
-		showDateFilter={true}
+		{availableAreas}
+		{selectedArea}
+		onSetArea={setArea}
+		{selectedTypes}
+		onToggleType={toggleType}
+		{availableScopes}
+		{selectedScopes}
+		onToggleScope={toggleScope}
+		showFilters={true}
+		filtersActive={hasFilters}
+		onClearFilters={clearFilters}
 		onSearchClick={() => searchOpen = true}
 	/>
 </div>
