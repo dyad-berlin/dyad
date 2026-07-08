@@ -134,6 +134,7 @@ export const copy = {
 		searchSuggestions: ['strangers & connection', 'philosophy of everyday life', 'belonging in Berlin', 'silence & listening', 'living in Berlin'],
 		filterWhenLabel: 'When',
 		filterWhereLabel: 'Where',
+		filterAnywhere: 'Anywhere',
 		filterTypeLabel: 'Type',
 		filterCornerLabel: 'Corner',
 		filterAll: 'Any',

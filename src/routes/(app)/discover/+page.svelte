@@ -123,7 +123,8 @@
 
 	// Filter state
 	let selectedDates = $state<Set<string>>(new Set());
-	let selectedAreas = $state<Set<string>>(new Set());
+	// Where filter — single neighbourhood (dropdown), null = anywhere.
+	let selectedArea = $state<string | null>(null);
 	// Conversation-level filter: 1-on-1 (capacity === 1) vs group (capacity null or >= 2).
 	let selectedMode = $state<'all' | '1on1' | 'group'>('all');
 	// Corner (scope) filter — client-side, derived from what's in the feed.
@@ -137,7 +138,7 @@
 	});
 
 	let hasFilters = $derived(
-		selectedDates.size > 0 || selectedAreas.size > 0 || selectedMode !== 'all' || selectedScope !== null
+		selectedDates.size > 0 || selectedArea !== null || selectedMode !== 'all' || selectedScope !== null
 	);
 
 	/** Prompt-level: match the selected 1-on-1/group mode. Group = null (legacy) or >= 2. */
@@ -159,10 +160,9 @@
 		return dates.has(slotDate);
 	}
 
-	/** Check if a slot is in one of the selected areas */
-	function slotMatchesArea(slot: TimeSlot, areas: Set<string>): boolean {
-		if (areas.size === 0) return true;
-		return areas.has(slot.general_area);
+	/** Check if a slot is in the selected neighbourhood (null = anywhere). */
+	function slotMatchesArea(slot: TimeSlot, area: string | null): boolean {
+		return area === null || slot.general_area === area;
 	}
 
 	let filteredPrompts = $derived.by(() => {
@@ -172,7 +172,7 @@
 				promptMatchesMode(p) &&
 				promptMatchesScope(p) &&
 				p.available_slots.some(
-					(s) => slotMatchesDate(s, selectedDates) && slotMatchesArea(s, selectedAreas)
+					(s) => slotMatchesDate(s, selectedDates) && slotMatchesArea(s, selectedArea)
 				)
 		);
 	});
@@ -183,7 +183,7 @@
 	// narrows the pin set within each conversation.
 	let mapSlotFilter = $derived(
 		hasFilters
-			? (slot: TimeSlot) => slotMatchesDate(slot, selectedDates) && slotMatchesArea(slot, selectedAreas)
+			? (slot: TimeSlot) => slotMatchesDate(slot, selectedDates) && slotMatchesArea(slot, selectedArea)
 			: undefined
 	);
 
@@ -194,11 +194,8 @@
 		selectedDates = next;
 	}
 
-	function toggleArea(area: string) {
-		const next = new Set(selectedAreas);
-		if (next.has(area)) next.delete(area);
-		else next.add(area);
-		selectedAreas = next;
+	function setArea(area: string | null) {
+		selectedArea = area;
 	}
 
 	function setMode(mode: 'all' | '1on1' | 'group') {
@@ -211,7 +208,7 @@
 
 	function clearFilters() {
 		selectedDates = new Set();
-		selectedAreas = new Set();
+		selectedArea = null;
 		selectedMode = 'all';
 		selectedScope = null;
 	}
@@ -222,7 +219,7 @@
 	// into the sheet. Reading the Sets directly tracks identity reassignment
 	// (toggleDate/clearFilters create new Set instances each time).
 	$effect(() => {
-		if (selectedDates && selectedAreas && selectedMode && selectedScope !== undefined) {
+		if (selectedDates && selectedMode && selectedArea !== undefined && selectedScope !== undefined) {
 			selectedPinItems = [];
 		}
 	});
@@ -299,8 +296,8 @@
 		selectedDays={selectedDates}
 		onToggleDay={toggleDate}
 		{availableAreas}
-		{selectedAreas}
-		onToggleArea={toggleArea}
+		{selectedArea}
+		onSetArea={setArea}
 		{selectedMode}
 		onSetMode={setMode}
 		{availableScopes}

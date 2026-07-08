@@ -37,8 +37,8 @@
 		selectedDays = new Set<string>(),
 		onToggleDay,
 		availableAreas = [],
-		selectedAreas = new Set<string>(),
-		onToggleArea,
+		selectedArea = null,
+		onSetArea,
 		selectedMode = 'all',
 		onSetMode,
 		availableScopes = [],
@@ -61,8 +61,8 @@
 		selectedDays?: Set<string>;
 		onToggleDay?: (date: string) => void;
 		availableAreas?: string[];
-		selectedAreas?: Set<string>;
-		onToggleArea?: (area: string) => void;
+		selectedArea?: string | null;
+		onSetArea?: (area: string | null) => void;
 		selectedMode?: 'all' | '1on1' | 'group';
 		onSetMode?: (mode: 'all' | '1on1' | 'group') => void;
 		availableScopes?: string[];
@@ -279,15 +279,21 @@
 		{#if availableAreas.length > 0}
 			<section class="filter-section">
 				<div class="filter-eyebrow">{copy.discover.filterWhereLabel}</div>
-				<div class="seg seg-wrap" role="group" aria-label={copy.discover.filterWhereLabel}>
-					{#each availableAreas as area}
-						<button
-							class="seg-btn"
-							class:selected={selectedAreas.has(area)}
-							aria-pressed={selectedAreas.has(area)}
-							onclick={() => onToggleArea?.(area)}
-						>{area}</button>
-					{/each}
+				<div class="filter-select-wrap">
+					<select
+						class="filter-select"
+						aria-label={copy.discover.filterWhereLabel}
+						value={selectedArea ?? ''}
+						onchange={(e) => onSetArea?.(e.currentTarget.value || null)}
+					>
+						<option value="">{copy.discover.filterAnywhere}</option>
+						{#each availableAreas as area}
+							<option value={area}>{area}</option>
+						{/each}
+					</select>
+					<svg class="filter-select-chevron" width="14" height="14" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+						<path d="M5 8l5 5 5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+					</svg>
 				</div>
 			</section>
 		{/if}
@@ -521,6 +527,31 @@
 		transition: background 0.15s, color 0.15s;
 	}
 	.seg-btn.selected { background: var(--text-primary); color: var(--bg-canvas); }
+
+	/* Where dropdown — native select styled to match the sheet's calm surface. */
+	.filter-select-wrap { position: relative; display: flex; }
+	.filter-select {
+		appearance: none;
+		-webkit-appearance: none;
+		width: 100%;
+		padding: var(--space-2) var(--space-6) var(--space-2) var(--space-3);
+		background: color-mix(in srgb, var(--text-primary) 6%, transparent);
+		border: none;
+		border-radius: var(--radius-input);
+		font-family: inherit;
+		font-size: var(--text-sm);
+		color: var(--text-primary);
+		cursor: pointer;
+	}
+	.filter-select:focus-visible { outline: 2px solid var(--text-primary); outline-offset: 1px; }
+	.filter-select-chevron {
+		position: absolute;
+		right: var(--space-3);
+		top: 50%;
+		transform: translateY(-50%);
+		color: var(--text-muted);
+		pointer-events: none;
+	}
 
 	.filter-clear {
 		align-self: flex-start;
