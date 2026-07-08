@@ -10,6 +10,11 @@
 	// svelte-ignore state_referenced_locally
 	let email = $state(form?.email ?? '');
 	let password = $state('');
+	// Captured once so it survives load re-runs after a failed login. The form
+	// posts to `?/login` (a query-only action URL that drops ?redirectTo), so the
+	// hidden field below — not the query string — is what carries the destination.
+	// svelte-ignore state_referenced_locally
+	let redirectTo = $state(data.redirectTo);
 </script>
 
 <svelte:head>
@@ -43,8 +48,8 @@
 			};
 		}}
 	>
-		{#if data.redirectTo}
-			<input type="hidden" name="redirectTo" value={data.redirectTo} />
+		{#if redirectTo}
+			<input type="hidden" name="redirectTo" value={redirectTo} />
 		{/if}
 		{#if mode !== 'update'}
 			<div class="form-group">

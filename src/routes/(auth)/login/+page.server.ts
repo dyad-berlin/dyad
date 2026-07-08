@@ -42,11 +42,13 @@ export const actions: Actions = {
 			return fail(503, { email: email.toString(), error: 'Service temporarily unavailable — please try again' });
 		}
 
-		// Prefer the query param (the form posts to the current URL, which carries
-		// ?redirectTo); fall back to the hidden form field. Both are re-validated.
+		// The form posts to `?/login`, a query-only action URL that drops the
+		// page's ?redirectTo — so the hidden form field is the reliable carrier.
+		// The url param is a defensive fallback. Both are re-validated (never
+		// trust the client-supplied field beyond safeLocalPath).
 		const redirectTo =
-			safeLocalPath(url.searchParams.get('redirectTo')) ??
-			safeLocalPath(data.get('redirectTo')?.toString());
+			safeLocalPath(data.get('redirectTo')?.toString()) ??
+			safeLocalPath(url.searchParams.get('redirectTo'));
 		redirect(302, redirectTo ?? '/discover');
 	},
 
