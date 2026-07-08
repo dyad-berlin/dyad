@@ -37,6 +37,9 @@
 		selectedDays = new Set<string>(),
 		onToggleDay,
 		showDateFilter = false,
+		selectedMode = 'all',
+		onSetMode,
+		showModeFilter = false,
 		onSearchClick,
 		// Detail variant controls (conversations/[id], meetings/[id])
 		onBackClick,
@@ -51,12 +54,16 @@
 		selectedDays?: Set<string>;
 		onToggleDay?: (date: string) => void;
 		showDateFilter?: boolean;
+		selectedMode?: 'all' | '1on1' | 'group';
+		onSetMode?: (mode: 'all' | '1on1' | 'group') => void;
+		showModeFilter?: boolean;
 		onSearchClick?: () => void;
 		onBackClick?: () => void;
 		actions?: FloatingNavAction[];
 	} = $props();
 
 	let dateFilterOpen = $state(false);
+	let modeFilterOpen = $state(false);
 	let actionsDropdownOpen = $state(false);
 	let actionsDropdownRef: HTMLElement | undefined = $state();
 
@@ -167,6 +174,22 @@
 				</button>
 			{/if}
 
+			{#if variant === 'discover' && showModeFilter}
+				<button
+					class="nav-btn"
+					class:active-icon={selectedMode !== 'all' || modeFilterOpen}
+					onclick={() => (modeFilterOpen = !modeFilterOpen)}
+					aria-label="Filter by group or one-on-one"
+				>
+					<svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+						<circle cx="7" cy="8" r="2.6" stroke="currentColor" stroke-width="1.6"/>
+						<circle cx="13.5" cy="9" r="2" stroke="currentColor" stroke-width="1.6"/>
+						<path d="M2.5 16c0-2.3 2-3.8 4.5-3.8s4.5 1.5 4.5 3.8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+						<path d="M13 12.5c2.2 0 4 1.3 4 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+					</svg>
+				</button>
+			{/if}
+
 			<!-- CORE TRIPLET -->
 			{@render coreDiscover(variant === 'discover', active === 'map')}
 			{@render corePlus()}
@@ -254,6 +277,15 @@
 			{copy.common.clear}
 		</button>
 	{/if}
+{/if}
+
+<!-- Group / one-on-one filter panel (discover variant only) -->
+{#if variant === 'discover' && showModeFilter && modeFilterOpen}
+	<div class="date-panel" class:date-panel-top={position === 'top'} class:date-panel-bottom={position === 'bottom'}>
+		<button class="mode-cell" class:selected={selectedMode === 'all'} onclick={() => onSetMode?.('all')}>{copy.discover.filterAll}</button>
+		<button class="mode-cell" class:selected={selectedMode === '1on1'} onclick={() => onSetMode?.('1on1')}>{copy.discover.filterOneOnOne}</button>
+		<button class="mode-cell" class:selected={selectedMode === 'group'} onclick={() => onSetMode?.('group')}>{copy.discover.filterGroup}</button>
+	</div>
 {/if}
 
 <style>
@@ -422,6 +454,19 @@
 		transition: background 0.15s, color 0.15s;
 	}
 	.day-cell.selected { background: var(--text-primary); color: var(--bg-canvas); }
+	.mode-cell {
+		flex: 1;
+		padding: var(--space-2) 0;
+		background: color-mix(in srgb, var(--text-primary) 6%, transparent);
+		border: none;
+		border-radius: var(--radius-card);
+		cursor: pointer;
+		font-family: inherit;
+		font-size: var(--text-sm);
+		color: var(--text-primary);
+		transition: background 0.15s, color 0.15s;
+	}
+	.mode-cell.selected { background: var(--text-primary); color: var(--bg-canvas); }
 	.day-name { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.04em; opacity: 0.7; }
 	.day-num { font-size: var(--text-base); font-weight: 600; line-height: 1; }
 

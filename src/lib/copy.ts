@@ -132,6 +132,9 @@ export const copy = {
 		searchPlaceholder: 'Search',
 		noResults: 'No conversations found.',
 		searchSuggestions: ['strangers & connection', 'philosophy of everyday life', 'belonging in Berlin', 'silence & listening', 'living in Berlin'],
+		filterAll: 'all',
+		filterOneOnOne: '1-on-1',
+		filterGroup: 'group',
 	},
 
 	// ── Conversation detail ────────────────────────────────────────────

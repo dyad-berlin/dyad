@@ -124,8 +124,17 @@
 	// Filter state
 	let selectedDates = $state<Set<string>>(new Set());
 	let selectedAreas = $state<Set<string>>(new Set());
+	// Conversation-level filter: 1-on-1 (capacity === 1) vs group (capacity null or >= 2).
+	let selectedMode = $state<'all' | '1on1' | 'group'>('all');
 
-	let hasFilters = $derived(selectedDates.size > 0 || selectedAreas.size > 0);
+	let hasFilters = $derived(selectedDates.size > 0 || selectedAreas.size > 0 || selectedMode !== 'all');
+
+	/** Prompt-level: match the selected 1-on-1/group mode. Group = null (legacy) or >= 2. */
+	function promptMatchesMode(p: PromptSummary): boolean {
+		if (selectedMode === 'all') return true;
+		const isOneOnOne = p.capacity === 1;
+		return selectedMode === '1on1' ? isOneOnOne : !isOneOnOne;
+	}
 
 	/** Check if a slot falls on one of the selected dates */
 	function slotMatchesDate(slot: TimeSlot, dates: Set<string>): boolean {
@@ -142,10 +151,12 @@
 
 	let filteredPrompts = $derived.by(() => {
 		if (!hasFilters) return data.prompts;
-		return data.prompts.filter((p) =>
-			p.available_slots.some(
-				(s) => slotMatchesDate(s, selectedDates) && slotMatchesArea(s, selectedAreas)
-			)
+		return data.prompts.filter(
+			(p) =>
+				promptMatchesMode(p) &&
+				p.available_slots.some(
+					(s) => slotMatchesDate(s, selectedDates) && slotMatchesArea(s, selectedAreas)
+				)
 		);
 	});
 
@@ -166,9 +177,14 @@
 		selectedDates = next;
 	}
 
+	function setMode(mode: 'all' | '1on1' | 'group') {
+		selectedMode = mode;
+	}
+
 	function clearFilters() {
 		selectedDates = new Set();
 		selectedAreas = new Set();
+		selectedMode = 'all';
 	}
 
 	// Reset the BottomSheet selection whenever the filter state changes — otherwise
@@ -177,7 +193,7 @@
 	// into the sheet. Reading the Sets directly tracks identity reassignment
 	// (toggleDate/clearFilters create new Set instances each time).
 	$effect(() => {
-		if (selectedDates && selectedAreas) {
+		if (selectedDates && selectedAreas && selectedMode) {
 			selectedPinItems = [];
 		}
 	});
@@ -254,6 +270,9 @@
 		selectedDays={selectedDates}
 		onToggleDay={toggleDate}
 		showDateFilter={true}
+		{selectedMode}
+		onSetMode={setMode}
+		showModeFilter={true}
 		onSearchClick={() => searchOpen = true}
 	/>
 </div>
