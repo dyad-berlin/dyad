@@ -36,10 +36,14 @@
 		weekDates = [],
 		selectedDays = new Set<string>(),
 		onToggleDay,
-		showDateFilter = false,
 		selectedMode = 'all',
 		onSetMode,
-		showModeFilter = false,
+		availableScopes = [],
+		selectedScope = null,
+		onSetScope,
+		showFilters = false,
+		filtersActive = false,
+		onClearFilters,
 		onSearchClick,
 		// Detail variant controls (conversations/[id], meetings/[id])
 		onBackClick,
@@ -53,17 +57,20 @@
 		weekDates?: WeekDate[];
 		selectedDays?: Set<string>;
 		onToggleDay?: (date: string) => void;
-		showDateFilter?: boolean;
 		selectedMode?: 'all' | '1on1' | 'group';
 		onSetMode?: (mode: 'all' | '1on1' | 'group') => void;
-		showModeFilter?: boolean;
+		availableScopes?: string[];
+		selectedScope?: string | null;
+		onSetScope?: (scope: string | null) => void;
+		showFilters?: boolean;
+		filtersActive?: boolean;
+		onClearFilters?: () => void;
 		onSearchClick?: () => void;
 		onBackClick?: () => void;
 		actions?: FloatingNavAction[];
 	} = $props();
 
-	let dateFilterOpen = $state(false);
-	let modeFilterOpen = $state(false);
+	let filterOpen = $state(false);
 	let actionsDropdownOpen = $state(false);
 	let actionsDropdownRef: HTMLElement | undefined = $state();
 
@@ -159,34 +166,19 @@
 				</button>
 			{/if}
 
-			{#if variant === 'discover' && showDateFilter}
+			{#if variant === 'discover' && showFilters}
 				<button
 					class="nav-btn"
-					class:active-icon={selectedDays.size > 0 || dateFilterOpen}
-					onclick={() => (dateFilterOpen = !dateFilterOpen)}
-					aria-label="Filter by date"
+					class:active-icon={filtersActive || filterOpen}
+					onclick={() => (filterOpen = !filterOpen)}
+					aria-label="Filter conversations"
+					aria-expanded={filterOpen}
 				>
+					<!-- Funnel: the unambiguous filter glyph — distinct from the list/map lines. -->
 					<svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-						<rect x="3" y="4" width="14" height="13" rx="2" stroke="currentColor" stroke-width="1.6"/>
-						<path d="M3 8h14" stroke="currentColor" stroke-width="1.6"/>
-						<path d="M7 2v4M13 2v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+						<path d="M3 4.5h14l-5.3 6.4v4.4l-3.4 1.7v-6.1L3 4.5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
 					</svg>
-				</button>
-			{/if}
-
-			{#if variant === 'discover' && showModeFilter}
-				<button
-					class="nav-btn"
-					class:active-icon={selectedMode !== 'all' || modeFilterOpen}
-					onclick={() => (modeFilterOpen = !modeFilterOpen)}
-					aria-label="Filter by group or one-on-one"
-				>
-					<svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-						<circle cx="7" cy="8" r="2.6" stroke="currentColor" stroke-width="1.6"/>
-						<circle cx="13.5" cy="9" r="2" stroke="currentColor" stroke-width="1.6"/>
-						<path d="M2.5 16c0-2.3 2-3.8 4.5-3.8s4.5 1.5 4.5 3.8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-						<path d="M13 12.5c2.2 0 4 1.3 4 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-					</svg>
+					{#if filtersActive}<span class="badge-dot"><span class="sr-only">filters active</span></span>{/if}
 				</button>
 			{/if}
 
@@ -258,33 +250,50 @@
 	</nav>
 </div>
 
-<!-- Date filter panel (discover variant only) -->
-{#if variant === 'discover' && showDateFilter && dateFilterOpen}
-	<div class="date-panel" class:date-panel-top={position === 'top'} class:date-panel-bottom={position === 'bottom'}>
-		{#each weekDates as day}
-			<button
-				class="day-cell"
-				class:selected={selectedDays.has(day.date)}
-				onclick={() => onToggleDay?.(day.date)}
-			>
-				<span class="day-name">{day.dayShort}</span>
-				<span class="day-num">{day.dayNum}</span>
-			</button>
-		{/each}
-	</div>
-	{#if selectedDays.size > 0}
-		<button class="clear-dates" class:clear-dates-top={position === 'top'} class:clear-dates-bottom={position === 'bottom'} onclick={() => { for (const d of [...selectedDays]) onToggleDay?.(d); }}>
-			{copy.common.clear}
-		</button>
-	{/if}
-{/if}
+<!-- Unified filter sheet (discover variant only): When · Type · Corner -->
+{#if variant === 'discover' && showFilters && filterOpen}
+	<div class="filter-sheet" class:filter-sheet-top={position === 'top'} class:filter-sheet-bottom={position === 'bottom'} role="dialog" aria-label="Filters">
+		<section class="filter-section">
+			<div class="filter-eyebrow">{copy.discover.filterWhenLabel}</div>
+			<div class="day-row">
+				{#each weekDates as day}
+					<button
+						class="day-cell"
+						class:selected={selectedDays.has(day.date)}
+						aria-pressed={selectedDays.has(day.date)}
+						onclick={() => onToggleDay?.(day.date)}
+					>
+						<span class="day-name">{day.dayShort}</span>
+						<span class="day-num">{day.dayNum}</span>
+					</button>
+				{/each}
+			</div>
+		</section>
 
-<!-- Group / one-on-one filter panel (discover variant only) -->
-{#if variant === 'discover' && showModeFilter && modeFilterOpen}
-	<div class="date-panel" class:date-panel-top={position === 'top'} class:date-panel-bottom={position === 'bottom'}>
-		<button class="mode-cell" class:selected={selectedMode === 'all'} onclick={() => onSetMode?.('all')}>{copy.discover.filterAll}</button>
-		<button class="mode-cell" class:selected={selectedMode === '1on1'} onclick={() => onSetMode?.('1on1')}>{copy.discover.filterOneOnOne}</button>
-		<button class="mode-cell" class:selected={selectedMode === 'group'} onclick={() => onSetMode?.('group')}>{copy.discover.filterGroup}</button>
+		<section class="filter-section">
+			<div class="filter-eyebrow">{copy.discover.filterTypeLabel}</div>
+			<div class="seg" role="group" aria-label={copy.discover.filterTypeLabel}>
+				<button class="seg-btn" class:selected={selectedMode === 'all'} aria-pressed={selectedMode === 'all'} onclick={() => onSetMode?.('all')}>{copy.discover.filterAll}</button>
+				<button class="seg-btn" class:selected={selectedMode === '1on1'} aria-pressed={selectedMode === '1on1'} onclick={() => onSetMode?.('1on1')}>{copy.discover.filterOneOnOne}</button>
+				<button class="seg-btn" class:selected={selectedMode === 'group'} aria-pressed={selectedMode === 'group'} onclick={() => onSetMode?.('group')}>{copy.discover.filterGroup}</button>
+			</div>
+		</section>
+
+		{#if availableScopes.length > 0}
+			<section class="filter-section">
+				<div class="filter-eyebrow">{copy.discover.filterCornerLabel}</div>
+				<div class="seg seg-wrap" role="group" aria-label={copy.discover.filterCornerLabel}>
+					<button class="seg-btn" class:selected={selectedScope === null} aria-pressed={selectedScope === null} onclick={() => onSetScope?.(null)}>{copy.discover.filterAllCorners}</button>
+					{#each availableScopes as scope}
+						<button class="seg-btn" class:selected={selectedScope === scope} aria-pressed={selectedScope === scope} onclick={() => onSetScope?.(scope)}>{scope}</button>
+					{/each}
+				</div>
+			</section>
+		{/if}
+
+		{#if filtersActive}
+			<button class="filter-clear" onclick={() => onClearFilters?.()}>{copy.discover.filterClearAll}</button>
+		{/if}
 	</div>
 {/if}
 
@@ -416,8 +425,8 @@
 	.dropdown-item--danger { color: var(--color-danger); }
 	.dropdown-item--danger:hover { background: color-mix(in srgb, var(--color-danger) 6%, transparent); }
 
-	/* Date filter panel */
-	.date-panel {
+	/* Unified filter sheet: one calm card, three labelled sections. */
+	.filter-sheet {
 		position: fixed;
 		left: 50%;
 		transform: translateX(-50%);
@@ -427,48 +436,79 @@
 		backdrop-filter: blur(12px);
 		-webkit-backdrop-filter: blur(12px);
 		border-radius: var(--radius-card);
-		box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
-		padding: var(--space-3);
+		box-shadow: 0 8px 32px rgba(0, 0, 0, 0.22);
+		padding: var(--space-4);
 		z-index: 799;
 		pointer-events: auto;
 		display: flex;
-		gap: var(--space-1);
-		justify-content: space-between;
+		flex-direction: column;
+		gap: var(--space-4);
 	}
-	.date-panel-top { top: 76px; }
-	.date-panel-bottom { bottom: 88px; }
+	.filter-sheet-top { top: 76px; }
+	.filter-sheet-bottom { bottom: 88px; }
 
+	.filter-section { display: flex; flex-direction: column; gap: var(--space-2); }
+	/* Mono eyebrow — dyad's existing editorial label idiom, reused for cohesion. */
+	.filter-eyebrow {
+		font-family: var(--font-mono);
+		font-size: var(--text-xs);
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		color: var(--text-muted);
+	}
+
+	.day-row { display: flex; gap: var(--space-1); justify-content: space-between; }
 	.day-cell {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 		gap: 1px;
-		padding: var(--space-1) 0;
+		padding: var(--space-2) 0;
 		flex: 1;
 		background: color-mix(in srgb, var(--text-primary) 6%, transparent);
 		border: none;
-		border-radius: var(--radius-card);
+		border-radius: var(--radius-input);
 		cursor: pointer;
 		font-family: inherit;
 		color: var(--text-primary);
 		transition: background 0.15s, color 0.15s;
 	}
 	.day-cell.selected { background: var(--text-primary); color: var(--bg-canvas); }
-	.mode-cell {
-		flex: 1;
-		padding: var(--space-2) 0;
+	.day-name { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.04em; opacity: 0.7; }
+	.day-num { font-size: var(--text-base); font-weight: 600; line-height: 1; }
+
+	/* Segmented control — shared by Type and Corner so selection reads identically. */
+	.seg { display: flex; gap: var(--space-1); }
+	.seg-wrap { flex-wrap: wrap; }
+	.seg-btn {
+		flex: 1 1 auto;
+		padding: var(--space-2) var(--space-3);
 		background: color-mix(in srgb, var(--text-primary) 6%, transparent);
 		border: none;
-		border-radius: var(--radius-card);
+		border-radius: var(--radius-input);
 		cursor: pointer;
 		font-family: inherit;
 		font-size: var(--text-sm);
+		white-space: nowrap;
 		color: var(--text-primary);
 		transition: background 0.15s, color 0.15s;
 	}
-	.mode-cell.selected { background: var(--text-primary); color: var(--bg-canvas); }
-	.day-name { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.04em; opacity: 0.7; }
-	.day-num { font-size: var(--text-base); font-weight: 600; line-height: 1; }
+	.seg-btn.selected { background: var(--text-primary); color: var(--bg-canvas); }
+
+	.filter-clear {
+		align-self: flex-start;
+		margin-top: calc(-1 * var(--space-1));
+		padding: 0;
+		background: none;
+		border: none;
+		font-family: inherit;
+		font-size: var(--text-sm);
+		color: var(--text-muted);
+		text-decoration: underline;
+		text-underline-offset: 2px;
+		cursor: pointer;
+	}
+	.filter-clear:hover { color: var(--text-primary); }
 
 	.clear-dates {
 		position: fixed;

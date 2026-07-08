@@ -126,14 +126,30 @@
 	let selectedAreas = $state<Set<string>>(new Set());
 	// Conversation-level filter: 1-on-1 (capacity === 1) vs group (capacity null or >= 2).
 	let selectedMode = $state<'all' | '1on1' | 'group'>('all');
+	// Corner (scope) filter — client-side, derived from what's in the feed.
+	let selectedScope = $state<string | null>(null);
 
-	let hasFilters = $derived(selectedDates.size > 0 || selectedAreas.size > 0 || selectedMode !== 'all');
+	// Distinct corner names present in the feed (commons prompts carry no name).
+	const availableScopes = $derived.by(() => {
+		const names = new Set<string>();
+		for (const p of data.prompts) if (p.audience_scope_name) names.add(p.audience_scope_name);
+		return [...names].sort();
+	});
+
+	let hasFilters = $derived(
+		selectedDates.size > 0 || selectedAreas.size > 0 || selectedMode !== 'all' || selectedScope !== null
+	);
 
 	/** Prompt-level: match the selected 1-on-1/group mode. Group = null (legacy) or >= 2. */
 	function promptMatchesMode(p: PromptSummary): boolean {
 		if (selectedMode === 'all') return true;
 		const isOneOnOne = p.capacity === 1;
 		return selectedMode === '1on1' ? isOneOnOne : !isOneOnOne;
+	}
+
+	/** Prompt-level: match the selected corner (null = all corners). */
+	function promptMatchesScope(p: PromptSummary): boolean {
+		return selectedScope === null || p.audience_scope_name === selectedScope;
 	}
 
 	/** Check if a slot falls on one of the selected dates */
@@ -154,6 +170,7 @@
 		return data.prompts.filter(
 			(p) =>
 				promptMatchesMode(p) &&
+				promptMatchesScope(p) &&
 				p.available_slots.some(
 					(s) => slotMatchesDate(s, selectedDates) && slotMatchesArea(s, selectedAreas)
 				)
@@ -181,10 +198,15 @@
 		selectedMode = mode;
 	}
 
+	function setScope(scope: string | null) {
+		selectedScope = scope;
+	}
+
 	function clearFilters() {
 		selectedDates = new Set();
 		selectedAreas = new Set();
 		selectedMode = 'all';
+		selectedScope = null;
 	}
 
 	// Reset the BottomSheet selection whenever the filter state changes — otherwise
@@ -193,7 +215,7 @@
 	// into the sheet. Reading the Sets directly tracks identity reassignment
 	// (toggleDate/clearFilters create new Set instances each time).
 	$effect(() => {
-		if (selectedDates && selectedAreas && selectedMode) {
+		if (selectedDates && selectedAreas && selectedMode && selectedScope !== undefined) {
 			selectedPinItems = [];
 		}
 	});
@@ -269,10 +291,14 @@
 		{weekDates}
 		selectedDays={selectedDates}
 		onToggleDay={toggleDate}
-		showDateFilter={true}
 		{selectedMode}
 		onSetMode={setMode}
-		showModeFilter={true}
+		{availableScopes}
+		{selectedScope}
+		onSetScope={setScope}
+		showFilters={true}
+		filtersActive={hasFilters}
+		onClearFilters={clearFilters}
 		onSearchClick={() => searchOpen = true}
 	/>
 </div>
