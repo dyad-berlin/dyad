@@ -93,9 +93,11 @@
 	let mapCenter = $state<[number, number] | null>(null);
 	let mapZoom = $state<number | null>(null);
 
-	export const snapshot: Snapshot<{ center: [number, number] | null; zoom: number | null }> = {
-		capture: () => ({ center: mapCenter, zoom: mapZoom }),
-		restore: (value) => { mapCenter = value.center; mapZoom = value.zoom; }
+	// Persist the list/map choice alongside map position so returning from a
+	// conversation restores the view the member was using, not the map default.
+	export const snapshot: Snapshot<{ center: [number, number] | null; zoom: number | null; view?: 'list' | 'map' }> = {
+		capture: () => ({ center: mapCenter, zoom: mapZoom, view: viewMode }),
+		restore: (value) => { mapCenter = value.center; mapZoom = value.zoom; if (value.view) viewMode = value.view; }
 	};
 	let searchOpen = $state(false);
 	let selectedPinItems = $state<Array<{ prompt: PromptSummary; slots: TimeSlot[] }>>([]);
