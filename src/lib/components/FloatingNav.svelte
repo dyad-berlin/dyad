@@ -36,6 +36,9 @@
 		weekDates = [],
 		selectedDays = new Set<string>(),
 		onToggleDay,
+		availableAreas = [],
+		selectedAreas = new Set<string>(),
+		onToggleArea,
 		selectedMode = 'all',
 		onSetMode,
 		availableScopes = [],
@@ -57,6 +60,9 @@
 		weekDates?: WeekDate[];
 		selectedDays?: Set<string>;
 		onToggleDay?: (date: string) => void;
+		availableAreas?: string[];
+		selectedAreas?: Set<string>;
+		onToggleArea?: (area: string) => void;
 		selectedMode?: 'all' | '1on1' | 'group';
 		onSetMode?: (mode: 'all' | '1on1' | 'group') => void;
 		availableScopes?: string[];
@@ -270,6 +276,22 @@
 			</div>
 		</section>
 
+		{#if availableAreas.length > 0}
+			<section class="filter-section">
+				<div class="filter-eyebrow">{copy.discover.filterWhereLabel}</div>
+				<div class="seg seg-wrap" role="group" aria-label={copy.discover.filterWhereLabel}>
+					{#each availableAreas as area}
+						<button
+							class="seg-btn"
+							class:selected={selectedAreas.has(area)}
+							aria-pressed={selectedAreas.has(area)}
+							onclick={() => onToggleArea?.(area)}
+						>{area}</button>
+					{/each}
+				</div>
+			</section>
+		{/if}
+
 		<section class="filter-section">
 			<div class="filter-eyebrow">{copy.discover.filterTypeLabel}</div>
 			<div class="seg" role="group" aria-label={copy.discover.filterTypeLabel}>
@@ -291,9 +313,14 @@
 			</section>
 		{/if}
 
-		{#if filtersActive}
-			<button class="filter-clear" onclick={() => onClearFilters?.()}>{copy.discover.filterClearAll}</button>
-		{/if}
+		<!-- Always rendered so toggling active state never reflows the sheet. -->
+		<button
+			class="filter-clear"
+			class:is-hidden={!filtersActive}
+			tabindex={filtersActive ? 0 : -1}
+			aria-hidden={!filtersActive}
+			onclick={() => onClearFilters?.()}
+		>{copy.discover.filterClearAll}</button>
 	</div>
 {/if}
 
@@ -509,6 +536,8 @@
 		cursor: pointer;
 	}
 	.filter-clear:hover { color: var(--text-primary); }
+	/* Reserve the box so appearing/disappearing never reflows the sheet. */
+	.filter-clear.is-hidden { visibility: hidden; pointer-events: none; }
 
 	.clear-dates {
 		position: fixed;

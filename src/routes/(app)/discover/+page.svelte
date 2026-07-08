@@ -194,6 +194,13 @@
 		selectedDates = next;
 	}
 
+	function toggleArea(area: string) {
+		const next = new Set(selectedAreas);
+		if (next.has(area)) next.delete(area);
+		else next.add(area);
+		selectedAreas = next;
+	}
+
 	function setMode(mode: 'all' | '1on1' | 'group') {
 		selectedMode = mode;
 	}
@@ -291,6 +298,9 @@
 		{weekDates}
 		selectedDays={selectedDates}
 		onToggleDay={toggleDate}
+		{availableAreas}
+		{selectedAreas}
+		onToggleArea={toggleArea}
 		{selectedMode}
 		onSetMode={setMode}
 		{availableScopes}
