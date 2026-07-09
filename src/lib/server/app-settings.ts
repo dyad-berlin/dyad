@@ -47,6 +47,24 @@ export async function getEmailNotificationsEnabled(): Promise<boolean> {
 	return data?.value === true;
 }
 
+/** Read the safety-reporting feature flag. Defaults to false (absent key or any
+ *  error) so the confidential reporting channel stays OFF until the retention /
+ *  Datenschutz / legal go-live gate (plan U5) is cleared and an operator flips it. */
+export async function getSafetyReportingEnabled(): Promise<boolean> {
+	const admin = makeAdminClient();
+	const { data, error } = await admin
+		.from('app_settings')
+		.select('value')
+		.eq('key', 'safety_reporting_enabled')
+		.maybeSingle();
+
+	if (error) {
+		console.error('[app-settings] read safety_reporting_enabled failed:', error);
+		return false;
+	}
+	return data?.value === true;
+}
+
 /** Set the global notification kill switch. Writes via service-role. Operator
  *  attribution is intentionally not stored — see the comment in the migration. */
 export async function setEmailNotificationsEnabled(enabled: boolean): Promise<void> {
