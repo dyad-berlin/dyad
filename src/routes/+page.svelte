@@ -81,6 +81,7 @@
 
 			<!-- ── Footer (in the left scroll flow) ── -->
 			<footer class="site-footer">
+				<a href="/voices" class="footer-link">{og.footerVoices}</a>
 				<a href="/steward-ownership" class="footer-link">{og.footerOwnership}</a>
 				<a href="/governance" class="footer-link">{og.footerGovernance}</a>
 				<a href="/community-care" class="footer-link">{og.footerCommunityCare}</a>
