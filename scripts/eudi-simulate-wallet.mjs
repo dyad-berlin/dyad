@@ -71,14 +71,20 @@ async function main() {
 		console.log('no POST result; simulation error:', session.simulatedResponse?.error ?? 'unknown');
 		return;
 	}
-	console.log('wallet POST status:', post.status ?? JSON.stringify(post).slice(0, 200));
-	const replyBody = post.body ?? post.data ?? null;
-	const redirect = replyBody && typeof replyBody === 'object' ? replyBody.redirect_uri : null;
-	if (redirect) {
-		console.log('\npresentation accepted. Finish the login by opening:\n\n  ' + redirect + '\n');
+	// Erica relays only the RP response status, not its body, so the
+	// response_code / redirect_uri is not observable from here. A 200 is the
+	// meaningful signal: dyad's respondToWallet returns 200 only when the full
+	// pipeline succeeded (JWE decrypted, SD-JWT VC and KB-JWT verified, status
+	// list checked, claims filtered to the declared set, Upactor mapped,
+	// session created, single-use response_code registered). Any rejection is
+	// a 400/503 with an OAuth error body. The browser-finish leg (redeeming
+	// the response_code at /login/eudi for an app session) needs a real wallet
+	// that follows the redirect; it is covered by the provider unit tests.
+	if (post.success && post.statusCode === 200) {
+		console.log('\npresentation VERIFIED end to end: dyad accepted the wallet presentation (HTTP 200).');
+		console.log('the session + single-use response_code were established server-side.');
 	} else {
-		console.log('wallet reply:', JSON.stringify(replyBody ?? post).slice(0, 400));
-		console.log('(if a redirect_uri is missing above, check the dyad dev server log)');
+		console.log('\npresentation rejected:', JSON.stringify(post).slice(0, 400));
 	}
 }
 

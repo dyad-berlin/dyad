@@ -66,6 +66,7 @@ interface EudiEnvConfig {
 	sessionSecret: string;
 	declaredAttributes: AttributeDeclaration[];
 	allowInsecure: boolean;
+	allowTestIssuerCerts: boolean;
 }
 
 /**
@@ -81,6 +82,9 @@ interface EudiEnvConfig {
  *   EUDI_SESSION_SECRET          HS256 secret for dyad's own session cookie
  *   EUDI_DECLARED_ATTRIBUTES     optional JSON declaration (see default above)
  *   EUDI_ALLOW_INSECURE          '1' allows an http:// base URL — DEV ONLY
+ *   EUDI_TRUST_TEST_ISSUERS      '1' relaxes issuer CA:TRUE for test certs
+ *                                (BMI Erica simulator) — DEV ONLY, independent
+ *                                of EUDI_ALLOW_INSECURE
  *
  * Dev-mode note: in development these paths point at the BMI Erica simulator's
  * fake access certificate/key and the published mock trust lists (see
@@ -130,7 +134,11 @@ function readConfig(): EudiEnvConfig | null {
 		trustAnchorsPath,
 		sessionSecret,
 		declaredAttributes,
-		allowInsecure: env.EUDI_ALLOW_INSECURE === '1'
+		allowInsecure: env.EUDI_ALLOW_INSECURE === '1',
+		// Relaxes the issuer-chain CA:TRUE constraint for test issuer certs
+		// (e.g. BMI Erica's simulator PID). Dev/test only; never in production.
+		// Independent of EUDI_ALLOW_INSECURE, which is only about http:// URLs.
+		allowTestIssuerCerts: env.EUDI_TRUST_TEST_ISSUERS === '1'
 	};
 }
 
@@ -181,7 +189,8 @@ export function getEudiPort(): EudiPort | null {
 		trustAnchors: splitPemCertificates(readFileSync(config.trustAnchorsPath, 'utf8')).map(
 			(certificate, i) => ({ certificate, name: `anchor ${i + 1} (${config.trustAnchorsPath})` })
 		),
-		...(config.allowInsecure ? { allowInsecureRequests: true } : {})
+		...(config.allowInsecure ? { allowInsecureRequests: true } : {}),
+		...(config.allowTestIssuerCerts ? { allowTestIssuerCertificates: true } : {})
 	});
 	return cachedPort;
 }
