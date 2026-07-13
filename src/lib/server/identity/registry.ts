@@ -9,9 +9,10 @@
 
 import type { IdentityProvider } from './types.js';
 import { emberProvider } from './providers/ember.js';
+import { eudiProvider } from './providers/eudi.js';
 
 function configured(): IdentityProvider[] {
-	return [emberProvider()].filter((p): p is IdentityProvider => p !== null);
+	return [emberProvider(), eudiProvider()].filter((p): p is IdentityProvider => p !== null);
 }
 
 export function getProviders(): IdentityProvider[] {

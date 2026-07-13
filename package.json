@@ -64,6 +64,7 @@
 		"@prefig/ember": "file:../prefig/ember",
 		"@prefig/upact": "^0.1.1",
 		"@prefig/upact-ember": "file:../prefig/upact-ember",
+		"@prefig/upact-eudi": "file:../prefig/upact-eudi",
 		"@prefig/upact-supabase": "^0.1.0",
 		"@supabase/ssr": "^0.8.0",
 		"@supabase/supabase-js": "^2.90.1",
