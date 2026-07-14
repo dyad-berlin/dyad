@@ -62,7 +62,7 @@ export const actions: Actions = {
 			// Fail open: redirect even if the substrate is unavailable.
 			// The cookie will expire naturally; the user is effectively logged out.
 		}
-		// Also clear any account-less provider scope session (e.g. ember).
+		// Also clear any account-less provider scope session (e.g. atproto).
 		try {
 			const { getProviders } = await import('$lib/server/identity/index.js');
 			for (const provider of getProviders()) provider.clear(cookies);

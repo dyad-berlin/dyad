@@ -3,8 +3,8 @@
  * import, so it is unit-testable directly (pattern: claims-sign.ts); the
  * env-reading providers are in `eudi.ts` / `atproto.ts`.
  *
- * Why a signed token instead of re-verifying a stored credential (the ember
- * cookie pattern): some substrates leave dyad nothing to re-verify — the EUDI
+ * Why a signed token instead of re-verifying a stored credential cookie:
+ * some substrates leave dyad nothing to re-verify — the EUDI
  * presentation is redeemed exactly once, and the ATProto OAuth session is
  * revoked at establishment because sign-in needs no standing tokens. For those,
  * the app session is dyad's own artifact: a short-lived HS256 token carrying

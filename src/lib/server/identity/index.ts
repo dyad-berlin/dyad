@@ -1,7 +1,7 @@
 /**
  * Substrate-agnostic identity for dyad. Account-less members enter and
  * participate in scopes by presenting a credential to a registered provider;
- * dyad core never names a substrate. ember is one provider (providers/ember.ts).
+ * dyad core never names a substrate. atproto is one provider (providers/atproto.ts).
  */
 
 export type { ScopeSession, IdentityProvider, EstablishResult } from './types.js';

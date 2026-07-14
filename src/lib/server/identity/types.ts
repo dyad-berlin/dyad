@@ -2,7 +2,7 @@
  * Substrate-agnostic identity contracts for dyad.
  *
  * dyad core speaks only these types. It never imports a substrate package and
- * never names a substrate. A specific substrate (ember, OIDC, Supabase, ...)
+ * never names a substrate. A specific substrate (atproto, OIDC, Supabase, ...)
  * appears only as an `IdentityProvider` implementation registered once in
  * `registry.ts`; everything downstream (sessions, corner routes, the claim
  * seam, the data layer) is identical regardless of which provider produced the
@@ -16,7 +16,7 @@ import type { Cookies } from '@sveltejs/kit';
  * to a provider. Re-verified every request, so it lapses on its own schedule.
  */
 export interface ScopeSession {
-	/** Registry id of the provider that issued it, e.g. 'ember'. */
+	/** Registry id of the provider that issued it, e.g. 'atproto'. */
 	provider: string;
 	/** `identities.substrate` tag, for attribution when the member acts. */
 	substrate: string;

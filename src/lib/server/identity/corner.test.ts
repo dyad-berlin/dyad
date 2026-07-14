@@ -30,7 +30,7 @@ function fakeClient(router: Router): SupabaseClient {
 describe('resolveIdentityId (substrate-agnostic)', () => {
 	it('returns an existing identity', async () => {
 		const c = fakeClient(() => ({ data: { id: 'existing' }, error: null }));
-		expect(await resolveIdentityId(c, 'ember', 'abc')).toBe('existing');
+		expect(await resolveIdentityId(c, 'atproto', 'abc')).toBe('existing');
 	});
 
 	it('inserts a row tagged with the given substrate when absent', async () => {

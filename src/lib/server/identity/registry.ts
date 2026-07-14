@@ -8,7 +8,6 @@
  */
 
 import type { IdentityProvider } from './types.js';
-import { emberProvider } from './providers/ember.js';
 import { eudiProvider } from './providers/eudi.js';
 import { atprotoProvider } from './providers/atproto.js';
 
@@ -16,9 +15,7 @@ import { atprotoProvider } from './providers/atproto.js';
 // (readiness for later; the machinery is shared with atproto). A provider with
 // no config resolves to null here and every surface of it 404s.
 function configured(): IdentityProvider[] {
-	return [emberProvider(), eudiProvider(), atprotoProvider()].filter(
-		(p): p is IdentityProvider => p !== null
-	);
+	return [eudiProvider(), atprotoProvider()].filter((p): p is IdentityProvider => p !== null);
 }
 
 export function getProviders(): IdentityProvider[] {

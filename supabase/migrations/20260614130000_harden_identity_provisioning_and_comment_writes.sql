@@ -10,12 +10,12 @@
 --    the dyad server already holds (supabase-admin) and never ships to a client.
 --
 -- 2. "Authors manage own comments" checked only authorship on write, not that
---    the author may see the prompt being commented on. A claim-authorized ember
+--    the author may see the prompt being commented on. A claim-authorized provider
 --    member scoped to corner A could INSERT a comment onto a prompt in corner B
 --    by id. The write check now also requires the target prompt to be visible
 --    to the requester: the EXISTS subquery on `prompts` is itself RLS-filtered
 --    for the authenticated role, so a comment can only be written on a prompt
---    the requester can actually read (scope membership for ember, normal
+--    the requester can actually read (scope membership for provider identities, normal
 --    visibility for a Supabase user).
 
 -- 1. Provisioning is service-role only.

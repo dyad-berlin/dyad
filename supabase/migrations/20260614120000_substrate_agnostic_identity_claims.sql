@@ -2,7 +2,7 @@
 --
 -- Goal: let RLS authorize on a portable identity id and a set of active scopes
 -- carried in the request JWT claims, so any upact substrate (Supabase Auth,
--- ember, OIDC, ...) flows through the same authorization path. The app mints a
+-- atproto, OIDC, ...) flows through the same authorization path. The app mints a
 -- short-lived JWT from the resolved Upactor carrying:
 --    app_identity_id : the identities.id (UUID) to authorize as
 --    app_scopes      : JSON array of scope slugs active for this request
@@ -82,7 +82,7 @@ GRANT EXECUTE ON FUNCTION public.ensure_identity(TEXT, TEXT) TO authenticated, a
 -- 4. Finish the seam: move prompt_comments authorship off raw auth.uid() onto
 -- app.current_user_id() (which now honours the claim). Behaviour is identical
 -- for Supabase users (identities.id mirrors auth.uid()), and now also works for
--- a claim-authorized ember identity.
+-- a claim-authorized provider identity.
 DROP POLICY IF EXISTS "Authors manage own comments" ON prompt_comments;
 CREATE POLICY "Authors manage own comments"
   ON prompt_comments FOR ALL

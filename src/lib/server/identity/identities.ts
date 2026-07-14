@@ -8,7 +8,7 @@
  * when the member *acts* (authoring attributable content), never for mere
  * membership, so there is still no roster.
  *
- * Service-role path only (the privileged fallback when EMBER_RLS_NATIVE is off);
+ * Service-role path only (the privileged fallback when IDENTITY_RLS_NATIVE is off);
  * the RLS-native path provisions via the `ensure_identity` RPC instead.
  */
 

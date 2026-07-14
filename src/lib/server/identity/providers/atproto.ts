@@ -51,9 +51,8 @@ import { makeAdminClient } from '$lib/server/supabase-admin.js';
 const SESSION_COOKIE = 'atproto_session';
 const TOKEN_KIND = 'dyad-atproto-session';
 
-// Ceiling on the app session minted from one sign-in. A week, matching the
-// ember credential-cookie cap: the scope session is guest-tier browsing and
-// re-establishing it is one redirect, so nothing argues for longer.
+// Ceiling on the app session minted from one sign-in. A week: re-establishing
+// is one redirect, so nothing argues for longer.
 const SESSION_CAP_S = 7 * 24 * 60 * 60;
 
 interface AtprotoEnvConfig {

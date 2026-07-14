@@ -154,9 +154,9 @@ type EudiPort = IdentityPort & EudiAdapterExtensions;
 
 // Module-level singleton: the port's transaction store and response codes are
 // closure state that must survive across the requests of one presentation
-// exchange (see file header). Unlike the ember provider — which builds a fresh
-// adapter per call precisely so closure state does NOT leak across requests —
-// the EUDI flow is multi-request by nature.
+// exchange (see file header). Unlike providers that build a fresh adapter per
+// call precisely so closure state does NOT leak across requests, the EUDI
+// flow is multi-request by nature.
 let cachedPort: EudiPort | null = null;
 
 /**
@@ -246,8 +246,8 @@ export function eudiProvider(): IdentityProvider | null {
 			// own per-scope policy (upact-eudi README, "Where EUDI evidence
 			// belongs in an application"). The policy check that decides what
 			// this crossing admits the person to — and what durable thing the
-			// community issues them (an invitation, a membership, an ember
-			// scope credential) — would consume `actor` here. Its id is one-shot
+			// community issues them (an invitation, a membership, a scope
+			// credential) — would consume `actor` here. Its id is one-shot
 			// by design: dyad can never recognise this holder again, so
 			// continuing membership must be dyad's own artifact, not a repeat
 			// presentation. Until that policy exists, the crossing opens only
@@ -276,7 +276,7 @@ export function eudiProvider(): IdentityProvider | null {
 			return { ok: true, session: toScopeSession(config.scope, actor.id, expiresAt) };
 		},
 
-		// Unlike ember there is no credential to re-verify (the presentation
+		// There is no substrate credential to re-verify (the presentation
 		// was one-shot); re-verification here is the signature and expiry of
 		// dyad's own session token.
 		async resolveSession(cookies: Cookies, nowSeconds: number): Promise<ScopeSession | null> {

@@ -12,7 +12,10 @@ import type { RequestHandler } from './$types';
  * a dropped request never silently leaves a member un-onboarded.
  */
 export const POST: RequestHandler = async ({ locals }) => {
-	const { user } = await locals.safeGetSession();
+	// locals.user covers both auth paths: a Supabase session or a provider
+	// identity (claim client). mark_self_onboarded() writes for
+	// app.current_user_id(), which resolves correctly under either.
+	const user = locals.user;
 	if (!user) {
 		return json({ error: 'Not authenticated' }, { status: 401 });
 	}

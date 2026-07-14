@@ -5,10 +5,10 @@
  * claim-injected Supabase client that authorizes as the member's identity with
  * their scopes, plus a minimal synthetic `locals.user` (id only) so the
  * existing app — which reads `locals.user.id` and runs every query through RLS
- * — renders for them unchanged, scoped by the claim. This is what makes ember
- * (or any substrate) a way *into the app*, not a special page.
+ * — renders for them unchanged, scoped by the claim. This is what makes a
+ * provider login (any substrate) a way *into the app*, not a special page.
  *
- * Requires the claim seam: EMBER_RLS_NATIVE=1, the 20260614120000 migration,
+ * Requires the claim seam: IDENTITY_RLS_NATIVE=1, the 20260614120000 migration,
  * and SUPABASE_JWT_SECRET. Returns null when not applicable, so the request
  * simply stays anonymous.
  */
