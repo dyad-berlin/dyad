@@ -1,6 +1,10 @@
 <script lang="ts">
+	import { page } from '$app/stores';
 	import ZineFooter from '$lib/components/ZineFooter.svelte';
 	let { children } = $props();
+
+	// The docs page is a self-contained reference surface; it carries no footer.
+	const showFooter = $derived(!$page.url.pathname.startsWith('/docs'));
 </script>
 
 <div class="zine-shell" data-theme="dark">
@@ -9,6 +13,7 @@
 		<nav class="zine-nav">
 			<a href="/community" class="zine-nav-link">community</a>
 			<a href="/governance" class="zine-nav-link">participatory governance</a>
+			<a href="/docs" class="zine-nav-link">docs</a>
 		</nav>
 		<!-- Mobile: the inline nav is hidden; this disclosure keeps the section
 		     links reachable and in the a11y tree on small screens. -->
@@ -17,6 +22,7 @@
 			<nav class="zine-nav-mobile-links">
 				<a href="/community" class="zine-nav-link">community</a>
 				<a href="/governance" class="zine-nav-link">participatory governance</a>
+				<a href="/docs" class="zine-nav-link">docs</a>
 			</nav>
 		</details>
 	</header>
@@ -25,7 +31,9 @@
 		{@render children()}
 	</main>
 
-	<ZineFooter />
+	{#if showFooter}
+		<ZineFooter />
+	{/if}
 </div>
 
 <style>
@@ -73,6 +81,8 @@
 	}
 
 	/* ── Header ── */
+	/* The sticky header sits above the shell's fixed grain overlays, so it
+	   carries its own moss tint and grain rather than reading as flat black. */
 	.zine-header {
 		position: sticky;
 		top: 0;
@@ -81,9 +91,18 @@
 		align-items: center;
 		justify-content: space-between;
 		padding: 20px 48px;
-		background: var(--zine-bg-translucent);
+		background: rgba(19, 26, 21, 0.92);
 		backdrop-filter: blur(12px);
 		border-bottom: 1px solid var(--zine-hairline);
+	}
+	.zine-header::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+		opacity: 0.09;
+		mix-blend-mode: screen;
+		background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='3'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
 	}
 
 	.zine-wordmark {
