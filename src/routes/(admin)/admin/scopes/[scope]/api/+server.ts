@@ -3,7 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { makeAdminClient } from '$lib/server/supabase-admin';
 import { parseJsonBody } from '$lib/server/parse-body.js';
 import { REGIONS } from '$lib/services/location.js';
-import { resolveIdentityId } from '$lib/server/identity/identities.js';
+import { resolveIdentityId, upsertScopeGrant } from '$lib/server/identity/identities.js';
 import { resolveHandleToDid, memberIdFromDid } from '$lib/server/identity/providers/atproto.js';
 import type { RequestHandler } from './$types';
 
@@ -33,46 +33,16 @@ import type { RequestHandler } from './$types';
  * Lives under /admin/* and is gated by the admin hook in src/hooks.server.ts.
  */
 
-/** Insert a grant, or revive a revoked one. Shared by both POST paths. */
+/** upsertScopeGrant, shaped to this endpoint's JSON responses. */
 async function upsertGrant(supabase: SupabaseClient, identityId: string, scope: string) {
-	const { data: existing } = await supabase
-		.from('identity_scopes')
-		.select('identity_id, revoked_at')
-		.eq('identity_id', identityId)
-		.eq('scope', scope)
-		.maybeSingle();
-
-	if (existing) {
-		// Restoring a revoked grant clears revoked_at but preserves the original
-		// granted_at — the cohort timestamp belongs to the first grant, not the
-		// re-grant.
-		const { error: dbError } = await supabase
-			.from('identity_scopes')
-			.update({ revoked_at: null })
-			.eq('identity_id', identityId)
-			.eq('scope', scope);
-		if (dbError) {
-			console.error('[admin/scopes/[scope]/api] restore grant failed:', dbError.message);
-			return json({ error: 'Failed to grant scope' }, { status: 500 });
-		}
-		return json({ ok: true, restored: true });
-	}
-
-	const { error: dbError } = await supabase.from('identity_scopes').insert({
-		identity_id: identityId,
-		scope,
-		granted_by: null
-	});
-
-	if (dbError) {
-		if (dbError.code === '23503') {
+	const result = await upsertScopeGrant(supabase, identityId, scope);
+	if (!result.ok) {
+		if (result.code === 'not_found') {
 			return json({ error: 'Scope or identity not found' }, { status: 404 });
 		}
-		console.error('[admin/scopes/[scope]/api] grant insert failed:', dbError.message);
 		return json({ error: 'Failed to grant scope' }, { status: 500 });
 	}
-
-	return json({ ok: true });
+	return json(result.restored ? { ok: true, restored: true } : { ok: true });
 }
 
 export const POST: RequestHandler = async ({ params, request }) => {

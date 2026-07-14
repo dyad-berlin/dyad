@@ -2,7 +2,11 @@
 	// ATProto sign-in: a handle form that navigates to the authorize route,
 	// which redirects to the member's own authorization server. The server
 	// sends the browser back to /api/atproto/callback, which establishes the
-	// scope session and lands on /discover. No fetch, no client state.
+	// scope session and lands on /discover.
+	//
+	// A verified-but-not-admitted sign-in can ask to join: the rejection left a
+	// short-lived pending token, and the waitlist endpoint attaches the request
+	// to that proven identity.
 
 	let { data } = $props();
 
@@ -14,6 +18,18 @@
 	const message = data.errorCode
 		? (messages[data.errorCode] ?? 'Sign-in did not complete.')
 		: null;
+
+	let requestState = $state<'idle' | 'sending' | 'sent' | 'failed'>('idle');
+
+	async function askToJoin() {
+		requestState = 'sending';
+		try {
+			const res = await fetch('/api/atproto/waitlist', { method: 'POST' });
+			requestState = res.ok ? 'sent' : 'failed';
+		} catch {
+			requestState = 'failed';
+		}
+	}
 </script>
 
 <svelte:head><title>Enter with Your ATProto Account</title></svelte:head>
@@ -40,6 +56,20 @@
 	</form>
 
 	{#if message}<p class="message">{message}</p>{/if}
+
+	{#if data.errorCode === 'not_admitted'}
+		{#if requestState === 'sent'}
+			<p class="lede">Request sent. Sign in again once it is approved.</p>
+		{:else}
+			<p class="ask">
+				<button onclick={askToJoin} disabled={requestState === 'sending'}>ask to join</button>
+			</p>
+			{#if requestState === 'failed'}
+				<p class="message">The request did not go through. Sign in again, then retry.</p>
+			{/if}
+		{/if}
+	{/if}
+
 	<p class="alt"><a href="/login">Use email instead</a></p>
 </main>
 
@@ -58,5 +88,6 @@
 	input::placeholder { color: var(--text-muted); }
 	button { cursor: pointer; padding: var(--space-2) var(--space-3); }
 	.message { color: var(--color-danger); }
+	.ask { margin-top: var(--space-4); }
 	.alt { margin-top: var(--space-6); }
 </style>

@@ -51,6 +51,13 @@ import { makeAdminClient } from '$lib/server/supabase-admin.js';
 const SESSION_COOKIE = 'atproto_session';
 const TOKEN_KIND = 'dyad-atproto-session';
 
+// A rejected-but-verified sign-in leaves this short-lived token so the person
+// can ask to join; the waitlist endpoint verifies it instead of trusting a
+// caller-supplied handle. Its own kind: it can never pass as a session.
+const PENDING_COOKIE = 'atproto_pending';
+const PENDING_KIND = 'dyad-atproto-pending';
+const PENDING_TTL_S = 15 * 60;
+
 // Ceiling on the app session minted from one sign-in. A week: re-establishing
 // is one redirect, so nothing argues for longer.
 const SESSION_CAP_S = 7 * 24 * 60 * 60;
@@ -152,11 +159,13 @@ function getClient(): NodeOAuthClient | null {
 /**
  * Resolves a member-entered handle (or DID) to their authorization server and
  * returns the URL to send the browser to. Called by /api/atproto/authorize.
+ * The handle rides along as OAuth state (server-bound to this flow by the
+ * client's state store) so establish() can label a join request with it.
  */
 export async function beginAuthorization(handle: string): Promise<URL | null> {
 	const client = getClient();
 	if (!client) return null;
-	return client.authorize(handle, { scope: 'atproto' });
+	return client.authorize(handle, { scope: 'atproto', state: handle });
 }
 
 /**
@@ -205,6 +214,29 @@ function toScopeSession(scope: string, memberId: string, expiresAt: number): Sco
 	return { provider: 'atproto', substrate: 'atproto', scope, memberId, expiresAt };
 }
 
+/**
+ * The verified pending identity from a rejected sign-in, or null. Consumed by
+ * the waitlist endpoint: the token proves the visitor controlled the DID
+ * minutes ago, so the join request records identity that was demonstrated,
+ * not asserted.
+ */
+export async function readPendingIdentity(
+	cookies: Cookies,
+	nowSeconds: number
+): Promise<{ memberId: string; scope: string; handle: string | null } | null> {
+	const config = readConfig();
+	if (!config) return null;
+	const token = cookies.get(PENDING_COOKIE);
+	if (!token) return null;
+	const claims = await verifySessionToken(PENDING_KIND, config.sessionSecret, token, nowSeconds);
+	if (!claims) return null;
+	return { memberId: claims.memberId, scope: claims.scope, handle: claims.hint ?? null };
+}
+
+export function clearPendingIdentity(cookies: Cookies): void {
+	cookies.delete(PENDING_COOKIE, { path: '/' });
+}
+
 /** Construct the ATProto provider, or null if this deployment has not configured it. */
 export function atprotoProvider(): IdentityProvider | null {
 	const config = readConfig();
@@ -241,9 +273,11 @@ export function atprotoProvider(): IdentityProvider | null {
 			}
 
 			let did: string;
+			let enteredHandle: string | null = null;
 			try {
-				const { session } = await client.callback(params);
+				const { session, state } = await client.callback(params);
 				did = session.did;
+				enteredHandle = typeof state === 'string' && state.length <= 253 ? state : null;
 				// Best-effort revocation: the tokens have served their purpose.
 				await session.signOut().catch(() => {});
 			} catch (e) {
@@ -256,10 +290,26 @@ export function atprotoProvider(): IdentityProvider | null {
 			// dyad still takes the invite/waitlist route; what that route leaves
 			// behind is a durable identity_scopes grant, and only its holder gets
 			// a session. No identity row is provisioned here (no roster of
-			// visitors who merely tried).
+			// visitors who merely tried). What a rejected sign-in DOES leave is a
+			// short-lived pending token, so the person can ask to join: the token
+			// is the proof-of-control their join request is verified by.
 			const memberId = await memberIdFromDid(did);
 			const admitted = await hasScopeGrant(makeAdminClient(), 'atproto', memberId, config.scope);
 			if (!admitted) {
+				const pendingExpiry = Math.floor(Date.now() / 1000) + PENDING_TTL_S;
+				const pending = await signSessionToken(PENDING_KIND, config.sessionSecret, {
+					memberId,
+					scope: config.scope,
+					expiresAt: pendingExpiry,
+					...(enteredHandle ? { hint: enteredHandle } : {})
+				});
+				cookies.set(PENDING_COOKIE, pending, {
+					path: '/',
+					httpOnly: true,
+					sameSite: 'lax',
+					secure: !dev,
+					maxAge: PENDING_TTL_S
+				});
 				return { ok: false, status: 403, code: 'not_admitted', message: 'no dyad membership is linked to this identity' };
 			}
 

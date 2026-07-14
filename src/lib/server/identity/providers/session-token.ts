@@ -25,6 +25,12 @@ export interface SessionTokenClaims {
 	scope: string;
 	/** Seconds (UNIX epoch). The session lapses at this instant. */
 	expiresAt: number;
+	/**
+	 * Optional public label carried alongside the id (e.g. the atproto handle
+	 * on a pending-identity token, so a join request can show it). Public
+	 * identifiers only; never a contact attribute.
+	 */
+	hint?: string;
 }
 
 export async function signSessionToken(
@@ -33,7 +39,7 @@ export async function signSessionToken(
 	claims: SessionTokenClaims
 ): Promise<string> {
 	if (!secret) throw new Error('a session secret is required to mint a session token');
-	return new SignJWT({ kind, scope: claims.scope })
+	return new SignJWT({ kind, scope: claims.scope, ...(claims.hint ? { hint: claims.hint } : {}) })
 		.setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
 		.setSubject(claims.memberId)
 		.setIssuedAt()
@@ -61,7 +67,14 @@ export async function verifySessionToken(
 		if (typeof payload.sub !== 'string' || payload.sub.length === 0) return null;
 		if (typeof payload.scope !== 'string' || payload.scope.length === 0) return null;
 		if (typeof payload.exp !== 'number') return null;
-		return { memberId: payload.sub, scope: payload.scope, expiresAt: payload.exp };
+		return {
+			memberId: payload.sub,
+			scope: payload.scope,
+			expiresAt: payload.exp,
+			...(typeof payload.hint === 'string' && payload.hint.length > 0
+				? { hint: payload.hint }
+				: {})
+		};
 	} catch {
 		return null;
 	}

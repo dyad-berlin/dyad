@@ -46,6 +46,52 @@ export async function hasScopeGrant(
 	return Boolean(grant.data);
 }
 
+export type GrantResult =
+	| { ok: true; restored: boolean }
+	| { ok: false; code: 'not_found' | 'error' };
+
+/**
+ * Insert an identity_scopes grant, or revive a revoked one. Restoring clears
+ * revoked_at but preserves the original granted_at: the cohort timestamp
+ * belongs to the first grant, not the re-grant. Shared by the admin grant
+ * paths (by username, by handle, waitlist approval).
+ */
+export async function upsertScopeGrant(
+	service: SupabaseClient,
+	identityId: string,
+	scope: string
+): Promise<GrantResult> {
+	const { data: existing } = await service
+		.from('identity_scopes')
+		.select('identity_id, revoked_at')
+		.eq('identity_id', identityId)
+		.eq('scope', scope)
+		.maybeSingle();
+
+	if (existing) {
+		const { error } = await service
+			.from('identity_scopes')
+			.update({ revoked_at: null })
+			.eq('identity_id', identityId)
+			.eq('scope', scope);
+		if (error) {
+			console.error('[identity] restore grant failed:', error.message);
+			return { ok: false, code: 'error' };
+		}
+		return { ok: true, restored: true };
+	}
+
+	const { error } = await service
+		.from('identity_scopes')
+		.insert({ identity_id: identityId, scope, granted_by: null });
+	if (error) {
+		if (error.code === '23503') return { ok: false, code: 'not_found' };
+		console.error('[identity] grant insert failed:', error.message);
+		return { ok: false, code: 'error' };
+	}
+	return { ok: true, restored: false };
+}
+
 export async function resolveIdentityId(
 	service: SupabaseClient,
 	substrate: string,
