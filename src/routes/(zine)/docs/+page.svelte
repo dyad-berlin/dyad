@@ -51,14 +51,15 @@
 
 <div class="docs">
 	<aside class="side">
+		<a href="/" class="side-wordmark">DYAD</a>
 		<nav aria-label="Documentation">
 			<button class="side-link side-top" class:active={active === 'start'} onclick={() => select('start')}>Documentation</button>
 
 			<p class="side-head">About</p>
 			<button class="side-link" class:active={active === 'about-why'} onclick={() => select('about-why')}>Our origin story</button>
 			<button class="side-link" class:active={active === 'about-community'} onclick={() => select('about-community')}>Community</button>
-			<button class="side-link" class:active={active === 'about-governance'} onclick={() => select('about-governance')}>Participatory governance</button>
-			<button class="side-link" class:active={active === 'about-care'} onclick={() => select('about-care')}>Trust, safety &amp; care</button>
+			<button class="side-link" class:active={active === 'about-governance'} onclick={() => select('about-governance')}>Governance</button>
+			<button class="side-link" class:active={active === 'about-care'} onclick={() => select('about-care')}>Community care</button>
 
 			<p class="side-head">Governing documents</p>
 			<button class="side-link" class:active={active === 'bylaws'} onclick={() => select('bylaws')}>Bylaws</button>
@@ -121,7 +122,7 @@
 		{:else if active === 'about-governance'}
 			<section>
 				<p class="doc-kicker">About</p>
-				<h2>Participatory governance</h2>
+				<h2>Governance</h2>
 				<p>Online spaces have become places we live in, but not places we govern. Rules change without participation, moderation happens behind closed doors, and the people most affected rarely shape decisions. dyad does it differently, and it starts small enough to actually do it.</p>
 				<h3>How we practice</h3>
 				<p>We begin with the least governance that is real: four practices, running from day one.</p>
@@ -145,7 +146,7 @@
 		{:else if active === 'about-care'}
 			<section>
 				<p class="doc-kicker">About</p>
-				<h2>Trust, safety &amp; community care</h2>
+				<h2>Community care</h2>
 
 				<h3>Holding space online</h3>
 				<p>The exhaustion, hostility, harm, and erosion of trust we have experienced and witnessed online are not abstract to us. They have been foundational parts of why Dyad exists.</p>
@@ -410,9 +411,19 @@
 		border-right: 1px solid rgba(240, 236, 230, 0.08);
 		padding-right: 32px;
 	}
+	.side-wordmark {
+		display: block;
+		font-family: var(--font-serif);
+		font-size: 18px;
+		font-weight: 700;
+		letter-spacing: 0.08em;
+		color: rgba(240, 236, 230, 0.9);
+		text-decoration: none;
+		margin: 0 0 28px;
+	}
 	.side nav {
 		position: sticky;
-		top: 96px;
+		top: 32px;
 		display: flex;
 		flex-direction: column;
 		align-items: flex-start;

@@ -3,11 +3,13 @@
 	import ZineFooter from '$lib/components/ZineFooter.svelte';
 	let { children } = $props();
 
-	// The docs page is a self-contained reference surface; it carries no footer.
-	const showFooter = $derived(!$page.url.pathname.startsWith('/docs'));
+	// The docs page is a self-contained reference surface; it carries neither
+	// the zine header nor the footer (its own sidebar holds the wordmark).
+	const isDocs = $derived($page.url.pathname.startsWith('/docs'));
 </script>
 
 <div class="zine-shell" data-theme="dark">
+	{#if !isDocs}
 	<header class="zine-header">
 		<a href="/" class="zine-wordmark">DYAD</a>
 		<nav class="zine-nav">
@@ -26,12 +28,13 @@
 			</nav>
 		</details>
 	</header>
+	{/if}
 
 	<main class="zine-main">
 		{@render children()}
 	</main>
 
-	{#if showFooter}
+	{#if !isDocs}
 		<ZineFooter />
 	{/if}
 </div>
