@@ -29,18 +29,18 @@
 </main>
 
 <style>
-	.enter { max-width: 32rem; margin: 2rem auto; padding: 1.5rem; }
-	.lede { color: #44403c; }
-	form { display: flex; gap: 0.5rem; margin-top: 1.25rem; }
+	.enter { max-width: 32rem; margin: 2rem auto; padding: var(--space-6); }
+	.lede { color: var(--text-secondary); }
+	form { display: flex; gap: var(--space-2); margin-top: var(--space-5); }
 	input {
 		flex: 1;
-		padding: 0.5rem 0.75rem;
-		background: #fff;
-		color: #1c1917;
-		border: 1px solid #d6d3d1;
-		border-radius: 6px;
+		padding: var(--space-2) var(--space-3);
+		background: var(--bg-canvas);
+		color: var(--text-primary);
+		border: 1px solid var(--border-link);
+		border-radius: var(--radius-input);
 	}
-	input::placeholder { color: #78716c; }
-	button { cursor: pointer; padding: 0.5rem 0.9rem; }
-	.message { color: #c2410c; }
+	input::placeholder { color: var(--text-muted); }
+	button { cursor: pointer; padding: var(--space-2) var(--space-3); }
+	.message { color: var(--color-danger); }
 </style>

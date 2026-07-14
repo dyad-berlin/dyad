@@ -61,17 +61,17 @@
 	});
 </script>
 
-<svelte:head><title>Enter with your EUDI wallet</title></svelte:head>
+<svelte:head><title>Enter with Your EUDI Wallet</title></svelte:head>
 
 <main class="enter">
-	<h1>Enter with your EUDI wallet</h1>
+	<h1>Enter with Your EUDI Wallet</h1>
 
 	{#if finishing}
 		<p class="lede">Checking your presentation…</p>
 	{:else}
 		<p class="lede">
 			No email, no password, no account. Your wallet proves you hold a valid
-			PID and discloses nothing else — no name, no birthdate, no identifier
+			PID and discloses nothing else: no name, no birthdate, no identifier
 			dyad could recognise you by next time. The proof admits you once; what
 			you enter is a scope session that lapses on its own.
 		</p>
@@ -96,12 +96,12 @@
 </main>
 
 <style>
-	.enter { max-width: 32rem; margin: 2rem auto; padding: 1.5rem; }
-	.lede { color: #44403c; }
-	.steps { display: grid; gap: 1.25rem; padding-left: 1rem; }
-	.hint { color: #78716c; }
-	button { cursor: pointer; padding: 0.5rem 0.9rem; }
-	a.wallet { display: inline-block; background: #1d4ed8; color: white; border-radius: 6px; padding: 0.5rem 0.9rem; text-decoration: none; }
-	.message { color: #c2410c; }
-	.alt { margin-top: 1.5rem; }
+	.enter { max-width: 32rem; margin: 2rem auto; padding: var(--space-6); }
+	.lede { color: var(--text-secondary); }
+	.steps { display: grid; gap: var(--space-5); padding-left: var(--space-4); }
+	.hint { color: var(--text-muted); }
+	button { cursor: pointer; padding: var(--space-2) var(--space-3); }
+	a.wallet { display: inline-block; background: var(--color-accent); color: var(--bg-canvas); border-radius: var(--radius-input); padding: var(--space-2) var(--space-3); text-decoration: none; }
+	.message { color: var(--color-danger); }
+	.alt { margin-top: var(--space-6); }
 </style>
