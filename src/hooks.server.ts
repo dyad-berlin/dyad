@@ -152,6 +152,28 @@ export const handle: Handle = async ({ event, resolve }) => {
 			event.locals.supabase = appIdentity.client;
 			event.locals.user = appIdentity.user;
 			event.locals.upactor = appIdentity.upactor;
+
+			// Admission is not joining. An invited identity can sign in, but the
+			// app opens only once they have created an account (a profiles row,
+			// chosen at /welcome). Gate page navigations; leave /api and assets
+			// reachable so the welcome page itself works.
+			const path = event.url.pathname;
+			const exempt =
+				path === '/welcome' ||
+				path.startsWith('/logout') ||
+				path.startsWith('/api/') ||
+				path.startsWith('/_app/') ||
+				path.includes('.');
+			if (!exempt && event.request.method === 'GET') {
+				const { data: profile } = await appIdentity.client
+					.from('profiles')
+					.select('id')
+					.eq('id', appIdentity.user.id)
+					.maybeSingle();
+				if (!profile) {
+					return new Response(null, { status: 302, headers: { Location: '/welcome' } });
+				}
+			}
 		}
 	}
 
