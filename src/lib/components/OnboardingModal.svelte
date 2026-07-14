@@ -1,5 +1,9 @@
 <script lang="ts">
+	import { copy } from '$lib/copy';
+
 	let { onDone, username = '' }: { onDone: () => void; username?: string } = $props();
+
+	const c = copy.onboarding;
 
 	let step = $state(0);
 	const totalSteps = 4;
@@ -30,17 +34,20 @@
 
 		{#if step === 0}
 			<div class="content">
-				<h2 id="onboarding-title">Hey{username ? ` ${username}` : ''}, welcome in.</h2>
-				<p>This is a place on the web<br>to find people to talk to, in person.<br><br>We don't believe the internet replaces conversation. We use it to begin one.<br><br>You bring a conversation, a thought. We surface others who share what you think, or have been where you are.</p>
+				<h2 id="onboarding-title">{c.welcomeHeading(username)}</h2>
+				{#each c.welcomeBody as paragraph (paragraph)}
+					<p>{paragraph}</p>
+				{/each}
 			</div>
 			<div class="actions">
-				<button class="cta-btn" onclick={next}>How does it work?</button>
-				<button class="skip-btn" onclick={skip}>Skip</button>
+				<button class="cta-btn" onclick={next}>{c.welcomeCta}</button>
+				<button class="skip-btn" onclick={skip}>{c.skip}</button>
 			</div>
 
 		{:else if step === 1}
 			<div class="content">
-				<h2 id="onboarding-title">Start online.</h2>
+				<h2 id="onboarding-title">{c.howHeading}</h2>
+				<p>{c.howIntro}</p>
 				<!-- Path 1: start your own -->
 				<div class="how-block">
 					<div class="how-row">
@@ -49,12 +56,12 @@
 								<path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
 							</svg>
 						</div>
-						<p class="how-heading">Create a conversation</p>
+						<p class="how-heading">{c.howCreateHeading}</p>
 					</div>
-					<p class="how-caption">Something's been on your mind. Write it down. There's someone else thinking about it too.</p>
+					<p class="how-caption">{c.howCreateCaption}</p>
 				</div>
 
-				<div class="divider-or">or</div>
+				<div class="divider-or">{c.howOr}</div>
 
 				<!-- Path 2: respond to someone's conversation -->
 				<div class="how-block">
@@ -65,34 +72,38 @@
 								<path d="M14 14l4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
 							</svg>
 						</div>
-						<p class="how-heading">Join one</p>
+						<p class="how-heading">{c.howJoinHeading}</p>
 					</div>
-					<p class="how-caption">Someone else has already started a conversation. Read it. Share your perspective.</p>
+					<p class="how-caption">{c.howJoinCaption}</p>
 				</div>
 			</div>
 			<div class="actions">
-				<button class="cta-btn" onclick={next}>Got it</button>
-				<button class="skip-btn" onclick={skip}>Skip</button>
+				<button class="cta-btn" onclick={next}>{c.howCta}</button>
+				<button class="skip-btn" onclick={skip}>{c.skip}</button>
 			</div>
 
 		{:else if step === 2}
 			<div class="content">
-				<h2 id="onboarding-title">Take it offline.</h2>
-				<p>You find people you want to meet<br>around what matters to you, and meet them here and now.</p>
-				<p>We use the internet for its original intentions, to connect and share.</p>
+				<h2 id="onboarding-title">{c.offlineHeading}</h2>
+				{#each c.offlineBody as paragraph (paragraph)}
+					<p>{paragraph}</p>
+				{/each}
 			</div>
 			<div class="actions">
-				<button class="cta-btn" onclick={next}>Got it</button>
-				<button class="skip-btn" onclick={skip}>Skip</button>
+				<button class="cta-btn" onclick={next}>{c.offlineCta}</button>
+				<button class="skip-btn" onclick={skip}>{c.skip}</button>
 			</div>
 
 		{:else}
 			<div class="content">
-				<h2 id="onboarding-title">Your move.</h2>
+				<h2 id="onboarding-title">{c.yoursHeading}</h2>
+				{#each c.yoursBody as paragraph (paragraph)}
+					<p>{paragraph}</p>
+				{/each}
 			</div>
 			<div class="actions">
-				<a href="/conversations/new" class="cta-btn" onclick={finish}>Start a conversation</a>
-				<button class="secondary-btn" onclick={finish}>Explore</button>
+				<a href="/membership" class="cta-btn" onclick={finish}>{c.yoursCtaMember}</a>
+				<button class="secondary-btn" onclick={finish}>{c.yoursCtaExplore}</button>
 			</div>
 		{/if}
 	</div>

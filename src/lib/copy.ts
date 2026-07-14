@@ -53,7 +53,7 @@ export const copy = {
 		back: 'Back',
 		cancel: 'Cancel',
 		close: 'Close',
-		notNow: 'Not now',
+		notNow: 'not now — keep looking around',
 		accept: 'Accept',
 		accepting: 'Accepting…',
 		loading: 'Loading…',
@@ -87,6 +87,49 @@ export const copy = {
 		startConversation: 'start a conversation',
 	},
 
+	// ── Onboarding ─────────────────────────────────────────────────────
+	onboarding: {
+		_routes: ['/discover'],
+		_description:
+			'The 4-step welcome modal shown once on the discover page. Voice: the founders speaking plainly about what dyad is, who builds it, and how the member shapes it.',
+		welcomeHeading: (username: string) => `Hey${username ? ` ${username}` : ''}, welcome in.`,
+		welcomeBody: [
+			'This is a place on the web to find people to talk to, in person.',
+			'We don’t believe the internet replaces conversation. We use it to begin one.',
+			'A small team builds dyad, voluntarily so far, because we care about how people meet: chosen, unhurried, face to face, on your own terms.'
+		],
+		welcomeCta: 'How does it work?',
+
+		howHeading: 'Discover.',
+		howIntro:
+			'Discover is where the conversations people in your city want to have live. Explore them in map or list view.',
+		howCreateHeading: 'Create a conversation',
+		howCreateCaption:
+			'Something’s been on your mind. Write it down. There’s someone else thinking about it too.',
+		howOr: 'or',
+		howJoinHeading: 'Join one',
+		howJoinCaption:
+			'Read it, respond with your perspective. Responding first is how joining begins — the invitation follows.',
+		howCta: 'Got it',
+
+		offlineHeading: 'Meet, in person.',
+		offlineBody: [
+			'Once an invitation is confirmed, you receive the details you need — where, when, and who.',
+			'Plans change; you can cancel up to 12 hours before the meeting.'
+		],
+		offlineCta: 'Got it',
+
+		yoursHeading: 'Thank you for being part of the journey at its early, bumpy stage.',
+		yoursBody: [
+			'dyad is co-designed with the people in it — you shape the rules, the program and the culture with us, and take part in decision-making in the Assembly.',
+			'If it resonates, consider supporting us as a member. It keeps dyad independent and ad-free.',
+			'Welcome in.'
+		],
+		yoursCtaMember: 'Become a member',
+		yoursCtaExplore: 'Explore',
+		skip: 'Skip'
+	},
+
 	// ── Landing page ───────────────────────────────────────────────────
 	landing: {
 		_routes: ['/'],
@@ -100,7 +143,7 @@ export const copy = {
 		// Footer links (left column). The legal-notice link is labelled
 		// "Impressum" — the page at /impressum is a legal notice, not terms
 		// of service, and German visitors look for it by that name.
-		footerOwnership: 'Ownership',
+		footerCommunity: 'Community',
 		footerGovernance: 'Governance',
 		footerCommunityCare: 'Community care',
 		footerImpressum: 'Impressum',
@@ -110,8 +153,10 @@ export const copy = {
 		// intentional brand styling — see CLAUDE.md § UI conventions).
 		headlineLine1: 'Collectively owned',
 		headlineLine2: 'offline social network',
+		// "Steward-owned" removed 2026-07-14 — dyad is not yet steward-owned.
+		// The archived ownership page lives at src/lib/archive/StewardOwnershipPage.svelte.
 		subcopy:
-			'A place online to find conversations, people and communities offline. Open source. Steward-owned. Governed by the communities who use it.',
+			'A place online to find conversations, people and communities offline. Open source. Governed by the communities who use it.',
 		// CTA on the map card that floats over a selected conversation.
 		mapCardCta: 'Join to read & meet',
 		// ZineFooter colophon. Centralized here so the edition/date is config,
@@ -494,7 +539,7 @@ export const copy = {
 		joinWaitlist: 'Join the waitlist',
 		joinWaitlistButton: 'Join waitlist',
 		sendingWaitlist: 'Sending…',
-		whatsOnYourMind: 'Dyad is a curated network of people who see conversation as one of the few spaces left that celebrate our differences as an asset. Why do you want more or other conversations in your life?',
+		whatsOnYourMind: 'dyad is an offline network for conversations — for people who want a direct way to meet each other, in an environment built by a team that cares about human development and flourishing. Why do you want to join us?',
 		thoughtPlaceholder: "What’s in a conversation?",
 		city: 'City',
 		cityPlaceholder: 'Berlin',
@@ -511,7 +556,7 @@ export const copy = {
 			{ value: 'newsletter', label: 'Newsletter' },
 			{ value: 'other', label: 'Other' }
 		],
-		referralSelectPlaceholder: 'Pick one (optional)',
+		referralSelectPlaceholder: 'Pick one',
 		referralOtherPlaceholder: 'Tell us where',
 		// Newsletter: the opt-in happens ON Substack (they are the controller —
 		// see 20260417110000_drop_newsletter_subscribers). We hold nothing.
@@ -523,6 +568,10 @@ export const copy = {
 		pageTitle: 'join · dyad. cultivating a culture of conversation',
 		heading: 'Request to join',
 		subtitle: 'For those who seek conversation for its own sake and meet others with humility, critical thinking and deep listening.',
+		// The acceptance intent, stated where the friction happens. Alignment
+		// with community standards — never identity. Membership ≠ paying.
+		intentNote:
+			'Why we ask: no community is for everyone, and this one is for people curious about others — people who understand and respect the interdependencies that make our lives rich. We read every request for alignment with our community standards: what you value, never who you are.',
 		successMessage: "Thank you. We’ll be in touch.",
 		freewriteLabel: 'Why do you want to join?',
 		freewritePlaceholder: "What’s in a conversation?",
@@ -531,6 +580,8 @@ export const copy = {
 		sending: 'Sending…',
 		submitCta: 'Request to join',
 		freewriteRequired: 'Please share your thoughts before joining.',
+		// Every field on the request form is required — the ask is small and deliberate.
+		allRequired: 'Please answer every field — each one helps us welcome you well.',
 		genericError: 'Something went wrong',
 	},
 
@@ -676,9 +727,17 @@ export const copy = {
 		// Accessible name for the paywall modal dialog (screen readers).
 		dialogLabel: 'Membership',
 
-		guestHeading: 'Become a Member',
+		guestHeading: 'Join Us as a Member',
 		guestIntro:
-			'Membership keeps dyad collectively owned and ad-free. Choose the plan that feels right.',
+			'dyad is built by a small team working voluntarily, because we believe people who seek to meet others should be able to do it their way — in a place designed with them, not just for them. Membership keeps this work independent and opens everything members do. You are welcome to look around without paying.',
+		// The fuller invitation, shown on the /membership page only (the modal
+		// stays compact). Written in the founders' voice: what is true, plainly.
+		pageStory: [
+			'We have been building dyad voluntarily — alongside our jobs, out of our own pockets — because we feel passionate about a way of meeting each other that we could not find anywhere: chosen, unhurried, in person, on your own terms.',
+			'We care about doing this participatorily. The people who use dyad shape its rules, its program and its culture with us. We care about human development and flourishing, and we try to build like it.',
+			'We do not ask for trust; we work to earn it — by staying in service to connection, collective sensemaking and community, and by keeping dyad independent: no ads, no data sales, nobody to answer to but the people in the room.',
+			'Membership is how this stays possible. And if paying is not right for you now, you are still welcome to be here.'
+		],
 		lapsedHeading: 'Renew Your Membership',
 		lapsedIntro:
 			'Your membership has lapsed, so the member-only actions are paused for now. Renewing turns them back on. Everything you have already made stays exactly as it is, and you can stop anytime.',
@@ -689,7 +748,7 @@ export const copy = {
 		cadenceMonthly: 'Monthly',
 		cadenceAnnual: 'Yearly',
 		cadenceLifetime: 'Lifetime',
-		cadenceMonthlyPrice: '€12',
+		cadenceMonthlyPrice: '€15',
 		cadenceMonthlyPeriod: 'per month',
 		cadenceAnnualPrice: '€100',
 		cadenceAnnualPeriod: 'per year',
@@ -699,12 +758,12 @@ export const copy = {
 		tierAriaLabel: 'Contribution tier',
 		tierPrompt: 'Choose a tier',
 		monthlySolidarityName: 'Solidarity',
-		monthlySolidarityPrice: '€7',
+		monthlySolidarityPrice: '€5',
 		monthlySolidarityNote: 'A lower rate.',
 		monthlyStandardName: 'Standard',
 		monthlyStandardNote: 'Covers what a membership costs.',
 		monthlySupporterName: 'Supporter',
-		monthlySupporterPrice: '€17',
+		monthlySupporterPrice: '€25',
 		monthlySupporterNote: 'A higher rate that helps fund the lower one.',
 		becomeMemberCta: 'become a member',
 		// Membership is currently open to people based in Berlin. Self-declared at
@@ -719,7 +778,7 @@ export const copy = {
 			'Start your own conversations',
 			'Respond and meet one-on-one',
 			'Join every group conversation',
-			'Keep dyad collectively owned and ad-free'
+			'Keep dyad independent, ad-free, and answerable to its members'
 		],
 		continueCta: 'continue to payment',
 		continuing: 'taking you to payment…',
@@ -756,7 +815,7 @@ export const copy = {
 		waitlistSubject: "What’s in a conversation?",
 		membershipActivatedSubject: 'Your membership is active',
 		membershipActivatedBody:
-			'Thank you for becoming a member. Your membership is active. It keeps dyad collectively owned and ad-free, and it’s what lets you start conversations, respond, and meet. You can review or manage it any time.',
+			'Thank you for joining us as a member. Your membership is active. We build dyad to stay independent and in service to connection, collective sensemaking and community — your membership is what makes that possible, and it’s what lets you start conversations, respond, and meet. You can review or manage it any time.',
 		// Lapsed / renewal reminder — COPY ONLY; no dispatcher wired yet (backend).
 		membershipLapsedSubject: 'Your dyad membership has lapsed',
 		membershipLapsedBody:
