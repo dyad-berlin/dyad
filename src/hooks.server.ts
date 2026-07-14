@@ -114,13 +114,6 @@ export const handle: Handle = async ({ event, resolve }) => {
 		return { session, user };
 	};
 
-	// TODO (Phase E): replace safeGetSession() with identityPort.currentUpactor(event.request)
-	// so per-request identity resolves through the port rather than calling Supabase Auth
-	// directly. Requires: (1) locals.upactor: Upactor | null added to App.Locals,
-	// (2) feedback gate uses upactor.id.
-	const { session, user } = await event.locals.safeGetSession();
-	event.locals.session = session;
-	event.locals.user = user;
 	event.locals.homeScope = null;
 	event.locals.homeRegion = null;
 	event.locals.accessExpiresAt = null;
@@ -134,33 +127,33 @@ export const handle: Handle = async ({ event, resolve }) => {
 	// present). Substrate-agnostic: dyad core names no substrate here. Sessions
 	// lapse with their credential and are stored in no identity_scopes row.
 	// See src/lib/server/identity.
-	const { loadScopeSessions, buildAppIdentity } = await import('$lib/server/identity/index.js');
+	const { loadScopeSessions, resolvePrincipal } = await import('$lib/server/identity/index.js');
 	const ephemeral = await loadScopeSessions(event.cookies, Math.floor(Date.now() / 1000));
 	event.locals.scopes = [...ephemeral.scopes];
 	event.locals.scopeSessions = ephemeral.sessions;
 	event.locals.upactor = null;
 
-	// Account-less app access: a visitor with a provider scope session but no
-	// Supabase account is authorized through the whole app as their identity,
-	// via a claim-injected client (RLS sees their identity + scopes). This is
-	// what makes a provider login a way *into the app*. Gated on the claim seam;
-	// a no-op (visitor stays anonymous) when the flag/migration are absent, and
-	// never touches the logged-in Supabase path (guarded on `!user`).
-	if (!user && ephemeral.sessions.length > 0) {
-		const appIdentity = await buildAppIdentity(ephemeral.sessions);
-		if (appIdentity) {
-			event.locals.supabase = appIdentity.client;
-			event.locals.user = appIdentity.user;
-			event.locals.upactor = appIdentity.upactor;
+	// One resolution, whatever the substrate: Supabase Auth is substrate zero,
+	// registry providers follow, first match wins. Everything downstream —
+	// locals.user, the access and feedback gates, services — keys on the
+	// resolved principal and never asks which substrate produced it. A
+	// Supabase principal keeps its native client and JWT; a provider principal
+	// runs on a claim-injected client (RLS sees its identity + scopes).
+	const resolved = await resolvePrincipal(event, ephemeral.sessions);
+	event.locals.session = resolved?.session ?? null;
+	event.locals.user = resolved?.principal.user ?? null;
+	if (resolved) {
+		event.locals.supabase = resolved.principal.client;
+		event.locals.upactor = resolved.principal.upactor;
 
-			// Admission is not joining. An invited identity holds a session, but
-			// the app stays closed until they create an account (a profiles row,
-			// chosen at /welcome). This is the one place a profile-less
-			// authenticated request can exist: Supabase users get a profile
-			// atomically via the handle_new_user trigger, so the rest of the app
-			// assumes authenticated implies a profile. Enforcing it here keeps
-			// that invariant whole, including for /api mutations, instead of
-			// re-checking in every handler.
+		// Admission is not joining. On substrates that defer account creation,
+		// an invited identity holds a session before any profiles row exists;
+		// the app stays closed until they create an account at /welcome. This
+		// is the one place a profile-less authenticated request can exist —
+		// atomic-account substrates (Supabase, via the handle_new_user trigger)
+		// never enter — so enforcing it here keeps the app-wide invariant that
+		// authenticated implies a profile, including for /api mutations.
+		if (resolved.principal.deferredAccount) {
 			const path = event.url.pathname;
 			const exempt =
 				path === '/welcome' ||
@@ -171,10 +164,10 @@ export const handle: Handle = async ({ event, resolve }) => {
 				path.startsWith('/favicon') ||
 				path.endsWith('.webmanifest');
 			if (!exempt) {
-				const { data: profile } = await appIdentity.client
+				const { data: profile } = await resolved.principal.client
 					.from('profiles')
 					.select('id')
-					.eq('id', appIdentity.user.id)
+					.eq('id', resolved.principal.user.id)
 					.maybeSingle();
 				if (!profile) {
 					if (path.startsWith('/api/')) {
@@ -197,10 +190,10 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	// An anonymous visitor on the conference host's bare domain has nothing
 	// to do there — without a join link, dyad.amsterdam redirects to the
-	// Berlin apex. Signed-in guests (!user guard) and the QR's
+	// Berlin apex. Signed-in guests (!resolved guard) and the QR's
 	// /join?glink=... path are unaffected.
 	if (
-		!user &&
+		!resolved &&
 		event.url.pathname === '/' &&
 		event.url.hostname.replace(/\.$/, '') === AMSTERDAM_HOSTNAME
 	) {
@@ -210,8 +203,10 @@ export const handle: Handle = async ({ event, resolve }) => {
 		});
 	}
 
-	// Feedback gate: block app access when user has due feedback
-	if (user) {
+	// Feedback gate: block app access when the member has due feedback. Keys on
+	// the resolved principal, so provider identities pass the same access and
+	// feedback gates as Supabase members.
+	if (resolved) {
 		const pathname = event.url.pathname;
 
 		// Exemption list — load-bearing for THREE concerns that all live in the
@@ -296,7 +291,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 			const { SupabaseGateService } = await import('$lib/services/gate.js');
 			const gateService = new SupabaseGateService(event.locals.supabase);
-			const gateStatus = await gateService.checkGate(user.id);
+			const gateStatus = await gateService.checkGate(resolved.principal.user.id);
 
 			if (gateStatus.gated && gateStatus.kind === 'one_on_one') {
 				if (pathname.startsWith('/api/')) {

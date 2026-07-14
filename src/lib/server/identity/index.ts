@@ -8,6 +8,7 @@ export type { ScopeSession, IdentityProvider, EstablishResult } from './types.js
 export { getProviders, getProvider } from './registry.js';
 export { loadScopeSessions } from './sessions.js';
 export { buildAppIdentity, type AppIdentity } from './app-identity.js';
+export { resolvePrincipal, type Principal, type ResolvedPrincipal } from './principal.js';
 export { claimInjectionEnabled, scopedReadClient, scopedWriteContext } from './data-access.js';
 export { resolveIdentityId } from './identities.js';
 export { mintIdentityJwt, createClaimClient } from './claims.js';
