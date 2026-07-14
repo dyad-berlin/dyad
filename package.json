@@ -61,6 +61,7 @@
 		"@supabase/supabase-js": "$@supabase/supabase-js"
 	},
 	"dependencies": {
+		"@atproto/oauth-client-node": "^0.4.8",
 		"@prefig/ember": "file:../prefig/ember",
 		"@prefig/upact": "^0.1.1",
 		"@prefig/upact-ember": "file:../prefig/upact-ember",
