@@ -66,7 +66,7 @@
 					<div class="approach-item">
 						<h3>Structural safeguards & processes</h3>
 						<p>We have placed our trust in technology companies enough times to know that goodwill and original intentions are not a sufficient safeguard. Founders change, teams change, investors arrive, and priorities shift. Rather than asking members to trust us indefinitely, we aim to create a system that requires as little blind trust as possible.</p>
-						<p>Open source infrastructure, transparent governance, community participation, and our commitment to steward ownership are all attempts to distribute power, increase accountability, and reduce dependence on any single group of people; including ourselves.</p>
+						<p>Open source infrastructure, transparent governance, and community participation are all attempts to distribute power, increase accountability, and reduce dependence on any single group of people; including ourselves.</p>
 					</div>
 					<div class="approach-item">
 						<h3>Shared stewardship</h3>

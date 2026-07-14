@@ -1,3 +1,7 @@
+<!-- ARCHIVED — not routed. The steward-ownership page, removed from the live site
+     on 2026-07-14 because dyad is not yet steward-owned. When the structure is
+     real, restore this to src/routes/(zine)/steward-ownership/+page.svelte and
+     re-add the nav/footer links (zine +layout.svelte, ZineFooter.svelte). -->
 <script lang="ts">
 	import { useTocScroll } from '$lib/utils/use-toc-scroll.svelte';
 

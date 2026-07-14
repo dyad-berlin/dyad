@@ -73,7 +73,24 @@
 
 	<div class="snap-section">
 		<div class="section-body">
-			<p>Dyad is set to transition into steward ownership. A root cause that takes a big part in explaining how social platforms begin with a niche, do great service, and end up as extractive technologies with agendas of their own lies in their corporate ownership structure. Traditional corporate models, by design, do not allow operational decision making to sit separate from shareholder interests, interests that are solely monetary. With that, the mission is diluted in the pursuit of ever greater profits. Steward ownership offers a different foundation. It is grounded in self-governance and treats profit as a means in service of purpose. In practice, our investors do not hold equity, nor do they have a say in our operational decision making. We believe it is our acts rather than our words that make the difference with such critical considerations. The choice of steward ownership is one of those acts.</p>
+			<!-- Steward-ownership paragraph removed 2026-07-14 — dyad is not yet
+			     steward-owned; restore when the structure is real. Original text:
+			     "Dyad is set to transition into steward ownership. A root cause that
+			     takes a big part in explaining how social platforms begin with a
+			     niche, do great service, and end up as extractive technologies with
+			     agendas of their own lies in their corporate ownership structure.
+			     Traditional corporate models, by design, do not allow operational
+			     decision making to sit separate from shareholder interests,
+			     interests that are solely monetary. With that, the mission is
+			     diluted in the pursuit of ever greater profits. Steward ownership
+			     offers a different foundation. It is grounded in self-governance and
+			     treats profit as a means in service of purpose. In practice, our
+			     investors do not hold equity, nor do they have a say in our
+			     operational decision making. We believe it is our acts rather than
+			     our words that make the difference with such critical
+			     considerations. The choice of steward ownership is one of those
+			     acts." -->
+			<p>How a platform is owned decides what it becomes. Social platforms begin with a niche, do great service, and end up extractive because traditional corporate models cannot keep operational decisions separate from shareholder interests. We are building dyad so that the mission governs the money, not the other way around — participatorily, with the people who use it, and in the open. It is our acts rather than our words that make the difference with such critical considerations.</p>
 		</div>
 		<div class="scattered">
 			<img class="sc sc-full" style="--x: 32%; --y: 12%; --r: 2deg"   src="{ASSETS}/steward2.png" alt="" />
@@ -116,6 +133,28 @@
 		background: var(--bg-canvas);
 		color: var(--text-secondary);
 		font-family: inherit;
+	}
+
+	/* Apartment-wall texture — same grain + plaster mottle as the app's dark
+	   theme (app.css); the global body grain doesn't reach this page because
+	   data-theme sits on this element, not on the document root. */
+	.page::before,
+	.page::after {
+		content: '';
+		position: fixed;
+		inset: 0;
+		pointer-events: none;
+	}
+	.page::before {
+		opacity: 0.07;
+		mix-blend-mode: screen;
+		background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='3'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+	}
+	.page::after {
+		opacity: 0.15;
+		mix-blend-mode: soft-light;
+		background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='900' height='900'><filter id='p'><feTurbulence type='fractalNoise' baseFrequency='0.006' numOctaves='4' seed='7' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='900' height='900' filter='url(%23p)'/></svg>");
+		background-size: 900px 900px;
 	}
 
 	.snap-intro {
