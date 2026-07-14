@@ -19,8 +19,8 @@ import type { SupabaseClient } from '@supabase/supabase-js';
  * (an `identity_scopes` row). Read-only: never provisions. This is the
  * admission check for providers whose credential proves identity but not
  * membership (atproto: anyone on the network can authenticate; only invited
- * identities may enter). Ember is the contrast: its credential is issued in
- * person, so possession is the admission.
+ * identities may enter). A substrate whose credential is itself issued by the
+ * community can skip this check: there, possession is the admission.
  */
 export async function hasScopeGrant(
 	service: SupabaseClient,
