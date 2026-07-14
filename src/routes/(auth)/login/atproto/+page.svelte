@@ -8,7 +8,8 @@
 
 	const messages: Record<string, string> = {
 		handle: 'Enter a handle like name.bsky.social.',
-		resolve: 'That handle was not found.'
+		resolve: 'That handle was not found.',
+		not_admitted: 'No dyad membership is linked to that handle yet. dyad is invite-based.'
 	};
 	const message = data.errorCode
 		? (messages[data.errorCode] ?? 'Sign-in did not complete.')

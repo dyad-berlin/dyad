@@ -14,6 +14,37 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 
+/**
+ * Whether this substrate member holds a durable grant for `scope`
+ * (an `identity_scopes` row). Read-only: never provisions. This is the
+ * admission check for providers whose credential proves identity but not
+ * membership (atproto: anyone on the network can authenticate; only invited
+ * identities may enter). Ember is the contrast: its credential is issued in
+ * person, so possession is the admission.
+ */
+export async function hasScopeGrant(
+	service: SupabaseClient,
+	substrate: string,
+	substrateId: string,
+	scope: string
+): Promise<boolean> {
+	const identity = await service
+		.from('identities')
+		.select('id')
+		.eq('substrate', substrate)
+		.eq('substrate_id', substrateId)
+		.maybeSingle();
+	if (!identity.data?.id) return false;
+
+	const grant = await service
+		.from('identity_scopes')
+		.select('identity_id')
+		.eq('identity_id', identity.data.id)
+		.eq('scope', scope)
+		.maybeSingle();
+	return Boolean(grant.data);
+}
+
 export async function resolveIdentityId(
 	service: SupabaseClient,
 	substrate: string,

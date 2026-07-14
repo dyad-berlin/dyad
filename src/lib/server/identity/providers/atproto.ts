@@ -45,6 +45,8 @@ import {
 } from '@atproto/oauth-client-node';
 import type { EstablishResult, IdentityProvider, ScopeSession } from '../types.js';
 import { signSessionToken, verifySessionToken } from './session-token.js';
+import { hasScopeGrant } from '../identities.js';
+import { makeAdminClient } from '$lib/server/supabase-admin.js';
 
 const SESSION_COOKIE = 'atproto_session';
 const TOKEN_KIND = 'dyad-atproto-session';
@@ -216,9 +218,20 @@ export function atprotoProvider(): IdentityProvider | null {
 				return { ok: false, status: 403, code: 'credential_rejected', message: 'authorization was not accepted' };
 			}
 
+			// Authentication is not admission. An ATProto credential proves the
+			// person controls a DID — anyone on the network has one. Entering
+			// dyad still takes the invite/waitlist route; what that route leaves
+			// behind is a durable identity_scopes grant, and only its holder gets
+			// a session. No identity row is provisioned here (no roster of
+			// visitors who merely tried).
+			const memberId = await memberIdFromDid(did);
+			const admitted = await hasScopeGrant(makeAdminClient(), 'atproto', memberId, config.scope);
+			if (!admitted) {
+				return { ok: false, status: 403, code: 'not_admitted', message: 'no dyad membership is linked to this identity' };
+			}
+
 			const now = Math.floor(Date.now() / 1000);
 			const expiresAt = now + SESSION_CAP_S;
-			const memberId = await memberIdFromDid(did);
 			const token = await signSessionToken(TOKEN_KIND, config.sessionSecret, {
 				memberId,
 				scope: config.scope,
