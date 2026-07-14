@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { useTocScroll } from '$lib/utils/use-toc-scroll.svelte';
 
-	const ids = ['intro', 'practice', 'flow', 'who-decides', 'documents'];
+	const ids = ['intro', 'documents', 'practice', 'flow', 'who-decides'];
 	const toc = useTocScroll(ids);
 	const activeId = $derived(toc.activeId);
 	const isPast = (id: string) => toc.isPast(id);
@@ -17,7 +17,7 @@
 	<div class="page-intro">
 		<p class="section-label">Participatory Governance</p>
 		<h1 class="page-title">"To maintain the faith that democracy requires, people need to experience co-governance in their daily lives."</h1>
-		<p class="page-attr">— Nathan Schneider</p>
+		<p class="page-attr">Nathan Schneider</p>
 	</div>
 
 	<div class="page-body">
@@ -25,23 +25,56 @@
 		<nav class="toc">
 			<p class="toc-label">In this section</p>
 			<ol class="toc-list">
+				<li><a href="#documents" class:active={activeId === 'documents'} class:past={isPast('documents')}>The documents we begin with</a></li>
 				<li><a href="#practice" class:active={activeId === 'practice'} class:past={isPast('practice')}>How we practice</a></li>
 				<li><a href="#flow" class:active={activeId === 'flow'} class:past={isPast('flow')}>How a decision is made</a></li>
 				<li><a href="#who-decides" class:active={activeId === 'who-decides'} class:past={isPast('who-decides')}>Who decides what</a></li>
-				<li><a href="#documents" class:active={activeId === 'documents'} class:past={isPast('documents')}>The documents we begin with</a></li>
 			</ol>
 		</nav>
 
 		<div class="prose">
 
 			<section id="intro">
-				<p class="intro-text">Online spaces have become places we live in, but not places we govern. Rules change without participation, moderation happens behind closed doors, and the people most affected rarely shape decisions. dyad does it differently — and starts small enough to actually do it.</p>
+				<p class="intro-text">Online spaces have become places we live in, but not places we govern. Rules change without participation, moderation happens behind closed doors, and the people most affected rarely shape decisions. dyad does it differently, and it starts small enough to actually do it.</p>
+			</section>
+
+			<section id="documents">
+				<h2 class="section-h2">The documents we begin with</h2>
+
+				<p>Governance here begins with documents, because writing things down is how a community can hold its own rules. There are six of them, all in plain language, all public, all versioned. Ratifying them with the founding members is the first consent round.</p>
+
+				<div class="docs-grid">
+					<div class="doc">
+						<h3>Charter</h3>
+						<p>The constitution. Who decides what, and how the rules change. Only members can amend it.</p>
+					</div>
+					<div class="doc">
+						<h3>Community Standards</h3>
+						<p>What we do not tolerate, where it applies, and the step-by-step process when something goes wrong, including appeals.</p>
+					</div>
+					<div class="doc">
+						<h3>Membership Criteria</h3>
+						<p>Who can join and how joining works. Published criteria, no taste judgments, a ladder instead of a wall.</p>
+					</div>
+					<div class="doc">
+						<h3>Member Agreement</h3>
+						<p>Your personal deal with dyad: what membership includes, what it is not, and how it can change, always with notice and with your right to leave first.</p>
+					</div>
+					<div class="doc">
+						<h3>Governance Roadmap</h3>
+						<p>How governance deepens as the community grows, in phases tied to real thresholds rather than promises.</p>
+					</div>
+					<div class="doc">
+						<h3>Glossary</h3>
+						<p>Ten terms, from member and steward to proposal, objection and consent, defined before we use them. Most governance disagreements are definitional, and this prevents them.</p>
+					</div>
+				</div>
 			</section>
 
 			<section id="practice">
 				<h2 class="section-h2">How we practice</h2>
 
-				<p>We begin with the least governance that is real — four practices, running from day one:</p>
+				<p>We begin with the least governance that is real: four practices, running from day one.</p>
 
 				<div class="practices">
 					<div class="practice-item">
@@ -50,7 +83,7 @@
 					</div>
 					<div class="practice-item">
 						<h3>Consent, not voting</h3>
-						<p>A proposal passes unless someone raises a reasoned objection — “this causes harm” or “this breaks an agreement we made.” Preferences are input; they are not vetoes. Nothing needs a majority, and nobody can block with taste.</p>
+						<p>A proposal passes unless someone raises a reasoned objection, meaning a specific claim that it causes harm or breaks an agreement we made. Preferences are input rather than vetoes. Nothing needs a majority, and nobody can block a proposal on taste alone.</p>
 					</div>
 					<div class="practice-item">
 						<h3>A public decision log</h3>
@@ -58,11 +91,11 @@
 					</div>
 					<div class="practice-item">
 						<h3>State of dyad, quarterly</h3>
-						<p>The team shares what it decided and why — including, once membership sustains it, what the founders are paid. Transparency without theatre.</p>
+						<p>The team shares what it decided and why, including, once membership sustains it, what the founders are paid.</p>
 					</div>
 				</div>
 
-				<blockquote class="pull-quote">We add more structure only when a real, recurring pain demands it — never in advance. That is the whole model.</blockquote>
+				<blockquote class="pull-quote">We add more structure only when a real and recurring pain demands it, and never in advance. That is the whole model.</blockquote>
 			</section>
 
 			<section id="flow">
@@ -80,8 +113,8 @@
 					</div>
 					<div class="flow-arrow" aria-hidden="true">↓</div>
 					<div class="flow-step">
-						<p class="flow-stage">3 · Consent round — 72 hours</p>
-						<p class="flow-desc">Members read it. Anyone may object — with a reason.</p>
+						<p class="flow-stage">3 · Consent round · 72 hours</p>
+						<p class="flow-desc">Members read it. Anyone may object, with a reason.</p>
 					</div>
 					<div class="flow-split">
 						<div class="flow-branch">
@@ -95,7 +128,7 @@
 							<p class="flow-branch-label">Reasoned objection</p>
 							<div class="flow-step amend">
 								<p class="flow-stage">Amend &amp; retry</p>
-								<p class="flow-desc">The proposer resolves the objection and the round runs again — or the proposal is withdrawn. Also logged.</p>
+								<p class="flow-desc">The proposer resolves the objection and the round runs again, or the proposal is withdrawn. This is logged as well.</p>
 							</div>
 						</div>
 					</div>
@@ -107,57 +140,24 @@
 			<section id="who-decides">
 				<h2 class="section-h2">Who decides what</h2>
 
-				<p>Not everything goes through a consent round — that would be bureaucracy with better branding. Decisions live in three lanes:</p>
+				<p>Not everything goes through a consent round. Some decisions need to move at the speed of the day, and forcing them through process would serve nobody. Decisions live in three lanes.</p>
 
 				<div class="decision-types">
 					<div class="decision-type">
 						<h3>Members decide together</h3>
-						<p>Community standards and moderation policy. Who can join and how. What gets programmed and curated. The community budget. Removing a member — never one person's call, always a review by members with a right to appeal.</p>
+						<p>Community standards and moderation policy. Who can join and how. What gets programmed and curated. The community budget. Removing a member, which is never one person's call and always a review by members with a right to appeal.</p>
 					</div>
 					<div class="decision-type">
 						<h3>The team decides</h3>
-						<p>Money, hiring, product direction, legal. Members are told what was decided and why — at the State of dyad, in writing. Told, not surprised.</p>
+						<p>Money, hiring, product direction, and legal matters. Members are told what was decided and why, at the State of dyad, in writing, and they are never surprised by it after the fact.</p>
 					</div>
 					<div class="decision-type">
 						<h3>Whoever holds the role acts</h3>
-						<p>Hosting an event, moderating by the agreed standards, welcoming someone new. Consent applies to the rules, not to every action inside them.</p>
+						<p>Hosting an event, moderating by the agreed standards, welcoming someone new. Consent applies to the rules, not to every action taken inside them.</p>
 					</div>
 				</div>
 
-				<p class="valve-note">And one lever that keeps the lanes honest: if enough members petition on <em>any</em> topic — including the team's — the team must answer in writing within 14 days.</p>
-			</section>
-
-			<section id="documents">
-				<h2 class="section-h2">The documents we begin with</h2>
-
-				<p>Six documents, all in plain language, all public, all versioned. Ratifying them with the founding members is the first consent round.</p>
-
-				<div class="docs-grid">
-					<div class="doc">
-						<h3>Charter</h3>
-						<p>The constitution. Who decides what, and how the rules change. Only members can amend it.</p>
-					</div>
-					<div class="doc">
-						<h3>Community Standards</h3>
-						<p>What we don't tolerate, where it applies, and the step-by-step ladder when something goes wrong — including appeals.</p>
-					</div>
-					<div class="doc">
-						<h3>Membership Criteria</h3>
-						<p>Who can join and how joining works. Published criteria, no taste judgments, a ladder instead of a wall.</p>
-					</div>
-					<div class="doc">
-						<h3>Member Agreement</h3>
-						<p>Your personal deal with dyad: what membership includes, what it is not, and how it can change — with notice, and your right to leave first.</p>
-					</div>
-					<div class="doc">
-						<h3>Governance Roadmap</h3>
-						<p>How governance deepens as the community grows — in phases tied to real thresholds, not promises.</p>
-					</div>
-					<div class="doc">
-						<h3>Glossary</h3>
-						<p>Ten terms — member, steward, proposal, objection, consent… — defined before we use them. Most governance fights are definitional; this prevents them.</p>
-					</div>
-				</div>
+				<p class="valve-note">One lever keeps the lanes honest: if enough members petition on <em>any</em> topic, including the team's own decisions, the team must answer in writing within 14 days.</p>
 			</section>
 
 		</div>
