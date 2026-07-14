@@ -145,7 +145,6 @@ export const copy = {
 		// of service, and German visitors look for it by that name.
 		footerCommunity: 'Community',
 		footerGovernance: 'Governance',
-		footerCommunityCare: 'Community care',
 		footerImpressum: 'Impressum',
 		footerAgb: 'AGB',
 		footerPrivacy: 'Privacy',

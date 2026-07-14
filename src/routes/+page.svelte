@@ -83,7 +83,6 @@
 			<footer class="site-footer">
 				<a href="/docs#about-community" class="footer-link">{og.footerCommunity}</a>
 				<a href="/docs#about-governance" class="footer-link">{og.footerGovernance}</a>
-				<a href="/docs#about-care" class="footer-link">{og.footerCommunityCare}</a>
 				<!-- Impressum + Privacy stay together so a wrap never orphans one of
 				     the legal links on its own line — they break as a pair. -->
 				<span class="footer-legal">

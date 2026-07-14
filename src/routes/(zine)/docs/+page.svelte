@@ -55,26 +55,22 @@
 		<nav aria-label="Documentation">
 			<button class="side-link side-top" class:active={active === 'start'} onclick={() => select('start')}>Documentation</button>
 
-			<p class="side-head">About</p>
+			<p class="side-head">Community</p>
 			<button class="side-link" class:active={active === 'about-why'} onclick={() => select('about-why')}>Our origin story</button>
-			<button class="side-link" class:active={active === 'about-community'} onclick={() => select('about-community')}>Community</button>
-			<button class="side-link" class:active={active === 'about-governance'} onclick={() => select('about-governance')}>Governance</button>
+			<button class="side-link" class:active={active === 'about-community'} onclick={() => select('about-community')}>Who dyad is for</button>
 			<button class="side-link" class:active={active === 'about-care'} onclick={() => select('about-care')}>Community care</button>
+			<button class="side-link" class:active={active === 'process-joining'} onclick={() => select('process-joining')}>Becoming a member</button>
+			<button class="side-link" class:active={active === 'guide-leaving'} onclick={() => select('guide-leaving')}>How to leave</button>
 
-			<p class="side-head">Governing documents</p>
+			<p class="side-head">Governance</p>
+			<button class="side-link" class:active={active === 'about-governance'} onclick={() => select('about-governance')}>How we practice</button>
 			<button class="side-link" class:active={active === 'bylaws'} onclick={() => select('bylaws')}>Bylaws</button>
 			<button class="side-link" class:active={active === 'agreements'} onclick={() => select('agreements')}>Member Agreements</button>
 			<button class="side-link" class:active={active === 'standards'} onclick={() => select('standards')}>Community Standards</button>
-
-			<p class="side-head">Processes</p>
 			<button class="side-link" class:active={active === 'process-decision'} onclick={() => select('process-decision')}>How a decision is made</button>
-			<button class="side-link" class:active={active === 'process-joining'} onclick={() => select('process-joining')}>Becoming a member</button>
 			<button class="side-link" class:active={active === 'process-wrong'} onclick={() => select('process-wrong')}>When something goes wrong</button>
-
-			<p class="side-head">Member resources</p>
 			<button class="side-link" class:active={active === 'guide-proposal'} onclick={() => select('guide-proposal')}>How to submit a proposal</button>
 			<button class="side-link" class:active={active === 'guide-objection'} onclick={() => select('guide-objection')}>How to object well</button>
-			<button class="side-link" class:active={active === 'guide-leaving'} onclick={() => select('guide-leaving')}>How to leave</button>
 		</nav>
 	</aside>
 
@@ -83,13 +79,13 @@
 			<section>
 				<h1>Documentation</h1>
 				<p>Welcome to dyad's documentation. You do not need to be a member to read any of this. If you are considering joining, this is a good place to learn how the community works, how membership functions, which documents govern us, and how we make decisions together. Everything that defines dyad as an organization lives here.</p>
-				<p>The <strong>About</strong> section is the place to start. <strong>Governing documents</strong> holds our Bylaws, Member Agreements, and Community Standards, the three working documents that formally define us. <strong>Processes</strong> shows, step by step, how a decision is made, how someone becomes a member, and what happens when something goes wrong. <strong>Member resources</strong> holds practical guides for taking part.</p>
+				<p><strong>Community</strong> holds our origin story, who dyad is for, community care, and how becoming a member works. <strong>Governance</strong> holds how we practice, the three working documents that formally define us (the Bylaws, the Member Agreements, and the Community Standards), and the step-by-step guides for taking part in decisions.</p>
 				<p>All three governing documents are working documents. They are starting points rather than final destinations, and they change through the consent process they describe. Ratifying them with the founding members is the first consent round.</p>
 				<p>If you have a question that is not answered here, write to <a href="mailto:hello@dyad.berlin">hello@dyad.berlin</a>.</p>
 			</section>
 		{:else if active === 'about-why'}
 			<section>
-				<p class="doc-kicker">About</p>
+				<p class="doc-kicker">Community</p>
 				<h2>Our origin story</h2>
 				<p>Over the past two years now, we have been meticulously at work. Working first to understand how we arrived at a digital environment that feels so intrusive, hostile, exhausting, and then, working on something precious, full of life by virtue of serving the life within. Dyad is the product of such care and intention.</p>
 				<p>We did not like how being social online felt. The platforms we meet on left little room for our humanity. We are stripped down to a certain version of ourselves, and not the version we wanted to come forth. There was no room for the complexity of our experiences, the intricacy of making sense of them, and with that, discovering and nurturing the meaning of our lives. Where do you go online to expand, deepen, texture?</p>
@@ -108,8 +104,8 @@
 			</section>
 		{:else if active === 'about-community'}
 			<section>
-				<p class="doc-kicker">About</p>
-				<h2>Community</h2>
+				<p class="doc-kicker">Community</p>
+				<h2>Who dyad is for</h2>
 				<p>We have been building dyad voluntarily, because we feel passionate about a way of meeting each other we could not find anywhere: chosen, unhurried, in person, on your own terms. We do not ask for trust; we work to earn it, in service to connection, collective sensemaking and community.</p>
 				<h3>Who dyad is for</h3>
 				<p>dyad is for people who seek to meet others and want to do it their way. You bring a conversation, something that has been on your mind. We surface the people thinking about it too. You meet them in person.</p>
@@ -121,8 +117,8 @@
 			</section>
 		{:else if active === 'about-governance'}
 			<section>
-				<p class="doc-kicker">About</p>
-				<h2>Governance</h2>
+				<p class="doc-kicker">Governance</p>
+				<h2>How we practice</h2>
 				<p>Online spaces have become places we live in, but not places we govern. Rules change without participation, moderation happens behind closed doors, and the people most affected rarely shape decisions. dyad does it differently, and it starts small enough to actually do it.</p>
 				<h3>How we practice</h3>
 				<p>We begin with the least governance that is real: four practices, running from day one.</p>
@@ -145,7 +141,7 @@
 			</section>
 		{:else if active === 'about-care'}
 			<section>
-				<p class="doc-kicker">About</p>
+				<p class="doc-kicker">Community</p>
 				<h2>Community care</h2>
 
 				<h3>Holding space online</h3>
@@ -191,7 +187,7 @@
 			</section>
 		{:else if active === 'bylaws'}
 			<section>
-				<p class="doc-kicker">Governing document · 01 · v0.1 · a working document</p>
+				<p class="doc-kicker">Governance · governing document · 01 · v0.1 · a working document</p>
 				<h2>Bylaws</h2>
 				<p class="doc-note">These Bylaws are a working document. They are a starting point rather than a final destination, and they change through the consent process they themselves describe. This is the one document that governs all the others: it says who decides what, and how the rules can change.</p>
 
@@ -258,7 +254,7 @@
 			</section>
 		{:else if active === 'agreements'}
 			<section>
-				<p class="doc-kicker">Governing document · 02 · v0.1 · a working document</p>
+				<p class="doc-kicker">Governance · governing document · 02 · v0.1 · a working document</p>
 				<h2>Member Agreements</h2>
 				<p class="doc-note">Who can join, how joining works, and your personal deal with dyad. The Bylaws are the constitution; this document covers the practical day-to-day of being a member. It can be updated by the team with 14 days' notice, and if you disagree with a change you can leave before it applies to you.</p>
 
@@ -310,7 +306,7 @@
 			</section>
 		{:else if active === 'standards'}
 			<section>
-				<p class="doc-kicker">Governing document · 03 · v0.1 · a working document</p>
+				<p class="doc-kicker">Governance · governing document · 03 · v0.1 · a working document</p>
 				<h2>Community Standards</h2>
 				<p class="doc-note">This document says what we do not tolerate, where these rules apply, and exactly what happens when something goes wrong, step by step, so that enforcement never depends on one person's mood. Members amend it by consent round.</p>
 
@@ -346,7 +342,7 @@
 			</section>
 		{:else if active === 'process-decision'}
 			<section>
-				<p class="doc-kicker">Process</p>
+				<p class="doc-kicker">Governance</p>
 				<h2>How a decision is made</h2>
 				<p>A proposal passes unless someone gives a reason that it causes harm or breaks an agreement. Preferences are input rather than vetoes. Every rule made this way can be unmade the same way.</p>
 				<ol>
@@ -359,7 +355,7 @@
 			</section>
 		{:else if active === 'process-joining'}
 			<section>
-				<p class="doc-kicker">Process</p>
+				<p class="doc-kicker">Community</p>
 				<h2>Becoming a member</h2>
 				<p>The small friction of requesting to join is deliberate, and it is about alignment rather than identity. It considers what you value, never who you are.</p>
 				<ol>
@@ -370,25 +366,25 @@
 			</section>
 		{:else if active === 'process-wrong'}
 			<section>
-				<p class="doc-kicker">Process</p>
+				<p class="doc-kicker">Governance</p>
 				<h2>When something goes wrong</h2>
 				<p>Enforcement is a procedure, not a mood. The five steps, from a private notice through a documented conversation, a review panel drawn by lot, the right to be heard, and an appeal, are written out in <button class="inline-link" onclick={() => select('standards')}>Community Standards, section 4</button>. No member is ever removed by the unilateral decision of a single person.</p>
 			</section>
 		{:else if active === 'guide-proposal'}
 			<section>
-				<p class="doc-kicker">Member resource</p>
+				<p class="doc-kicker">Governance</p>
 				<h2>How to submit a proposal</h2>
 				<p>Write a few plain sentences in the proposal channel: what should change, and why. You do not need a template, a seconder, or permission. If your proposal touches a tactical domain (standards, membership, programming, the community budget), the consent round starts when you post it. If it touches a team domain, it becomes a question the team answers in writing, and if enough members co-sign it as a petition, the team must answer within 14 days.</p>
 			</section>
 		{:else if active === 'guide-objection'}
 			<section>
-				<p class="doc-kicker">Member resource</p>
+				<p class="doc-kicker">Governance</p>
 				<h2>How to object well</h2>
 				<p>An objection is a gift when it is specific. Say which harm the proposal causes, or which existing agreement it breaks. "I would not do it this way" is a preference, and preferences are welcome as input, but they do not stop a proposal. If your objection is reasoned, the proposer must resolve it before the change can pass, so the clearer you are, the faster the resolution.</p>
 			</section>
 		{:else if active === 'guide-leaving'}
 			<section>
-				<p class="doc-kicker">Member resource</p>
+				<p class="doc-kicker">Community</p>
 				<h2>How to leave</h2>
 				<p>Membership is voluntary, and you can leave at any time from your account, with no notice period and no conversation required. Contributions already made are not refunded. If you drift away instead of leaving, your voice simply pauses, and returning restores it automatically. Members who leave in good standing are always welcome back.</p>
 			</section>
