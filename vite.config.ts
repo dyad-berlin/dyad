@@ -1,8 +1,26 @@
+import { execSync } from 'node:child_process';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { SvelteKitPWA } from '@vite-pwa/sveltekit';
 import { defineConfig } from 'vitest/config';
 
+/**
+ * Build identifier stamped into the client so in-app feedback records the exact
+ * deployed build. Cloudflare Pages exposes CF_PAGES_COMMIT_SHA at build time;
+ * locally we fall back to the current git short SHA, then 'dev'.
+ */
+function appVersion(): string {
+	if (process.env.CF_PAGES_COMMIT_SHA) return process.env.CF_PAGES_COMMIT_SHA.slice(0, 7);
+	try {
+		return execSync('git rev-parse --short HEAD').toString().trim();
+	} catch {
+		return 'dev';
+	}
+}
+
 export default defineConfig({
+	define: {
+		__APP_VERSION__: JSON.stringify(appVersion())
+	},
 	test: {
 		include: ['src/**/*.test.ts'],
 		environment: 'node'

@@ -4,6 +4,9 @@ import type { SupabaseClient, Session, User } from '@supabase/supabase-js';
 import type { IdentityPort } from '@prefig/upact';
 
 declare global {
+	/** Build identifier injected by Vite `define` (see vite.config.ts appVersion). */
+	const __APP_VERSION__: string;
+
 	namespace App {
 		// interface Error {}
 		interface Locals {

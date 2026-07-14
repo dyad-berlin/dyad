@@ -41,7 +41,7 @@
 
 				<p>We started this zine with the harms that brought us here. The exhaustion, hostility, harm, and erosion of trust we have experienced and witnessed are not abstract to us. They have been foundational parts of why Dyad exists.</p>
 
-				<p>The places where we meet others online are part of public life. They may not look like streets, libraries, or community spaces, but they increasingly serve similar functions. People gather there, speak there, organize there, disagree there, find belonging there, and become visible to one another there. Yet our language, principles, and practices for public space, civic responsibility, and communal life has not fully caught up with the digital realm.</p>
+				<p>The places where we meet others online are part of public life. They may not look like streets, libraries, or community spaces, but they increasingly serve similar functions. People gather there, speak there, organize there, disagree there, find belonging there, and become visible to one another there. Yet our language, principles, and practices for public space, civic responsibility, and communal life have not fully caught up with the digital realm.</p>
 
 				<p>Communal living has always come with shared understandings, boundaries, agreements, and forms of accountability. The digital realm will not be an exception. Consideration of safeguarding cannot be secondary.</p>
 
@@ -104,11 +104,11 @@
 
 				<div class="moderation-grid">
 					<div class="mod-item">
-						<h3>Moderation labels</h3>
+						<h3>Reporting</h3>
 						<p>Members will be able to report content, behavior, or in-person encounters that violate our guidelines. Reports should include context where possible, so moderators can understand what happened without relying on assumptions. We will encourage reporting through the proper channels rather than public escalation that may amplify harm. Reports will be taken seriously, but the reporting system itself must not be used to harass, punish, or coordinate against others.</p>
 					</div>
 					<div class="mod-item">
-						<h3>Reporting</h3>
+						<h3>Moderation labels</h3>
 						<p>Reports will be reviewed against a small set of moderation labels. Our starting labels will include harassment, discrimination, coercion, abuse, doxing or privacy violation, non-consensual behavior, spam, impersonation, unsafe meeting conduct, weaponized reporting, and misogynoir, the intersection of anti-Black racism and misogyny that standard categories consistently fail to capture.</p>
 						<p>Each label will have a public definition, examples, possible consequences, and a path to appeal. Blacksky's model is grounded in the principle that communities closest to harm are best positioned to name it. Their labels are publicly defined, contestable, and shaped through community input rather than decided by a central team. We are drawing from this approach.</p>
 					</div>

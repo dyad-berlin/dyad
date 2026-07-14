@@ -1,4 +1,4 @@
-import { json, error } from '@sveltejs/kit';
+import { json } from '@sveltejs/kit';
 import { sendEmail } from '$lib/server/email.js';
 import { escapeHtml } from '$lib/utils/escape-html.js';
 import { copy } from '$lib/copy';
@@ -45,27 +45,27 @@ export const POST: RequestHandler = async ({ request, locals, getClientAddress }
 		return json({ error: 'Invalid JSON body' }, { status: 400 });
 	}
 
-	const { email, name, based_in, freewrite, expression_url, referred_by_username, referral_source } = body as Record<string, unknown>;
+	const { email, name, based_in, freewrite, referred_by_username, referral_source } = body as Record<string, unknown>;
 
 	if (!email || typeof email !== 'string') {
-		error(400, 'Email is required');
+		return json({ error: 'Email is required' }, { status: 400 });
 	}
 
 	if (email.length > 254) {
-		error(400, 'Email is too long');
+		return json({ error: 'Email is too long' }, { status: 400 });
 	}
 
 	// Basic email validation
 	if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-		error(400, 'Invalid email address');
+		return json({ error: 'Invalid email address' }, { status: 400 });
 	}
 
 	if (name !== undefined && typeof name !== 'string') {
-		error(400, 'Name must be a string');
+		return json({ error: 'Name must be a string' }, { status: 400 });
 	}
 
 	if (typeof name === 'string' && name.length > 200) {
-		error(400, 'Name is too long');
+		return json({ error: 'Name is too long' }, { status: 400 });
 	}
 
 	if (!freewrite || typeof freewrite !== 'string' || !freewrite.trim()) {
@@ -77,24 +77,19 @@ export const POST: RequestHandler = async ({ request, locals, getClientAddress }
 	}
 
 	if (typeof based_in === 'string' && based_in.length > 200) {
-		error(400, 'City is too long');
-	}
-
-	if (typeof expression_url === 'string' && expression_url.trim()) {
-		if (expression_url.length > 2048) error(400, 'Expression URL is too long');
-		if (!/^https:\/\//.test(expression_url.trim())) error(400, 'Expression URL must start with https://');
+		return json({ error: 'City is too long' }, { status: 400 });
 	}
 
 	if (typeof referred_by_username === 'string' && referred_by_username.length > 100) {
-		error(400, 'Referred by username is too long');
+		return json({ error: 'Referred by username is too long' }, { status: 400 });
 	}
 
 	// "Where did you spot us?" — option key or free text; member-stated, optional.
 	if (referral_source !== undefined && typeof referral_source !== 'string') {
-		error(400, 'Referral source must be a string');
+		return json({ error: 'Referral source must be a string' }, { status: 400 });
 	}
 	if (typeof referral_source === 'string' && referral_source.length > 120) {
-		error(400, 'Referral source is too long');
+		return json({ error: 'Referral source is too long' }, { status: 400 });
 	}
 
 	// Short-circuit: if this email already belongs to a confirmed account,
@@ -118,9 +113,6 @@ export const POST: RequestHandler = async ({ request, locals, getClientAddress }
 		based_in: (typeof based_in === 'string' ? based_in.trim() : null) || null,
 		freewrite: (typeof freewrite === 'string' ? freewrite.trim() : null) || null,
 	};
-	if (typeof expression_url === 'string' && expression_url.trim()) {
-		insertRow.expression_url = expression_url.trim();
-	}
 	if (typeof referred_by_username === 'string' && referred_by_username.trim()) {
 		insertRow.referred_by_username = referred_by_username.trim();
 	}
@@ -147,7 +139,7 @@ export const POST: RequestHandler = async ({ request, locals, getClientAddress }
 			return json({ error: 'This email is already on the waitlist.' }, { status: 409 });
 		}
 		console.error('[contact] Failed to save contact:', dbError);
-		error(500, 'Failed to save contact');
+		return json({ error: 'Failed to save contact. Please try again.' }, { status: 500 });
 	}
 
 	const displayName = escapeHtml((typeof name === 'string' && name.trim()) || 'there');

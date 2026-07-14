@@ -20,7 +20,7 @@
 				{$page.error?.message || 'An error occurred.'}
 			{/if}
 		</p>
-		<a href="/" class="home-link">Go home</a>
+		<a href="/" class="home-link">go home</a>
 	</div>
 </div>
 

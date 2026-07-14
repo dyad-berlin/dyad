@@ -27,6 +27,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	if (context && typeof context === 'object') {
 		if (typeof context.page_url === 'string') sanitizedContext.page_url = context.page_url.slice(0, 2048);
 		if (typeof context.user_agent === 'string') sanitizedContext.user_agent = context.user_agent.slice(0, 512);
+		if (typeof context.app_version === 'string') sanitizedContext.app_version = context.app_version.slice(0, 64);
 		if (Array.isArray(context.recent_errors)) {
 			sanitizedContext.recent_errors = context.recent_errors
 				.slice(0, 10)

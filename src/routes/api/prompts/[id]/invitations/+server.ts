@@ -2,6 +2,8 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { requireIdentity } from '$lib/services/identity.js';
 import { requireMembershipForAction } from '$lib/server/require-membership.js';
+import { resolvePromptCapacity } from '$lib/server/resolve-capacity.js';
+import { gatingActionForCapacity } from '$lib/domain/gating.js';
 import { parseJsonBody } from '$lib/server/parse-body.js';
 import { SupabaseInvitationService } from '$lib/services/invitation.js';
 import { SupabasePromptQueryService } from '$lib/services/prompt-query.js';
@@ -14,7 +16,13 @@ import { copy } from '$lib/copy.js';
 export const POST: RequestHandler = async ({ params, request, locals, platform }) => {
 	const upactor = requireIdentity(locals);
 
-	const gate = await requireMembershipForAction('invite_to_meet', locals);
+	// Gate scoped to the target conversation's size (one-on-one vs group) so the
+	// two can be gated independently; a capacity read blip ⇒ null ⇒ group.
+	const capacity = await resolvePromptCapacity(locals.supabase, params.id);
+	const gate = await requireMembershipForAction(
+		gatingActionForCapacity('invite_to_meet', capacity),
+		locals
+	);
 	if (gate) return gate;
 
 	const [body, errorResponse] = await parseJsonBody<{

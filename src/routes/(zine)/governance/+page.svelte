@@ -46,7 +46,7 @@
 			<section id="experiment">
 				<h2 class="section-h2">Community building as a social experiment</h2>
 
-				<p>Our lived experiences organizing as communities for different intentions have presented us a valuable view of community building. We see communities as microcosms of society, and in that, a chance to rehearse another set of organizing principles for collective living.</p>
+				<p>Our lived experiences organizing as communities for different intentions have presented us with a valuable view of community building. We see communities as microcosms of society, and in that, a chance to rehearse another set of organizing principles for collective living.</p>
 
 				<p>Our long-term theory of change begins with the ability to be with one another across difference. Not to collapse differences into agreement, but to stay in contact long enough to notice what our own vantage point cannot see. We believe this capacity is vital for discernment, truth-seeking, and a richer engagement with life.</p>
 

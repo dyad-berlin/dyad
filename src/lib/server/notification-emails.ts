@@ -287,7 +287,7 @@ export async function notifyGatheringCancelled(params: {
 		pref: 'meetingCancelled',
 		subject: 'A gathering was called off',
 		bodyHtml: `
-			<p>The host called off the gathering — this time is no longer happening.</p>
+			<p>The host called off the gathering. This time is no longer happening.</p>
 			${reasonBlock}
 			<p><a href="${meetingLink(params.meetingId)}" style="color: ${color.textPrimary}; font-weight: bold; text-decoration: underline;">See the details</a></p>
 		`

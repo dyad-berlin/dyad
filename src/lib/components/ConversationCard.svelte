@@ -38,6 +38,8 @@
 		/** Muted the whole card — drafts, archived, expired items. */
 		dimmed?: boolean;
 		variant?: 'full' | 'profile' | 'compact';
+		/** 1-on-1 vs group indicator, shown in the meta row (full + compact). */
+		conversationType?: '1on1' | 'group' | null;
 		audienceScopeName?: string | null;
 		/** Slot for nested content below the row (e.g. the gathering card). */
 		children?: Snippet;
@@ -57,6 +59,7 @@
 		statusText = null,
 		dimmed = false,
 		variant = 'full',
+		conversationType = null,
 		audienceScopeName = null,
 		children
 	}: Props = $props();
@@ -82,6 +85,27 @@
 	);
 </script>
 
+{#snippet typeTag()}
+	{#if conversationType}
+		<span class="type-tag" title={conversationType === 'group' ? copy.discover.filterGroup : copy.discover.filterOneOnOne}>
+			{#if conversationType === 'group'}
+				<svg width="13" height="13" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+					<circle cx="7" cy="7.5" r="2.4" stroke="currentColor" stroke-width="1.6"/>
+					<circle cx="13.5" cy="8.5" r="1.9" stroke="currentColor" stroke-width="1.6"/>
+					<path d="M2.5 15.5c0-2.2 2-3.6 4.5-3.6s4.5 1.4 4.5 3.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+					<path d="M13 12c2.1 0 3.9 1.2 3.9 3.3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+				</svg>
+			{:else}
+				<svg width="13" height="13" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+					<circle cx="10" cy="7" r="2.7" stroke="currentColor" stroke-width="1.6"/>
+					<path d="M4 16c0-2.6 2.7-4.3 6-4.3s6 1.7 6 4.3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+				</svg>
+			{/if}
+			<span>{conversationType === 'group' ? copy.discover.filterGroup : copy.discover.filterOneOnOne}</span>
+		</span>
+	{/if}
+{/snippet}
+
 {#snippet inner()}
 	<div class="row" class:profile={variant === 'profile'} class:compact={variant === 'compact'}>
 		<div class="thumb" class:profile={variant === 'profile'} class:compact={variant === 'compact'}>
@@ -92,9 +116,10 @@
 			{/if}
 		</div>
 		<div class="body">
-			{#if variant === 'full' && (metaLeft || metaRight)}
+			{#if variant === 'full' && (metaLeft || metaRight || conversationType)}
 				<div class="meta-row">
 					{#if metaLeft}<span class="meta-left">{metaLeft}</span>{/if}
+					{@render typeTag()}
 					{#if metaRight}<span class="meta-right">{metaRight}</span>{/if}
 				</div>
 			{/if}
@@ -114,9 +139,10 @@
 			{#if audienceScopeName}
 				<span class="audience-tag">{copy.discover.audienceTag.replace('{name}', audienceScopeName)}</span>
 			{/if}
-			{#if variant === 'compact' && (metaLeft || displayedAuthor)}
+			{#if variant === 'compact' && (metaLeft || displayedAuthor || conversationType)}
 				<div class="compact-meta">
 					{#if metaLeft}<span class="meta-left">{metaLeft}</span>{/if}
+					{@render typeTag()}
 					{#if displayedAuthor}
 						<span class="meta-author" class:anonymised={anonymiseAuthor}>@{displayedAuthor}</span>
 					{/if}
@@ -227,7 +253,7 @@
 	.meta-row {
 		display: flex;
 		gap: var(--space-3);
-		align-items: baseline;
+		align-items: center;
 		margin-bottom: var(--space-1);
 	}
 
@@ -243,6 +269,19 @@
 	.meta-right {
 		margin-left: auto;
 	}
+
+	/* 1-on-1 / group indicator — quiet mono tag with a matching person(s) glyph. */
+	.type-tag {
+		display: inline-flex;
+		align-items: center;
+		gap: 3px;
+		font-family: var(--font-mono);
+		font-size: var(--text-xs);
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		color: var(--text-muted);
+	}
+	.type-tag svg { flex-shrink: 0; }
 
 	.title {
 		font-size: var(--text-lg);

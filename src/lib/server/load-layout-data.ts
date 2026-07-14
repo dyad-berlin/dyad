@@ -6,9 +6,13 @@ import { toMembershipDisplay, type MembershipRow } from '$lib/domain/membership.
  * Shared layout data loader for authenticated route groups.
  * Used by both (app) and (editor) layouts.
  */
-export async function loadLayoutData(locals: App.Locals) {
+export async function loadLayoutData(locals: App.Locals, url?: URL) {
 	if (!locals.user) {
-		redirect(302, '/');
+		// Preserve the intended destination so login can resume there (e.g. an
+		// invitation email deep-link to /conversations/{id}). Falls back to a
+		// bare /login when no url is threaded.
+		const returnTo = url ? url.pathname + url.search : '';
+		redirect(302, returnTo ? `/login?redirectTo=${encodeURIComponent(returnTo)}` : '/login');
 	}
 
 	const pendingFormId = (locals as any).pendingFeedbackFormId as string | undefined;

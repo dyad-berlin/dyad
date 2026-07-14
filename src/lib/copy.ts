@@ -35,7 +35,7 @@ export const copy = {
 		_routes: ['/discover', '/profile', '/conversations/[id]', '/meetings/[id]', '/feedback/[id]'],
 		_description: 'Button labels, fallback text, and error messages used across the whole app.',
 		untitled: 'Untitled',
-		// The viewer's own pin in a participants stack — never their raw @handle.
+		// The viewer’s own pin in a participants stack — never their raw @handle.
 		you: 'you',
 		// Hover handle on the anonymised pins — how many, never who.
 		nOthers: (n: number) => `${n} other${n === 1 ? '' : 's'}`,
@@ -55,14 +55,14 @@ export const copy = {
 		close: 'Close',
 		notNow: 'Not now',
 		accept: 'Accept',
-		accepting: 'Accepting...',
-		loading: 'Loading...',
+		accepting: 'Accepting…',
+		loading: 'Loading…',
 		clear: 'Clear',
 		someone: 'someone',
 		networkError: 'Network error. Please try again.',
 		genericError: 'Something went wrong. Please try again.',
-		submitFailed: 'Couldn\u2019t submit. Please try again.',
-		sendFailed: 'Couldn\u2019t send. Please try again.',
+		submitFailed: 'Couldn’t submit. Please try again.',
+		sendFailed: 'Couldn’t send. Please try again.',
 		clearFilters: 'Clear filters',
 	},
 
@@ -95,8 +95,17 @@ export const copy = {
 		metaDescription: 'The offline social network owned by its community.',
 		ogSiteName: 'dyad',
 		ogUrl: 'https://dyad.berlin',
-		joinWaitlist: 'join waitlist',
-		logIn: 'log in',
+		joinWaitlist: 'Join',
+		logIn: 'Sign in',
+		// Footer links (left column). The legal-notice link is labelled
+		// "Impressum" — the page at /impressum is a legal notice, not terms
+		// of service, and German visitors look for it by that name.
+		footerOwnership: 'Ownership',
+		footerGovernance: 'Governance',
+		footerCommunityCare: 'Community care',
+		footerImpressum: 'Impressum',
+		footerAgb: 'AGB',
+		footerPrivacy: 'Privacy',
 		// Hero headline + supporting line (display copy; sentence case is the
 		// intentional brand styling — see CLAUDE.md § UI conventions).
 		headlineLine1: 'Collectively owned',
@@ -120,22 +129,29 @@ export const copy = {
 		checkBackSoon: 'Check back soon, or start your own.',
 		startConversation: 'Start a conversation',
 		noMatchingFilters: 'No conversations match your filters.',
-		search: 'Search',
 		searchPlaceholder: 'Search',
 		noResults: 'No conversations found.',
 		searchSuggestions: ['strangers & connection', 'philosophy of everyday life', 'belonging in Berlin', 'silence & listening', 'living in Berlin'],
+		filterWhenLabel: 'When',
+		filterWhereLabel: 'Where',
+		filterAnywhere: 'Anywhere',
+		filterTypeLabel: 'Type',
+		filterCornerLabel: 'Corner',
+		filterOneOnOne: '1-on-1',
+		filterGroup: 'Group',
+		filterClearAll: 'clear all',
 	},
 
 	// ── Conversation detail ────────────────────────────────────────────
 	conversation: {
 		_routes: ['/conversations/[id]'],
 		_description: 'Viewing a conversation: body, response form, invitation flow, author edit/archive actions.',
-		responsePlaceholder: 'Share your thoughts...',
-		slotsTeaser: (authorUsername: string) => `respond to @${authorUsername} to see the times they've suggested to meet`,
+		responsePlaceholder: 'Share your thoughts…',
+		slotsTeaser: (authorUsername: string) => `respond to @${authorUsername} to see the times they’ve suggested to meet`,
 		inviteQuestion: (authorUsername: string) => `Would you like to meet @${authorUsername} in person?`,
 		inviteNotePlaceholder: 'Add a note (optional)',
 		sendInvitation: 'Send invitation',
-		sending: 'Sending...',
+		sending: 'Sending…',
 		responseSent: 'response sent',
 		youWrote: (date: string) => `on ${date}, you wrote`,
 		respondedBy: (username: string, date: string) => `on ${date}, @${username} wrote`,
@@ -145,12 +161,12 @@ export const copy = {
 		youResponded: (date: string) => `${date === 'just now' ? 'just now' : `on ${date}`}, you responded`,
 		invitationPending: (authorUsername: string) => `You have invited @${authorUsername}, waiting for them to confirm.`,
 		withdrawInvitation: 'Withdraw invitation',
-		withdrawing: 'Withdrawing...',
-		withdrawFailed: 'Couldn\u2019t withdraw. Please try again.',
+		withdrawing: 'Withdrawing…',
+		withdrawFailed: 'Couldn’t withdraw. Please try again.',
 		decline: 'Decline',
-		declining: 'Declining...',
+		declining: 'Declining…',
 		declineMessagePlaceholder: 'Optional: a short message',
-		declineFailed: 'Couldn\u2019t decline. Please try again.',
+		declineFailed: 'Couldn’t decline. Please try again.',
 		myOfferedTimes: 'Times you offered',
 		changeTimes: 'Change times',
 		unpublish: 'Unpublish',
@@ -163,7 +179,7 @@ export const copy = {
 		// Conversation size / capacity (shown to responders near the times).
 		sizeOneOnOne: 'one-on-one',
 		sizeGroup: (others: number) => `small group · up to ${others} other${others === 1 ? '' : 's'}`,
-		// Author's response-spine view: each response carries a quiet status line,
+		// Author’s response-spine view: each response carries a quiet status line,
 		// referencing its slot by day + neighbourhood only (the exact place lives
 		// once in "Times you offered"). slotRef is pre-formatted "day · neighbourhood".
 		responsesHeading: 'Responses',
@@ -189,14 +205,14 @@ export const copy = {
 		_routes: ['/conversations/[id]/edit'],
 		_description: 'Creating and editing conversations with TipTap rich text editor.',
 		titlePlaceholder: 'Title',
-		bodyPlaceholder: 'Start writing your conversation...',
+		bodyPlaceholder: 'Start writing your conversation…',
 		saveDraft: 'Save as draft',
 		publish: 'Publish as conversation',
-		loadingEditor: 'Loading editor...',
+		loadingEditor: 'Loading editor…',
 		failedToLoad: 'Failed to load editor.',
 		published: 'Published',
 		publishedDesc: 'Your conversation is live on the discover feed.',
-		saving: 'Saving...',
+		saving: 'Saving…',
 		saved: 'Saved',
 		saveError: 'Error',
 		continue: 'Continue',
@@ -206,7 +222,7 @@ export const copy = {
 		publishAction: 'Publish…',
 		discardTitle: 'Discard draft',
 		discardConfirm: 'This will permanently delete this draft. This cannot be undone.',
-		uploading: 'Uploading...',
+		uploading: 'Uploading…',
 		changeCover: 'Change cover',
 		addCoverPhoto: 'Add a cover photo',
 		coverRequired: 'Required. Click or drag an image.',
@@ -218,7 +234,7 @@ export const copy = {
 		dayPickerHint: 'Pick up to three slots in the next 7 days.',
 		privacyNote: 'We only show the address to those you agree to meet.',
 		addTime: '+ add time',
-		publishing: 'Publishing...',
+		publishing: 'Publishing…',
 		publishButton: 'Publish',
 		removeTimeSlot: 'Remove time slot',
 		closeDialog: 'Close',
@@ -275,7 +291,7 @@ export const copy = {
 		noScheduledMeetings: 'No scheduled meetings.',
 		noPastMeetings: 'No past meetings.',
 		invitedBy: (username: string) => `Invited by @${username}`,
-		searchPlaceholder: 'Search your conversations...',
+		searchPlaceholder: 'Search your conversations…',
 		emptyResponded: 'No responses yet.',
 		emptyRespondedCta: 'Find a conversation →',
 		emptyArchived: 'Nothing archived yet.',
@@ -292,7 +308,7 @@ export const copy = {
 			`@${username} cancelled this meeting on ${date}`,
 		// Quiet action row in the profile card, next to sign out.
 		preferencesLink: 'preferences',
-		membershipLink: 'Membership',
+		membershipLink: 'membership',
 	},
 
 	// ── Preferences ────────────────────────────────────────────────────
@@ -305,7 +321,7 @@ export const copy = {
 		emailPlaceholder: 'Add an email address to turn on notifications',
 		emailAriaLabel: 'Email address for notifications',
 		save: 'save',
-		emailError: "Couldn't save that address. Please try again.",
+		emailError: "Couldn’t save that address. Please try again.",
 		emailPrefsHeading: 'Email me about',
 		prefInvitationReceived: 'New invitations',
 		prefInvitationAnswered: 'Replies to my invitations',
@@ -320,7 +336,7 @@ export const copy = {
 		// Preferences-page note (U6). By-choice, default-off, channel-agnostic.
 		// Must not reference a sign-up/account email or treat contact as identity.
 		notificationPrefsNote:
-			"By default, dyad doesn't send notifications. Choose what you'd like to receive; you can change this anytime.",
+			"By default, dyad doesn’t send notifications. Choose what you’d like to receive; you can change this anytime.",
 		membershipHeading: 'Membership',
 		membershipManage: 'manage membership',
 		membershipManageError: 'We couldn’t open the membership portal just now. Please try again.',
@@ -328,7 +344,7 @@ export const copy = {
 		membershipJoin: 'become a member',
 		membershipNone: 'You’re not a member yet.',
 		membershipLapsed: 'Your membership has lapsed.',
-		membershipEnded: 'Your complimentary access has ended.',
+		membershipEnded: 'Your complimentary membership has ended.',
 		planMonthly: 'Monthly membership',
 		planAnnual: 'Yearly membership',
 		planLifetime: 'Lifetime membership',
@@ -355,18 +371,18 @@ export const copy = {
 		_description: 'Single meeting view with time/location details, linked conversation, and cancel action.',
 		addToCalendar: 'Add to calendar',
 		cancelMeeting: 'Cancel meeting',
-		cancelling: 'Cancelling...',
+		cancelling: 'Cancelling…',
 		cancelConfirm: 'Are you sure you want to cancel this meeting?',
 		cancelTitle: (username: string) => `Cancel your meeting with @${username}?`,
 		cancelBodyEarly: (username: string) =>
-			`You're cancelling more than 12 hours out, so the slot goes back to discover. @${username} will see your note on the conversation.`,
+			`You’re cancelling more than 12 hours out, so the slot goes back to discover. @${username} will see your note on the conversation.`,
 		cancelBodyLate: (username: string) =>
-			`This is a late cancellation. @${username} won't have much time to make other plans, so a real explanation matters here.`,
+			`This is a late cancellation. @${username} won’t have much time to make other plans, so a real explanation matters here.`,
 		cancelReasonLabelEarly: (username: string) => `A message to @${username}`,
 		cancelReasonLabelLate: (username: string) => `Tell @${username} what happened`,
 		cancelReasonPlaceholderEarly: 'A sentence or two.',
 		cancelReasonPlaceholderLate: 'Be honest. It helps.',
-		cancelGenericError: 'Couldn\'t cancel the meeting. Please try again.',
+		cancelGenericError: 'Couldn’t cancel the meeting. Please try again.',
 		cancelKeep: 'Keep meeting',
 		cancelConfirmEarly: 'Cancel meeting',
 		cancelConfirmLate: 'Cancel anyway',
@@ -377,7 +393,7 @@ export const copy = {
 		cancelBodyLeaveEarly: (username: string) =>
 			`The gathering continues without you. @${username} will see your note.`,
 		cancelBodyLeaveLate: (username: string) =>
-			`This is a late change. The gathering continues, but @${username} won't have much time to adjust, so a real explanation matters here.`,
+			`This is a late change. The gathering continues, but @${username} won’t have much time to adjust, so a real explanation matters here.`,
 		cancelTitleChoice: 'What would you like to cancel?',
 		// The author picks people (checkboxes) or the entirety. Cancelling
 		// people keeps the time open; the entirety withdraws it.
@@ -395,7 +411,7 @@ export const copy = {
 		cancelBodyGatheringEarly: (count: number) =>
 			`This calls the time off for ${count === 1 ? 'your one confirmed joiner' : `all ${count} people`}. Everyone is notified, the time is withdrawn, and your note travels with the cancellation.`,
 		cancelBodyGatheringLate: (count: number) =>
-			`This is a late cancellation for ${count === 1 ? 'your one confirmed joiner' : `all ${count} people`}. They won't have much time to make other plans, so a real explanation matters here.`,
+			`This is a late cancellation for ${count === 1 ? 'your one confirmed joiner' : `all ${count} people`}. They won’t have much time to make other plans, so a real explanation matters here.`,
 		cancelReasonLabelGathering: 'A message to everyone',
 		cancelConfirmGatheringEarly: 'Call off the gathering',
 		cancelConfirmGatheringLate: 'Call it off anyway',
@@ -410,7 +426,7 @@ export const copy = {
 		giveFeedback: 'Give feedback',
 		feedbackWaitingForOther: 'Feedback submitted. Waiting for the other person.',
 		revealedTitle: 'What they shared with you',
-		revealedNoShow: 'They reported you didn\u2019t meet',
+		revealedNoShow: 'They reported you didn’t meet',
 		// .ics calendar event metadata
 		calendarTitlePrefix: 'dyad: ',
 		calendarFallbackTitle: (username: string) => `Meeting with @${username}`,
@@ -421,7 +437,7 @@ export const copy = {
 		reportLabel: 'What happened?',
 		reportPlaceholder: 'A few sentences. Be honest. It helps us look into it.',
 		reportSubmit: 'Send report',
-		reportSubmitting: 'Sending...',
+		reportSubmitting: 'Sending…',
 		reportCancel: 'Cancel',
 		reportThankYou: 'Thanks. A moderator will look into this.',
 		reportGenericError: 'Couldn’t send the report. Please try again.',
@@ -433,7 +449,7 @@ export const copy = {
 		_description: 'Post-meeting feedback form. Gated — blocks all app access until submitted.',
 		howDidItGo: 'How did it go?',
 		weMet: 'We met',
-		weDidntMeet: "We didn't meet",
+		weDidntMeet: "We didn’t meet",
 		thankYou: 'Thank you',
 		submitted: 'Your feedback has been submitted.',
 		continue: 'Continue',
@@ -441,12 +457,12 @@ export const copy = {
 		whatHappened: 'What happened?',
 		selectTags: 'Select any that apply:',
 		shareWithPerson: 'What would you like to share with them?',
-		shareWithPersonHint: 'This will be shared with them after they also submit feedback',
+		shareWithPersonHint: 'This will be shared with them after they also submit feedback.',
 		shareWithPlatform: 'Anything you want to share with us?',
 		submitFeedback: 'Submit feedback',
-		submitting: 'Submitting...',
-		revealIntro: (username: string) => `Here's what @${username} shared with you:`,
-		revealIntroFallback: "Here's what they shared with you:",
+		submitting: 'Submitting…',
+		revealIntro: (username: string) => `Here’s what @${username} shared with you:`,
+		revealIntroFallback: "Here’s what they shared with you:",
 	},
 
 	// ── Group feedback ───────────────────────────────────────────────────
@@ -459,10 +475,10 @@ export const copy = {
 		no: 'No',
 		commentLabel: 'Anything you want to add?',
 		commentPlaceholder: 'Optional',
-		personalFeedbackLabel: 'Any personal feedback you\'d like to give?',
+		personalFeedbackLabel: 'Any personal feedback you’d like to give?',
 		personalFeedbackPlaceholder: 'Optional',
 		submit: 'Submit feedback',
-		submitting: 'Submitting...',
+		submitting: 'Submitting…',
 		thankYou: 'Thank you',
 		submitted: 'Your feedback has been submitted.',
 		continueToDiscover: 'Continue to discover',
@@ -472,17 +488,17 @@ export const copy = {
 	waitlist: {
 		_routes: ['/waitlist', '/ (AuthDialog)'],
 		_description: 'Public waitlist request page and AuthDialog modal.',
-		thankYou: 'Thank you. We\'ll be in touch.',
-		alreadyOnWaitlist: 'You\'re already on our list. We\'ll be in touch soon.',
-		thanksForJoining: 'Thanks for joining. We\'ll be in touch within a week.',
+		thankYou: 'Thank you. We’ll be in touch.',
+		alreadyOnWaitlist: 'You’re already on our list. We’ll be in touch soon.',
+		thanksForJoining: 'Thanks for joining. We’ll be in touch within a week.',
 		joinWaitlist: 'Join the waitlist',
 		joinWaitlistButton: 'Join waitlist',
-		sendingWaitlist: 'Sending...',
-		whatsOnYourMind: 'Dyad is a curated network of people who see conversation as one of the limited spaces left that celebrates our differences as an asset. Why do you want more or other conversations in your life?',
-		thoughtPlaceholder: 'We wonder',
+		sendingWaitlist: 'Sending…',
+		whatsOnYourMind: 'Dyad is a curated network of people who see conversation as one of the few spaces left that celebrate our differences as an asset. Why do you want more or other conversations in your life?',
+		thoughtPlaceholder: "What’s in a conversation?",
 		city: 'City',
 		cityPlaceholder: 'Berlin',
-		// "Where did you spot us?" — ozge's design (pre-open repo, b4e32ee):
+		// "Where did you spot us?" — ozge’s design (pre-open repo, b4e32ee):
 		// member-stated arrival channel, explicitly framed as not-tracking.
 		referralLabel: 'Where did you spot us?',
 		referralNote: 'We do not track your moves online. Your answer here would help us understand how word travels.',
@@ -501,18 +517,18 @@ export const copy = {
 		// see 20260417110000_drop_newsletter_subscribers). We hold nothing.
 		newsletterInvite: 'We also write a newsletter, hosted on Substack.',
 		newsletterCta: 'Subscribe on Substack',
-		cityExpansionNote: 'We\'re currently active in Berlin and will expand to other cities soon.',
+		cityExpansionNote: 'We’re currently active in Berlin and will expand to other cities soon.',
 
 		// /waitlist page
 		pageTitle: 'join · dyad. cultivating a culture of conversation',
 		heading: 'Request to join',
 		subtitle: 'For those who seek conversation for its own sake and meet others with humility, critical thinking and deep listening.',
-		successMessage: "Thank you. We'll be in touch.",
+		successMessage: "Thank you. We’ll be in touch.",
 		freewriteLabel: 'Why do you want to join?',
-		freewritePlaceholder: "What's in a conversation?",
+		freewritePlaceholder: "What’s in a conversation?",
 		namePlaceholder: 'Name',
 		emailPlaceholder: 'Email',
-		sending: 'Sending...',
+		sending: 'Sending…',
 		submitCta: 'Request to join',
 		freewriteRequired: 'Please share your thoughts before joining.',
 		genericError: 'Something went wrong',
@@ -525,16 +541,16 @@ export const copy = {
 		welcomeBack: 'Welcome back',
 		signInSubtitle: 'Sign in to create and join conversations',
 		signIn: 'Sign in',
-		loggingIn: 'Logging in...',
+		loggingIn: 'Signing in…',
 		forgotPassword: 'Forgot password?',
 		passwordHint: 'At least 8 characters',
 		email: 'Email',
 		password: 'Password',
 		name: 'Name',
 		alreadyHaveAccount: 'Already have an account?',
-		dontHaveAccount: "Don't have an account?",
+		dontHaveAccount: "Don’t have an account?",
 		join: 'Join',
-		logIn: 'Log in',
+		logIn: 'Sign in',
 		somethingWentWrong: 'Something went wrong. Please try again.',
 
 		// Login page — reset / update-password sub-modes
@@ -542,9 +558,9 @@ export const copy = {
 		setNewPasswordTitle: 'Set new password',
 		resetSubtitle: 'Enter your email to receive a reset link',
 		updateSubtitle: 'Choose a new password for your account',
-		signingIn: 'Signing in...',
-		sending: 'Sending...',
-		updating: 'Updating...',
+		signingIn: 'Signing in…',
+		sending: 'Sending…',
+		updating: 'Updating…',
 		sendResetLink: 'Send reset link',
 		updatePasswordAction: 'Update password',
 		goToDashboard: 'Go to dashboard',
@@ -561,18 +577,18 @@ export const copy = {
 		signupPageTitle: 'Join dyad.',
 		checkYourEmail: 'Check your email',
 		otpIntro: 'We sent a 6-digit code to',
-		verifying: 'Verifying...',
+		verifying: 'Verifying…',
 		confirm: 'Confirm',
 		wrongEmail: 'Wrong email?',
 		startOver: 'Start over',
-		youreInvited: "You're invited",
+		youreInvited: "You’re invited",
 		createAccountSubtitle: 'Create your account to join the conversation.',
 		usernamePlaceholder: 'Username',
 		usernameTitle: 'Lowercase letters, numbers, underscores, and hyphens only',
 		usernameHintShort: 'Your public URL: dyad.berlin/',
 		usernameHintLong: 'This will be your public URL: dyad.berlin/',
 		passwordWithMinPlaceholder: 'Password (at least 8 characters)',
-		creatingAccount: 'Creating account...',
+		creatingAccount: 'Creating account…',
 		createAccount: 'Create account',
 
 		// Invitation-based join page
@@ -585,7 +601,7 @@ export const copy = {
 		// Group-link join page (shared conference/corner links)
 		groupJoinTitle: 'Join {name}',
 		groupJoinSubtitle: 'Create your account to join the conversations in this corner.',
-		groupLinkUnknown: 'This link isn\'t valid',
+		groupLinkUnknown: 'This link isn’t valid',
 		groupLinkUnknownSubtitle: 'Check that you copied the whole link, or ask the organizers for a fresh one.',
 		groupLinkClosed: 'Joining has closed',
 		groupLinkClosedSubtitle: 'This corner is no longer taking new members through this link.',
@@ -594,9 +610,9 @@ export const copy = {
 		groupLinkRevoked: 'This link is no longer available',
 		groupLinkRevokedSubtitle: 'The organizers have switched this link off. Ask them for a current one.',
 		groupAlreadyMember: 'You already have an account',
-		groupAlreadyMemberSubtitle: 'You\'re signed in. Corner access is granted by the organizers.',
+		groupAlreadyMemberSubtitle: 'You’re signed in. Corner access is granted by the organizers.',
 		groupGoToDiscover: 'Go to discover',
-		groupEmailRegistered: 'An account with this email already exists. Log in instead.',
+		groupEmailRegistered: 'An account with this email already exists. Sign in instead.',
 		groupTooManyAttempts: 'Too many attempts. Wait a moment and try again.',
 		groupSetupFailed: 'Could not finish setting up your account. Please try again.',
 		// Action-time redemption failures (link state changed between page
@@ -605,7 +621,7 @@ export const copy = {
 			full: 'This corner is full. Ask the organizers.',
 			closed: 'Joining through this link has closed.',
 			revoked: 'This link is no longer available.',
-			unknown: 'This link isn\'t valid.'
+			unknown: 'This link isn’t valid.'
 		},
 
 		// Access-ended page (expired guest access, /access-ended)
@@ -665,10 +681,10 @@ export const copy = {
 			'Membership keeps dyad collectively owned and ad-free. Choose the plan that feels right.',
 		lapsedHeading: 'Renew Your Membership',
 		lapsedIntro:
-			'Your membership has lapsed, so the member-only actions are paused for now. Renewing turns them back on. Everything you have already made stays exactly as it is, and you can stop any time.',
+			'Your membership has lapsed, so the member-only actions are paused for now. Renewing turns them back on. Everything you have already made stays exactly as it is, and you can stop anytime.',
 		grantEndedHeading: 'Your Access Has Ended',
 		grantEndedIntro:
-			'Your complimentary membership has ended, so the member-only actions are paused for now. You can become a member any time to turn them back on. Everything you have already made stays exactly as it is.',
+			'Your complimentary membership has ended, so the member-only actions are paused for now. You can become a member anytime to turn them back on. Everything you have already made stays exactly as it is.',
 
 		cadenceMonthly: 'Monthly',
 		cadenceAnnual: 'Yearly',
@@ -691,10 +707,17 @@ export const copy = {
 		monthlySupporterPrice: '€17',
 		monthlySupporterNote: 'A higher rate that helps fund the lower one.',
 		becomeMemberCta: 'become a member',
+		// Membership is currently open to people based in Berlin. Self-declared at
+		// the paywall — the only place location is asked about.
+		berlinConfirmLabel: 'I’m based in Berlin. Membership is open to Berlin residents for now.',
+		berlinRequired: 'Membership is currently open to people based in Berlin.',
 		billingNote: 'Billed securely via Stripe. Cancel anytime.',
+		// Lifetime is a one-time payment — there is no subscription to cancel,
+		// so the note drops "Cancel anytime" for that cadence.
+		billingNoteLifetime: 'Billed securely via Stripe. One payment, no renewal.',
 		benefits: [
 			'Start your own conversations',
-			'Respond and meet one to one',
+			'Respond and meet one-on-one',
 			'Join every group conversation',
 			'Keep dyad collectively owned and ad-free'
 		],
@@ -729,8 +752,8 @@ export const copy = {
 		_description: 'Transactional emails sent server-side. HTML templates in the API route handlers.',
 		inviteSubject: 'Come & join us at Dyad.',
 		inviteBody: (displayName: string, inviteUrl: string, expiryDays: number) =>
-			`Hi ${displayName}, We are letting in groups of people to come and play. We are currently on our private beta and would love for you to take a walk inside and tell us about your experience. You can do this asynchronously via the feedback area on the bottom right with a question mark icon. We are looking forward to bringing the fruits of our love, care and labor to you. Join: ${inviteUrl}. This link expires in ${expiryDays} days.`,
-		waitlistSubject: "What's in a conversation?",
+			`Hi ${displayName}, we are letting in groups of people to come and play. We are currently in our private beta and would love for you to take a walk inside and tell us about your experience. You can do this asynchronously via the feedback area on the bottom right with a question mark icon. We are looking forward to bringing the fruits of our love, care and labor to you. Join: ${inviteUrl}. This link expires in ${expiryDays} days.`,
+		waitlistSubject: "What’s in a conversation?",
 		membershipActivatedSubject: 'Your membership is active',
 		membershipActivatedBody:
 			'Thank you for becoming a member. Your membership is active. It keeps dyad collectively owned and ad-free, and it’s what lets you start conversations, respond, and meet. You can review or manage it any time.',

@@ -2,6 +2,8 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { requireIdentity } from '$lib/services/identity.js';
 import { requireMembershipForAction } from '$lib/server/require-membership.js';
+import { resolvePromptCapacity } from '$lib/server/resolve-capacity.js';
+import { gatingActionForCapacity } from '$lib/domain/gating.js';
 import { parseJsonBody } from '$lib/server/parse-body.js';
 import { SupabaseCommentService } from '$lib/services/comment.js';
 import { handleServiceError } from '$lib/server/handle-service-error.js';
@@ -12,8 +14,10 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 
 	// Gate the create path only — editing an existing response stays ungated, so
 	// a lapsed member can revise what they already wrote (matches the split RLS,
-	// which gates INSERT and leaves the edit UPDATE open). "respond_take_slot"
-	// also covers accepting an invitation (gated inside accept_invitation).
+	// which gates INSERT and leaves the edit UPDATE open). "respond_take_slot_*"
+	// also covers accepting an invitation (gated inside accept_invitation). The
+	// action is scoped to the target conversation's size (one-on-one vs group) so
+	// the two can be gated independently; a capacity read blip ⇒ null ⇒ group.
 	const { data: existingResponse } = await locals.supabase
 		.from('prompt_comments')
 		.select('id')
@@ -21,7 +25,11 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 		.eq('author_id', upactor.id)
 		.maybeSingle();
 	if (!existingResponse) {
-		const gate = await requireMembershipForAction('respond_take_slot', locals);
+		const capacity = await resolvePromptCapacity(locals.supabase, params.id);
+		const gate = await requireMembershipForAction(
+			gatingActionForCapacity('respond_take_slot', capacity),
+			locals
+		);
 		if (gate) return gate;
 	}
 

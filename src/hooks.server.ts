@@ -205,7 +205,8 @@ export const handle: Handle = async ({ event, resolve }) => {
 			pathname.startsWith('/service-worker') ||
 			pathname.startsWith('/favicon') ||
 			pathname.startsWith('/impressum') ||
-			pathname.startsWith('/datenschutz');
+			pathname.startsWith('/datenschutz') ||
+			pathname.startsWith('/agb');
 
 		if (!isExempt) {
 			// Load the access context once per request: active scope memberships
