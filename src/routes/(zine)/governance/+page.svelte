@@ -41,32 +41,20 @@
 			<section id="documents">
 				<h2 class="section-h2">The documents we begin with</h2>
 
-				<p>Governance here begins with documents, because writing things down is how a community can hold its own rules. There are six of them, all in plain language, all public, all versioned. Ratifying them with the founding members is the first consent round.</p>
+				<p>Governance here begins with documents, because writing things down is how a community can hold its own rules. There are three of them, all in plain language, all public, all versioned, and all working documents: starting points rather than final destinations. Ratifying them with the founding members is the first consent round.</p>
 
-				<div class="docs-grid">
+				<div class="docs-grid docs-grid-three">
 					<div class="doc">
-						<h3>Charter</h3>
-						<p>The constitution. Who decides what, and how the rules change. Only members can amend it.</p>
+						<h3>Bylaws</h3>
+						<p>The working constitution. Who decides what, how a decision is made, how governance grows as the community does, and the terms we use. Only members can amend it, through the consent process it describes.</p>
+					</div>
+					<div class="doc">
+						<h3>Member Agreements</h3>
+						<p>Who can join and how joining works, together with your personal deal with dyad: what membership includes, what it is not, and how it can change, always with notice and with your right to leave first.</p>
 					</div>
 					<div class="doc">
 						<h3>Community Standards</h3>
-						<p>What we do not tolerate, where it applies, and the step-by-step process when something goes wrong, including appeals.</p>
-					</div>
-					<div class="doc">
-						<h3>Membership Criteria</h3>
-						<p>Who can join and how joining works. Published criteria, no taste judgments, a ladder instead of a wall.</p>
-					</div>
-					<div class="doc">
-						<h3>Member Agreement</h3>
-						<p>Your personal deal with dyad: what membership includes, what it is not, and how it can change, always with notice and with your right to leave first.</p>
-					</div>
-					<div class="doc">
-						<h3>Governance Roadmap</h3>
-						<p>How governance deepens as the community grows, in phases tied to real thresholds rather than promises.</p>
-					</div>
-					<div class="doc">
-						<h3>Glossary</h3>
-						<p>Ten terms, from member and steward to proposal, objection and consent, defined before we use them. Most governance disagreements are definitional, and this prevents them.</p>
+						<p>What we do not tolerate, where it applies, and the step-by-step process when something goes wrong, including the right to be heard and to appeal.</p>
 					</div>
 				</div>
 			</section>

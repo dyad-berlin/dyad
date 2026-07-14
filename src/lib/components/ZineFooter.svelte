@@ -1,6 +1,14 @@
 <!-- Shared zine footer — used by the (zine) layout and the /why page. -->
 <script lang="ts">
 	import { copy } from '$lib/copy';
+	import { env } from '$env/dynamic/public';
+
+	// Social/blog links render only when configured, following the repo's
+	// env-gating pattern (cf. zine payment links). Set in the Pages env:
+	// PUBLIC_BLOG_URL, PUBLIC_INSTAGRAM_URL, PUBLIC_YOUTUBE_URL.
+	const blogUrl = (env.PUBLIC_BLOG_URL ?? '').trim();
+	const instagramUrl = (env.PUBLIC_INSTAGRAM_URL ?? '').trim();
+	const youtubeUrl = (env.PUBLIC_YOUTUBE_URL ?? '').trim();
 </script>
 
 <footer class="zine-footer">
@@ -8,17 +16,18 @@
 		<div class="footer-grid">
 			<div class="footer-col">
 				<p class="footer-col-head">Community</p>
-				<a href="/community" class="footer-link">Who dyad is for</a>
-				<a href="/community#belonging" class="footer-link">Belonging &amp; membership</a>
-				<a href="/community-care#approach" class="footer-link">Trust, safety &amp; care</a>
-				<a href="/community-care#moderation" class="footer-link">Moderation</a>
+				<a href="/join" class="footer-link">Become a member</a>
+				<span class="footer-link footer-soon">Forum (in the making)</span>
+				{#if blogUrl}<a href={blogUrl} class="footer-link" target="_blank" rel="noopener">Blog</a>{/if}
+				{#if instagramUrl}<a href={instagramUrl} class="footer-link" target="_blank" rel="noopener">Instagram</a>{/if}
+				{#if youtubeUrl}<a href={youtubeUrl} class="footer-link" target="_blank" rel="noopener">YouTube</a>{/if}
 			</div>
 			<div class="footer-col">
 				<p class="footer-col-head">Participatory Governance</p>
+				<a href="/governance#documents" class="footer-link">Bylaws, agreements &amp; standards</a>
 				<a href="/governance#practice" class="footer-link">How we practice</a>
 				<a href="/governance#flow" class="footer-link">How a decision is made</a>
 				<a href="/governance#who-decides" class="footer-link">Who decides what</a>
-				<a href="/governance#documents" class="footer-link">The documents</a>
 			</div>
 			<div class="footer-col">
 				<p class="footer-col-head">Dyad</p>
@@ -76,6 +85,15 @@
 
 	.footer-link:hover {
 		color: rgba(240, 236, 230, 0.85);
+	}
+
+	/* Not yet a destination — quieter than the live links, not interactive. */
+	.footer-soon {
+		color: rgba(240, 236, 230, 0.25);
+		cursor: default;
+	}
+	.footer-soon:hover {
+		color: rgba(240, 236, 230, 0.25);
 	}
 
 	.footer-colophon {
