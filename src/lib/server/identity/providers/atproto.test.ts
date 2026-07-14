@@ -102,4 +102,43 @@ describe('atproto provider', () => {
 		const { atprotoProvider } = await import('./atproto.js');
 		expect(await atprotoProvider()!.resolveSession(fakeCookies(), NOW)).toBeNull();
 	});
+
+	it('reads a pending identity (with handle hint) from a pending token', async () => {
+		const token = await signSessionToken('dyad-atproto-pending', SECRET, {
+			memberId: 'did-hash-pending',
+			scope: SCOPE,
+			expiresAt: NOW + 900,
+			hint: 'alice.bsky.social'
+		});
+		const { readPendingIdentity } = await import('./atproto.js');
+		expect(await readPendingIdentity(fakeCookies({ atproto_pending: token }), NOW)).toEqual({
+			memberId: 'did-hash-pending',
+			scope: SCOPE,
+			handle: 'alice.bsky.social'
+		});
+	});
+
+	it('does not accept a live session token as a pending identity', async () => {
+		const sessionToken = await signSessionToken(KIND, SECRET, {
+			memberId: 'did-hash-abc',
+			scope: SCOPE,
+			expiresAt: NOW + 3600
+		});
+		const { readPendingIdentity } = await import('./atproto.js');
+		expect(
+			await readPendingIdentity(fakeCookies({ atproto_pending: sessionToken }), NOW)
+		).toBeNull();
+	});
+
+	it('does not accept a pending token as a live session', async () => {
+		const pendingToken = await signSessionToken('dyad-atproto-pending', SECRET, {
+			memberId: 'did-hash-pending',
+			scope: SCOPE,
+			expiresAt: NOW + 900
+		});
+		const { atprotoProvider } = await import('./atproto.js');
+		expect(
+			await atprotoProvider()!.resolveSession(fakeCookies({ atproto_session: pendingToken }), NOW)
+		).toBeNull();
+	});
 });
