@@ -33,19 +33,42 @@ export async function buildAppIdentity(sessions: ScopeSession[]): Promise<AppIde
 	// RPC error) leaves the visitor anonymous rather than 500-ing the request.
 	try {
 		// All sessions here belong to the same visitor (one provider session in
-		// practice). Provision the identity once; grant every active scope.
+		// practice).
 		const primary = sessions[0];
-		const scopes = [...new Set(sessions.map((s) => s.scope))];
+		const admin = makeAdminClient();
 
 		// Provisioning an identity row is privileged; do it with the service role,
 		// never the public anon key. The claim client minted below is what then
 		// authorizes the request under RLS.
-		const { data, error } = await makeAdminClient().rpc('ensure_identity', {
+		const { data, error } = await admin.rpc('ensure_identity', {
 			p_substrate: primary.substrate,
 			p_substrate_id: primary.memberId
 		});
 		if (error || typeof data !== 'string') return null;
 		const identityId = data;
+
+		// Mint the claim's scopes from the identity's LIVE grants, not from the
+		// session cookie's asserted scope. The cookie proves the credential; the
+		// identity_scopes row proves current admission. Reading the durable grant
+		// (revoked_at IS NULL) each request is what makes revocation take effect
+		// immediately: the claim-scoped RLS policies trust app_scopes and have no
+		// revocation awareness of their own, and a provider session cookie lives
+		// for days, so a stale cookie scope would otherwise outlast a revoked
+		// grant. Intersect with the session's scope so the claim never exceeds
+		// what this credential was for.
+		const sessionScopes = new Set(sessions.map((s) => s.scope));
+		const { data: grantRows } = await admin
+			.from('identity_scopes')
+			.select('scope')
+			.eq('identity_id', identityId)
+			.is('revoked_at', null);
+		const scopes = (grantRows ?? [])
+			.map((r) => r.scope as string)
+			.filter((s) => sessionScopes.has(s));
+
+		// Every scope this session asserted has been revoked: the visitor is no
+		// longer admitted. Return null so the request falls back to anonymous.
+		if (scopes.length === 0) return null;
 
 		const jwt = await mintIdentityJwt({ identityId, scopes });
 		const client = createClaimClient(jwt);
