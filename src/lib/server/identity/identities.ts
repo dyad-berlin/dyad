@@ -41,6 +41,7 @@ export async function hasScopeGrant(
 		.select('identity_id')
 		.eq('identity_id', identity.data.id)
 		.eq('scope', scope)
+		.is('revoked_at', null)
 		.maybeSingle();
 	return Boolean(grant.data);
 }

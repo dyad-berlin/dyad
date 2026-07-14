@@ -160,8 +160,42 @@ export async function beginAuthorization(handle: string): Promise<URL | null> {
 	return client.authorize(handle, { scope: 'atproto' });
 }
 
+/**
+ * Resolves an ATProto handle to its DID, or null if it does not resolve.
+ * Well-known first (authoritative for custom-domain handles), then the public
+ * AppView as fallback. DNS TXT resolution is deliberately skipped: it needs a
+ * node dns runtime, and every handle these two paths miss is one the OAuth
+ * flow could not sign in anyway.
+ */
+export async function resolveHandleToDid(handle: string): Promise<string | null> {
+	try {
+		const res = await fetch(`https://${handle}/.well-known/atproto-did`, {
+			signal: AbortSignal.timeout(5000)
+		});
+		if (res.ok) {
+			const text = (await res.text()).trim();
+			if (text.startsWith('did:')) return text;
+		}
+	} catch {
+		// fall through to the AppView
+	}
+	try {
+		const res = await fetch(
+			`https://public.api.bsky.app/xrpc/com.atproto.identity.resolveHandle?handle=${encodeURIComponent(handle)}`,
+			{ signal: AbortSignal.timeout(5000) }
+		);
+		if (res.ok) {
+			const body = (await res.json()) as { did?: unknown };
+			if (typeof body.did === 'string') return body.did;
+		}
+	} catch {
+		// unresolvable
+	}
+	return null;
+}
+
 /** Opaque member id: SHA-256(did), hex, truncated to 32 (adapter-shapes.md). */
-async function memberIdFromDid(did: string): Promise<string> {
+export async function memberIdFromDid(did: string): Promise<string> {
 	const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(did));
 	return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, '0'))
 		.join('')
