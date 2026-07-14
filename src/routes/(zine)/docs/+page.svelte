@@ -55,7 +55,7 @@
 			<button class="side-link side-top" class:active={active === 'start'} onclick={() => select('start')}>Documentation</button>
 
 			<p class="side-head">About</p>
-			<button class="side-link" class:active={active === 'about-why'} onclick={() => select('about-why')}>Why dyad exists</button>
+			<button class="side-link" class:active={active === 'about-why'} onclick={() => select('about-why')}>Our origin story</button>
 			<button class="side-link" class:active={active === 'about-community'} onclick={() => select('about-community')}>Community</button>
 			<button class="side-link" class:active={active === 'about-governance'} onclick={() => select('about-governance')}>Participatory governance</button>
 			<button class="side-link" class:active={active === 'about-care'} onclick={() => select('about-care')}>Trust, safety &amp; care</button>
@@ -89,7 +89,7 @@
 		{:else if active === 'about-why'}
 			<section>
 				<p class="doc-kicker">About</p>
-				<h2>Why dyad exists</h2>
+				<h2>Our origin story</h2>
 				<p>Over the past two years now, we have been meticulously at work. Working first to understand how we arrived at a digital environment that feels so intrusive, hostile, exhausting, and then, working on something precious, full of life by virtue of serving the life within. Dyad is the product of such care and intention.</p>
 				<p>We did not like how being social online felt. The platforms we meet on left little room for our humanity. We are stripped down to a certain version of ourselves, and not the version we wanted to come forth. There was no room for the complexity of our experiences, the intricacy of making sense of them, and with that, discovering and nurturing the meaning of our lives. Where do you go online to expand, deepen, texture?</p>
 				<p>A face to face conversation is part of the oral culture we only recently parted ways with. Stories and conversations have so long been how we weave parts of us together. And we wanted to give way to more of them.</p>
