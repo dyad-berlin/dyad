@@ -50,6 +50,16 @@ export const actions: Actions = {
 			.insert({ id: locals.user.id, username });
 		if (dbError) {
 			if (dbError.code === '23505') {
+				// A unique violation is either this identity resubmitting (it
+				// already has a profile: a double submit) or the username being
+				// taken by someone else. Distinguish so a resubmit lands in the
+				// app instead of being told, wrongly, that its own name is taken.
+				const { data: mine } = await makeAdminClient()
+					.from('profiles')
+					.select('id')
+					.eq('id', locals.user.id)
+					.maybeSingle();
+				if (mine) redirect(302, '/discover');
 				return fail(400, { username, error: 'That name is taken' });
 			}
 			console.error('[welcome] profile creation failed:', dbError.message);

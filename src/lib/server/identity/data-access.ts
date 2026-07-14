@@ -2,8 +2,8 @@
  * Chooses how an account-less corner request reaches the database. Generic over
  * substrate: it takes the substrate tag + member id from the ScopeSession.
  *
- * Two modes, switched by IDENTITY_RLS_NATIVE (the flag name is historical; it
- * governs the claim-injection path for every provider):
+ * Two modes, switched by IDENTITY_RLS_NATIVE (governs the claim-injection path
+ * for every provider):
  *  - default (off): the service-role client; the server enforces scoping in
  *    code. Works without the claim-seam migration applied.
  *  - native (on): a claim-injected client (a short-lived JWT carrying the

@@ -153,24 +153,36 @@ export const handle: Handle = async ({ event, resolve }) => {
 			event.locals.user = appIdentity.user;
 			event.locals.upactor = appIdentity.upactor;
 
-			// Admission is not joining. An invited identity can sign in, but the
-			// app opens only once they have created an account (a profiles row,
-			// chosen at /welcome). Gate page navigations; leave /api and assets
-			// reachable so the welcome page itself works.
+			// Admission is not joining. An invited identity holds a session, but
+			// the app stays closed until they create an account (a profiles row,
+			// chosen at /welcome). This is the one place a profile-less
+			// authenticated request can exist: Supabase users get a profile
+			// atomically via the handle_new_user trigger, so the rest of the app
+			// assumes authenticated implies a profile. Enforcing it here keeps
+			// that invariant whole, including for /api mutations, instead of
+			// re-checking in every handler.
 			const path = event.url.pathname;
 			const exempt =
 				path === '/welcome' ||
+				path.startsWith('/auth') ||
 				path.startsWith('/logout') ||
-				path.startsWith('/api/') ||
 				path.startsWith('/_app/') ||
-				path.includes('.');
-			if (!exempt && event.request.method === 'GET') {
+				path.startsWith('/service-worker') ||
+				path.startsWith('/favicon') ||
+				path.endsWith('.webmanifest');
+			if (!exempt) {
 				const { data: profile } = await appIdentity.client
 					.from('profiles')
 					.select('id')
 					.eq('id', appIdentity.user.id)
 					.maybeSingle();
 				if (!profile) {
+					if (path.startsWith('/api/')) {
+						return new Response(JSON.stringify({ error: 'onboarding_required' }), {
+							status: 403,
+							headers: { 'Content-Type': 'application/json' }
+						});
+					}
 					return new Response(null, { status: 302, headers: { Location: '/welcome' } });
 				}
 			}
