@@ -7,13 +7,11 @@
 	let { data } = $props();
 
 	const messages: Record<string, string> = {
-		handle: 'Enter the handle you use on the network, like name.bsky.social.',
-		resolve: 'That handle could not be found on the network.',
-		credential_rejected: 'Sign-in was not completed. You can try again.',
-		credential_invalid: 'Sign-in was not completed. You can try again.'
+		handle: 'Enter a handle like name.bsky.social.',
+		resolve: 'That handle was not found.'
 	};
 	const message = data.errorCode
-		? (messages[data.errorCode] ?? 'Something went wrong. You can try again.')
+		? (messages[data.errorCode] ?? 'Sign-in did not complete.')
 		: null;
 </script>
 
@@ -23,9 +21,8 @@
 	<h1>Enter with Your ATProto Account</h1>
 
 	<p class="lede">
-		If you have an account on Bluesky or elsewhere on the ATProto network, you
-		can enter with it. Your own server confirms it is you; dyad learns no name,
-		no email, and keeps no way to reach you.
+		Enter with a handle from Bluesky or any other ATProto service. dyad keeps
+		an anonymous reference to it and nothing else.
 	</p>
 
 	<form method="GET" action="/api/atproto/authorize">
@@ -49,7 +46,15 @@
 	.enter { max-width: 32rem; margin: 2rem auto; padding: 1.5rem; }
 	.lede { color: #44403c; }
 	form { display: flex; gap: 0.5rem; margin-top: 1.25rem; }
-	input { flex: 1; padding: 0.5rem 0.75rem; }
+	input {
+		flex: 1;
+		padding: 0.5rem 0.75rem;
+		background: #fff;
+		color: #1c1917;
+		border: 1px solid #d6d3d1;
+		border-radius: 6px;
+	}
+	input::placeholder { color: #78716c; }
 	button { cursor: pointer; padding: 0.5rem 0.9rem; }
 	.message { color: #c2410c; }
 	.alt { margin-top: 1.5rem; }
