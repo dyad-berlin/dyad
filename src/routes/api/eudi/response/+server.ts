@@ -1,4 +1,4 @@
-import { error } from '@sveltejs/kit';
+import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getEudiPort } from '$lib/server/identity/providers/eudi.js';
 
@@ -12,7 +12,7 @@ import { getEudiPort } from '$lib/server/identity/providers/eudi.js';
  */
 export const POST: RequestHandler = async ({ request }) => {
 	const port = getEudiPort();
-	if (!port) error(404, 'not found');
+	if (!port) return json({ error: 'not found' }, { status: 404 });
 	const outcome = await port.authenticate({ kind: 'eudi-response', request });
 	return port.respondToWallet(outcome);
 };

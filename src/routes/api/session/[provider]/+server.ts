@@ -1,4 +1,4 @@
-import { json, error } from '@sveltejs/kit';
+import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getProvider } from '$lib/server/identity/index.js';
 
@@ -13,22 +13,24 @@ import { getProvider } from '$lib/server/identity/index.js';
  * substrate-specific credential handling; this endpoint names no substrate.
  */
 
+const unknownProvider = () => json({ error: 'unknown identity provider' }, { status: 404 });
+
 export const GET: RequestHandler = async ({ params, cookies }) => {
 	const provider = getProvider(params.provider);
-	if (!provider) error(404, 'unknown identity provider');
+	if (!provider) return unknownProvider();
 	const payload = await provider.challenge(cookies);
 	return json({ provider: provider.id, scope: provider.scope, ...payload });
 };
 
 export const POST: RequestHandler = async ({ params, request, cookies }) => {
 	const provider = getProvider(params.provider);
-	if (!provider) error(404, 'unknown identity provider');
+	if (!provider) return unknownProvider();
 
 	let evidence: unknown;
 	try {
 		evidence = await request.json();
 	} catch {
-		error(400, 'invalid JSON body');
+		return json({ error: 'Invalid JSON' }, { status: 400 });
 	}
 
 	const result = await provider.establish(cookies, evidence);
@@ -40,7 +42,7 @@ export const POST: RequestHandler = async ({ params, request, cookies }) => {
 
 export const DELETE: RequestHandler = async ({ params, cookies }) => {
 	const provider = getProvider(params.provider);
-	if (!provider) error(404, 'unknown identity provider');
+	if (!provider) return unknownProvider();
 	provider.clear(cookies);
 	return json({ ok: true });
 };
