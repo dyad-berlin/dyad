@@ -13,6 +13,9 @@
 		"url": "https://github.com/dyad-berlin/dyad/issues"
 	},
 	"type": "module",
+	"engines": {
+		"node": ">=22"
+	},
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
