@@ -1,0 +1,23 @@
+#!/bin/sh
+# dyad pre-commit: block secrets before they enter git history.
+#
+# Enabled automatically via `npm install` (the "prepare" script sets
+# core.hooksPath to .githooks). Bypass with `git commit --no-verify` — use
+# only for a false positive you have personally verified is not a secret.
+set -eu
+
+CONFIG=".gitleaks.toml"
+
+if ! command -v gitleaks >/dev/null 2>&1; then
+	printf '\033[33m[pre-commit] gitleaks not installed — secret scan SKIPPED.\033[0m\n' >&2
+	printf '  Install it so secrets are caught before every commit:\n' >&2
+	printf '    brew install gitleaks   (or see https://github.com/gitleaks/gitleaks)\n' >&2
+	exit 0
+fi
+
+if ! gitleaks protect --staged --config "$CONFIG" --redact --no-banner; then
+	printf '\033[31m[pre-commit] gitleaks flagged a potential secret in staged changes (above).\033[0m\n' >&2
+	printf '  Fixtures: use the sentinel `local-fixture-not-a-secret`, or add an allowlist\n' >&2
+	printf '  entry in %s for a documented public value. Bypass (rare): git commit --no-verify\n' "$CONFIG" >&2
+	exit 1
+fi
