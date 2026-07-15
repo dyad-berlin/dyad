@@ -35,6 +35,7 @@ export default defineConfig({
 		// Externalizing keeps a single Node-resolved instance, matching prod.
 		external: [
 			'@prefig/upact',
+			'@prefig/upact-atproto',
 			'@prefig/upact-supabase'
 		]
 	},

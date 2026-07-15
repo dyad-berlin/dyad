@@ -66,6 +66,7 @@
 	"dependencies": {
 		"@atproto/oauth-client-node": "^0.4.8",
 		"@prefig/upact": "^0.1.1",
+		"@prefig/upact-atproto": "file:../prefig/upact-atproto",
 		"@prefig/upact-supabase": "^0.1.0",
 		"@supabase/ssr": "^0.8.0",
 		"@supabase/supabase-js": "^2.90.1",

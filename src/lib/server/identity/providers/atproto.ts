@@ -1,48 +1,43 @@
 /**
- * The ATProto substrate edge. This is the ONLY file in dyad that imports
- * `@atproto/oauth-client-node` or knows the ATProto OAuth flow shape. It is
- * registered once in `../registry.ts`; dyad core sees only the generic
- * `IdentityProvider`. Extraction into a `@prefig/upact-atproto` package
- * follows once the shape has settled (adapter-shapes.md already reserves it:
- * Mastodon-adapter camp, per-login instance resolution, Decision 7).
+ * The dyad-side ATProto provider: a thin wrapper over `@prefig/upact-atproto`.
  *
- * ATProto's credential collection is redirect-shaped with a handle input:
- *   1. GET  /login/atproto           -> the member enters their handle.
- *   2. GET  /api/atproto/authorize   -> resolves handle -> DID -> DID document
- *      -> PDS -> authorization server, then redirects the browser there
- *      (PAR + PKCE + DPoP, all inside the client library).
- *   3. The authorization server sends the browser to /api/atproto/callback,
- *      which delegates to `establish()`: the code is exchanged, the DID is
- *      read, and the OAuth session is immediately REVOKED.
+ * The ATProto SUBSTRATE EDGE now lives in the package: handle->DID resolution,
+ * the `@atproto/oauth-client-node` client (client metadata, PAR/PKCE/DPoP, the
+ * module singleton spanning authorize->callback), the authorization start
+ * (`beginAuthorization`), and the terminal callback exchange (`authenticate`,
+ * which reads the DID and revokes the OAuth session). dyad imports those rather
+ * than owning them.
  *
- * Sign-in is all Phase 1 needs (research/2026-07-13-atproto-experiment-design.md),
- * so dyad keeps no ATProto tokens at all: the session it mints is its own
- * HS256 cookie carrying an opaque id derived from the DID. Publishing (Phase 2)
- * will ask for the write scope separately, per member, when it exists.
+ * What stays HERE is the part that was always dyad's, never the substrate's:
+ *   - admission (`hasScopeGrant`): authentication is not admission. An ATProto
+ *     credential proves control of a DID — anyone on the network has one.
+ *     Entering dyad still takes the invite/waitlist route, and only a durable
+ *     identity_scopes grant admits.
+ *   - the pending-token cookie dance: a rejected-but-verified sign-in leaves a
+ *     short-lived proof-of-control token so the person can ask to join.
+ *   - dyad's own HS256 ScopeSession cookie: sign-in keeps no ATProto tokens, so
+ *     the app session is dyad's own artifact, minted and re-verified here.
  *
- * The Upactor-shaped derivations follow adapter-shapes.md:
- *   - member id: SHA-256(did)[:32] — stable across PDS migrations, which is the
- *     `continuation` property DIDs add over Mastodon's per-instance actor URLs.
- *   - no display hint: sign-in grants a scope session, not a profile. dyad
- *     learns the DID and nothing else; even the handle is discarded.
- *
- * Deployment shape: the client's state/session stores are closure memory and
- * must span the authorize -> callback exchange, so the client is a module-level
- * singleton. Single-instance node deployments only (dev/sandbox); a Workers
- * deployment needs shared stores first. Sessions are deleted at establishment,
- * so the session store never
- * outlives one login.
+ * The seam: `establish()` calls the adapter's `authenticate()` with the callback
+ * params, reads the resolved Upactor via `upactorForSession()`, then runs the
+ * admission gate and session minting exactly as before. The opaque member id is
+ * `Upactor.id` = SHA-256(did)[:32], stable across PDS migration (unchanged from
+ * the pre-extraction derivation).
  */
 
 import type { Cookies } from '@sveltejs/kit';
 import { dev } from '$app/environment';
 import { env } from '$env/dynamic/private';
 import {
-	NodeOAuthClient,
-	type NodeSavedSession,
-	type NodeSavedState,
-	type OAuthClientMetadataInput
-} from '@atproto/oauth-client-node';
+	createAtprotoAdapter,
+	buildClientMetadata,
+	resolveHandleToDid,
+	deriveMemberId,
+	type AtprotoConfig,
+	type AuthError,
+	type Session
+} from '@prefig/upact-atproto';
+import type { OAuthClientMetadataInput } from '@atproto/oauth-client-node';
 import type { EstablishResult, IdentityProvider, ScopeSession } from '../types.js';
 import { signSessionToken, verifySessionToken } from './session-token.js';
 import { hasScopeGrant } from '../identities.js';
@@ -88,126 +83,44 @@ function readConfig(): AtprotoEnvConfig | null {
 	return { scope, baseUrl: baseUrl.replace(/\/$/, ''), sessionSecret };
 }
 
-function isLoopback(baseUrl: string): boolean {
-	try {
-		const host = new URL(baseUrl).hostname;
-		return host === '127.0.0.1' || host === '[::1]' || host === 'localhost';
-	} catch {
-		return false;
-	}
+/**
+ * The adapter config derived from the deployment env. dyad's client metadata is
+ * byte-identical to the pre-extraction inline provider's: client_name 'dyad',
+ * client_uri and redirect_uri under the base URL, scope 'atproto'.
+ */
+function adapterConfig(config: AtprotoEnvConfig): AtprotoConfig {
+	return { baseUrl: config.baseUrl, clientName: 'dyad', clientUri: config.baseUrl };
 }
 
 /**
- * The client metadata this deployment presents to authorization servers.
- * Public client (`token_endpoint_auth_method: 'none'`): no keys to manage, at
- * the cost of shorter-lived grants — the right trade while sign-in discards
- * the tokens anyway. Served at /oauth/client-metadata.json in production; the
- * loopback form (dev) is passed by value and never served.
+ * The client metadata this deployment presents to authorization servers, or
+ * null when the provider is not configured. Served at /oauth/client-metadata.json.
  */
 export function getAtprotoClientMetadata(): OAuthClientMetadataInput | null {
 	const config = readConfig();
 	if (!config) return null;
-
-	const redirectUri = `${config.baseUrl}/api/atproto/callback`;
-	const loopback = isLoopback(config.baseUrl);
-	return {
-		client_id: loopback
-			? `http://localhost?redirect_uri=${encodeURIComponent(redirectUri)}&scope=atproto`
-			: `${config.baseUrl}/oauth/client-metadata.json`,
-		client_name: 'dyad',
-		client_uri: config.baseUrl,
-		redirect_uris: [redirectUri],
-		scope: 'atproto',
-		grant_types: ['authorization_code', 'refresh_token'],
-		response_types: ['code'],
-		application_type: loopback ? 'native' : 'web',
-		token_endpoint_auth_method: 'none',
-		dpop_bound_access_tokens: true
-	};
-}
-
-/** In-memory store spanning one authorize -> callback exchange (see header). */
-function memoryStore<V>() {
-	const map = new Map<string, V>();
-	return {
-		async set(key: string, value: V) {
-			map.set(key, value);
-		},
-		async get(key: string) {
-			return map.get(key);
-		},
-		async del(key: string) {
-			map.delete(key);
-		}
-	};
-}
-
-let cachedClient: NodeOAuthClient | null = null;
-
-function getClient(): NodeOAuthClient | null {
-	if (cachedClient) return cachedClient;
-	const clientMetadata = getAtprotoClientMetadata();
-	if (!clientMetadata) return null;
-	cachedClient = new NodeOAuthClient({
-		clientMetadata,
-		stateStore: memoryStore<NodeSavedState>(),
-		sessionStore: memoryStore<NodeSavedSession>()
-	});
-	return cachedClient;
+	return buildClientMetadata(adapterConfig(config));
 }
 
 /**
  * Resolves a member-entered handle (or DID) to their authorization server and
- * returns the URL to send the browser to. Called by /api/atproto/authorize.
- * The handle rides along as OAuth state (server-bound to this flow by the
- * client's state store) so establish() can label a join request with it.
+ * returns the URL to send the browser to, or null when the provider is not
+ * configured. Called by /api/atproto/authorize.
  */
 export async function beginAuthorization(handle: string): Promise<URL | null> {
-	const client = getClient();
-	if (!client) return null;
-	return client.authorize(handle, { scope: 'atproto', state: handle });
+	const config = readConfig();
+	if (!config) return null;
+	return createAtprotoAdapter(adapterConfig(config)).beginAuthorization(handle);
 }
 
-/**
- * Resolves an ATProto handle to its DID, or null if it does not resolve.
- * Well-known first (authoritative for custom-domain handles), then the public
- * AppView as fallback. DNS TXT resolution is deliberately skipped: it needs a
- * node dns runtime, and every handle these two paths miss is one the OAuth
- * flow could not sign in anyway.
- */
-export async function resolveHandleToDid(handle: string): Promise<string | null> {
-	try {
-		const res = await fetch(`https://${handle}/.well-known/atproto-did`, {
-			signal: AbortSignal.timeout(5000)
-		});
-		if (res.ok) {
-			const text = (await res.text()).trim();
-			if (text.startsWith('did:')) return text;
-		}
-	} catch {
-		// fall through to the AppView
-	}
-	try {
-		const res = await fetch(
-			`https://public.api.bsky.app/xrpc/com.atproto.identity.resolveHandle?handle=${encodeURIComponent(handle)}`,
-			{ signal: AbortSignal.timeout(5000) }
-		);
-		if (res.ok) {
-			const body = (await res.json()) as { did?: unknown };
-			if (typeof body.did === 'string') return body.did;
-		}
-	} catch {
-		// unresolvable
-	}
-	return null;
-}
+// Substrate-edge helper re-exports: the admin scope-granting route resolves a
+// member-entered handle to an opaque member id through the same edge the
+// provider uses, so the two derive ids identically.
+export { resolveHandleToDid };
 
-/** Opaque member id: SHA-256(did), hex, truncated to 32 (adapter-shapes.md). */
+/** Opaque member id: SHA-256(did)[:32] (now in @prefig/upact-atproto). */
 export async function memberIdFromDid(did: string): Promise<string> {
-	const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(did));
-	return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, '0'))
-		.join('')
-		.slice(0, 32);
+	return deriveMemberId(did);
 }
 
 function toScopeSession(scope: string, memberId: string, expiresAt: number): ScopeSession {
@@ -237,6 +150,26 @@ export function clearPendingIdentity(cookies: Cookies): void {
 	cookies.delete(PENDING_COOKIE, { path: '/' });
 }
 
+/** HTTP status for a port AuthErrorCode, preserving the pre-extraction responses. */
+function statusForAuthError(error: AuthError): number {
+	switch (error.code) {
+		case 'credential_invalid':
+			return 400;
+		case 'substrate_unavailable':
+			return 503;
+		case 'rate_limited':
+			return 429;
+		default:
+			// credential_rejected / auth_failed / identity_unavailable: the sign-in
+			// was not accepted. The pre-extraction provider answered 403 here.
+			return 403;
+	}
+}
+
+function isAuthError(outcome: Session | AuthError): outcome is AuthError {
+	return typeof (outcome as { code?: unknown }).code === 'string';
+}
+
 /** Construct the ATProto provider, or null if this deployment has not configured it. */
 export function atprotoProvider(): IdentityProvider | null {
 	const config = readConfig();
@@ -254,36 +187,37 @@ export function atprotoProvider(): IdentityProvider | null {
 		},
 
 		// The evidence is the authorization server's redirect parameters
-		// (code, state, iss), delivered by /api/atproto/callback. The exchange
-		// yields the DID; the OAuth session is then revoked — sign-in keeps no
-		// standing capability against the member's repository.
+		// (code, state, iss), delivered by /api/atproto/callback. The adapter
+		// runs the exchange (DID read, OAuth session revoked) and hands back an
+		// opaque Session; dyad reads the resolved Upactor and takes it from there.
 		async establish(cookies: Cookies, evidence: unknown): Promise<EstablishResult> {
-			const client = getClient();
-			if (!client) {
-				return { ok: false, status: 404, code: 'provider_unconfigured', message: 'atproto provider not configured' };
-			}
+			const adapter = createAtprotoAdapter(adapterConfig(config));
 
 			const params = new URLSearchParams();
 			for (const key of ['code', 'state', 'iss', 'error', 'error_description'] as const) {
 				const value = (evidence as Record<string, unknown>)?.[key];
 				if (typeof value === 'string') params.set(key, value);
 			}
-			if (!params.get('code')) {
-				return { ok: false, status: 400, code: 'credential_invalid', message: 'missing authorization code' };
+
+			const outcome = await adapter.authenticate({ kind: 'atproto-callback', params });
+			if (isAuthError(outcome)) {
+				return {
+					ok: false,
+					status: statusForAuthError(outcome),
+					code: outcome.code,
+					message: outcome.message
+				};
 			}
 
-			let did: string;
-			let enteredHandle: string | null = null;
-			try {
-				const { session, state } = await client.callback(params);
-				did = session.did;
-				enteredHandle = typeof state === 'string' && state.length <= 253 ? state : null;
-				// Best-effort revocation: the tokens have served their purpose.
-				await session.signOut().catch(() => {});
-			} catch (e) {
-				console.error('[identity/atproto] callback exchange failed:', e);
+			const upactor = adapter.upactorForSession(outcome);
+			if (!upactor) {
 				return { ok: false, status: 403, code: 'credential_rejected', message: 'authorization was not accepted' };
 			}
+			const memberId = upactor.id;
+			// The handle the member entered rode along as the (now-validated) OAuth
+			// state; it labels a rejected sign-in's join request, nothing more.
+			const rawState = params.get('state');
+			const enteredHandle = rawState && rawState.length <= 253 ? rawState : null;
 
 			// Authentication is not admission. An ATProto credential proves the
 			// person controls a DID — anyone on the network has one. Entering
@@ -293,7 +227,6 @@ export function atprotoProvider(): IdentityProvider | null {
 			// visitors who merely tried). What a rejected sign-in DOES leave is a
 			// short-lived pending token, so the person can ask to join: the token
 			// is the proof-of-control their join request is verified by.
-			const memberId = await memberIdFromDid(did);
 			const admitted = await hasScopeGrant(makeAdminClient(), 'atproto', memberId, config.scope);
 			if (!admitted) {
 				const pendingExpiry = Math.floor(Date.now() / 1000) + PENDING_TTL_S;
