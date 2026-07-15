@@ -281,6 +281,35 @@ export interface SafetyConcern {
 	created_at: string;
 }
 
+// Public feedback edge (feat: unified gathering feedback, U3). Any-to-any
+// experiential feedback about a co-present participant — tags (from
+// adjective_vocabulary) + free text, NO numeric rating. Least-privilege
+// visibility (R11): visible to reviewer + subject on submit; the subject alone
+// promotes it by setting made_public_at, after which co-participants of the
+// gathering may read it. See supabase/migrations/20260715120200_create_public_feedback.sql.
+export interface PublicFeedback {
+	id: string;
+	gathering_id: string;
+	reviewer_id: string;
+	reviewee_id: string;
+	tags: string[];
+	free_text: string | null;
+	// NULL = subject-visible only; set (by the subject) to promote to a broader,
+	// still-minimal co-participant audience.
+	made_public_at: string | null;
+	created_at: string;
+}
+
+// Collect-only "would you meet again" soft signal (R7). One row per reviewer per
+// gathering; owner-read only, wired to nothing user-visible or match-affecting.
+export interface GatheringFeedback {
+	id: string;
+	gathering_id: string;
+	reviewer_id: string;
+	meet_again: boolean | null;
+	created_at: string;
+}
+
 // Discriminated union so invalid states (both form IDs set) are unrepresentable.
 // `kind` distinguishes the one-on-one feedback_forms gate (reveal-capable modal)
 // from the group_feedback gate (standalone redirect page). Mutually exclusive by
