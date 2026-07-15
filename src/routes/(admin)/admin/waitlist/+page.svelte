@@ -71,6 +71,30 @@
 	function formatDate(iso: string): string {
 		return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 	}
+
+	// Provider join requests (substrate-verified, e.g. atproto): approving grants
+	// the scope so the person's next sign-in is admitted. Pending requests are
+	// the ones awaiting a decision.
+	let deciding = $state<string | null>(null);
+	let decided = $state<Record<string, 'approved' | 'declined' | 'failed'>>({});
+
+	const pendingRequests = $derived(data.joinRequests.filter((r) => r.decided_at === null));
+
+	async function decide(id: string, action: 'approve' | 'decline') {
+		deciding = id;
+		try {
+			const res = await fetch('/admin/waitlist/api', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ id, action })
+			});
+			decided = { ...decided, [id]: res.ok ? (action === 'approve' ? 'approved' : 'declined') : 'failed' };
+		} catch {
+			decided = { ...decided, [id]: 'failed' };
+		} finally {
+			deciding = null;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -79,6 +103,39 @@
 
 <h1 class="admin-title">Waitlist</h1>
 <p class="admin-subtitle">{data.waitlist.length} contacts</p>
+
+{#if pendingRequests.length > 0}
+	<section class="join-requests">
+		<h2>Join requests</h2>
+		<p class="admin-subtitle">{pendingRequests.length} awaiting a decision</p>
+		{#each pendingRequests as req (req.id)}
+			<div class="request-row">
+				<div class="request-info">
+					<span class="request-handle">{req.handle ?? req.substrate_id}</span>
+					<span class="badge badge-provider">{req.substrate}</span>
+					<span class="request-scope">{req.scope}</span>
+					<span class="contact-date">{formatDate(req.requested_at)}</span>
+				</div>
+				{#if decided[req.id]}
+					<span class="request-decided">{decided[req.id]}</span>
+				{:else}
+					<div class="request-actions">
+						<button
+							class="btn-primary"
+							disabled={deciding === req.id}
+							onclick={() => decide(req.id, 'approve')}>approve</button
+						>
+						<button
+							class="btn-ghost"
+							disabled={deciding === req.id}
+							onclick={() => decide(req.id, 'decline')}>decline</button
+						>
+					</div>
+				{/if}
+			</div>
+		{/each}
+	</section>
+{/if}
 
 {#if inviteResult}
 	<div class="invite-result">
@@ -252,6 +309,23 @@
 	.badge-invited { background: rgba(245,158,11,0.12); color: #b45309; }
 	.badge-expired { background: rgba(239,68,68,0.12); color: #dc2626; }
 	.badge-signed_up { background: rgba(61,158,90,0.12); color: #2d7a42; }
+	.badge-provider { background: color-mix(in srgb, var(--color-accent) 12%, transparent); color: var(--color-accent); }
+
+	.join-requests { margin-bottom: var(--space-6); }
+	.join-requests h2 { font-size: var(--text-lg); margin: 0 0 var(--space-1) 0; color: var(--text-primary); }
+	.request-row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--space-4);
+		padding: var(--space-3) 0;
+		border-bottom: 1px solid var(--border-subtle);
+	}
+	.request-info { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+	.request-handle { font-weight: 500; color: var(--text-primary); }
+	.request-scope { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--text-secondary); }
+	.request-actions { display: flex; gap: var(--space-2); flex-shrink: 0; }
+	.request-decided { font-size: var(--text-sm); color: var(--text-muted); text-transform: capitalize; }
 
 	.contact-actions { flex-shrink: 0; display: flex; flex-direction: column; gap: var(--space-2); }
 	.btn-ghost {

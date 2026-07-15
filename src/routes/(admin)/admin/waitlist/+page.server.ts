@@ -5,15 +5,20 @@ export const load: PageServerLoad = async () => {
 	// Admin plane: service-role client, no user/session context.
 	const supabase = makeAdminClient();
 
-	// Two parallel queries — no FK between contacts and invitations (merge by email)
-	const [{ data: contacts }, { data: invitations }] = await Promise.all([
+	// Parallel queries — no FK between contacts and invitations (merge by email).
+	// join_requests is the provider-identity waitlist (substrate-verified).
+	const [{ data: contacts }, { data: invitations }, { data: joinRequests }] = await Promise.all([
 		supabase
 			.from('contacts')
 			.select('id, email, name, based_in, freewrite, referral_source, created_at')
 			.order('created_at', { ascending: false }),
 		supabase
 			.from('invitations')
-			.select('email, token, used_at, expires_at, created_at')
+			.select('email, token, used_at, expires_at, created_at'),
+		supabase
+			.from('join_requests')
+			.select('id, substrate, substrate_id, handle, scope, requested_at, decided_at, approved')
+			.order('requested_at', { ascending: false })
 	]);
 
 	// Build invitation lookup by email
@@ -42,5 +47,5 @@ export const load: PageServerLoad = async () => {
 		return { ...c, status };
 	});
 
-	return { waitlist };
+	return { waitlist, joinRequests: joinRequests ?? [] };
 };

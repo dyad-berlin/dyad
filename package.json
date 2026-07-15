@@ -13,11 +13,14 @@
 		"url": "https://github.com/dyad-berlin/dyad/issues"
 	},
 	"type": "module",
+	"engines": {
+		"node": ">=22"
+	},
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
 		"preview": "vite preview",
-		"prepare": "svelte-kit sync || echo ''",
+		"prepare": "git config core.hooksPath .githooks 2>/dev/null || true; svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"lint": "eslint src/ tests/ --max-warnings 0",
@@ -61,7 +64,9 @@
 		"@supabase/supabase-js": "$@supabase/supabase-js"
 	},
 	"dependencies": {
+		"@atproto/oauth-client-node": "^0.4.8",
 		"@prefig/upact": "^0.1.1",
+		"@prefig/upact-atproto": "^0.1.0",
 		"@prefig/upact-supabase": "^0.1.0",
 		"@supabase/ssr": "^0.8.0",
 		"@supabase/supabase-js": "^2.90.1",

@@ -28,6 +28,11 @@ regexes = [
     # base64 of `{"iss":"supabase-demo` — a value every Supabase install
     # ships with publicly, not a real secret.
     '''eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.eyJpc3MiOiJzdXBhYmFzZS1kZW1v[A-Za-z0-9_-]*\.[A-Za-z0-9_-]+''',
+    # The canonical local Supabase demo JWT *signing secret* (not a JWT
+    # itself) — ships with every Supabase install, documented and public.
+    # Used only to sign claim tokens against the local stack in tests
+    # (e.g. tests/integration/bridge-only-supabase.test.ts).
+    '''super-secret-jwt-token-with-at-least-32-characters-long''',
 ]
 
 # ── Custom rules ────────────────────────────────────────────────────────────

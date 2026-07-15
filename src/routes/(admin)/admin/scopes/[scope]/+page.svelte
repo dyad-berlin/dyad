@@ -9,6 +9,10 @@
 	let grantUsername = $state('');
 	let grantError = $state<string | null>(null);
 
+	let invitingHandle = $state(false);
+	let grantHandle = $state('');
+	let handleError = $state<string | null>(null);
+
 	// ── Region (post-hoc) ───────────────────────────────────────────────────
 	// Corners created before regions existed (e.g. a prod stub) get their
 	// region set here. Existing conversations keep their published region.
@@ -146,6 +150,33 @@
 			grantError = 'Network error';
 		} finally {
 			granting = false;
+		}
+	}
+
+	// Account-less invite: the handle resolves to a DID server-side, the
+	// identity row is provisioned, and the grant is what admits that DID's
+	// later sign-in at /login/atproto. No profile or account is created.
+	async function inviteAtproto() {
+		if (!grantHandle.trim()) return;
+		invitingHandle = true;
+		handleError = null;
+		try {
+			const res = await fetch(`/admin/scopes/${data.scope.scope}/api`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ handle: grantHandle.trim() })
+			});
+			const body = await res.json();
+			if (!res.ok) {
+				handleError = body.error ?? 'Failed to grant scope';
+				return;
+			}
+			grantHandle = '';
+			location.reload();
+		} catch {
+			handleError = 'Network error';
+		} finally {
+			invitingHandle = false;
 		}
 	}
 
@@ -425,6 +456,33 @@
 		{/if}
 		<button class="btn-primary" type="submit" disabled={granting || !grantUsername.trim()}>
 			{granting ? 'Granting...' : 'Grant access'}
+		</button>
+	</form>
+</details>
+
+<details class="grant-form">
+	<summary>Invite an ATProto identity</summary>
+	<form
+		onsubmit={(e) => {
+			e.preventDefault();
+			inviteAtproto();
+		}}
+	>
+		<label class="field">
+			<span>Handle</span>
+			<input
+				type="text"
+				bind:value={grantHandle}
+				required
+				placeholder="name.bsky.social"
+				disabled={invitingHandle}
+			/>
+		</label>
+		{#if handleError}
+			<p class="grant-error">{handleError}</p>
+		{/if}
+		<button class="btn-primary" type="submit" disabled={invitingHandle || !grantHandle.trim()}>
+			{invitingHandle ? 'Inviting...' : 'Invite'}
 		</button>
 	</form>
 </details>
