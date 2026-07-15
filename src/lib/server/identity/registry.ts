@@ -8,14 +8,12 @@
  */
 
 import type { IdentityProvider } from './types.js';
-import { eudiProvider } from './providers/eudi.js';
 import { atprotoProvider } from './providers/atproto.js';
 
-// eudi stays registered but unpublished: no deployment sets its env config yet
-// (readiness for later; the machinery is shared with atproto). A provider with
-// no config resolves to null here and every surface of it 404s.
+// A provider with no env config resolves to null here and every surface of it
+// 404s, so unconfigured deployments expose nothing.
 function configured(): IdentityProvider[] {
-	return [eudiProvider(), atprotoProvider()].filter((p): p is IdentityProvider => p !== null);
+	return [atprotoProvider()].filter((p): p is IdentityProvider => p !== null);
 }
 
 export function getProviders(): IdentityProvider[] {

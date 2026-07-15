@@ -28,9 +28,9 @@
  *
  * Deployment shape: the client's state/session stores are closure memory and
  * must span the authorize -> callback exchange, so the client is a module-level
- * singleton. Single-instance node deployments only (dev/sandbox), same stance
- * as the EUDI transaction store; a Workers deployment needs shared stores
- * first. Sessions are deleted at establishment, so the session store never
+ * singleton. Single-instance node deployments only (dev/sandbox); a Workers
+ * deployment needs shared stores first. Sessions are deleted at establishment,
+ * so the session store never
  * outlives one login.
  */
 

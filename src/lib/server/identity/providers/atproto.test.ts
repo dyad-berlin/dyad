@@ -41,7 +41,7 @@ describe('atproto session token (pure, via session-token)', () => {
 	});
 
 	it("rejects a token minted under another provider's kind", async () => {
-		const token = await signSessionToken('dyad-eudi-session', SECRET, {
+		const token = await signSessionToken('dyad-other-session', SECRET, {
 			memberId: 'x',
 			scope: SCOPE,
 			expiresAt: NOW + 3600

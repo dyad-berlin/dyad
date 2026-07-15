@@ -4,9 +4,9 @@ import { beginAuthorization } from '$lib/server/identity/providers/atproto.js';
 
 /**
  * Starts an ATProto sign-in: resolves the entered handle to its authorization
- * server and sends the browser there. Redirect-shaped like the EUDI wallet
- * routes — this is the substrate's HTTP surface, not the generic session
- * endpoint's; the browser arrives here by form navigation, not fetch.
+ * server and sends the browser there. Redirect-shaped, not the generic session
+ * endpoint's fetch shape — this is the substrate's own HTTP surface; the browser
+ * arrives here by form navigation, not fetch.
  */
 export const GET: RequestHandler = async ({ url }) => {
 	const handle = url.searchParams.get('handle')?.trim().replace(/^@/, '') ?? '';
