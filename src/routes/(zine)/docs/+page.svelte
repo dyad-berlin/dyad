@@ -6,7 +6,6 @@
 	const sections = new Set([
 		'start',
 		'about-why',
-		'about-community',
 		'about-governance',
 		'about-care',
 		'bylaws',
@@ -57,20 +56,19 @@
 
 			<p class="side-head">Community</p>
 			<button class="side-link" class:active={active === 'about-why'} onclick={() => select('about-why')}>Our origin story</button>
-			<button class="side-link" class:active={active === 'about-community'} onclick={() => select('about-community')}>Who dyad is for</button>
 			<button class="side-link" class:active={active === 'about-care'} onclick={() => select('about-care')}>Community care</button>
 			<button class="side-link" class:active={active === 'process-joining'} onclick={() => select('process-joining')}>Becoming a member</button>
 			<button class="side-link" class:active={active === 'guide-leaving'} onclick={() => select('guide-leaving')}>How to leave</button>
 
 			<p class="side-head">Governance</p>
-			<button class="side-link" class:active={active === 'about-governance'} onclick={() => select('about-governance')}>How we practice</button>
 			<button class="side-link" class:active={active === 'bylaws'} onclick={() => select('bylaws')}>Bylaws</button>
 			<button class="side-link" class:active={active === 'agreements'} onclick={() => select('agreements')}>Member Agreements</button>
 			<button class="side-link" class:active={active === 'standards'} onclick={() => select('standards')}>Community Standards</button>
-			<button class="side-link" class:active={active === 'process-decision'} onclick={() => select('process-decision')}>How a decision is made</button>
-			<button class="side-link" class:active={active === 'process-wrong'} onclick={() => select('process-wrong')}>When something goes wrong</button>
-			<button class="side-link" class:active={active === 'guide-proposal'} onclick={() => select('guide-proposal')}>How to submit a proposal</button>
-			<button class="side-link" class:active={active === 'guide-objection'} onclick={() => select('guide-objection')}>How to object well</button>
+			<button class="side-link" class:active={active === 'about-governance'} onclick={() => select('about-governance')}>How we practice</button>
+			<button class="side-link side-sub" class:active={active === 'process-decision'} onclick={() => select('process-decision')}>How a decision is made</button>
+			<button class="side-link side-sub" class:active={active === 'process-wrong'} onclick={() => select('process-wrong')}>When something goes wrong</button>
+			<button class="side-link side-sub" class:active={active === 'guide-proposal'} onclick={() => select('guide-proposal')}>How to submit a proposal</button>
+			<button class="side-link side-sub" class:active={active === 'guide-objection'} onclick={() => select('guide-objection')}>How to object well</button>
 		</nav>
 	</aside>
 
@@ -79,7 +77,7 @@
 			<section>
 				<h1>Documentation</h1>
 				<p>Welcome to dyad's documentation. You do not need to be a member to read any of this. If you are considering joining, this is a good place to learn how the community works, how membership functions, which documents govern us, and how we make decisions together. Everything that defines dyad as an organization lives here.</p>
-				<p><strong>Community</strong> holds our origin story, who dyad is for, community care, and how becoming a member works. <strong>Governance</strong> holds how we practice, the three working documents that formally define us (the Bylaws, the Member Agreements, and the Community Standards), and the step-by-step guides for taking part in decisions.</p>
+				<p><strong>Community</strong> holds our origin story, community care, and how becoming a member works. <strong>Governance</strong> holds the three working documents that formally define us (the Bylaws, the Member Agreements, and the Community Standards) and how we practice, with step-by-step guides for taking part in decisions.</p>
 				<p>All three governing documents are working documents. They are starting points rather than final destinations, and they change through the consent process they describe. Ratifying them with the founding members is the first consent round.</p>
 				<p>If you have a question that is not answered here, write to <a href="mailto:hello@dyad.berlin">hello@dyad.berlin</a>.</p>
 			</section>
@@ -101,19 +99,6 @@
 				<p>Dyad is built on a framework that follows the open and decentralised original intentions of the web. The fact that we do not yet own the data we create online and how little we know and can affect of the collection, archival, and usage of this information is absolutely bonkers. We nest ourselves in the movement towards open, decentralised infrastructure that makes these matters right.</p>
 				<p>We feel that in speaking our minds as we build Dyad, we give the most honest insider view into what is happening inside the community. If you feel spoken to, join us still early in the way and let's talk.</p>
 				<p>With care and joy,<br>Luna</p>
-			</section>
-		{:else if active === 'about-community'}
-			<section>
-				<p class="doc-kicker">Community</p>
-				<h2>Who dyad is for</h2>
-				<p>We have been building dyad voluntarily, because we feel passionate about a way of meeting each other we could not find anywhere: chosen, unhurried, in person, on your own terms. We do not ask for trust; we work to earn it, in service to connection, collective sensemaking and community.</p>
-				<h3>Who dyad is for</h3>
-				<p>dyad is for people who seek to meet others and want to do it their way. You bring a conversation, something that has been on your mind. We surface the people thinking about it too. You meet them in person.</p>
-				<p>The environment is nurtured, built and designed by a team that genuinely cares about doing it participatorily, and cares about human development and flourishing. That is not a slogan; it is the way the place is run, and the governing documents in this documentation show exactly how.</p>
-				<h3>Belonging &amp; membership</h3>
-				<p>Becoming a member is by request: a few honest sentences, read by members against our community standards. The small friction is deliberate, and it is about alignment, never identity. There is no community for everyone, and this one is for people curious about others, who respect the interdependencies that make our lives rich.</p>
-				<p>Membership does not require paying. Members who choose to pay, at €5, €15 or €25 a month, whichever fits your life, are how the work stays independent: no ads, no data sales, nobody to answer to but the people in the room.</p>
-				<p>Members are not customers. The rules, the program, the culture: members make them with us. There are two roles. <strong>Members</strong> have a voice in the decisions that shape the community. <strong>Stewards</strong> are members entrusted with keeping things healthy: upholding shared norms, facilitating moderation, carrying out what was decided together.</p>
 			</section>
 		{:else if active === 'about-governance'}
 			<section>
@@ -310,10 +295,14 @@
 				<h2>Community Standards</h2>
 				<p class="doc-note">This document says what we do not tolerate, where these rules apply, and exactly what happens when something goes wrong, step by step, so that enforcement never depends on one person's mood. Members amend it by consent round.</p>
 
-				<h3>1. The baseline</h3>
+				<h3>1. Who this community is for</h3>
+				<p>dyad is for people who seek to meet others and want to do it their way. You bring a conversation, something that has been on your mind. We surface the people thinking about it too. You meet them in person.</p>
+				<p>There is no community for everyone in the world. This one is for people who value and seek a community of people curious about others, people who understand, acknowledge and respect the interdependencies that make our lives rich. The rules that follow exist to protect exactly that.</p>
+
+				<h3>2. The baseline</h3>
 				<p>dyad is built on mutual respect and the dignity of everyone in the room: members, guests, hosts, and the people who work on dyad. Disagreement is welcome; contempt is not.</p>
 
-				<h3>2. Prohibited conduct</h3>
+				<h3>3. Prohibited conduct</h3>
 				<ul>
 					<li><strong>Hate and supremacy:</strong> content or conduct promoting the inherent superiority or inferiority of any group. This includes white supremacy and Nazism together with their recognized symbols and dog-whistles, anti-LGBTQ+ bigotry, misogyny, ableism, and religious hatred. In Berlin this is not abstract, and we name it.</li>
 					<li><strong>Harassment:</strong> doxxing, stalking, credible threats, and targeted intimidation of any member or guest.</li>
@@ -321,10 +310,10 @@
 					<li><strong>Exploitation of the commons:</strong> using dyad's spaces, member list, or trust for extraction, such as undisclosed selling, data harvesting, or recruitment into schemes.</li>
 				</ul>
 
-				<h3>3. Where these standards apply</h3>
+				<h3>4. Where these standards apply</h3>
 				<p>Our authority covers dyad's spaces: events, online channels, and anywhere people are present as dyad members. We are not tasked with policing members' outside lives. dyad will act on off-community conduct only when it creates a direct, material risk to members' safety or to dyad's mission or legal standing.</p>
 
-				<h3>4. The enforcement process</h3>
+				<h3>5. The enforcement process</h3>
 				<ol>
 					<li><strong>Notice.</strong> A steward names the concern to the member privately, with reference to the specific standard. Most issues end here.</li>
 					<li><strong>Conversation.</strong> If the concern recurs, there is a documented conversation about what changes and by when.</li>
@@ -334,15 +323,15 @@
 				</ol>
 				<p>Every case that reaches the review panel or beyond is recorded in the decision log, anonymized where safety requires it.</p>
 
-				<h3>5. Exceptions</h3>
+				<h3>6. Exceptions</h3>
 				<p>Removals required by law and urgent action against credible safety threats bypass this process. They are executed by the team under the Bylaws' reserved powers, then logged and explained.</p>
 
-				<h3>6. Dignity of the people who work on dyad</h3>
+				<h3>7. Dignity of the people who work on dyad</h3>
 				<p>The people building and hosting dyad are part of this community, not customer service. Abusive communication toward them violates these Standards exactly as it would toward any member.</p>
 			</section>
 		{:else if active === 'process-decision'}
 			<section>
-				<p class="doc-kicker">Governance</p>
+				<p class="doc-kicker">Governance · how we practice</p>
 				<h2>How a decision is made</h2>
 				<p>A proposal passes unless someone gives a reason that it causes harm or breaks an agreement. Preferences are input rather than vetoes. Every rule made this way can be unmade the same way.</p>
 				<ol>
@@ -366,19 +355,19 @@
 			</section>
 		{:else if active === 'process-wrong'}
 			<section>
-				<p class="doc-kicker">Governance</p>
+				<p class="doc-kicker">Governance · how we practice</p>
 				<h2>When something goes wrong</h2>
 				<p>Enforcement is a procedure, not a mood. The five steps, from a private notice through a documented conversation, a review panel drawn by lot, the right to be heard, and an appeal, are written out in <button class="inline-link" onclick={() => select('standards')}>Community Standards, section 4</button>. No member is ever removed by the unilateral decision of a single person.</p>
 			</section>
 		{:else if active === 'guide-proposal'}
 			<section>
-				<p class="doc-kicker">Governance</p>
+				<p class="doc-kicker">Governance · how we practice</p>
 				<h2>How to submit a proposal</h2>
 				<p>Write a few plain sentences in the proposal channel: what should change, and why. You do not need a template, a seconder, or permission. If your proposal touches a tactical domain (standards, membership, programming, the community budget), the consent round starts when you post it. If it touches a team domain, it becomes a question the team answers in writing, and if enough members co-sign it as a petition, the team must answer within 14 days.</p>
 			</section>
 		{:else if active === 'guide-objection'}
 			<section>
-				<p class="doc-kicker">Governance</p>
+				<p class="doc-kicker">Governance · how we practice</p>
 				<h2>How to object well</h2>
 				<p>An objection is a gift when it is specific. Say which harm the proposal causes, or which existing agreement it breaks. "I would not do it this way" is a preference, and preferences are welcome as input, but they do not stop a proposal. If your objection is reasoned, the proposer must resolve it before the change can pass, so the clearer you are, the faster the resolution.</p>
 			</section>
@@ -451,6 +440,7 @@
 		transition: color 0.15s;
 	}
 	.side-link:hover { color: rgba(240, 236, 230, 0.9); }
+	.side-sub { padding-left: 14px; font-size: 0.8rem; }
 	.side-link.active { color: rgba(240, 236, 230, 0.95); }
 
 	/* ── Body ── */
