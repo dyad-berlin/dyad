@@ -259,6 +259,28 @@ export interface Participation {
 	created_at: string;
 }
 
+// Confidential safeguarding concern (feat: unified gathering feedback, U2).
+// Structurally isolated: insert-only for participants, steward-only read via the
+// service-role admin plane. Never surfaced to the reported person or any
+// participant. See supabase/migrations/20260715120100_create_safety_concerns.sql.
+export type SafetyConcernScope = 'person' | 'gathering';
+export type SafetyConcernKind = 'no_show' | 'felt_unsafe' | 'other';
+
+export interface SafetyConcern {
+	id: string;
+	// Schedule-time anchor (turnout-blind gate keys off this slot).
+	slot_id: string;
+	// Optional finer context; null when filed before/without a gathering row.
+	gathering_id: string | null;
+	reporter_id: string;
+	// Null for a gathering-scoped concern (names no person).
+	subject_id: string | null;
+	scope: SafetyConcernScope;
+	kind: SafetyConcernKind;
+	detail: string | null;
+	created_at: string;
+}
+
 // Discriminated union so invalid states (both form IDs set) are unrepresentable.
 // `kind` distinguishes the one-on-one feedback_forms gate (reveal-capable modal)
 // from the group_feedback gate (standalone redirect page). Mutually exclusive by
