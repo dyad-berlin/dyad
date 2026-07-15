@@ -4,7 +4,10 @@ import type {
 	FeedbackFormState,
 	RevealedFeedback,
 	GroupFeedback,
-	GroupFeedbackState
+	GroupFeedbackState,
+	AttendanceInput,
+	PublicFeedbackInput,
+	SafetyConcernInput
 } from '$lib/domain/types.js';
 
 export interface FeedbackInput {
@@ -31,6 +34,13 @@ export interface FeedbackService {
 	getVocabulary(): Promise<string[]>;
 	getGroupFormById(formId: string, userId: string): Promise<GroupFeedback | null>;
 	submitGroupFeedback(formId: string, data: GroupFeedbackInput): Promise<GroupFeedbackState>;
+
+	// ── Unified gathering feedback write path (U5) ──────────────────────────
+	submitAttendance(data: AttendanceInput): Promise<void>;
+	submitPublicFeedback(data: PublicFeedbackInput): Promise<void>;
+	/** Returns true if a subject-owned row was promoted, false otherwise. */
+	promotePublicFeedback(feedbackId: string): Promise<boolean>;
+	submitConcern(data: SafetyConcernInput): Promise<void>;
 }
 
 export class SupabaseFeedbackService implements FeedbackService {
@@ -125,5 +135,51 @@ export class SupabaseFeedbackService implements FeedbackService {
 
 		if (error) throw new Error(`Failed to submit group feedback: ${error.message}`);
 		return result as GroupFeedbackState;
+	}
+
+	// ── Unified gathering feedback write path (U5) ──────────────────────────
+
+	async submitAttendance(data: AttendanceInput): Promise<void> {
+		const { error } = await this.supabase.rpc('submit_attendance', {
+			p_gathering: data.gathering_id,
+			p_self_report: data.self_report,
+			p_absence_reason: data.absence_reason ?? null,
+			p_turnout: data.turnout ?? null
+		});
+
+		if (error) throw new Error(`Failed to submit attendance: ${error.message}`);
+	}
+
+	async submitPublicFeedback(data: PublicFeedbackInput): Promise<void> {
+		const { error } = await this.supabase.rpc('submit_public_feedback', {
+			p_gathering: data.gathering_id,
+			p_reviewee: data.reviewee_id,
+			p_tags: data.tags ?? [],
+			p_free_text: data.free_text ?? null
+		});
+
+		if (error) throw new Error(`Failed to submit public feedback: ${error.message}`);
+	}
+
+	async promotePublicFeedback(feedbackId: string): Promise<boolean> {
+		const { data: result, error } = await this.supabase.rpc('promote_public_feedback', {
+			p_feedback_id: feedbackId
+		});
+
+		if (error) throw new Error(`Failed to promote public feedback: ${error.message}`);
+		return result === true;
+	}
+
+	async submitConcern(data: SafetyConcernInput): Promise<void> {
+		const { error } = await this.supabase.rpc('submit_concern', {
+			p_slot: data.slot_id,
+			p_scope: data.scope,
+			p_kind: data.kind,
+			p_subject: data.subject_id ?? null,
+			p_gathering: data.gathering_id ?? null,
+			p_detail: data.detail ?? null
+		});
+
+		if (error) throw new Error(`Failed to submit concern: ${error.message}`);
 	}
 }

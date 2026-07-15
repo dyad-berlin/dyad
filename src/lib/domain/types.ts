@@ -310,6 +310,40 @@ export interface GatheringFeedback {
 	created_at: string;
 }
 
+// ── Gathering write-path inputs (feat: unified gathering feedback, U5) ──────
+// Inputs to the SECURITY DEFINER RPCs (submit_attendance, submit_public_feedback,
+// submit_concern) consumed by FeedbackService. See
+// supabase/migrations/20260715120300_feedback_write_rpcs.sql.
+
+// The caller's own attendance, plus (host only) a turnout attestation map of
+// member_id -> turned_up for co-participants.
+export interface AttendanceInput {
+	gathering_id: string;
+	self_report: SelfReport;
+	absence_reason?: string;
+	// Host-only: attest other participants' turnout. Keyed by member id.
+	turnout?: Record<string, boolean>;
+}
+
+// A public (subject-visible) feedback edge about a co-present participant.
+export interface PublicFeedbackInput {
+	gathering_id: string;
+	reviewee_id: string;
+	tags?: string[];
+	free_text?: string;
+}
+
+// A confidential safeguarding concern about a co-participant or the meeting.
+export interface SafetyConcernInput {
+	slot_id: string;
+	scope: SafetyConcernScope;
+	kind: SafetyConcernKind;
+	// Required when scope='person'; must be absent when scope='gathering'.
+	subject_id?: string | null;
+	gathering_id?: string | null;
+	detail?: string | null;
+}
+
 // Discriminated union so invalid states (both form IDs set) are unrepresentable.
 // `kind` distinguishes the one-on-one feedback_forms gate (reveal-capable modal)
 // from the group_feedback gate (standalone redirect page). Mutually exclusive by

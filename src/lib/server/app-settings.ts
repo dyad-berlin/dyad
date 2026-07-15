@@ -10,6 +10,7 @@ import { PROTECTED_ACTIONS, type MembershipGating } from '$lib/domain/gating.js'
 const EMAIL_NOTIFICATIONS_ENABLED_KEY = 'email_notifications_enabled';
 const MEMBERSHIP_GATING_KEY = 'membership_gating';
 const FREE_INTERACTION_QUOTA_KEY = 'free_interaction_quota';
+const SAFETY_REPORTING_ENABLED_KEY = 'safety_reporting_enabled';
 
 /** Default free-interaction quota when the key is absent, non-integer, or a read
  *  fails: 0 — the gate is pure members-only from the first gated action, and the
@@ -64,6 +65,42 @@ export async function setEmailNotificationsEnabled(enabled: boolean): Promise<vo
 
 	if (error) {
 		console.error('[app-settings] write email_notifications_enabled failed:', error);
+		throw error;
+	}
+}
+
+/** Read the confidential-reporting kill switch (feat: unified gathering feedback,
+ *  U5). The safeguarding store is sensitive personal data and ships DARK until
+ *  retention + Datenschutz are cleared (R9, a go-live gate). Defaults to false on
+ *  an absent key or any error so a settings outage fails CLOSED — the concern
+ *  endpoint returns 403 rather than accepting reports into an ungoverned store. */
+export async function getSafetyReportingEnabled(): Promise<boolean> {
+	const admin = makeAdminClient();
+	const { data, error } = await admin
+		.from('app_settings')
+		.select('value')
+		.eq('key', SAFETY_REPORTING_ENABLED_KEY)
+		.maybeSingle();
+
+	if (error) {
+		console.error('[app-settings] read safety_reporting_enabled failed:', error);
+		return false;
+	}
+	return data?.value === true;
+}
+
+/** Set the confidential-reporting kill switch (service-role). */
+export async function setSafetyReportingEnabled(enabled: boolean): Promise<void> {
+	const admin = makeAdminClient();
+	const { error } = await admin
+		.from('app_settings')
+		.upsert(
+			{ key: SAFETY_REPORTING_ENABLED_KEY, value: enabled, updated_at: new Date().toISOString() },
+			{ onConflict: 'key' }
+		);
+
+	if (error) {
+		console.error('[app-settings] write safety_reporting_enabled failed:', error);
 		throw error;
 	}
 }
