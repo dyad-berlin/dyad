@@ -7,7 +7,8 @@ import type {
 	GroupFeedbackState,
 	AttendanceInput,
 	PublicFeedbackInput,
-	SafetyConcernInput
+	SafetyConcernInput,
+	RosterMember
 } from '$lib/domain/types.js';
 
 export interface FeedbackInput {
@@ -41,6 +42,10 @@ export interface FeedbackService {
 	/** Returns true if a subject-owned row was promoted, false otherwise. */
 	promotePublicFeedback(feedbackId: string): Promise<boolean>;
 	submitConcern(data: SafetyConcernInput): Promise<void>;
+	/** Co-participant roster (caller excluded) for a gathering the caller is in. */
+	getGatheringRoster(gatheringId: string): Promise<RosterMember[]>;
+	/** Records the caller's collect-only "would you meet again" answer. */
+	submitMeetAgain(gatheringId: string, meetAgain: boolean): Promise<void>;
 }
 
 export class SupabaseFeedbackService implements FeedbackService {
@@ -181,5 +186,23 @@ export class SupabaseFeedbackService implements FeedbackService {
 		});
 
 		if (error) throw new Error(`Failed to submit concern: ${error.message}`);
+	}
+
+	async getGatheringRoster(gatheringId: string): Promise<RosterMember[]> {
+		const { data, error } = await this.supabase.rpc('get_gathering_roster', {
+			p_gathering: gatheringId
+		});
+
+		if (error) throw new Error(`Failed to load gathering roster: ${error.message}`);
+		return (data ?? []) as RosterMember[];
+	}
+
+	async submitMeetAgain(gatheringId: string, meetAgain: boolean): Promise<void> {
+		const { error } = await this.supabase.rpc('submit_meet_again', {
+			p_gathering: gatheringId,
+			p_meet_again: meetAgain
+		});
+
+		if (error) throw new Error(`Failed to submit meet-again: ${error.message}`);
 	}
 }

@@ -310,6 +310,16 @@ export interface GatheringFeedback {
 	created_at: string;
 }
 
+// A co-participant of a gathering, as returned by get_gathering_roster (U6). The
+// caller is EXCLUDED. display_name is pre-resolved (profiles.username, falling
+// back to the substrate handle) — no raw ids surface in the UI.
+export interface RosterMember {
+	member_id: string;
+	display_name: string;
+	is_host: boolean;
+	turned_up: boolean;
+}
+
 // ── Gathering write-path inputs (feat: unified gathering feedback, U5) ──────
 // Inputs to the SECURITY DEFINER RPCs (submit_attendance, submit_public_feedback,
 // submit_concern) consumed by FeedbackService. See
