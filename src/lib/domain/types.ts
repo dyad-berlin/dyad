@@ -345,13 +345,16 @@ export interface SafetyConcernInput {
 }
 
 // Discriminated union so invalid states (both form IDs set) are unrepresentable.
-// `kind` distinguishes the one-on-one feedback_forms gate (reveal-capable modal)
-// from the group_feedback gate (standalone redirect page). Mutually exclusive by
-// construction.
+// `kind` distinguishes the one-on-one feedback_forms gate (reveal-capable modal),
+// the legacy group_feedback gate (standalone redirect page), and the unified
+// `gathering` obligation (U9 — an unconfirmed participation.self_report on a
+// group gathering; formId is the gathering id, routed to /feedback/gathering/[id]).
+// Mutually exclusive by construction.
 export type GateStatus =
 	| { gated: false }
 	| { gated: true; kind: 'one_on_one'; formId: string }
-	| { gated: true; kind: 'group'; formId: string };
+	| { gated: true; kind: 'group'; formId: string }
+	| { gated: true; kind: 'gathering'; formId: string };
 
 export interface ReputationSignal {
 	id: string;

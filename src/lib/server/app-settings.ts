@@ -11,6 +11,7 @@ const EMAIL_NOTIFICATIONS_ENABLED_KEY = 'email_notifications_enabled';
 const MEMBERSHIP_GATING_KEY = 'membership_gating';
 const FREE_INTERACTION_QUOTA_KEY = 'free_interaction_quota';
 const SAFETY_REPORTING_ENABLED_KEY = 'safety_reporting_enabled';
+const GATHERING_FEEDBACK_GATE_ENABLED_KEY = 'gathering_feedback_gate_enabled';
 
 /** Default free-interaction quota when the key is absent, non-integer, or a read
  *  fails: 0 — the gate is pure members-only from the first gated action, and the
@@ -101,6 +102,51 @@ export async function setSafetyReportingEnabled(enabled: boolean): Promise<void>
 
 	if (error) {
 		console.error('[app-settings] write safety_reporting_enabled failed:', error);
+		throw error;
+	}
+}
+
+/** Read the unified-gathering feedback-gate flag (feat: unified gathering
+ *  feedback, U9). Controls whether the feedback gate enforces the NEW mandatory
+ *  attendance-confirmation obligation (an unconfirmed participation.self_report
+ *  on a group gathering) and suppresses the legacy group_feedback gate for the
+ *  same slot — the no-double-prompt behaviour. Ships LIVE for the group flow:
+ *  defaults to TRUE on an absent key. FAIL-SAFE is TRUE — this is a mandatory
+ *  obligation gate, so a settings outage must keep enforcing (a member is still
+ *  gated, never bypassed), unlike the fail-closed reporting kill switch. */
+export async function getGatheringFeedbackGateEnabled(): Promise<boolean> {
+	const admin = makeAdminClient();
+	const { data, error } = await admin
+		.from('app_settings')
+		.select('value')
+		.eq('key', GATHERING_FEEDBACK_GATE_ENABLED_KEY)
+		.maybeSingle();
+
+	if (error) {
+		console.error('[app-settings] read gathering_feedback_gate_enabled failed:', error);
+		return true;
+	}
+	// Absent key -> live default (TRUE). Only an explicit `false` disables it.
+	return data?.value !== false;
+}
+
+/** Set the unified-gathering feedback-gate flag (service-role). Lets an operator
+ *  roll the U9 gate back to legacy behaviour without a migration. */
+export async function setGatheringFeedbackGateEnabled(enabled: boolean): Promise<void> {
+	const admin = makeAdminClient();
+	const { error } = await admin
+		.from('app_settings')
+		.upsert(
+			{
+				key: GATHERING_FEEDBACK_GATE_ENABLED_KEY,
+				value: enabled,
+				updated_at: new Date().toISOString()
+			},
+			{ onConflict: 'key' }
+		);
+
+	if (error) {
+		console.error('[app-settings] write gathering_feedback_gate_enabled failed:', error);
 		throw error;
 	}
 }

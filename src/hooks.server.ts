@@ -291,7 +291,15 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 			const { SupabaseGateService } = await import('$lib/services/gate.js');
 			const gateService = new SupabaseGateService(event.locals.supabase);
-			const gateStatus = await gateService.checkGate(resolved.principal.user.id);
+			const { getGatheringFeedbackGateEnabled } = await import('$lib/server/app-settings.js');
+			// The U9 gathering obligation ships live for the group flow; the flag
+			// (app_settings, default + fail-safe TRUE) lets an operator roll back to
+			// legacy behaviour without a migration.
+			const gatheringGateEnabled = await getGatheringFeedbackGateEnabled();
+			const gateStatus = await gateService.checkGate(
+				resolved.principal.user.id,
+				gatheringGateEnabled
+			);
 
 			if (gateStatus.gated && gateStatus.kind === 'one_on_one') {
 				if (pathname.startsWith('/api/')) {
@@ -318,6 +326,24 @@ export const handle: Handle = async ({ event, resolve }) => {
 				return new Response(null, {
 					status: 302,
 					headers: { Location: `/feedback/group/${gateStatus.formId}` }
+				});
+			} else if (gateStatus.gated && gateStatus.kind === 'gathering') {
+				// U9 unified gathering obligation: confirming attendance (R10) on a
+				// group gathering. formId is the GATHERING id. Routed to the new-model
+				// form at /feedback/gathering/[id] (gate-exempt under /feedback), a
+				// standalone-page redirect like the group path. NOTE: the U6 form page
+				// ships on this same branch to fill this route; until it lands the
+				// redirect targets a not-yet-built page (harmless — /feedback is exempt,
+				// so no gate loop).
+				if (pathname.startsWith('/api/')) {
+					return new Response(JSON.stringify({ error: 'gated', kind: gateStatus.kind, formId: gateStatus.formId }), {
+						status: 403,
+						headers: { 'Content-Type': 'application/json' }
+					});
+				}
+				return new Response(null, {
+					status: 302,
+					headers: { Location: `/feedback/gathering/${gateStatus.formId}` }
 				});
 			}
 		}
