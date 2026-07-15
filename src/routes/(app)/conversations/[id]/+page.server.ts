@@ -18,13 +18,19 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	// this comes via the viewer-safe SECURITY DEFINER RPC — count-only, no
 	// usernames/UUIDs/location. Keyed slotId → active-meeting count. Never an
 	// ordering signal. Independent of `detail`, so fetched in the same batch.
-	const [detail, comments, myComment, myInvitations, slotOccupancy] = await Promise.all([
-		promptService.getPromptDetail(params.id, userId),
-		commentService.getCommentsForPrompt(params.id),
-		commentService.getMyComment(params.id, userId),
-		invitationService.getPendingForPrompt(params.id, userId),
-		promptService.getSlotOccupancy(params.id)
-	]);
+	// `slotAttendance` is the retrospective sibling of `slotOccupancy`: it INCLUDES
+	// completed meetings, so the confirmed gathering card ("who came") counts an
+	// ended gathering's room correctly (#66). Occupancy stays the pre-event seat
+	// cap for the available-slots markers. Independent, so fetched in the same batch.
+	const [detail, comments, myComment, myInvitations, slotOccupancy, slotAttendance] =
+		await Promise.all([
+			promptService.getPromptDetail(params.id, userId),
+			commentService.getCommentsForPrompt(params.id),
+			commentService.getMyComment(params.id, userId),
+			invitationService.getPendingForPrompt(params.id, userId),
+			promptService.getSlotOccupancy(params.id),
+			promptService.getSlotAttendance(params.id)
+		]);
 
 	if (!detail) {
 		redirect(302, '/discover');
@@ -294,6 +300,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		myMeeting,
 		myCancellation,
 		slotOccupancy,
+		slotAttendance,
 		user: { id: userId }
 	};
 };
