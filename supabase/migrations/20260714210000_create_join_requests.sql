@@ -9,7 +9,7 @@
 -- from the admin plane. RLS is enabled with no policies, so anon/authenticated
 -- reach nothing.
 
-CREATE TABLE join_requests (
+CREATE TABLE IF NOT EXISTS join_requests (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   substrate text NOT NULL,
   substrate_id text NOT NULL,
