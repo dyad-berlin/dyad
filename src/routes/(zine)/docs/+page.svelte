@@ -8,6 +8,7 @@
 		'about-why',
 		'about-governance',
 		'about-care',
+		'privacy',
 		'bylaws',
 		'agreements',
 		'standards',
@@ -57,6 +58,7 @@
 			<p class="side-head">Community</p>
 			<button class="side-link" class:active={active === 'about-why'} onclick={() => select('about-why')}>Our origin story</button>
 			<button class="side-link" class:active={active === 'about-care'} onclick={() => select('about-care')}>Community care</button>
+			<button class="side-link" class:active={active === 'privacy'} onclick={() => select('privacy')}>Privacy commitments</button>
 			<button class="side-link" class:active={active === 'process-joining'} onclick={() => select('process-joining')}>Becoming a member</button>
 			<button class="side-link" class:active={active === 'guide-leaving'} onclick={() => select('guide-leaving')}>How to leave</button>
 
@@ -77,9 +79,11 @@
 			<section>
 				<h1>Documentation</h1>
 				<p>Welcome to dyad's documentation. You do not need to be a member to read any of this. If you are considering joining, this is a good place to learn how the community works, how membership functions, which documents govern us, and how we make decisions together. Everything that defines dyad as an organization lives here.</p>
-				<p><strong>Community</strong> holds our origin story, community care, and how becoming a member works. <strong>Governance</strong> holds the three working documents that formally define us (the Bylaws, the Member Agreements, and the Community Standards) and how we practice, with step-by-step guides for taking part in decisions.</p>
+				<p><strong>Community</strong> holds our origin story, community care, our privacy commitments, and how becoming a member works. <strong>Governance</strong> holds the three working documents that formally define us (the Bylaws, the Member Agreements, and the Community Standards) and how we practice, with step-by-step guides for taking part in decisions.</p>
 				<p>All three governing documents are working documents. They are starting points rather than final destinations, and they change through the consent process they describe. Ratifying them with the founding members is the first consent round.</p>
 				<p>If you have a question that is not answered here, write to <a href="mailto:hello@dyad.berlin">hello@dyad.berlin</a>.</p>
+				<h3>Attribution and licence</h3>
+				<p>These documents adapt, with gratitude, from the published governance work of <a href="https://www.subvert.fm/">Subvert Cooperative</a>, <a href="https://inclusiveorg.net/">Inclusive Organizing</a>, <a href="https://blackskyweb.xyz/">Blacksky</a>, Glitch, and the <a href="https://democratictech.fund/">Democratic Tech Fund</a>'s Code of Co-operation. In the same spirit, dyad's governing documents are shared under <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>: adapt them for your own community, with attribution.</p>
 			</section>
 		{:else if active === 'about-why'}
 			<section>
@@ -170,6 +174,19 @@
 				<h3>Living guidelines</h3>
 				<p>These guidelines are living documents. They will change as the community grows, as new harms become visible, and as we learn what our current process fails to see. Updates to guidelines, labels, moderation processes, and appeals will be recorded in a public changelog, so members can follow the evolution of the process with ease.</p>
 			</section>
+		{:else if active === 'privacy'}
+			<section>
+				<p class="doc-kicker">Community</p>
+				<h2>Privacy commitments</h2>
+				<p class="doc-note">The plain-language version of how we treat your data. The legal version lives in the <a href="/datenschutz">Datenschutzerklärung</a>; if the two ever disagree, tell us, because they should not.</p>
+				<ul>
+					<li><strong>We hold as little as possible.</strong> Our safety architecture depends on it: we cannot leak, sell, or be forced to hand over what we never collected. We collect only what the service needs to run responsibly.</li>
+					<li><strong>We never sell personal data, and we never use it for advertising.</strong> There are no advertisers to serve and there never will be.</li>
+					<li><strong>Disclosure only with your consent, or where the law compels us.</strong> Every use of that legal exception is logged and explained to members afterwards, under the Bylaws' reserved powers.</li>
+					<li><strong>Trust and safety will not become surveillance in softer language.</strong> We look for patterns of harm through reports and aggregated signals, not by tracking people.</li>
+					<li><strong>Your data does not lock you in.</strong> Sign-in works without our database provider, including with an open, portable network identity, and leaving dyad does not strand anything that is yours.</li>
+				</ul>
+			</section>
 		{:else if active === 'bylaws'}
 			<section>
 				<p class="doc-kicker">Governance · governing document · 01 · v0.1 · a working document</p>
@@ -177,7 +194,7 @@
 				<p class="doc-note">These Bylaws are a working document. They are a starting point rather than a final destination, and they change through the consent process they themselves describe. This is the one document that governs all the others: it says who decides what, and how the rules can change.</p>
 
 				<h3>1. Purpose</h3>
-				<p>dyad exists for people who seek to meet others and want to do it their way, in an environment nurtured, built and designed by a team that genuinely cares about doing it participatorily, cares about human development and flourishing, and stays in service to connection, collective sensemaking and community. These Bylaws exist so that the people who make dyad alive, its members, genuinely co-design it, and so that the line between what members decide and what the team decides is public, explicit, and never arbitrary.</p>
+				<p>dyad exists for people who seek to meet others and want to do it their way, in an environment nurtured, built and designed by a team that genuinely cares about doing it participatorily, cares about human development and flourishing, and stays in service to connection, collective sensemaking and community. These Bylaws exist so that the people who make dyad alive, its members, genuinely co-design it, and so that the line between what members decide and what the team decides is public, explicit, and never arbitrary. Our horizon is an ecosystem in service to connection and collective sensemaking, in which the capability and the wealth a community generates stay with the community.</p>
 
 				<h3>2. Principles</h3>
 				<ul>
@@ -302,7 +319,15 @@
 				<h3>2. The baseline</h3>
 				<p>dyad is built on mutual respect and the dignity of everyone in the room: members, guests, hosts, and the people who work on dyad. Disagreement is welcome; contempt is not.</p>
 
-				<h3>3. Prohibited conduct</h3>
+				<h3>3. Commitments we make to one another</h3>
+				<ul>
+					<li><strong>We listen.</strong> When something has happened and someone is uncomfortable, our first choice is dialogue. We ask questions before making statements, we give people time to respond, and we adjust our behaviour when asked to, even when we do not fully understand why. Repeating behaviour after it has been addressed is itself disrespectful.</li>
+					<li><strong>We practise active consent.</strong> This matters doubly in a community built on meeting in person. We ask before photographing or recording anyone at a meeting or event. We ask how people would like to be greeted. We respect everyone's right to end a conversation or leave a meeting at any time, without needing to explain why.</li>
+					<li><strong>We engage in good faith, across languages.</strong> Berlin is a many-language city and many members are not conversing in their first language. We engage with what people actually said rather than with our assumptions, we never conflate fluency with intelligence or commitment, and we are patient with first mistakes and less patient with repetition.</li>
+					<li><strong>We care for capacity.</strong> We respect people's limits, we do not pressure anyone to participate beyond what is sustainable, and we do not shame anyone for stepping back for a while. Care work is named and shared; it must not fall invisibly on the same people.</li>
+				</ul>
+
+				<h3>4. Prohibited conduct</h3>
 				<ul>
 					<li><strong>Hate and supremacy:</strong> content or conduct promoting the inherent superiority or inferiority of any group. This includes white supremacy and Nazism together with their recognized symbols and dog-whistles, anti-LGBTQ+ bigotry, misogyny, ableism, and religious hatred. In Berlin this is not abstract, and we name it.</li>
 					<li><strong>Harassment:</strong> doxxing, stalking, credible threats, and targeted intimidation of any member or guest.</li>
@@ -310,10 +335,16 @@
 					<li><strong>Exploitation of the commons:</strong> using dyad's spaces, member list, or trust for extraction, such as undisclosed selling, data harvesting, or recruitment into schemes.</li>
 				</ul>
 
-				<h3>4. Where these standards apply</h3>
-				<p>Our authority covers dyad's spaces: events, online channels, and anywhere people are present as dyad members. We are not tasked with policing members' outside lives. dyad will act on off-community conduct only when it creates a direct, material risk to members' safety or to dyad's mission or legal standing.</p>
+				<h3>5. Where these standards apply, and whom they cover</h3>
+				<p>Our authority covers dyad's spaces: the app, meetings and events, online channels, and anywhere someone represents dyad publicly. They cover everyone present in those spaces: members, guests, hosts, partners at our events, and the team itself. We are not tasked with policing members' outside lives. dyad will act on off-community conduct only when it creates a direct, material risk to members' safety or to dyad's mission or legal standing.</p>
 
-				<h3>5. The enforcement process</h3>
+				<h3>6. Reporting a concern</h3>
+				<p>Anyone can report content, behaviour, or an in-person encounter that violates these standards. Reports go to a steward, or to <a href="mailto:hello@dyad.berlin">hello@dyad.berlin</a>, in writing or in person. A report can also be made through a trusted third party, who can pass it on without naming you.</p>
+				<p>Where you feel comfortable, include what happened, when and where, any witnesses, and what outcome you are hoping for. We acknowledge every report within 48 hours, we do not share your identity without your consent, and we keep you informed of progress.</p>
+				<p>A report made in good faith that turns out not to be a violation is never held against the person who made it. Using the reporting system as a weapon against another member is itself a violation of these standards.</p>
+
+				<h3>7. The enforcement process</h3>
+				<p>Our aim is repair rather than punishment: repair of the harm done to a person, and of the trust that makes meeting strangers possible. Responses are proportionate, weighing the severity and pattern of the behaviour, its impact on the person harmed and the community, and the openness of the person responsible to acknowledging the harm. A first-time mistake is treated differently from repeated conduct. At the same time, we act decisively to protect safety.</p>
 				<ol>
 					<li><strong>Notice.</strong> A steward names the concern to the member privately, with reference to the specific standard. Most issues end here.</li>
 					<li><strong>Conversation.</strong> If the concern recurs, there is a documented conversation about what changes and by when.</li>
@@ -323,10 +354,10 @@
 				</ol>
 				<p>Every case that reaches the review panel or beyond is recorded in the decision log, anonymized where safety requires it.</p>
 
-				<h3>6. Exceptions</h3>
+				<h3>8. Exceptions</h3>
 				<p>Removals required by law and urgent action against credible safety threats bypass this process. They are executed by the team under the Bylaws' reserved powers, then logged and explained.</p>
 
-				<h3>7. Dignity of the people who work on dyad</h3>
+				<h3>9. Dignity of the people who work on dyad</h3>
 				<p>The people building and hosting dyad are part of this community, not customer service. Abusive communication toward them violates these Standards exactly as it would toward any member.</p>
 			</section>
 		{:else if active === 'process-decision'}
