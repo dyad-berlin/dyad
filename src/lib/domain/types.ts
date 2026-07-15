@@ -231,6 +231,34 @@ export interface GroupFeedback {
 	created_at: string;
 }
 
+// Unified gathering model (feat: unified gathering feedback, U1). A gathering is
+// the anchor for one time_slot that took place; a 1-on-1 is the n=2 case.
+// Occurrence is DERIVED from participation (>= 2 turned_up), never stored.
+
+export interface Gathering {
+	id: string;
+	slot_id: string;
+	prompt_id: string;
+	host_id: string;
+	closed_at: string | null;
+	created_at: string;
+}
+
+// A participant's own account of what happened at a gathering.
+export type SelfReport = 'attended' | 'cancelled_before' | 'absent';
+
+export interface Participation {
+	id: string;
+	gathering_id: string;
+	member_id: string;
+	is_host: boolean;
+	turned_up: boolean;
+	self_report: SelfReport | null;
+	absence_reason: string | null;
+	attested_by: string | null;
+	created_at: string;
+}
+
 // Discriminated union so invalid states (both form IDs set) are unrepresentable.
 // `kind` distinguishes the one-on-one feedback_forms gate (reveal-capable modal)
 // from the group_feedback gate (standalone redirect page). Mutually exclusive by
