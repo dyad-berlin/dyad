@@ -18,11 +18,13 @@ vi.mock('$lib/services/scope.js', () => ({
 
 const { load } = await import('./+page.server.js');
 
-function runNew(): Promise<unknown> {
+async function runNew(): Promise<unknown> {
 	const locals = { supabase: {}, homeScope: null, homeRegion: null };
-	return load({ params: { id: 'new' }, locals } as unknown as Parameters<typeof load>[0]).catch(
-		(e) => e
-	);
+	try {
+		return await load({ params: { id: 'new' }, locals } as unknown as Parameters<typeof load>[0]);
+	} catch (e) {
+		return e;
+	}
 }
 
 describe('editor load — create_conversation gate on the new path', () => {
