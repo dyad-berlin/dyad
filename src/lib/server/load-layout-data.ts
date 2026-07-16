@@ -1,6 +1,7 @@
 import { redirect } from '@sveltejs/kit';
 import { userToUpactor } from '@prefig/upact-supabase';
 import { toMembershipDisplay, type MembershipRow } from '$lib/domain/membership.js';
+import { getGatheringFeedbackGateEnabled } from '$lib/server/app-settings.js';
 
 /**
  * Shared layout data loader for authenticated route groups.
@@ -17,7 +18,7 @@ export async function loadLayoutData(locals: App.Locals, url?: URL) {
 
 	const pendingFormId = (locals as any).pendingFeedbackFormId as string | undefined;
 
-	const [{ data: profile }, { count: invitationCount }, { count: feedbackCount }, { count: groupFeedbackCount }, pendingFeedback, { data: notif, error: notifError }, { data: membershipRow, error: membershipError }] = await Promise.all([
+	const [{ data: profile }, { count: invitationCount }, { count: feedbackCount }, { data: groupRows }, { data: gatheringRows }, { data: pendingParticipation }, gatheringGateEnabled, pendingFeedback, { data: notif, error: notifError }, { data: membershipRow, error: membershipError }] = await Promise.all([
 		locals.supabase
 			.from('profiles')
 			.select('username, onboarded')
@@ -33,13 +34,27 @@ export async function loadLayoutData(locals: App.Locals, url?: URL) {
 			.select('*', { count: 'exact', head: true })
 			.eq('reviewer_id', locals.user.id)
 			.eq('state', 'due'),
-		// Group gatherings gate on group_feedback rows, not feedback_forms — count
-		// them too so the attention badge matches what the gate enforces.
+		// My legacy group_feedback rows (id/slot/state). Whether each counts is
+		// decided in JS to mirror the U9 gate: a group_feedback 'due' row is
+		// SUPPRESSED when its slot has a gathering row (the new participation
+		// obligation carries it instead) — no double-count.
 		locals.supabase
 			.from('group_feedback')
-			.select('*', { count: 'exact', head: true })
-			.eq('reviewer_id', locals.user.id)
-			.eq('state', 'due'),
+			.select('id, slot_id, state')
+			.eq('reviewer_id', locals.user.id),
+		// My gatherings (id → slot_id). Marks which slots have a gathering row
+		// (drives group_feedback suppression) and, joined with group_feedback
+		// slots, which gatherings are GROUP gatherings (drive the new obligation).
+		locals.supabase.from('gatherings').select('id, slot_id'),
+		// My unconfirmed attendance obligations (participation.self_report NULL).
+		locals.supabase
+			.from('participation')
+			.select('gathering_id')
+			.eq('member_id', locals.user.id)
+			.is('self_report', null),
+		// The U9 gate flag (app_settings, default + fail-safe TRUE). Keeps the
+		// badge aligned with what hooks.server.ts enforces.
+		getGatheringFeedbackGateEnabled(),
 		pendingFormId ? loadPendingFeedback(locals, pendingFormId) : Promise.resolve(null),
 		// The notification address is the opt-in; its presence is the only signal the
 		// contextual hints need. Select only `email` and return a boolean — never the
@@ -68,6 +83,33 @@ export async function loadLayoutData(locals: App.Locals, url?: URL) {
 		console.error('[layout loader] memberships fetch failed:', membershipError);
 	}
 
+	// Attention badge mirrors the U9 feedback gate (my_feedback_gate): one_on_one
+	// (feedback_forms due) always counts; the gathering + group counts depend on
+	// the flag. When enabled, a group gathering's obligation is the unconfirmed
+	// participation (gatheringCount) and its legacy group_feedback 'due' row is
+	// suppressed; a pre-U4 group_feedback row (no gathering) still counts. When
+	// disabled, all group_feedback 'due' rows count and no participation does.
+	const gatheringSlots = new Set((gatheringRows ?? []).map((g) => g.slot_id));
+	const gatheringIdToSlot = new Map((gatheringRows ?? []).map((g) => [g.id, g.slot_id]));
+	const groupFeedbackSlots = new Set((groupRows ?? []).map((g) => g.slot_id));
+
+	let gatheringCount = 0;
+	let groupCount = 0;
+	if (gatheringGateEnabled) {
+		// Group gatherings only: an unconfirmed participation whose gathering's slot
+		// also carries group_feedback (the legacy group-branch marker). 1-on-1
+		// participations are excluded here and stay on the feedback_forms gate.
+		gatheringCount = (pendingParticipation ?? []).filter((p) => {
+			const slot = gatheringIdToSlot.get(p.gathering_id);
+			return slot != null && groupFeedbackSlots.has(slot);
+		}).length;
+		groupCount = (groupRows ?? []).filter(
+			(g) => g.state === 'due' && !gatheringSlots.has(g.slot_id)
+		).length;
+	} else {
+		groupCount = (groupRows ?? []).filter((g) => g.state === 'due').length;
+	}
+
 	return {
 		identity: userToUpactor(locals.user),
 		username: profile?.username ?? '',
@@ -76,7 +118,7 @@ export async function loadLayoutData(locals: App.Locals, url?: URL) {
 		// otherwise a second account on the same browser is wrongly treated as
 		// already onboarded and never sees the welcome flow.
 		onboarded: profile?.onboarded ?? false,
-		attentionCount: (invitationCount ?? 0) + (feedbackCount ?? 0) + (groupFeedbackCount ?? 0),
+		attentionCount: (invitationCount ?? 0) + (feedbackCount ?? 0) + gatheringCount + groupCount,
 		pendingFeedback,
 		hasNotificationEmail: notifError ? true : !!notif?.email,
 		membership: toMembershipDisplay(membershipRow as MembershipRow | null)

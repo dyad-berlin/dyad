@@ -82,6 +82,14 @@ export interface PromptQueryService {
 	 *  usernames/UUIDs/location). Unauthorized/empty prompts return {}. */
 	getSlotOccupancy(promptId: string): Promise<Record<string, number>>;
 
+	/** Per-slot retrospective ATTENDEE count for a single prompt, keyed slotId →
+	 *  attended count. Sourced from the viewer-safe SECURITY DEFINER RPC
+	 *  `get_prompt_slot_attendance`. Unlike `getSlotOccupancy` (the pre-event seat
+	 *  cap, which excludes `completed`), this INCLUDES completed meetings so an
+	 *  ended gathering's "who came" circle is sized correctly (#66). Same
+	 *  count-only, viewer-safe contract; unauthorized/empty prompts return {}. */
+	getSlotAttendance(promptId: string): Promise<Record<string, number>>;
+
 	/** Returns a user's public profile (username, display name) and their
 	 *  published conversations. Null when no profile with the given username.
 	 *
@@ -115,6 +123,17 @@ export class SupabasePromptQueryService implements PromptQueryService {
 		const out: Record<string, number> = {};
 		for (const r of (data ?? []) as Array<{ slot_id: string; occupied: number }>) {
 			out[r.slot_id] = r.occupied;
+		}
+		return out;
+	}
+
+	async getSlotAttendance(promptId: string): Promise<Record<string, number>> {
+		const { data } = await this.supabase.rpc('get_prompt_slot_attendance', {
+			p_prompt_id: promptId
+		});
+		const out: Record<string, number> = {};
+		for (const r of (data ?? []) as Array<{ slot_id: string; attended: number }>) {
+			out[r.slot_id] = r.attended;
 		}
 		return out;
 	}

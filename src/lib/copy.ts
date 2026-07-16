@@ -484,6 +484,60 @@ export const copy = {
 		continueToDiscover: 'Continue to discover',
 	},
 
+	// ── Gathering feedback (unified post-conversation form) ──────────────
+	// One form for every conversation, 1-on-1 or group. Domain terms
+	// (gathering / prompt / reviewee) never surface — members see
+	// "conversation" and "the people you met". See CLAUDE.md § Domain language.
+	gatheringFeedback: {
+		_routes: ['/feedback/gathering/[id]'],
+		_description: 'Unified post-conversation feedback. Attendance is mandatory; per-person positive notes and a confidential concern channel are optional. Gated — blocks all app access until attendance is confirmed.',
+		title: 'How was the conversation?',
+
+		// Attendance — mandatory, branches on "no".
+		attendanceQuestion: 'Did you meet?',
+		wentYes: 'Yes, we met',
+		wentNo: 'No',
+		cancelledOption: 'It was cancelled beforehand',
+		absentOption: 'I couldn’t make it',
+		absenceReasonLabel: 'Anything you’d like to add?',
+		optional: 'Optional',
+
+		// Host-only turnout attestation.
+		hostTurnoutHeading: 'Who came?',
+		hostTurnoutHint: 'You set this up, so you can note who turned up.',
+		present: 'Came',
+		noShow: 'No‑show',
+
+		// Per-person positive feedback (only when you turned up).
+		peopleHeading: 'The people you met',
+		didntGoNote: 'Since you didn’t meet, there’s nothing more to add here.',
+		positiveLabel: 'Share something positive',
+		positiveNote: 'They’ll see what you share.',
+		positiveTextPlaceholder: 'Optional — a note just for them',
+
+		// Confidential concern — quiet, non-accusatory, never the headline.
+		concernLink: 'Raise a private concern',
+		concernAboutMeeting: 'Raise a concern about this meeting',
+		concernNote: 'Only a steward reads this. The other person is never told.',
+		concernKindNoShow: 'They didn’t show up',
+		concernKindUnsafe: 'I felt uncomfortable or unsafe',
+		concernKindOther: 'Something else',
+		concernDetailPlaceholder: 'Optional — anything that would help a steward',
+		concernSaved: 'Sent to a steward',
+		concernCancel: 'never mind',
+
+		// Meet-again — one gathering-level pulse.
+		meetAgainQuestion: 'Would you meet again?',
+		yes: 'Yes',
+		no: 'No',
+
+		submit: 'done',
+		submitting: 'Submitting…',
+		thankYou: 'Thank you',
+		submitted: 'Thanks — that’s all we needed.',
+		continueToDiscover: 'Continue to discover',
+	},
+
 	// ── Waitlist ───────────────────────────────────────────────────────
 	waitlist: {
 		_routes: ['/waitlist', '/ (AuthDialog)'],
