@@ -4,6 +4,9 @@
 </script>
 
 <footer class="zine-footer">
+	<!-- Inner wrapper mirrors the .page geometry (1080px + 48px side padding) so the
+	     footer columns align with the page content grid; the top hairline stays full-bleed. -->
+	<div class="footer-inner">
 	<div class="footer-grid">
 		<div class="footer-col">
 			<p class="footer-col-head">Steward Ownership</p>
@@ -35,12 +38,20 @@
 		</div>
 	</div>
 	<p class="footer-colophon">{copy.landing.zineColophon}</p>
+	</div>
 </footer>
 
 <style>
 	.zine-footer {
 		border-top: 1px solid rgba(240, 236, 230, 0.06);
+	}
+
+	/* Same box geometry as .zine-main .page: content and footer share columns. */
+	.footer-inner {
+		max-width: 1080px;
+		margin: 0 auto;
 		padding: 64px 48px 48px;
+		box-sizing: border-box;
 	}
 
 	.footer-grid {
@@ -87,7 +98,7 @@
 	}
 
 	@media (max-width: 640px) {
-		.zine-footer {
+		.footer-inner {
 			padding: 40px 20px 40px;
 		}
 		.footer-grid {

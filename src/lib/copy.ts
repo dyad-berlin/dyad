@@ -100,6 +100,7 @@ export const copy = {
 		// Footer links (left column). The legal-notice link is labelled
 		// "Impressum" — the page at /impressum is a legal notice, not terms
 		// of service, and German visitors look for it by that name.
+		footerVoices: 'Voices',
 		footerOwnership: 'Ownership',
 		footerGovernance: 'Governance',
 		footerCommunityCare: 'Community care',
@@ -118,6 +119,16 @@ export const copy = {
 		// not a string literal scattered in a component (no hardcoded dates).
 		zineColophon:
 			'DYAD — Building social technology as civic infrastructure. Draft Edition, June 2026. Currently in beta in Berlin.',
+	},
+
+	// ── Voices ─────────────────────────────────────────────────────────
+	voices: {
+		_routes: ['/voices'],
+		sectionLabel: 'Voices',
+		title: 'People, talking.',
+		sub: 'Members on why they show up.',
+		metaDescription:
+			'Members of Dyad on why they show up: short films about conversation, belonging, and meeting face to face.',
 	},
 
 	// ── Discover ───────────────────────────────────────────────────────
