@@ -42,23 +42,41 @@
 		class:zine-header-hidden={isUnfolding && headerHidden}
 	>
 		<a href="/" class="zine-wordmark">DYAD</a>
-		<nav class="zine-nav">
-			<a href="/community" class="zine-nav-link">community</a>
-			<a href="/governance" class="zine-nav-link">participatory governance</a>
-			<a href="/unfolding" class="zine-nav-link">unfolding</a>
-			<a href="/docs" class="zine-nav-link">docs</a>
-		</nav>
-		<!-- Mobile: the inline nav is hidden; this disclosure keeps the section
-		     links reachable and in the a11y tree on small screens. -->
-		<details class="zine-nav-mobile">
-			<summary aria-label="Sections">Sections</summary>
-			<nav class="zine-nav-mobile-links">
+		{#if isUnfolding}
+			<!-- Same wording and sequencing as the landing footer's row:
+			     Documentation, Community, Newsletter. -->
+			<nav class="zine-nav">
+				<a href="/docs" class="zine-nav-link">documentation</a>
+				<a href="/community" class="zine-nav-link">community</a>
+				<a href="/unfolding" class="zine-nav-link">newsletter</a>
+			</nav>
+			<details class="zine-nav-mobile">
+				<summary aria-label="Sections">Sections</summary>
+				<nav class="zine-nav-mobile-links">
+					<a href="/docs" class="zine-nav-link">documentation</a>
+					<a href="/community" class="zine-nav-link">community</a>
+					<a href="/unfolding" class="zine-nav-link">newsletter</a>
+				</nav>
+			</details>
+		{:else}
+			<nav class="zine-nav">
 				<a href="/community" class="zine-nav-link">community</a>
 				<a href="/governance" class="zine-nav-link">participatory governance</a>
 				<a href="/unfolding" class="zine-nav-link">unfolding</a>
 				<a href="/docs" class="zine-nav-link">docs</a>
 			</nav>
-		</details>
+			<!-- Mobile: the inline nav is hidden; this disclosure keeps the section
+			     links reachable and in the a11y tree on small screens. -->
+			<details class="zine-nav-mobile">
+				<summary aria-label="Sections">Sections</summary>
+				<nav class="zine-nav-mobile-links">
+					<a href="/community" class="zine-nav-link">community</a>
+					<a href="/governance" class="zine-nav-link">participatory governance</a>
+					<a href="/unfolding" class="zine-nav-link">unfolding</a>
+					<a href="/docs" class="zine-nav-link">docs</a>
+				</nav>
+			</details>
+		{/if}
 	</header>
 	{/if}
 

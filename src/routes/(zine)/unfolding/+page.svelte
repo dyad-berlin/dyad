@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { unfoldingEntries } from '$lib/content/unfolding';
 	import { formatEditorialDate } from '$lib/utils/dates';
+	import { storageUrl } from '$lib/utils/storage-url';
 
 	const [featured, ...rest] = unfoldingEntries;
 </script>
@@ -21,7 +22,11 @@
 
 	{#if featured}
 		<a href="/unfolding/{featured.slug}" class="featured">
-			<div class="featured-hero" aria-hidden="true"></div>
+			{#if featured.heroImage}
+				<img class="featured-hero" src={storageUrl('newsletter assets', featured.heroImage)} alt="" />
+			{:else}
+				<div class="featured-hero" aria-hidden="true"></div>
+			{/if}
 			<div class="featured-text">
 				<p class="entry-kicker">Unfolding</p>
 				<h2 class="featured-title">{featured.title}</h2>
@@ -34,7 +39,11 @@
 	<div class="grid">
 		{#each rest as entry}
 			<a href="/unfolding/{entry.slug}" class="card">
-				<div class="card-hero" aria-hidden="true"></div>
+				{#if entry.heroImage}
+					<img class="card-hero" src={storageUrl('newsletter assets', entry.heroImage)} alt="" />
+				{:else}
+					<div class="card-hero" aria-hidden="true"></div>
+				{/if}
 				<p class="entry-kicker">Unfolding</p>
 				<h3 class="card-title">{entry.title}</h3>
 				<p class="entry-date">{formatEditorialDate(entry.date)}</p>
@@ -66,13 +75,14 @@
 
 	.archive-title {
 		font-family: var(--font-serif);
-		font-size: clamp(1.4rem, 2.7vw, 1.9rem);
+		font-size: 0.95rem;
 		font-weight: 400;
 		font-style: italic;
-		line-height: 1.4;
-		color: var(--paper-ink);
+		line-height: 1.5;
+		color: var(--paper-ink-soft);
 		margin: 0;
-		letter-spacing: -0.01em;
+		max-width: 44ch;
+		letter-spacing: -0.005em;
 	}
 
 	.entry-kicker {
@@ -104,14 +114,25 @@
 		border-bottom: 1px solid var(--paper-line);
 	}
 
+	/* Uncropped: real covers keep their natural aspect ratio (height follows
+	   the file), matching the essay page's hero treatment. Only the
+	   placeholder gets a fixed height, since it has no file to size to. */
 	.featured-hero {
 		width: 100%;
-		aspect-ratio: 4 / 3;
 		border-radius: 3px;
+		display: block;
+	}
+	img.featured-hero {
+		height: auto;
+	}
+	/* Placeholder only — real covers (heroImage set) render as an <img> and
+	   skip the gradient/grain; these rules can't reach an <img> element. */
+	div.featured-hero {
+		height: clamp(200px, 24vw, 320px);
 		background: linear-gradient(155deg, #e8e2d4 0%, #d8cfba 100%);
 		position: relative;
 	}
-	.featured-hero::after {
+	div.featured-hero::after {
 		content: '';
 		position: absolute;
 		inset: 0;
@@ -143,26 +164,41 @@
 		margin: 0;
 	}
 
-	/* ── Grid of the rest ── */
+	/* ── Masonry grid of the rest ── */
+	/* CSS columns, not CSS grid: grid forces every row to the height of its
+	   tallest cell, which recreates uniform cards even with auto-height
+	   images. Columns let each card's natural height stand, producing a
+	   true editorial masonry with varying card heights, consistent column
+	   width. break-inside: avoid keeps a card from splitting across columns. */
 	.grid {
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: 48px 36px;
+		column-count: 3;
+		column-gap: 36px;
 	}
 
 	.card {
+		display: block;
 		text-decoration: none;
+		break-inside: avoid;
+		margin-bottom: 48px;
 	}
 
+	/* Uncropped: consistent column width, height: auto, natural aspect
+	   ratio preserved — no object-fit: cover cutting parts away. */
 	.card-hero {
 		width: 100%;
-		aspect-ratio: 4 / 3;
 		border-radius: 3px;
 		margin-bottom: 22px;
+		display: block;
+	}
+	img.card-hero {
+		height: auto;
+	}
+	div.card-hero {
+		height: 260px;
 		background: linear-gradient(155deg, #e8e2d4 0%, #d8cfba 100%);
 		position: relative;
 	}
-	.card-hero::after {
+	div.card-hero::after {
 		content: '';
 		position: absolute;
 		inset: 0;
@@ -189,10 +225,11 @@
 	@media (max-width: 760px) {
 		.archive { padding: 48px 20px 90px; }
 		.featured { grid-template-columns: 1fr; }
-		.grid { grid-template-columns: 1fr 1fr; gap: 36px 24px; }
+		.grid { column-count: 2; column-gap: 24px; }
+		.card { margin-bottom: 36px; }
 	}
 
 	@media (max-width: 480px) {
-		.grid { grid-template-columns: 1fr; }
+		.grid { column-count: 1; }
 	}
 </style>
