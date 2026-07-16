@@ -76,18 +76,28 @@ export async function setEmailNotificationsEnabled(enabled: boolean): Promise<vo
  *  an absent key or any error so a settings outage fails CLOSED — the concern
  *  endpoint returns 403 rather than accepting reports into an ungoverned store. */
 export async function getSafetyReportingEnabled(): Promise<boolean> {
-	const admin = makeAdminClient();
-	const { data, error } = await admin
-		.from('app_settings')
-		.select('value')
-		.eq('key', SAFETY_REPORTING_ENABLED_KEY)
-		.maybeSingle();
+	// This runs on the authenticated request hot path (page load). makeAdminClient()
+	// throws synchronously without SUPABASE_SERVICE_ROLE_KEY, and a hard network
+	// reject is thrown rather than returned as `error` — both must fail CLOSED here,
+	// not escape and 500 the request. The try/catch is the fail-safe, not just the
+	// `error` branch below.
+	try {
+		const admin = makeAdminClient();
+		const { data, error } = await admin
+			.from('app_settings')
+			.select('value')
+			.eq('key', SAFETY_REPORTING_ENABLED_KEY)
+			.maybeSingle();
 
-	if (error) {
-		console.error('[app-settings] read safety_reporting_enabled failed:', error);
+		if (error) {
+			console.error('[app-settings] read safety_reporting_enabled failed:', error);
+			return false;
+		}
+		return data?.value === true;
+	} catch (err) {
+		console.error('[app-settings] read safety_reporting_enabled threw:', err);
 		return false;
 	}
-	return data?.value === true;
 }
 
 /** Set the confidential-reporting kill switch (service-role). */
@@ -115,19 +125,29 @@ export async function setSafetyReportingEnabled(enabled: boolean): Promise<void>
  *  obligation gate, so a settings outage must keep enforcing (a member is still
  *  gated, never bypassed), unlike the fail-closed reporting kill switch. */
 export async function getGatheringFeedbackGateEnabled(): Promise<boolean> {
-	const admin = makeAdminClient();
-	const { data, error } = await admin
-		.from('app_settings')
-		.select('value')
-		.eq('key', GATHERING_FEEDBACK_GATE_ENABLED_KEY)
-		.maybeSingle();
+	// Runs on the authenticated request hot path (hooks.server.ts + layout loader).
+	// makeAdminClient() throws without SUPABASE_SERVICE_ROLE_KEY and a network reject
+	// is thrown, not returned as `error`; either would escape and 500 every gated
+	// request. FAIL-SAFE is TRUE (keep enforcing the obligation, never bypass), so a
+	// throw returns true here rather than propagating.
+	try {
+		const admin = makeAdminClient();
+		const { data, error } = await admin
+			.from('app_settings')
+			.select('value')
+			.eq('key', GATHERING_FEEDBACK_GATE_ENABLED_KEY)
+			.maybeSingle();
 
-	if (error) {
-		console.error('[app-settings] read gathering_feedback_gate_enabled failed:', error);
+		if (error) {
+			console.error('[app-settings] read gathering_feedback_gate_enabled failed:', error);
+			return true;
+		}
+		// Absent key -> live default (TRUE). Only an explicit `false` disables it.
+		return data?.value !== false;
+	} catch (err) {
+		console.error('[app-settings] read gathering_feedback_gate_enabled threw:', err);
 		return true;
 	}
-	// Absent key -> live default (TRUE). Only an explicit `false` disables it.
-	return data?.value !== false;
 }
 
 /** Set the unified-gathering feedback-gate flag (service-role). Lets an operator
