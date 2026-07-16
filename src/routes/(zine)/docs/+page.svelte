@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { copy } from '$lib/copy';
 
 	// Master–detail: the sidebar picks a topic, the pane shows only that topic.
 	// The hash carries the selection so every topic stays deep-linkable.
@@ -286,7 +287,7 @@
 				<ul>
 					<li>Follow the Community Standards and the Bylaws;</li>
 					<li>Keep other members' non-public information confidential;</li>
-					<li>If you choose to pay, and paying is a choice rather than a condition of membership, keep your contribution current at the rate you picked: €5, €15, or €25 monthly, €100 yearly, or €400 lifetime. The rate is your call, and we ask no questions about it.</li>
+					<li>If you choose to pay, and paying is a choice rather than a condition of membership, keep your contribution current at the rate you picked: {copy.membership.monthlySolidarityPrice}, {copy.membership.cadenceMonthlyPrice}, or {copy.membership.monthlySupporterPrice} monthly, {copy.membership.cadenceAnnualPrice} yearly, or {copy.membership.cadenceLifetimePrice} lifetime. The rate is your call, and we ask no questions about it.</li>
 				</ul>
 
 				<h3>7. What membership is not</h3>

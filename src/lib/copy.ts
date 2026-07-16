@@ -135,7 +135,7 @@ export const copy = {
 		_routes: ['/'],
 		_description: 'Landing page for unauthenticated visitors.',
 		title: 'dyad.',
-		metaDescription: 'The offline social network owned by its community.',
+		metaDescription: 'The offline social network governed by its community.',
 		ogSiteName: 'dyad',
 		ogUrl: 'https://dyad.berlin',
 		joinWaitlist: 'Join',
@@ -151,7 +151,7 @@ export const copy = {
 		footerPrivacy: 'Privacy',
 		// Hero headline + supporting line (display copy; sentence case is the
 		// intentional brand styling — see CLAUDE.md § UI conventions).
-		headlineLine1: 'Collectively owned',
+		headlineLine1: 'Collectively governed',
 		headlineLine2: 'offline social network',
 		// "Steward-owned" removed 2026-07-14 — dyad is not yet steward-owned.
 		// The archived ownership page lives at src/lib/archive/StewardOwnershipPage.svelte.
@@ -812,7 +812,7 @@ export const copy = {
 		cadenceMonthly: 'Monthly',
 		cadenceAnnual: 'Yearly',
 		cadenceLifetime: 'Lifetime',
-		cadenceMonthlyPrice: '€15',
+		cadenceMonthlyPrice: '€12',
 		cadenceMonthlyPeriod: 'per month',
 		cadenceAnnualPrice: '€100',
 		cadenceAnnualPeriod: 'per year',
@@ -822,12 +822,12 @@ export const copy = {
 		tierAriaLabel: 'Contribution tier',
 		tierPrompt: 'Choose a tier',
 		monthlySolidarityName: 'Solidarity',
-		monthlySolidarityPrice: '€5',
+		monthlySolidarityPrice: '€7',
 		monthlySolidarityNote: 'A lower rate.',
 		monthlyStandardName: 'Standard',
 		monthlyStandardNote: 'Covers what a membership costs.',
 		monthlySupporterName: 'Supporter',
-		monthlySupporterPrice: '€25',
+		monthlySupporterPrice: '€17',
 		monthlySupporterNote: 'A higher rate that helps fund the lower one.',
 		becomeMemberCta: 'become a member',
 		// Membership is currently open to people based in Berlin. Self-declared at

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { useTocScroll } from '$lib/utils/use-toc-scroll.svelte';
+	import { copy } from '$lib/copy';
 
 	const ids = ['intro', 'who', 'belonging', 'care'];
 	const toc = useTocScroll(ids);
@@ -45,7 +46,7 @@
 			<section id="belonging">
 				<h2 class="section-h2">Belonging &amp; membership</h2>
 				<p>Becoming a member is by request — a few honest sentences, read by members against our community standards. The small friction is deliberate, and it is about alignment, never identity: there is no community for everyone, and this one is for people curious about others, who respect the interdependencies that make our lives rich.</p>
-				<p>Membership does not require paying. Members who choose to pay — €5, €15 or €25 a month, whichever fits your life — are how the work stays independent: no ads, no data sales, nobody to answer to but the people in the room.</p>
+				<p>Membership does not require paying. Members who choose to pay — {copy.membership.monthlySolidarityPrice}, {copy.membership.cadenceMonthlyPrice} or {copy.membership.monthlySupporterPrice} a month, whichever fits your life — are how the work stays independent: no ads, no data sales, nobody to answer to but the people in the room.</p>
 				<p>Members are not customers. The rules, the program, the culture — members make them with us. There are two roles: <strong>members</strong>, who have a voice in the decisions that shape the community, and <strong>stewards</strong> — members entrusted with keeping things healthy: upholding shared norms, facilitating moderation, carrying out what was decided together.</p>
 			</section>
 
