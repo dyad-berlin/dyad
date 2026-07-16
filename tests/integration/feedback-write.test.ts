@@ -301,6 +301,22 @@ describe('gathering write RPCs (U5)', () => {
 	});
 
 	describe('submit_concern (turnout-blind co-membership gate)', () => {
+		// The RPC re-enforces the R9 kill-switch in its own body, so writes only
+		// succeed with the flag ON. Set it for the gate tests; the last test flips
+		// it OFF to prove the in-RPC guard fails closed. Restore dark default after.
+		beforeAll(async () => {
+			await admin
+				.from('app_settings')
+				.upsert({ key: 'safety_reporting_enabled', value: true }, { onConflict: 'key' })
+				.throwOnError();
+		});
+		afterAll(async () => {
+			await admin
+				.from('app_settings')
+				.upsert({ key: 'safety_reporting_enabled', value: false }, { onConflict: 'key' })
+				.throwOnError();
+		});
+
 		it('a co-participant files a no_show concern about another (steward-readable)', async () => {
 			const { error } = await lisa.rpc('submit_concern', {
 				p_slot: fx.slot,
@@ -339,6 +355,30 @@ describe('gathering write RPCs (U5)', () => {
 				p_subject: TEST_USERS.marco.id
 			});
 			expect(error, 'a non-participant reporter must be rejected by the gate').not.toBeNull();
+		});
+
+		it('the RPC itself rejects when the kill-switch is off (R9, defense in depth)', async () => {
+			// A direct RPC call bypasses the endpoint check, so the RPC must fail
+			// closed on its own — the dark-launch guarantee cannot rest on the
+			// endpoint alone. Flip the flag off, attempt an otherwise-valid concern,
+			// expect rejection; restore on for the afterAll's benefit.
+			await admin
+				.from('app_settings')
+				.upsert({ key: 'safety_reporting_enabled', value: false }, { onConflict: 'key' })
+				.throwOnError();
+			const { error } = await lisa.rpc('submit_concern', {
+				p_slot: fx.slot,
+				p_scope: 'person',
+				p_kind: 'no_show',
+				p_subject: TEST_USERS.ava.id,
+				p_gathering: fx.gathering,
+				p_detail: 'Should be blocked while dark.'
+			});
+			expect(error, 'the RPC must reject when reporting is disabled').not.toBeNull();
+			await admin
+				.from('app_settings')
+				.upsert({ key: 'safety_reporting_enabled', value: true }, { onConflict: 'key' })
+				.throwOnError();
 		});
 	});
 });
@@ -508,6 +548,23 @@ describe('gathering feedback endpoints (U5)', () => {
 	});
 
 	describe('concern endpoint (kill-switch)', () => {
+		// submit_concern now re-enforces the kill-switch in its own body (reads the
+		// real app_settings row), so the endpoint mock alone is not enough — the DB
+		// flag must actually be ON for the enabled-path cases to insert. Set it here
+		// and restore the dark default afterwards.
+		beforeAll(async () => {
+			await admin
+				.from('app_settings')
+				.upsert({ key: 'safety_reporting_enabled', value: true }, { onConflict: 'key' })
+				.throwOnError();
+		});
+		afterAll(async () => {
+			await admin
+				.from('app_settings')
+				.upsert({ key: 'safety_reporting_enabled', value: false }, { onConflict: 'key' })
+				.throwOnError();
+		});
+
 		it('returns JSON ok when reporting is enabled', async () => {
 			killSwitch.mockResolvedValue(true);
 			const res = await concernPOST(
