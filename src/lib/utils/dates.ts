@@ -47,6 +47,15 @@ export function formatShortDate(iso: string): string {
 	});
 }
 
+/** "20 July 2026" — full editorial date, for essay bylines and archive listings. */
+export function formatEditorialDate(iso: string): string {
+	return new Date(iso).toLocaleDateString('en-GB', {
+		day: 'numeric',
+		month: 'long',
+		year: 'numeric'
+	});
+}
+
 /**
  * Past-looking relative date for "when did this happen":
  * today → "today", yesterday → "yesterday", 2-6 days ago → weekday,

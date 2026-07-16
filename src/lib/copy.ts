@@ -143,8 +143,9 @@ export const copy = {
 		// Footer links (left column). The legal-notice link is labelled
 		// "Impressum" — the page at /impressum is a legal notice, not terms
 		// of service, and German visitors look for it by that name.
+		footerDocs: 'Documentation',
 		footerCommunity: 'Community',
-		footerGovernance: 'Governance',
+		footerNewsletter: 'Newsletter',
 		footerImpressum: 'Impressum',
 		footerAgb: 'AGB',
 		footerPrivacy: 'Privacy',
@@ -158,10 +159,6 @@ export const copy = {
 			'A place online to find conversations, people and communities offline. Open source. Governed by the communities who use it.',
 		// CTA on the map card that floats over a selected conversation.
 		mapCardCta: 'Join to read & meet',
-		// ZineFooter colophon. Centralized here so the edition/date is config,
-		// not a string literal scattered in a component (no hardcoded dates).
-		zineColophon:
-			'DYAD — Building social technology as civic infrastructure. Draft Edition, June 2026. Currently in beta in Berlin.',
 	},
 
 	// ── Discover ───────────────────────────────────────────────────────
