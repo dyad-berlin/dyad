@@ -82,6 +82,7 @@
 			<!-- ── Footer (in the left scroll flow) ── -->
 			<footer class="site-footer">
 				<a href="/docs#about-why" class="footer-link">{og.footerCommunity}</a>
+				<a href="/voices" class="footer-link">{og.footerVoices}</a>
 				<a href="/docs#about-governance" class="footer-link">{og.footerGovernance}</a>
 				<!-- Impressum + Privacy stay together so a wrap never orphans one of
 				     the legal links on its own line — they break as a pair. -->

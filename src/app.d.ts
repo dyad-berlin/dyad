@@ -19,8 +19,10 @@ declare global {
 			 * Active (non-revoked, non-retired) scope memberships for the current
 			 * user. Empty array for anonymous visitors. Populated once per request
 			 * in hooks.server.ts via get_my_access_context() and read by
-			 * prompt-query.ts listing methods to gate scoped prompts. See
-			 * migrations 20260508180000 and 20260605100400.
+			 * prompt-query.ts listing methods to gate scoped prompts. Carries both
+			 * permanent grants and any ephemeral provider scope sessions (see
+			 * `scopeSessions`). See migrations 20260508180000 and 20260605100400,
+			 * and src/lib/server/identity.
 			 */
 			scopes: string[];
 			/**
@@ -42,6 +44,21 @@ declare global {
 			 * members. The access gate in hooks.server.ts blocks expired guests.
 			 */
 			accessExpiresAt: string | null;
+			/**
+			 * Ephemeral scope sessions for this request (any identity substrate).
+			 * Each is established by presenting a credential to a registered
+			 * provider and lapses when that credential expires; stored in no DB row,
+			 * re-verified each request. Their scopes are merged into `scopes` above.
+			 * See src/lib/server/identity.
+			 */
+			scopeSessions: import('$lib/server/identity/types').ScopeSession[];
+			/**
+			 * Substrate-agnostic identity for this request (Phase E). Populated for
+			 * a Supabase user or an account-less provider session alike. For an
+			 * account-less visitor, `user` is a synthetic id-only stand-in and this
+			 * is the canonical identity. Null for anonymous requests.
+			 */
+			upactor: import('@prefig/upact').Upactor | null;
 		}
 		// interface PageData {}
 		// interface PageState {}

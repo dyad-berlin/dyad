@@ -231,14 +231,140 @@ export interface GroupFeedback {
 	created_at: string;
 }
 
+// Unified gathering model (feat: unified gathering feedback, U1). A gathering is
+// the anchor for one time_slot that took place; a 1-on-1 is the n=2 case.
+// Occurrence is DERIVED from participation (>= 2 turned_up), never stored.
+
+export interface Gathering {
+	id: string;
+	slot_id: string;
+	prompt_id: string;
+	host_id: string;
+	closed_at: string | null;
+	created_at: string;
+}
+
+// A participant's own account of what happened at a gathering.
+export type SelfReport = 'attended' | 'cancelled_before' | 'absent';
+
+export interface Participation {
+	id: string;
+	gathering_id: string;
+	member_id: string;
+	is_host: boolean;
+	turned_up: boolean;
+	self_report: SelfReport | null;
+	absence_reason: string | null;
+	attested_by: string | null;
+	created_at: string;
+}
+
+// Confidential safeguarding concern (feat: unified gathering feedback, U2).
+// Structurally isolated: insert-only for participants, steward-only read via the
+// service-role admin plane. Never surfaced to the reported person or any
+// participant. See supabase/migrations/20260715120100_create_safety_concerns.sql.
+export type SafetyConcernScope = 'person' | 'gathering';
+export type SafetyConcernKind = 'no_show' | 'felt_unsafe' | 'other';
+
+export interface SafetyConcern {
+	id: string;
+	// Schedule-time anchor (turnout-blind gate keys off this slot).
+	slot_id: string;
+	// Optional finer context; null when filed before/without a gathering row.
+	gathering_id: string | null;
+	reporter_id: string;
+	// Null for a gathering-scoped concern (names no person).
+	subject_id: string | null;
+	scope: SafetyConcernScope;
+	kind: SafetyConcernKind;
+	detail: string | null;
+	created_at: string;
+}
+
+// Public feedback edge (feat: unified gathering feedback, U3). Any-to-any
+// experiential feedback about a co-present participant — tags (from
+// adjective_vocabulary) + free text, NO numeric rating. Least-privilege
+// visibility (R11): visible to reviewer + subject on submit; the subject alone
+// promotes it by setting made_public_at, after which co-participants of the
+// gathering may read it. See supabase/migrations/20260715120200_create_public_feedback.sql.
+export interface PublicFeedback {
+	id: string;
+	gathering_id: string;
+	reviewer_id: string;
+	reviewee_id: string;
+	tags: string[];
+	free_text: string | null;
+	// NULL = subject-visible only; set (by the subject) to promote to a broader,
+	// still-minimal co-participant audience.
+	made_public_at: string | null;
+	created_at: string;
+}
+
+// Collect-only "would you meet again" soft signal (R7). One row per reviewer per
+// gathering; owner-read only, wired to nothing user-visible or match-affecting.
+export interface GatheringFeedback {
+	id: string;
+	gathering_id: string;
+	reviewer_id: string;
+	meet_again: boolean | null;
+	created_at: string;
+}
+
+// A co-participant of a gathering, as returned by get_gathering_roster (U6). The
+// caller is EXCLUDED. display_name is pre-resolved (profiles.username, falling
+// back to the substrate handle) — no raw ids surface in the UI.
+export interface RosterMember {
+	member_id: string;
+	display_name: string;
+	is_host: boolean;
+	turned_up: boolean;
+}
+
+// ── Gathering write-path inputs (feat: unified gathering feedback, U5) ──────
+// Inputs to the SECURITY DEFINER RPCs (submit_attendance, submit_public_feedback,
+// submit_concern) consumed by FeedbackService. See
+// supabase/migrations/20260715120300_feedback_write_rpcs.sql.
+
+// The caller's own attendance, plus (host only) a turnout attestation map of
+// member_id -> turned_up for co-participants.
+export interface AttendanceInput {
+	gathering_id: string;
+	self_report: SelfReport;
+	absence_reason?: string;
+	// Host-only: attest other participants' turnout. Keyed by member id.
+	turnout?: Record<string, boolean>;
+}
+
+// A public (subject-visible) feedback edge about a co-present participant.
+export interface PublicFeedbackInput {
+	gathering_id: string;
+	reviewee_id: string;
+	tags?: string[];
+	free_text?: string;
+}
+
+// A confidential safeguarding concern about a co-participant or the meeting.
+export interface SafetyConcernInput {
+	slot_id: string;
+	scope: SafetyConcernScope;
+	kind: SafetyConcernKind;
+	// Required when scope='person'; must be absent when scope='gathering'.
+	subject_id?: string | null;
+	gathering_id?: string | null;
+	detail?: string | null;
+}
+
 // Discriminated union so invalid states (both form IDs set) are unrepresentable.
-// `kind` distinguishes the one-on-one feedback_forms gate (reveal-capable modal)
-// from the group_feedback gate (standalone redirect page). Mutually exclusive by
-// construction.
+// `kind` distinguishes the one-on-one feedback_forms gate (reveal-capable modal),
+// the legacy group_feedback gate (standalone redirect page), and the unified
+// `gathering` obligation (U9 — an unconfirmed participation.self_report on a
+// group gathering; formId is the gathering id, routed to /feedback/gathering/[id]).
+// Mutually exclusive by construction.
 export type GateStatus =
 	| { gated: false }
 	| { gated: true; kind: 'one_on_one'; formId: string }
-	| { gated: true; kind: 'group'; formId: string };
+	| { gated: true; kind: 'group'; formId: string }
+	| { gated: true; kind: 'gathering'; formId: string };
 
 export interface ReputationSignal {
 	id: string;

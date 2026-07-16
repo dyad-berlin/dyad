@@ -82,8 +82,17 @@ for f in "${changed[@]}"; do
 	#    the vendor-neutrality guard. Require app.current_user_id() instead.
 	#    Scoped to $$...$$ bodies via perl so a normal CREATE POLICY using
 	#    auth.uid() (outside any body) is not a false positive.
+	#
+	#    One exemption: app.current_user_id() IS the vendor-neutrality wrapper.
+	#    Its own body must read auth.uid() to resolve the Supabase (substrate-
+	#    zero) identity — that is the single, deliberate coupling point every
+	#    other DEFINER function and policy delegates to. Strip its definition
+	#    before the scan so defining the wrapper isn't flagged as bypassing it.
 	if grep -Eq 'security[[:space:]]+definer' <<<"$low"; then
-		bodies_low=$(perl -0777 -ne 'print "$1\n" while /\$\$(.*?)\$\$/sg' "$f" 2>/dev/null | tr '[:upper:]' '[:lower:]')
+		bodies_low=$(perl -0777 -ne '
+			s/create\s+or\s+replace\s+function\s+app\.current_user_id\b.*?\$\$.*?\$\$//sig;
+			print "$1\n" while /\$\$(.*?)\$\$/sg;
+		' "$f" 2>/dev/null | tr '[:upper:]' '[:lower:]')
 		if grep -Eq 'auth\.uid\(\)' <<<"$bodies_low"; then
 			note "SECURITY DEFINER function body uses auth.uid() — use app.current_user_id() (the policy-scan drift test can't see function bodies)"
 		fi

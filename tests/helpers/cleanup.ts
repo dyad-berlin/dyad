@@ -33,6 +33,18 @@ export async function cleanTestData(admin?: SupabaseClient): Promise<void> {
 			// cleared before the prompt (and before time_slots, which it also
 			// references) is deleted.
 			await client.from('group_feedback').delete().eq('prompt_id', pid);
+			// Unified gathering tables (seeded by advance_scheduled_meetings, U4).
+			// gatherings.prompt_id is ON DELETE RESTRICT and gathering_feedback /
+			// public_feedback FK gatherings ON DELETE RESTRICT, so they must be
+			// cleared before the prompt / time_slots go. participation cascades
+			// from gatherings.
+			const { data: gatherings } = await client.from('gatherings').select('id').eq('prompt_id', pid);
+			const gatheringIds = (gatherings ?? []).map(g => g.id);
+			if (gatheringIds.length > 0) {
+				await client.from('gathering_feedback').delete().in('gathering_id', gatheringIds);
+				await client.from('public_feedback').delete().in('gathering_id', gatheringIds);
+			}
+			await client.from('gatherings').delete().eq('prompt_id', pid);
 			await client.from('meetings').delete().eq('prompt_id', pid);
 			await client.from('prompt_invitations').delete().eq('prompt_id', pid);
 			await client.from('prompt_comments').delete().eq('prompt_id', pid);

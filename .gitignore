@@ -61,3 +61,7 @@ compound-engineering.local.md
 /*.jpeg
 /*.webp
 /*.pdf
+
+# Local ember demo scope state (holds demo keys)
+.ember-demo.json
+.eudi-dev/

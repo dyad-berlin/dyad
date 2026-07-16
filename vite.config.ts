@@ -25,6 +25,20 @@ export default defineConfig({
 		include: ['src/**/*.test.ts'],
 		environment: 'node'
 	},
+	ssr: {
+		// Load the @prefig identity packages through Node's resolver rather
+		// than bundling them. They are symlinked workspace packages, which Vite
+		// would otherwise bundle and evaluate per entry point; @prefig/upact
+		// exposes an `/internal` subpath guarding the opaque Session with a
+		// module-private symbol, and double-instantiating it breaks that symbol
+		// (respondToWallet rejects a session authenticate() just produced).
+		// Externalizing keeps a single Node-resolved instance, matching prod.
+		external: [
+			'@prefig/upact',
+			'@prefig/upact-atproto',
+			'@prefig/upact-supabase'
+		]
+	},
 	server: {
 		// Dev-only: admit the conference hostnames so the host routing in
 		// hooks.server.ts can be exercised locally with a Host header or a
