@@ -104,68 +104,75 @@ describe('public_feedback + gathering_feedback RLS (U3)', () => {
 
 	afterAll(cleanup);
 
-	describe('INSERT gate (actual turnout — app.both_present)', () => {
+	// Writes are DEFINER-RPC-only (submit_public_feedback), matching every other
+	// table in the unit — public_feedback holds no direct INSERT/UPDATE grant. The
+	// RPC forces reviewer_id = caller (spoofing impossible by construction) and
+	// re-enforces the turnout gate, tag vocabulary, and length caps in its body.
+	describe('write path (submit_public_feedback RPC + turnout gate)', () => {
 		it('a joiner<->joiner edge inserts when both turned up (marco -> ava)', async () => {
-			const { error } = await marco.from('public_feedback').insert({
-				gathering_id: gathering1,
-				reviewer_id: TEST_USERS.marco.id,
-				reviewee_id: TEST_USERS.ava.id,
-				tags: ['thoughtful', 'curious'],
-				free_text: 'Great conversation.'
+			const { error } = await marco.rpc('submit_public_feedback', {
+				p_gathering: gathering1,
+				p_reviewee: TEST_USERS.ava.id,
+				p_tags: ['thoughtful', 'curious'],
+				p_free_text: 'Great conversation.'
 			});
 			expect(error, error?.message).toBeNull();
 		});
 
 		it('a second joiner<->joiner edge inserts (marco -> ben)', async () => {
+			const { error } = await marco.rpc('submit_public_feedback', {
+				p_gathering: gathering1,
+				p_reviewee: TEST_USERS.ben.id,
+				p_tags: ['warm']
+			});
+			expect(error, error?.message).toBeNull();
+		});
+
+		it('a direct table INSERT is blocked (no user grant — RPC-minted only)', async () => {
 			const { error } = await marco.from('public_feedback').insert({
 				gathering_id: gathering1,
 				reviewer_id: TEST_USERS.marco.id,
-				reviewee_id: TEST_USERS.ben.id,
+				reviewee_id: TEST_USERS.ava.id,
 				tags: ['warm']
 			});
-			expect(error, error?.message).toBeNull();
+			expect(error, 'direct user INSERT must be blocked').not.toBeNull();
 		});
 
 		it('an edge naming the ABSENT host is rejected (both_present false)', async () => {
 			// lisa (host) did not turn up — the turnout gate blocks any edge naming
 			// her, even from a joiner who did turn up.
-			const { error } = await marco.from('public_feedback').insert({
-				gathering_id: gathering1,
-				reviewer_id: TEST_USERS.marco.id,
-				reviewee_id: TEST_USERS.lisa.id,
-				tags: ['warm']
+			const { error } = await marco.rpc('submit_public_feedback', {
+				p_gathering: gathering1,
+				p_reviewee: TEST_USERS.lisa.id,
+				p_tags: ['warm']
 			});
 			expect(error, 'edge naming the absent host must be rejected by both_present').not.toBeNull();
 		});
 
-		it('rejects a self-review (reviewer_id = reviewee_id)', async () => {
-			const { error } = await marco.from('public_feedback').insert({
-				gathering_id: gathering1,
-				reviewer_id: TEST_USERS.marco.id,
-				reviewee_id: TEST_USERS.marco.id,
-				tags: ['curious']
+		it('rejects a self-review (reviewee = caller)', async () => {
+			const { error } = await marco.rpc('submit_public_feedback', {
+				p_gathering: gathering1,
+				p_reviewee: TEST_USERS.marco.id,
+				p_tags: ['curious']
 			});
 			expect(error, 'self-review must be rejected').not.toBeNull();
 		});
 
-		it('cannot spoof reviewer_id to another user (reviewer_id = current user)', async () => {
-			// ben tries to file feedback AS marco. reviewer_id must equal the caller.
-			const { error } = await ben.from('public_feedback').insert({
-				gathering_id: gathering1,
-				reviewer_id: TEST_USERS.marco.id,
-				reviewee_id: TEST_USERS.ava.id,
-				tags: ['warm']
+		it('rejects a tag outside the active vocabulary', async () => {
+			const { error } = await marco.rpc('submit_public_feedback', {
+				p_gathering: gathering1,
+				p_reviewee: TEST_USERS.ava.id,
+				p_tags: ['definitely-not-a-real-vocabulary-word']
 			});
-			expect(error, 'reviewer_id spoofing must be blocked').not.toBeNull();
+			expect(error, 'non-vocabulary tag must be rejected').not.toBeNull();
 		});
 
 		it('rejects free_text over the length cap', async () => {
-			const { error } = await marco.from('public_feedback').insert({
-				gathering_id: gathering1,
-				reviewer_id: TEST_USERS.marco.id,
-				reviewee_id: TEST_USERS.ava.id,
-				tags: [],
-				free_text: 'x'.repeat(2001)
+			const { error } = await marco.rpc('submit_public_feedback', {
+				p_gathering: gathering1,
+				p_reviewee: TEST_USERS.ava.id,
+				p_tags: [],
+				p_free_text: 'x'.repeat(2001)
 			});
 			expect(error, 'free_text over 2000 chars must be rejected').not.toBeNull();
 		});
@@ -219,29 +226,29 @@ describe('public_feedback + gathering_feedback RLS (U3)', () => {
 			return data!.id;
 		}
 
-		it('the reviewer CANNOT promote (set made_public_at)', async () => {
+		it('the reviewer CANNOT promote (promote_public_feedback returns false)', async () => {
 			const id = await feedbackId();
-			await marco.from('public_feedback').update({ made_public_at: new Date().toISOString() }).eq('id', id);
-			// RLS UPDATE policy admits only the subject — marco's update matches no
-			// row, so made_public_at stays NULL. Verify via service role.
+			// The RPC only promotes rows the caller is the SUBJECT of. marco is the
+			// reviewer, not the subject — it returns false and sets nothing.
+			const { data: promoted } = await marco.rpc('promote_public_feedback', { p_feedback_id: id });
+			expect(promoted, 'reviewer must not be able to promote').toBe(false);
 			const { data } = await admin.from('public_feedback').select('made_public_at').eq('id', id).single();
 			expect(data!.made_public_at, 'reviewer must not be able to promote').toBeNull();
 		});
 
 		it('a third participant CANNOT promote', async () => {
 			const id = await feedbackId();
-			await ben.from('public_feedback').update({ made_public_at: new Date().toISOString() }).eq('id', id);
+			const { data: promoted } = await ben.rpc('promote_public_feedback', { p_feedback_id: id });
+			expect(promoted, 'a third party must not be able to promote').toBe(false);
 			const { data } = await admin.from('public_feedback').select('made_public_at').eq('id', id).single();
 			expect(data!.made_public_at, 'a third party must not be able to promote').toBeNull();
 		});
 
-		it('the SUBJECT promotes it (sets made_public_at)', async () => {
+		it('the SUBJECT promotes it (promote_public_feedback returns true)', async () => {
 			const id = await feedbackId();
-			const { error } = await ava
-				.from('public_feedback')
-				.update({ made_public_at: new Date().toISOString() })
-				.eq('id', id);
+			const { data: promoted, error } = await ava.rpc('promote_public_feedback', { p_feedback_id: id });
 			expect(error, error?.message).toBeNull();
+			expect(promoted, 'subject promotion must succeed').toBe(true);
 			const { data } = await admin.from('public_feedback').select('made_public_at').eq('id', id).single();
 			expect(data!.made_public_at, 'subject promotion must persist').not.toBeNull();
 		});
@@ -250,6 +257,42 @@ describe('public_feedback + gathering_feedback RLS (U3)', () => {
 			const id = await feedbackId();
 			const { data } = await ben.from('public_feedback').select('id').eq('id', id);
 			expect((data ?? []).map((r) => r.id)).toContain(id);
+		});
+
+		it('editing content AFTER promotion resets made_public_at (re-consent required)', async () => {
+			// The subject consented to specific content. If the reviewer re-submits the
+			// same edge with different content, promotion must drop back to NULL so the
+			// substitute is not silently public under the old consent.
+			const id = await feedbackId();
+			const { error } = await marco.rpc('submit_public_feedback', {
+				p_gathering: gathering1,
+				p_reviewee: TEST_USERS.ava.id,
+				p_tags: ['reserved'],
+				p_free_text: 'Different text.'
+			});
+			expect(error, error?.message).toBeNull();
+			const { data } = await admin
+				.from('public_feedback')
+				.select('made_public_at, tags')
+				.eq('id', id)
+				.single();
+			expect(data!.made_public_at, 'content change must reset promotion').toBeNull();
+			expect(data!.tags).toEqual(['reserved']);
+		});
+
+		it('a no-op resubmit (identical content) leaves promotion intact', async () => {
+			// Re-promote, then resubmit the SAME content — made_public_at must survive.
+			const id = await feedbackId();
+			await ava.rpc('promote_public_feedback', { p_feedback_id: id });
+			const { error } = await marco.rpc('submit_public_feedback', {
+				p_gathering: gathering1,
+				p_reviewee: TEST_USERS.ava.id,
+				p_tags: ['reserved'],
+				p_free_text: 'Different text.'
+			});
+			expect(error, error?.message).toBeNull();
+			const { data } = await admin.from('public_feedback').select('made_public_at').eq('id', id).single();
+			expect(data!.made_public_at, 'identical resubmit must keep promotion').not.toBeNull();
 		});
 	});
 
