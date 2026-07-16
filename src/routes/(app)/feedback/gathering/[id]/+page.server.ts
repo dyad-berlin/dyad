@@ -2,6 +2,7 @@ import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { requireIdentity } from '$lib/services/identity.js';
 import { SupabaseFeedbackService } from '$lib/services/feedback.js';
+import { getSafetyReportingEnabled } from '$lib/server/app-settings.js';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	const upactor = requireIdentity(locals);
@@ -39,11 +40,16 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		redirect(302, '/discover');
 	}
 
-	// Roster (co-participants, caller excluded) + active tag vocabulary, in
-	// parallel — independent reads (CLAUDE.md).
-	const [roster, vocabulary] = await Promise.all([
+	// Roster (co-participants, caller excluded) + active tag vocabulary + the
+	// safety-reporting kill-switch, in parallel — independent reads (CLAUDE.md).
+	// The concern channel is a sensitive-data surface gated on R9 (retention /
+	// Datenschutz): when the kill-switch is off the affordance is HIDDEN, not
+	// shown-then-403'd — a "report unsafe" button that fails is the wrong UX for
+	// a safeguarding feature. The submit endpoint enforces the same flag.
+	const [roster, vocabulary, safetyReportingEnabled] = await Promise.all([
 		service.getGatheringRoster(gathering.id).catch(() => []),
-		service.getVocabulary().catch(() => [])
+		service.getVocabulary().catch(() => []),
+		getSafetyReportingEnabled().catch(() => false)
 	]);
 
 	return {
@@ -51,6 +57,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		slotId: gathering.slot_id,
 		isHost: participation.is_host,
 		roster,
-		vocabulary
+		vocabulary,
+		safetyReportingEnabled
 	};
 };

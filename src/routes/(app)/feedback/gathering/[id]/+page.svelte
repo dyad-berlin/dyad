@@ -246,13 +246,15 @@
 							></textarea>
 							<p class="micro-note">{copy.gatheringFeedback.positiveNote}</p>
 
-							<ConcernPanel
-								slotId={data.slotId}
-								gatheringId={data.gatheringId}
-								scope="person"
-								subjectId={member.member_id}
-								name={member.display_name}
-							/>
+							{#if data.safetyReportingEnabled}
+								<ConcernPanel
+									slotId={data.slotId}
+									gatheringId={data.gatheringId}
+									scope="person"
+									subjectId={member.member_id}
+									name={member.display_name}
+								/>
+							{/if}
 						</div>
 					{/each}
 				</div>
@@ -282,8 +284,9 @@
 			</fieldset>
 		{/if}
 
-		<!-- ═══ Meeting-level concern — always available (turnout-blind) ═══ -->
-		{#if attendanceAnswered(selfReport)}
+		<!-- ═══ Meeting-level concern — turnout-blind, but gated on the safety-
+		     reporting kill-switch (R9): hidden until the concern store is live ═══ -->
+		{#if attendanceAnswered(selfReport) && data.safetyReportingEnabled}
 			<div class="meeting-concern">
 				<ConcernPanel slotId={data.slotId} gatheringId={data.gatheringId} scope="gathering" />
 			</div>
