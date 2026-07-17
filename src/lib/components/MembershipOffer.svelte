@@ -38,9 +38,6 @@
 	let tier = $state<Tier>('standard');
 	let busy = $state(false);
 	let error = $state('');
-	// Membership is Berlin-only; the paywall is the geofence. The member must
-	// confirm they're based in Berlin before checkout (honor system).
-	let berlinConfirmed = $state(false);
 
 	// Price shown on the CTA row: the tier's price for monthly, the cadence's own price otherwise.
 	const shownPrice = $derived(
@@ -56,7 +53,6 @@
 		try {
 			const payload: Record<string, unknown> =
 				cadence === 'monthly' ? { cadence, tier } : { cadence };
-			payload.berlinBased = berlinConfirmed;
 			if (returnTo) payload.returnTo = returnTo;
 			const res = await fetch('/api/membership/checkout', {
 				method: 'POST',
@@ -68,7 +64,7 @@
 				window.location.href = body.url; // full-page redirect to Stripe
 				return;
 			}
-			error = body.error === 'region_ineligible' ? c.berlinRequired : c.errorGeneric;
+			error = c.errorGeneric;
 		} catch {
 			error = copy.common.networkError;
 		} finally {
@@ -125,12 +121,7 @@
 		{/each}
 	</ul>
 
-	<label class="berlin-confirm">
-		<input type="checkbox" bind:checked={berlinConfirmed} disabled={busy} />
-		<span>{c.berlinConfirmLabel}</span>
-	</label>
-
-	<button class="primary" disabled={busy || !berlinConfirmed} onclick={startCheckout}>
+	<button class="primary" disabled={busy} onclick={startCheckout}>
 		{ctaLabel} · {shownPrice}{shownPeriod ? ' ' + shownPeriod : ''}
 	</button>
 	<p class="billing-note">{cadence === 'lifetime' ? c.billingNoteLifetime : c.billingNote}</p>
@@ -241,16 +232,6 @@
 		cursor: pointer;
 	}
 	.primary:disabled { cursor: progress; opacity: var(--opacity-disabled); }
-	.berlin-confirm {
-		display: flex;
-		align-items: flex-start;
-		gap: var(--space-2);
-		font-size: var(--text-sm);
-		color: var(--text-primary);
-		line-height: var(--leading-normal);
-		cursor: pointer;
-	}
-	.berlin-confirm input { margin-top: 0.2em; flex-shrink: 0; cursor: pointer; }
 	.billing-note { font-size: var(--text-sm); color: var(--text-muted); text-align: center; margin: 0; }
 	.error { font-size: var(--text-sm); color: var(--color-danger); margin: var(--space-2) 0 0; }
 	.busy { font-size: var(--text-sm); color: var(--text-muted); margin: var(--space-2) 0 0; }

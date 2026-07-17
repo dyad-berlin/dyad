@@ -23,8 +23,7 @@ const { mockEnv, createStripeClient, makeAdminClient, ensurePaymentRef, sessionC
 					eq() {
 						return this;
 					},
-					// Resolves the memberships read (.maybeSingle) AND the profiles
-					// berlin_based write (awaited after .eq) — both return { error: null }.
+					// Resolves the memberships read (.maybeSingle).
 					maybeSingle: async () => ({ data: adminState.existing, error: null }),
 					then(resolve: (v: { error: null }) => void) {
 						resolve({ error: null });
@@ -42,13 +41,10 @@ vi.mock('$lib/server/stripe-customer', () => ({ ensurePaymentRef }));
 
 const { POST } = await import('./+server.js');
 
-// berlinBased defaults to true so these cadence/Stripe cases clear the Berlin
-// geofence; the geofence itself is covered by its own tests below. A case can
-// override it (e.g. berlinBased: false) to exercise the gate.
 function call(bodyObj: Record<string, unknown>, user: { id: string } | null = { id: 'actor-1' }) {
 	const request = new Request('http://localhost/api/membership/checkout', {
 		method: 'POST',
-		body: JSON.stringify({ berlinBased: true, ...bodyObj }),
+		body: JSON.stringify(bodyObj),
 		headers: { 'content-type': 'application/json' }
 	});
 	return POST({
@@ -161,28 +157,5 @@ describe('POST /api/membership/checkout', () => {
 
 	it('401 when unauthenticated', async () => {
 		await expect(call({ cadence: 'annual' }, null)).rejects.toMatchObject({ status: 401 });
-	});
-
-	it('403 region_ineligible when not Berlin-based, before any Stripe work', async () => {
-		const res = await call({ cadence: 'annual', berlinBased: false });
-		expect(res.status).toBe(403);
-		expect(await res.json()).toMatchObject({ error: 'region_ineligible' });
-		expect(sessionCreate).not.toHaveBeenCalled();
-	});
-
-	it('403 region_ineligible when berlinBased is omitted', async () => {
-		// Bypass the helper's default to send a body with no berlinBased at all.
-		const request = new Request('http://localhost/api/membership/checkout', {
-			method: 'POST',
-			body: JSON.stringify({ cadence: 'annual' }),
-			headers: { 'content-type': 'application/json' }
-		});
-		const res = await POST({
-			request,
-			locals: { user: { id: 'actor-1' } },
-			url: new URL('http://localhost/api/membership/checkout')
-		} as unknown as Parameters<typeof POST>[0]);
-		expect(res.status).toBe(403);
-		expect(await res.json()).toMatchObject({ error: 'region_ineligible' });
 	});
 });

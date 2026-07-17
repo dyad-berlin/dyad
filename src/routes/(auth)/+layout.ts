@@ -6,7 +6,8 @@ const imageMap: Record<string, string> = {
 	'/join': '/images/log-in.jpeg',
 	// Same cover as the newsletter's "Become a co-designer" invite — the
 	// image a reader just clicked through from stays with them here.
-	'/waitlist': storageUrl('newsletter assets', 'cover, become a comember.webp')
+	'/waitlist': storageUrl('newsletter assets', 'cover, become a comember.webp'),
+	'/become-a-member': storageUrl('newsletter assets', 'cover, become a comember.webp')
 };
 
 export const load: LayoutLoad = ({ url }) => {
