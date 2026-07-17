@@ -52,7 +52,7 @@
 				<p class="invite-body">Consider joining us as a member. Join a network of people meeting weekly for face to face conversations, receive our weekly newsletter, and get involved in our collective governance process. We are building a social technology company in service to community and collective sensemaking.</p>
 				<a href="/waitlist" class="invite-link">Join us <span aria-hidden="true">→</span></a>
 			</div>
-			<div class="invite-image" aria-hidden="true"></div>
+			<img class="invite-image" src={storageUrl('newsletter assets', 'cover, become a comember.webp')} alt="" />
 		</section>
 	</div>
 </article>
@@ -260,21 +260,13 @@
 	.invite-link span { transition: transform 0.15s; }
 	.invite-link:hover span { transform: translateX(3px); }
 
+	/* Uncropped: natural aspect ratio, no object-fit: cover — same rule as
+	   the essay hero and the archive listing covers. */
 	.invite-image {
 		width: 100%;
-		aspect-ratio: 4 / 3;
+		height: auto;
 		border-radius: 3px;
-		background: linear-gradient(155deg, #d8cfba 0%, #c9b98f 100%);
-		position: relative;
-	}
-	.invite-image::after {
-		content: '';
-		position: absolute;
-		inset: 0;
-		border-radius: 3px;
-		opacity: 0.12;
-		mix-blend-mode: multiply;
-		background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='700' height='700'><filter id='p'><feTurbulence type='fractalNoise' baseFrequency='0.008' numOctaves='4' seed='6' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='700' height='700' filter='url(%23p)'/></svg>");
+		display: block;
 	}
 
 	@media (max-width: 760px) {

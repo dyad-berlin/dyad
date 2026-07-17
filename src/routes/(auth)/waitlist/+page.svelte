@@ -158,6 +158,11 @@
 	.auth-card {
 		width: 100%;
 		max-width: 400px;
+		/* Auto cross-axis margins: centered when the form fits the viewport,
+		   collapsing to 0 when it's taller — so the layout's overflow-y: auto
+		   can reach the top of the form instead of clipping it. */
+		margin: auto 0;
+		padding: var(--space-8) 0;
 	}
 
 	h1 {
