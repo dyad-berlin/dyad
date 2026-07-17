@@ -1,15 +1,21 @@
 import { json } from '@sveltejs/kit';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { makeAdminClient } from '$lib/server/supabase-admin';
 import { parseJsonBody } from '$lib/server/parse-body.js';
 import { REGIONS } from '$lib/services/location.js';
+import { resolveIdentityId, upsertScopeGrant } from '$lib/server/identity/identities.js';
+import { resolveHandleToDid, memberIdFromDid } from '$lib/server/identity/providers/atproto.js';
 import type { RequestHandler } from './$types';
 
 /**
  * Admin Scope detail mutation endpoint.
  *
- * - POST: grant a scope to an identity. Body: { username }.
- *   Looks up identity by username (via profiles), then inserts (or revives)
- *   identity_scopes row.
+ * - POST: grant a scope to an identity. Body: { username } OR { handle }.
+ *   { username } looks the identity up via profiles (a Supabase-account
+ *   member). { handle } is account-less: the ATProto handle resolves to a
+ *   DID, the identity row is provisioned directly, and the grant is what
+ *   later admits that DID's sign-in (`hasScopeGrant`). No profile, no
+ *   auth.users — inviting is an identity-layer act, not an account one.
  * - PATCH: discriminated by body shape:
  *     { identity_id, revoked: boolean }                — revoke/restore a grant
  *     { action: 'extend', identity_id, access_expires_at } — move one guest's window
@@ -27,14 +33,48 @@ import type { RequestHandler } from './$types';
  * Lives under /admin/* and is gated by the admin hook in src/hooks.server.ts.
  */
 
+/** upsertScopeGrant, shaped to this endpoint's JSON responses. */
+async function upsertGrant(supabase: SupabaseClient, identityId: string, scope: string) {
+	const result = await upsertScopeGrant(supabase, identityId, scope);
+	if (!result.ok) {
+		if (result.code === 'not_found') {
+			return json({ error: 'Scope or identity not found' }, { status: 404 });
+		}
+		return json({ error: 'Failed to grant scope' }, { status: 500 });
+	}
+	return json(result.restored ? { ok: true, restored: true } : { ok: true });
+}
+
 export const POST: RequestHandler = async ({ params, request }) => {
 	const supabase = makeAdminClient();
 	const [body, errorResponse] = await parseJsonBody(request);
 	if (errorResponse) return errorResponse;
 
+	// Account-less invite: an ATProto handle. Provisioning the identity here is
+	// deliberate — the operator is admitting this person; the grant is the
+	// admission artifact their later sign-in is checked against.
+	if (typeof body.handle === 'string' && body.handle.trim()) {
+		const handle = body.handle.trim().replace(/^@/, '');
+		if (handle.length > 253 || /\s/.test(handle) || !handle.includes('.')) {
+			return json({ error: 'That does not look like a handle' }, { status: 400 });
+		}
+		const did = await resolveHandleToDid(handle);
+		if (!did) {
+			return json({ error: 'That handle was not found on the network' }, { status: 404 });
+		}
+		let identityId: string;
+		try {
+			identityId = await resolveIdentityId(supabase, 'atproto', await memberIdFromDid(did));
+		} catch (e) {
+			console.error('[admin/scopes/[scope]/api] identity provisioning failed:', e);
+			return json({ error: 'Failed to grant scope' }, { status: 500 });
+		}
+		return upsertGrant(supabase, identityId, params.scope);
+	}
+
 	const { username } = body;
 	if (typeof username !== 'string' || !username.trim()) {
-		return json({ error: 'username is required' }, { status: 400 });
+		return json({ error: 'username or handle is required' }, { status: 400 });
 	}
 
 	// identity_scopes.identity_id FKs to identities(id), not profiles(id).
@@ -61,44 +101,7 @@ export const POST: RequestHandler = async ({ params, request }) => {
 		);
 	}
 
-	const { data: existing } = await supabase
-		.from('identity_scopes')
-		.select('identity_id, revoked_at')
-		.eq('identity_id', identity.id)
-		.eq('scope', params.scope)
-		.maybeSingle();
-
-	if (existing) {
-		// Restoring a revoked grant clears revoked_at but preserves the original
-		// granted_at — the cohort timestamp belongs to the first grant, not the
-		// re-grant.
-		const { error: dbError } = await supabase
-			.from('identity_scopes')
-			.update({ revoked_at: null })
-			.eq('identity_id', identity.id)
-			.eq('scope', params.scope);
-		if (dbError) {
-			console.error('[admin/scopes/[scope]/api] restore grant failed:', dbError.message);
-			return json({ error: 'Failed to grant scope' }, { status: 500 });
-		}
-		return json({ ok: true, restored: true });
-	}
-
-	const { error: dbError } = await supabase.from('identity_scopes').insert({
-		identity_id: identity.id,
-		scope: params.scope,
-		granted_by: null
-	});
-
-	if (dbError) {
-		if (dbError.code === '23503') {
-			return json({ error: 'Scope or identity not found' }, { status: 404 });
-		}
-		console.error('[admin/scopes/[scope]/api] grant insert failed:', dbError.message);
-		return json({ error: 'Failed to grant scope' }, { status: 500 });
-	}
-
-	return json({ ok: true });
+	return upsertGrant(supabase, identity.id, params.scope);
 };
 
 function parseFutureTimestamp(value: unknown): string | null {

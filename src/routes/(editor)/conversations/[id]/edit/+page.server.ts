@@ -1,6 +1,7 @@
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { requireIdentity } from '$lib/services/identity.js';
+import { requireMembershipForAction } from '$lib/server/require-membership.js';
 import type { Prompt } from '$lib/domain/types.js';
 import { SupabasePromptQueryService } from '$lib/services/prompt-query.js';
 import { SupabaseScopeService } from '$lib/services/scope.js';
@@ -18,6 +19,16 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	const myScopes = await scopeService.listMyScopes(userId);
 
 	if (params.id === 'new') {
+		// Gate creation at the entry, before the editor renders. A non-eligible
+		// actor is sent to the paywall here instead of hitting the gate on every
+		// auto-save (the ~10s paywall-modal loop) or only at publish (where it
+		// mis-surfaced as a cover-image error). Re-checked on every navigation,
+		// so a direct /conversations/new/edit URL can't slip past a lapsed
+		// membership. The /api/prompts create gate + RLS remain the enforcement.
+		if (await requireMembershipForAction('create_conversation', locals)) {
+			redirect(303, '/membership?return=/conversations/new');
+		}
+
 		const now = new Date().toISOString();
 		const blank: Prompt = {
 			id: 'new',

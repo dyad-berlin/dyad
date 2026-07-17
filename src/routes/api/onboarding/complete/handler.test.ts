@@ -1,11 +1,15 @@
 import { describe, it, expect, vi } from 'vitest';
 import { POST } from './+server';
 
-/** Minimal RequestEvent stub — POST only touches locals. */
+/**
+ * Minimal RequestEvent stub — POST only touches locals. hooks.server.ts
+ * populates locals.user for both the Supabase session and a provider identity,
+ * so the handler authenticates on locals.user, not safeGetSession.
+ */
 function makeEvent(opts: { user: unknown; rpcError?: { message: string } | null }) {
 	return {
 		locals: {
-			safeGetSession: vi.fn().mockResolvedValue({ user: opts.user }),
+			user: opts.user,
 			supabase: { rpc: vi.fn().mockResolvedValue({ error: opts.rpcError ?? null }) }
 		}
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any

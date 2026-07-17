@@ -104,9 +104,15 @@
 		return copy.conversation.sizeGroup(cap);
 	});
 
-	// Per-slot occupancy (confirmed joiners), from the viewer-safe RPC.
+	// Per-slot occupancy (confirmed joiners), from the viewer-safe RPC. Pre-event
+	// seat cap — excludes completed, drives the available-slot markers + fullness.
 	function occupiedOn(slotId: string): number {
 		return data.slotOccupancy?.[slotId] ?? 0;
+	}
+	// Per-slot retrospective attendance — includes completed meetings, so the
+	// confirmed gathering card counts an ended gathering's room correctly (#66).
+	function attendedOn(slotId: string): number {
+		return data.slotAttendance?.[slotId] ?? 0;
 	}
 	// Capacity-aware fullness for a slot.
 	function slotIsFull(slotId: string): boolean {
@@ -615,7 +621,8 @@
 		{#if data.myMeeting}
 			<!-- Confirmed: the unified gathering card. The full room — the host
 			     identified, the viewer's own pin ("you"), and neutral circles for
-			     the other joiners (count from the viewer-safe occupancy RPC,
+			     the other joiners (count from the viewer-safe attendance RPC, which
+			     includes completed gatherings so an ended room counts right — #66;
 			     never who). -->
 			<section class="slots-section">
 				<GatheringCard
@@ -625,7 +632,7 @@
 					exactLocation={data.myMeeting.exact_location}
 					participants={[{ id: 'host', name: data.prompt.author_username, href: `/users/${data.prompt.author_username}` }]}
 					self={{ name: data.username || copy.common.you, href: data.username ? `/users/${data.username}` : undefined }}
-					anonymousCount={othersBeyond(occupiedOn(data.myMeeting.slot_id), 1)}
+					anonymousCount={othersBeyond(attendedOn(data.myMeeting.slot_id), 1)}
 					meetingHref="/meetings/{data.myMeeting.id}"
 				/>
 			</section>

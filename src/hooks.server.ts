@@ -114,14 +114,6 @@ export const handle: Handle = async ({ event, resolve }) => {
 		return { session, user };
 	};
 
-	// TODO (Phase E): replace safeGetSession() with identityPort.currentUpactor(event.request)
-	// so per-request identity resolves through the port rather than calling Supabase Auth
-	// directly. Requires: (1) locals.upactor: Upactor | null added to App.Locals,
-	// (2) feedback gate uses upactor.id.
-	const { session, user } = await event.locals.safeGetSession();
-	event.locals.session = session;
-	event.locals.user = user;
-	event.locals.scopes = [];
 	event.locals.homeScope = null;
 	event.locals.homeRegion = null;
 	event.locals.accessExpiresAt = null;
@@ -129,6 +121,66 @@ export const handle: Handle = async ({ event, resolve }) => {
 	// — it's purely the hostname — so loaders can switch a member's region
 	// context to match the domain they arrived on.
 	event.locals.hostRegion = HOST_REGIONS[event.url.hostname.replace(/\.$/, '')] ?? null;
+
+	// Ephemeral scope sessions from any configured identity provider (additive;
+	// no-op unless a provider is configured and a valid credential cookie is
+	// present). Substrate-agnostic: dyad core names no substrate here. Sessions
+	// lapse with their credential and are stored in no identity_scopes row.
+	// See src/lib/server/identity.
+	const { loadScopeSessions, resolvePrincipal } = await import('$lib/server/identity/index.js');
+	const ephemeral = await loadScopeSessions(event.cookies, Math.floor(Date.now() / 1000));
+	event.locals.scopes = [...ephemeral.scopes];
+	event.locals.scopeSessions = ephemeral.sessions;
+	event.locals.upactor = null;
+
+	// One resolution, whatever the substrate: Supabase Auth is substrate zero,
+	// registry providers follow, first match wins. Everything downstream —
+	// locals.user, the access and feedback gates, services — keys on the
+	// resolved principal and never asks which substrate produced it. A
+	// Supabase principal keeps its native client and JWT; a provider principal
+	// runs on a claim-injected client (RLS sees its identity + scopes).
+	const resolved = await resolvePrincipal(event, ephemeral.sessions);
+	event.locals.session = resolved?.session ?? null;
+	event.locals.user = resolved?.principal.user ?? null;
+	if (resolved) {
+		event.locals.supabase = resolved.principal.client;
+		event.locals.upactor = resolved.principal.upactor;
+
+		// Admission is not joining. On substrates that defer account creation,
+		// an invited identity holds a session before any profiles row exists;
+		// the app stays closed until they create an account at /welcome. This
+		// is the one place a profile-less authenticated request can exist —
+		// atomic-account substrates (Supabase, via the handle_new_user trigger)
+		// never enter — so enforcing it here keeps the app-wide invariant that
+		// authenticated implies a profile, including for /api mutations.
+		if (resolved.principal.deferredAccount) {
+			const path = event.url.pathname;
+			const exempt =
+				path === '/welcome' ||
+				path.startsWith('/auth') ||
+				path.startsWith('/logout') ||
+				path.startsWith('/_app/') ||
+				path.startsWith('/service-worker') ||
+				path.startsWith('/favicon') ||
+				path.endsWith('.webmanifest');
+			if (!exempt) {
+				const { data: profile } = await resolved.principal.client
+					.from('profiles')
+					.select('id')
+					.eq('id', resolved.principal.user.id)
+					.maybeSingle();
+				if (!profile) {
+					if (path.startsWith('/api/')) {
+						return new Response(JSON.stringify({ error: 'onboarding_required' }), {
+							status: 403,
+							headers: { 'Content-Type': 'application/json' }
+						});
+					}
+					return new Response(null, { status: 302, headers: { Location: '/welcome' } });
+				}
+			}
+		}
+	}
 
 	// Redirect old /prompts/ URLs to /conversations/
 	if (event.url.pathname.startsWith('/prompts/')) {
@@ -138,10 +190,10 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	// An anonymous visitor on the conference host's bare domain has nothing
 	// to do there — without a join link, dyad.amsterdam redirects to the
-	// Berlin apex. Signed-in guests (!user guard) and the QR's
+	// Berlin apex. Signed-in guests (!resolved guard) and the QR's
 	// /join?glink=... path are unaffected.
 	if (
-		!user &&
+		!resolved &&
 		event.url.pathname === '/' &&
 		event.url.hostname.replace(/\.$/, '') === AMSTERDAM_HOSTNAME
 	) {
@@ -151,8 +203,10 @@ export const handle: Handle = async ({ event, resolve }) => {
 		});
 	}
 
-	// Feedback gate: block app access when user has due feedback
-	if (user) {
+	// Feedback gate: block app access when the member has due feedback. Keys on
+	// the resolved principal, so provider identities pass the same access and
+	// feedback gates as Supabase members.
+	if (resolved) {
 		const pathname = event.url.pathname;
 
 		// Exemption list — load-bearing for THREE concerns that all live in the
@@ -202,7 +256,8 @@ export const handle: Handle = async ({ event, resolve }) => {
 				console.error('[hooks] get_my_access_context failed:', ctxError.message);
 			}
 			const ctx = firstAccessContextRow(ctxRows);
-			event.locals.scopes = ctx?.scopes ?? [];
+			// Merge permanent grants with any ephemeral provider scope sessions.
+			event.locals.scopes = [...new Set([...(ctx?.scopes ?? []), ...ephemeral.scopes])];
 			event.locals.homeScope = ctx?.home_scope ?? null;
 			event.locals.homeRegion = ctx?.home_region ?? null;
 			event.locals.accessExpiresAt = ctx?.access_expires_at ?? null;
@@ -236,7 +291,15 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 			const { SupabaseGateService } = await import('$lib/services/gate.js');
 			const gateService = new SupabaseGateService(event.locals.supabase);
-			const gateStatus = await gateService.checkGate(user.id);
+			const { getGatheringFeedbackGateEnabled } = await import('$lib/server/app-settings.js');
+			// The U9 gathering obligation ships live for the group flow; the flag
+			// (app_settings, default + fail-safe TRUE) lets an operator roll back to
+			// legacy behaviour without a migration.
+			const gatheringGateEnabled = await getGatheringFeedbackGateEnabled();
+			const gateStatus = await gateService.checkGate(
+				resolved.principal.user.id,
+				gatheringGateEnabled
+			);
 
 			if (gateStatus.gated && gateStatus.kind === 'one_on_one') {
 				if (pathname.startsWith('/api/')) {
@@ -263,6 +326,24 @@ export const handle: Handle = async ({ event, resolve }) => {
 				return new Response(null, {
 					status: 302,
 					headers: { Location: `/feedback/group/${gateStatus.formId}` }
+				});
+			} else if (gateStatus.gated && gateStatus.kind === 'gathering') {
+				// U9 unified gathering obligation: confirming attendance (R10) on a
+				// group gathering. formId is the GATHERING id. Routed to the new-model
+				// form at /feedback/gathering/[id] (gate-exempt under /feedback), a
+				// standalone-page redirect like the group path. NOTE: the U6 form page
+				// ships on this same branch to fill this route; until it lands the
+				// redirect targets a not-yet-built page (harmless — /feedback is exempt,
+				// so no gate loop).
+				if (pathname.startsWith('/api/')) {
+					return new Response(JSON.stringify({ error: 'gated', kind: gateStatus.kind, formId: gateStatus.formId }), {
+						status: 403,
+						headers: { 'Content-Type': 'application/json' }
+					});
+				}
+				return new Response(null, {
+					status: 302,
+					headers: { Location: `/feedback/gathering/${gateStatus.formId}` }
 				});
 			}
 		}
