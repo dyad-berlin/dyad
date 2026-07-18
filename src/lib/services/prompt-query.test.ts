@@ -204,4 +204,91 @@ describe('SupabasePromptQueryService.getPublishedPrompts — time-bounded visibi
 		const result = await svc.getPublishedPrompts({ region: 'berlin', userId: 'viewer', scopes: [] });
 		expect(result).toHaveLength(0);
 	});
+
+	// #100: the discover list should lead with the soonest-occurring conversation,
+	// not the most recently posted. The DB hands rows back in published_at DESC
+	// order; the service must re-rank by soonest upcoming slot.
+	it('ranks the feed by soonest upcoming slot, not published_at order', async () => {
+		const soon = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // +24h
+		const later = new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString(); // +72h
+		// p-newest is returned first by the DB (published_at DESC) but its slot is
+		// the LATER one; p-older is returned second but has the SOONER slot.
+		const pNewest = { ...prompt('p-newest'), published_at: '2026-02-01T00:00:00Z' };
+		const pOlder = { ...prompt('p-older'), published_at: '2026-01-01T00:00:00Z' };
+		const supa = mockSupabase(
+			[pNewest, pOlder],
+			[slot('p-newest', later), slot('p-older', soon)],
+			profiles
+		);
+		// @ts-expect-error test-only shape
+		const svc = new SupabasePromptQueryService(supa);
+		const result = await svc.getPublishedPrompts({ region: 'berlin', userId: 'viewer', scopes: [] });
+		expect(result.map((r) => r.id)).toEqual(['p-older', 'p-newest']);
+		expect(result[0].soonest_slot).toBe(soon);
+	});
+
+	// #99: a reactivated conversation (fresh slots on an old published prompt)
+	// keeps its stale published_at and ranks below newer posts. The feed must
+	// over-fetch a wider candidate window than the page size so it enters the
+	// pool, then surface it via the soonest-slot rank.
+	it('over-fetches a candidate window wider than the requested limit', async () => {
+		const limitCalls: number[] = [];
+		function spyChain(data: unknown) {
+			const c: Record<string, unknown> = {};
+			Object.assign(c, {
+				select: () => c,
+				eq: () => c,
+				is: () => c,
+				or: () => c,
+				in: () => c,
+				order: () => c,
+				limit: (n: number) => {
+					limitCalls.push(n);
+					return c;
+				},
+				lt: () => c,
+				then: (cb: (v: { data: unknown; error: null }) => unknown) => cb({ data, error: null })
+			});
+			return c;
+		}
+		const supa = {
+			from(table: string) {
+				if (table === 'prompts') return spyChain([]);
+				if (table === 'time_slots_public') return spyChain([]);
+				if (table === 'profiles') return spyChain([]);
+				throw new Error(`unexpected table: ${table}`);
+			},
+			rpc() {
+				throw new Error('discover feed must not call the occupancy RPC');
+			}
+		};
+		// @ts-expect-error test-only shape
+		const svc = new SupabasePromptQueryService(supa);
+		await svc.getPublishedPrompts({ region: 'berlin', userId: 'viewer', scopes: [], limit: 20 });
+		// The prompts query's limit must exceed the requested page size so a
+		// reactivated conversation ranked just past position 20 still loads.
+		expect(limitCalls[0]).toBeGreaterThan(20);
+	});
+
+	it('resurfaces a reactivated conversation ranked below the page size, and trims to limit', async () => {
+		const soon = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // fresh slot, +24h
+		const later = new Date(Date.now() + 96 * 60 * 60 * 1000).toISOString(); // +96h
+		// DB returns published_at DESC: the two newer posts first, then the old
+		// reactivated one last. With a page size of 2 and no over-fetch, the
+		// reactivated conversation would be cut before slot-loading. The widened
+		// window pulls it in; the soonest-slot rank floats it to the top.
+		const newerA = { ...prompt('newer-a'), published_at: '2026-03-01T00:00:00Z' };
+		const newerB = { ...prompt('newer-b'), published_at: '2026-02-01T00:00:00Z' };
+		const reactivated = { ...prompt('reactivated'), published_at: '2026-01-01T00:00:00Z' };
+		const supa = mockSupabase(
+			[newerA, newerB, reactivated],
+			[slot('newer-a', later), slot('newer-b', later), slot('reactivated', soon)],
+			[{ id: 'a1', username: 'alice', display_name: null }]
+		);
+		// @ts-expect-error test-only shape
+		const svc = new SupabasePromptQueryService(supa);
+		const result = await svc.getPublishedPrompts({ region: 'berlin', userId: 'viewer', scopes: [], limit: 2 });
+		expect(result).toHaveLength(2);
+		expect(result[0].id).toBe('reactivated');
+	});
 });
