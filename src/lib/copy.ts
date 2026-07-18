@@ -135,7 +135,7 @@ export const copy = {
 		_routes: ['/'],
 		_description: 'Landing page for unauthenticated visitors.',
 		title: 'dyad.',
-		metaDescription: 'The offline social network governed by its community.',
+		metaDescription: 'The offline social network owned by its community.',
 		ogSiteName: 'dyad',
 		ogUrl: 'https://dyad.berlin',
 		joinWaitlist: 'Join',
@@ -151,7 +151,7 @@ export const copy = {
 		footerPrivacy: 'Privacy',
 		// Hero headline + supporting line (display copy; sentence case is the
 		// intentional brand styling — see CLAUDE.md § UI conventions).
-		headlineLine1: 'Collectively governed',
+		headlineLine1: 'Collectively owned',
 		headlineLine2: 'offline social network',
 		// "Steward-owned" removed 2026-07-14 — dyad is not yet steward-owned.
 		// The archived ownership page lives at src/lib/archive/StewardOwnershipPage.svelte.
