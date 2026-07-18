@@ -8,7 +8,12 @@ config({ path: '.env.local' });
 export default defineConfig({
 	resolve: {
 		alias: {
-			$lib: resolve('./src/lib')
+			$lib: resolve('./src/lib'),
+			// SvelteKit generates $env/* at build time; stub the public+private env
+			// modules under vitest so server modules (e.g. supabase-admin) that
+			// import them can be exercised directly in integration tests.
+			'$env/static/public': resolve('./tests/helpers/env-static-public.ts'),
+			'$env/dynamic/private': resolve('./tests/helpers/env-dynamic-private.ts')
 		}
 	},
 	test: {

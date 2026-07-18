@@ -485,7 +485,7 @@ describe('Capacity + group feedback lifecycle', () => {
 	async function cancelMeeting(meetingId: string): Promise<void> {
 		await adminClient
 			.from('meetings')
-			.update({ state: 'cancelled', resolved_at: new Date().toISOString() })
+			.update({ state: 'cancelled_early', resolved_at: new Date().toISOString() })
 			.eq('id', meetingId)
 			.throwOnError();
 	}
@@ -508,9 +508,13 @@ describe('Capacity + group feedback lifecycle', () => {
 			// Full slot: the second accept is rejected while the seat is occupied.
 			await expect(marcoServices.invitation.accept(invB)).rejects.toMatchObject({ status: 409 });
 
-			// Free the seat, then the same second invitation accepts cleanly.
+			// Free the seat, then a FRESH invitation from a distinct inviter accepts.
+			// A cap=1 fill resolves the other pending invites (and the full-slot accept
+			// above consumed invB), so seat-refill is proven with a new invitation
+			// rather than by re-accepting a now-resolved one.
 			await cancelMeeting(meetingA);
-			const meetingB = await marcoServices.invitation.accept(invB);
+			const invC = await invite(tomServices, TOM.id, MARCO.id, promptId, slotId);
+			const meetingB = await marcoServices.invitation.accept(invC);
 			expect(meetingB).toBeTruthy();
 
 			const { data: active } = await adminClient
