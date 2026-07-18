@@ -50,7 +50,7 @@
 			<div class="invite-text">
 				<h2 class="invite-title">Become a co-designer</h2>
 				<p class="invite-body">Consider joining us as a member. Join a network of people meeting weekly for face to face conversations, receive our weekly newsletter, and get involved in our collective governance process. We are building a social technology company in service to community and collective sensemaking.</p>
-				<a href="/become-a-member" class="invite-link">Join us <span aria-hidden="true">→</span></a>
+				<a href="/waitlist" class="invite-link">Join us <span aria-hidden="true">→</span></a>
 			</div>
 			<img class="invite-image" src={storageUrl('newsletter assets', 'cover, become a comember.webp')} alt="" />
 		</section>

@@ -15,7 +15,7 @@
 		<div class="footer-grid">
 			<div class="footer-col">
 				<p class="footer-col-head">Community</p>
-				<a href="/become-a-member" class="footer-link">Become a member</a>
+				<a href="/waitlist" class="footer-link">Become a member</a>
 				<a href="/unfolding" class="footer-link">Unfolding</a>
 				<span class="footer-link footer-soon">Forum (in the making)</span>
 				{#if blogUrl}<a href={blogUrl} class="footer-link" target="_blank" rel="noopener">Blog</a>{/if}

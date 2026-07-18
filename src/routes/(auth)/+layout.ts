@@ -7,7 +7,6 @@ const imageMap: Record<string, string> = {
 	// Same cover as the newsletter's "Become a co-designer" invite — the
 	// image a reader just clicked through from stays with them here.
 	'/waitlist': storageUrl('newsletter assets', 'cover, become a comember.webp'),
-	'/become-a-member': storageUrl('newsletter assets', 'cover, become a comember.webp')
 };
 
 export const load: LayoutLoad = ({ url }) => {

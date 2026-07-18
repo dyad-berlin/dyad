@@ -113,7 +113,7 @@
 				<p>dyad is an independent startup, built so far by a team working voluntarily. Paying is a choice, and when you choose to, your contribution is what keeps dyad answering to the people in the room instead of to advertisers or investors chasing growth at any cost.</p>
 				<p>If five hundred of us choose to support dyad financially by the end of August, at whatever rate fits your life, €7, €12, or €17 a month, we stay independent in pursuing the future we are already seeding: a social technology in service to connection and collective sensemaking, held by the people who build and use it. Becoming a supporting member is one of the clearest ways to shape what happens next.</p>
 				<p class="doc-note">Becoming a member does not go through a gate where we accept or decline you. You read and agree to the <button class="inline-link" onclick={() => select('standards')}>Community Standards</button> and the <button class="inline-link" onclick={() => select('agreements')}>Member Agreements</button>, choose a rate that fits you, or none, and you are in.</p>
-				<p><a class="support-cta" href="/become-a-member">Become a member →</a></p>
+				<p><a class="support-cta" href="/waitlist">Become a member →</a></p>
 			</section>
 		{:else if active === 'about-why'}
 			<section>
@@ -417,7 +417,7 @@
 					<li><strong>Choose a rate, or none.</strong> Membership does not require paying. If you choose to, pick whatever fits your life.</li>
 					<li><strong>Create your account.</strong> You are a member from that moment, with a voice equal to everyone else's.</li>
 				</ol>
-				<p><a class="support-cta" href="/become-a-member">Become a member →</a></p>
+				<p><a class="support-cta" href="/waitlist">Become a member →</a></p>
 				<h3>Belonging &amp; membership</h3>
 				<p>Membership does not require paying. Members who choose to pay — €7, €12 or €17 a month, whichever fits your life — are how the work stays independent: no ads, no data sales, nobody to answer to but the people in the room.</p>
 				<p>Members are not customers. The rules, the program, the culture — members make them with us. There are two roles: <strong>members</strong>, who have a voice in the decisions that shape the community, and <strong>stewards</strong> — members entrusted with keeping things healthy: upholding shared norms, facilitating moderation, carrying out what was decided together.</p>
