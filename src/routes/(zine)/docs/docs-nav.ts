@@ -1,6 +1,7 @@
 import type { Component } from 'svelte';
 
 import Start from './sections/Start.svelte';
+import SupportUs from './sections/SupportUs.svelte';
 import OriginStory from './sections/OriginStory.svelte';
 import CommunityCare from './sections/CommunityCare.svelte';
 import Privacy from './sections/Privacy.svelte';
@@ -43,6 +44,7 @@ export interface DocSection {
 export const docSections: DocSection[] = [
 	{ id: 'start', title: 'Documentation', group: 'top', component: Start },
 
+	{ id: 'support-us', title: 'Become a supporter', group: 'community', component: SupportUs },
 	{ id: 'about-why', title: 'Our origin story', group: 'community', component: OriginStory },
 	{ id: 'about-care', title: 'Community care', group: 'community', component: CommunityCare },
 	{ id: 'privacy', title: 'Privacy commitments', group: 'community', component: Privacy },
