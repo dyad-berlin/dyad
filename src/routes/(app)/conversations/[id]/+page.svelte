@@ -170,6 +170,11 @@
 				capture('response_sent');
 				clearResponseDraft();
 				responseStatus = 'sent';
+				// Clear cached loader data so the new response is reflected on the
+				// first subsequent view — both this page's own response list and the
+				// profile "Responded" tab, which otherwise showed a stale snapshot
+				// until a hard reload (#72). Mirrors the invite/withdraw flows below.
+				await invalidateAll();
 			} else {
 				const err = await res.json().catch(() => ({}));
 				if (isMembershipGate(err)) {
