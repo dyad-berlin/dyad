@@ -39,8 +39,10 @@ test-results/
 tests/.auth/
 .env.test
 
-# Internal-only directories (mirrored in ~/prefig/docs/dyad)
-docs/
+# Internal-only directories (mirrored in ~/prefig/docs/dyad).
+# Anchored to the repo root so route directories like src/routes/(zine)/docs
+# are not swallowed by the ignore.
+/docs/
 todos/
 plans/
 

@@ -1,33 +1,42 @@
 <script lang="ts">
+	import { page } from '$app/stores';
 	import ZineFooter from '$lib/components/ZineFooter.svelte';
 	let { children } = $props();
+
+	// The docs page is a self-contained reference surface; it carries neither
+	// the zine header nor the footer (its own sidebar holds the wordmark).
+	const isDocs = $derived($page.url.pathname.startsWith('/docs'));
 </script>
 
 <div class="zine-shell" data-theme="dark">
+	{#if !isDocs}
 	<header class="zine-header">
 		<a href="/" class="zine-wordmark">DYAD</a>
 		<nav class="zine-nav">
-			<a href="/steward-ownership" class="zine-nav-link">steward ownership</a>
+			<a href="/community" class="zine-nav-link">community</a>
 			<a href="/governance" class="zine-nav-link">participatory governance</a>
-			<a href="/community-care" class="zine-nav-link">trust, safety &amp; community care</a>
+			<a href="/docs" class="zine-nav-link">docs</a>
 		</nav>
 		<!-- Mobile: the inline nav is hidden; this disclosure keeps the section
 		     links reachable and in the a11y tree on small screens. -->
 		<details class="zine-nav-mobile">
 			<summary aria-label="Sections">Sections</summary>
 			<nav class="zine-nav-mobile-links">
-				<a href="/steward-ownership" class="zine-nav-link">steward ownership</a>
+				<a href="/community" class="zine-nav-link">community</a>
 				<a href="/governance" class="zine-nav-link">participatory governance</a>
-				<a href="/community-care" class="zine-nav-link">trust, safety &amp; community care</a>
+				<a href="/docs" class="zine-nav-link">docs</a>
 			</nav>
 		</details>
 	</header>
+	{/if}
 
 	<main class="zine-main">
 		{@render children()}
 	</main>
 
-	<ZineFooter />
+	{#if !isDocs}
+		<ZineFooter />
+	{/if}
 </div>
 
 <style>
@@ -38,8 +47,9 @@
 	   no clean app.css token; everything else maps onto the [data-theme="dark"]
 	   tokens via the wrapper above. */
 	.zine-shell {
-		--zine-bg: #080808;
-		--zine-bg-translucent: rgba(8, 8, 8, 0.92);
+		/* Moss-black family (see app.css dark theme) rather than neutral black. */
+		--zine-bg: #0b0e0c;
+		--zine-bg-translucent: rgba(11, 14, 12, 0.92);
 		--zine-ink: rgba(240, 236, 230, 0.8);
 		--zine-ink-strong: rgba(240, 236, 230, 0.9);
 		--zine-ink-muted: rgba(240, 236, 230, 0.35);
@@ -52,7 +62,30 @@
 		flex-direction: column;
 	}
 
+	/* Apartment-wall texture — same grain + plaster mottle as the app's dark
+	   theme (app.css); scoped here because the zine paints its own surface. */
+	.zine-shell::before,
+	.zine-shell::after {
+		content: '';
+		position: fixed;
+		inset: 0;
+		pointer-events: none;
+	}
+	.zine-shell::before {
+		opacity: 0.07;
+		mix-blend-mode: screen;
+		background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='3'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+	}
+	.zine-shell::after {
+		opacity: 0.15;
+		mix-blend-mode: soft-light;
+		background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='900' height='900'><filter id='p'><feTurbulence type='fractalNoise' baseFrequency='0.006' numOctaves='4' seed='7' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='900' height='900' filter='url(%23p)'/></svg>");
+		background-size: 900px 900px;
+	}
+
 	/* ── Header ── */
+	/* The sticky header sits above the shell's fixed grain overlays, so it
+	   carries its own moss tint and grain rather than reading as flat black. */
 	.zine-header {
 		position: sticky;
 		top: 0;
@@ -61,9 +94,18 @@
 		align-items: center;
 		justify-content: space-between;
 		padding: 20px 48px;
-		background: var(--zine-bg-translucent);
+		background: rgba(19, 26, 21, 0.92);
 		backdrop-filter: blur(12px);
 		border-bottom: 1px solid var(--zine-hairline);
+	}
+	.zine-header::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+		opacity: 0.09;
+		mix-blend-mode: screen;
+		background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='3'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
 	}
 
 	.zine-wordmark {

@@ -109,6 +109,14 @@
 		{:else if status === 'cancelled'}
 			<p class="lead notice">{c.cancelled}</p>
 		{/if}
+		{#if offerMode === 'join'}
+			<!-- The fuller invitation, page only — the paywall modal stays compact. -->
+			<div class="story">
+				{#each c.pageStory as paragraph (paragraph)}
+					<p>{paragraph}</p>
+				{/each}
+			</div>
+		{/if}
 		<!-- The shared offer body: same cadence→tier picker, benefits, CTA, and
 		     checkout POST as the paywall modal, so the two never diverge. -->
 		<MembershipOffer mode={offerMode} {returnTo} />
@@ -131,6 +139,16 @@
 		color: var(--text-muted);
 		line-height: var(--leading-relaxed);
 		margin: 0 0 var(--space-5);
+	}
+	.story {
+		max-width: 30rem;
+		margin: 0 auto var(--space-6);
+	}
+	.story p {
+		font-size: var(--text-base);
+		color: var(--text-primary);
+		line-height: var(--leading-relaxed);
+		margin: 0 0 var(--space-4);
 	}
 	.notice {
 		padding: var(--space-3) var(--space-4);

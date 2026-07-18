@@ -25,6 +25,16 @@
 			return;
 		}
 
+		// Every field is required — the ask is small and deliberate.
+		if (
+			!name.trim() || !basedIn.trim() || !referralSource ||
+			(referralSource === 'other' && !referralOther.trim())
+		) {
+			errorMsg = copy.waitlist.allRequired;
+			status = 'error';
+			return;
+		}
+
 		// Read referral cookie if present
 		const dyadRef = document.cookie.split('; ').find(r => r.startsWith('dyad_ref='))?.split('=')[1];
 		const referredByUsername = dyadRef ? decodeURIComponent(dyadRef) : undefined;
@@ -79,6 +89,7 @@
 		{/if}
 	{:else}
 		<form onsubmit={handleSubmit}>
+			<p class="intent-note">{copy.waitlist.intentNote}</p>
 			<div class="form-group">
 				<label for="freewrite" class="freewrite-label">{copy.waitlist.freewriteLabel}</label>
 				<textarea
@@ -95,6 +106,7 @@
 					type="text"
 					placeholder={copy.waitlist.namePlaceholder}
 					bind:value={name}
+					required
 					disabled={status === 'sending'}
 				/>
 			</div>
@@ -113,7 +125,7 @@
 
 			<div class="field referral-field">
 				<label for="referral-source">{copy.waitlist.referralLabel}</label>
-				<select id="referral-source" bind:value={referralSource} disabled={status === 'sending'}>
+				<select id="referral-source" bind:value={referralSource} required disabled={status === 'sending'}>
 					<option value="">{copy.waitlist.referralSelectPlaceholder}</option>
 					{#each copy.waitlist.referralOptions as opt (opt.value)}
 						<option value={opt.value}>{opt.label}</option>
@@ -123,6 +135,7 @@
 					<input
 						type="text"
 						bind:value={referralOther}
+						required
 						maxlength="120"
 						placeholder={copy.waitlist.referralOtherPlaceholder}
 						disabled={status === 'sending'}
@@ -158,6 +171,14 @@
 		margin: 0 0 var(--space-6) 0;
 		color: var(--text-muted);
 		font-size: var(--text-md);
+	}
+
+	.intent-note {
+		margin: 0 0 var(--space-5) 0;
+		color: var(--text-muted);
+		font-size: var(--text-sm);
+		line-height: var(--leading-relaxed);
+		font-style: italic;
 	}
 
 	.success-message {

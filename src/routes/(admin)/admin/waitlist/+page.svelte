@@ -52,10 +52,7 @@
 	}
 
 	async function inviteWaitlisted(email: string) {
-		// The contact's stored `name` is their first name from /waitlist —
-		// don't reuse it as the opener, since the opener is a full salutation
-		// line the admin writes by hand. An unfilled opener means no greeting
-		// paragraph renders.
+		// Personalized path: the admin wrote the opener/message by hand.
 		const opener = openerByEmail[email] ?? '';
 		const msg = messageByEmail[email] ?? '';
 		await send(email, opener.trim() || null, msg);
@@ -66,6 +63,14 @@
 			messageByEmail = restMessages;
 			expandedEmail = null;
 		}
+	}
+
+	/** One-click accept: the templated join email goes out as-is, with the
+	 *  greeting built from the name the person gave on the waitlist form.
+	 *  Nothing to type — the template (copy.email.invite*) carries the words. */
+	async function acceptWithTemplate(contact: { email: string; name: string | null }) {
+		const opener = contact.name?.trim() ? `Hi ${contact.name.trim()},` : null;
+		await send(contact.email, opener, '');
 	}
 
 	function formatDate(iso: string): string {
@@ -218,8 +223,19 @@
 							Cancel
 						</button>
 					{:else}
-						<button class="btn-primary" onclick={() => (expandedEmail = contact.email)}>
-							{contact.status === 'expired' ? 'Re-accept' : 'Accept'}
+						<button
+							class="btn-primary"
+							onclick={() => acceptWithTemplate(contact)}
+							disabled={invitingEmail === contact.email}
+						>
+							{invitingEmail === contact.email
+								? 'Sending...'
+								: contact.status === 'expired'
+									? 'Re-accept & send'
+									: 'Accept & send'}
+						</button>
+						<button class="btn-ghost" onclick={() => (expandedEmail = contact.email)}>
+							personalize
 						</button>
 					{/if}
 				{:else if contact.status === 'signed_up'}

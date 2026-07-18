@@ -81,10 +81,9 @@
 
 			<!-- ── Footer (in the left scroll flow) ── -->
 			<footer class="site-footer">
+				<a href="/docs#about-why" class="footer-link">{og.footerCommunity}</a>
 				<a href="/voices" class="footer-link">{og.footerVoices}</a>
-				<a href="/steward-ownership" class="footer-link">{og.footerOwnership}</a>
-				<a href="/governance" class="footer-link">{og.footerGovernance}</a>
-				<a href="/community-care" class="footer-link">{og.footerCommunityCare}</a>
+				<a href="/docs#about-governance" class="footer-link">{og.footerGovernance}</a>
 				<!-- Impressum + Privacy stay together so a wrap never orphans one of
 				     the legal links on its own line — they break as a pair. -->
 				<span class="footer-legal">
@@ -176,9 +175,10 @@
 	   surfaces and the deliberately light floating card — so they live as named
 	   locals here rather than scattered literals. */
 	.shell {
-		/* near-black surfaces (deeper than --bg-canvas: #000 reads flat here) */
-		--landing-surface: #040407;
-		--landing-map-surface: #0a0a0d;
+		/* near-black surfaces (deeper than --bg-canvas: #000 reads flat here) —
+		   green-tinted to stay in the dark theme's moss-black family */
+		--landing-surface: #070a08;
+		--landing-map-surface: #0d110e;
 		/* the floating card is an intentionally light surface over the dark map */
 		--landing-card-bg: #fff;
 		--landing-card-ink: #111;
@@ -198,6 +198,28 @@
 		   reserved here, so the top no longer gets an outsized 72px. */
 		padding: var(--space-6);
 		box-sizing: border-box;
+	}
+
+	/* Apartment-wall texture — the same grain + plaster mottle as the app's
+	   dark theme (app.css), scoped here because the landing paints its own
+	   fixed surface over the body and would otherwise cover the global grain. */
+	.shell::before,
+	.shell::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+	}
+	.shell::before {
+		opacity: 0.07;
+		mix-blend-mode: screen;
+		background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='3'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+	}
+	.shell::after {
+		opacity: 0.15;
+		mix-blend-mode: soft-light;
+		background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='900' height='900'><filter id='p'><feTurbulence type='fractalNoise' baseFrequency='0.006' numOctaves='4' seed='7' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='900' height='900' filter='url(%23p)'/></svg>");
+		background-size: 900px 900px;
 	}
 
 	/* LEFT — content column: intro sits bottom-left, footer pinned to the bottom */
@@ -416,7 +438,7 @@
 		border-radius: 100px;
 		transition: background 0.15s;
 	}
-	.map-card-cta:hover { background: #000; }
+	.map-card-cta:hover { background: #131614; }
 
 	.map-inner {
 		width: 100%;

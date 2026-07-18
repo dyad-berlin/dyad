@@ -74,7 +74,14 @@
 	}
 
 	async function submitWaitlist() {
-		if (!freewrite.trim() || !email.trim()) return;
+		// Every field is part of the request — the ask is small and deliberate.
+		if (
+			!freewrite.trim() || !email.trim() || !name.trim() || !city.trim() ||
+			!referralSource || (referralSource === 'other' && !referralOther.trim())
+		) {
+			error = copy.waitlist.allRequired;
+			return;
+		}
 		loading = true;
 		error = '';
 
@@ -179,7 +186,7 @@
 					</label>
 
 					<label class="field">
-						<span class="field-label">{copy.auth.email} *</span>
+						<span class="field-label">{copy.auth.email}</span>
 						<input
 							type="email"
 							bind:value={email}
@@ -197,8 +204,9 @@
 						<input
 							type="text"
 							bind:value={name}
+							required
 							maxlength={200}
-							placeholder="Optional"
+							placeholder={copy.waitlist.namePlaceholder}
 							autocomplete="name"
 						/>
 					</label>
@@ -211,7 +219,7 @@
 
 					<label class="field">
 						<span class="field-label">{copy.waitlist.referralLabel}</span>
-						<select bind:value={referralSource} class="city-select">
+						<select bind:value={referralSource} class="city-select" required>
 							<option value="">{copy.waitlist.referralSelectPlaceholder}</option>
 							{#each copy.waitlist.referralOptions as opt (opt.value)}
 								<option value={opt.value}>{opt.label}</option>
@@ -221,6 +229,7 @@
 							<input
 								type="text"
 								bind:value={referralOther}
+								required
 								maxlength={120}
 								placeholder={copy.waitlist.referralOtherPlaceholder}
 								class="referral-other"

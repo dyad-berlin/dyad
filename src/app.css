@@ -147,25 +147,27 @@
 }
 
 [data-theme='dark'] {
-	/* Warm near-black rather than pure #000: the paper brand's dark counterpart.
-	 * Pure black against the warm off-white text (#f5f3f0) reads as harsh, high-
-	 * contrast glare; a soft warm near-black calms it while staying clearly dark.
-	 * Glass sits a touch lighter so floating panels still read as raised. */
-	--bg-canvas: #141210;
-	--bg-glass: rgba(30, 27, 23, 0.96);
+	/* Green-tinted near-black rather than pure #000: an apartment wall at night,
+	 * not a screen. Pure black against off-white text reads as harsh, high-
+	 * contrast glare; this deep moss-black calms it while staying clearly dark.
+	 * Palette shared with the governance pages (ground #131614, surface #1b201d,
+	 * ink #e7eae5, accent #7fbf9e). Glass sits a touch lighter so floating
+	 * panels still read as raised. */
+	--bg-canvas: #131614;
+	--bg-glass: rgba(27, 32, 29, 0.96);
 	--bg-code: rgba(255, 255, 255, 0.08);
 	--bg-code-block: rgba(255, 255, 255, 0.05);
 	--bg-control: rgba(255, 255, 255, 0.05);
 	--bg-control-hover: rgba(255, 255, 255, 0.1);
 
-	--text-primary: #f5f3f0;
-	--text-secondary: #e8e6e3;
-	--text-muted: #888;
-	--text-link: #b8b4ac;
-	--text-link-hover: #f5f3f0;
+	--text-primary: #e7eae5;
+	--text-secondary: #d8ded9;
+	--text-muted: #9ba69e;
+	--text-link: #9ad0b4;
+	--text-link-hover: #e7eae5;
 
-	--line-color: #767676;
-	--line-color-active: #9a9a9a;
+	--line-color: #6e7a72;
+	--line-color-active: #8d998f;
 	--border-subtle: rgba(255, 255, 255, 0.08);
 	--border-link: rgba(255, 255, 255, 0.25);
 	--border-link-hover: rgba(255, 255, 255, 0.5);
@@ -212,8 +214,21 @@ body::before {
 	mix-blend-mode: multiply;
 }
 [data-theme='dark'] body::before {
-	opacity: 0.06;
+	opacity: 0.07;
 	mix-blend-mode: screen;
+}
+/* Dark mode adds a soft large-scale mottle under the grain — the unevenness of
+ * a plastered wall rather than a printed fill. Light mode keeps paper alone. */
+[data-theme='dark'] body::after {
+	content: '';
+	position: fixed;
+	inset: 0;
+	pointer-events: none;
+	z-index: -1;
+	opacity: 0.15;
+	background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='900' height='900'><filter id='p'><feTurbulence type='fractalNoise' baseFrequency='0.006' numOctaves='4' seed='7' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='900' height='900' filter='url(%23p)'/></svg>");
+	background-size: 900px 900px;
+	mix-blend-mode: soft-light;
 }
 
 /* Form elements inherit font from body */
