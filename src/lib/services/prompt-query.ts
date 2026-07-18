@@ -226,7 +226,17 @@ export class SupabasePromptQueryService implements PromptQueryService {
 			});
 		}
 
-		// Stable sort: keep published_at order from DB (no soonest_slot re-sort)
+		// Rank by soonest upcoming slot (ascending): the discover list leads with
+		// what is happening soonest, not what was posted most recently (#100).
+		// `soonest_slot` is the earliest available slot (slots are start_time-asc);
+		// every summary here has at least one, so it is non-null in practice, but
+		// guard defensively and sink any null to the end.
+		summaries.sort((a, b) => {
+			const at = a.soonest_slot ? new Date(a.soonest_slot).getTime() : Number.POSITIVE_INFINITY;
+			const bt = b.soonest_slot ? new Date(b.soonest_slot).getTime() : Number.POSITIVE_INFINITY;
+			return at - bt;
+		});
+
 		return summaries;
 	}
 
