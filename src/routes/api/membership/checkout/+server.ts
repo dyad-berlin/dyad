@@ -39,17 +39,8 @@ const MONTHLY_TIER_PRICE_ENV: Record<MembershipMonthlyTier, string> = {
 export const POST: RequestHandler = async ({ request, locals, url }) => {
 	const actor = requireIdentity(locals);
 
-	const [body, errorResponse] = await parseJsonBody<{ cadence?: string; tier?: string; returnTo?: string; berlinBased?: boolean }>(request);
+	const [body, errorResponse] = await parseJsonBody<{ cadence?: string; tier?: string; returnTo?: string }>(request);
 	if (errorResponse) return errorResponse;
-
-	// Membership is geofenced to Berlin, and the paywall is the geofence: only a
-	// self-declared Berlin-based member can mint a Checkout Session. This is the
-	// ONLY location gate in the app — participation and discovery are never gated
-	// by location (discovery stays region-scoped as a view, not an access gate).
-	// Honor-system self-declaration, consistent with the join/signup posture.
-	if (body.berlinBased !== true) {
-		return json({ error: 'region_ineligible' }, { status: 403 });
-	}
 
 	const cadence = body.cadence;
 	if (typeof cadence !== 'string' || !(MEMBERSHIP_CADENCES as readonly string[]).includes(cadence)) {
@@ -82,16 +73,6 @@ export const POST: RequestHandler = async ({ request, locals, url }) => {
 	}
 
 	const admin = makeAdminClient();
-
-	// Record the self-declared Berlin eligibility for our records. Best-effort —
-	// a failed write must not block a paying member; the gate above already ran.
-	const { error: berlinWriteError } = await admin
-		.from('profiles')
-		.update({ berlin_based: true })
-		.eq('id', actor.id);
-	if (berlinWriteError) {
-		console.error('[membership/checkout] berlin_based write error:', berlinWriteError.message);
-	}
 
 	// Cross-cadence collision: buying lifetime while a live subscription exists
 	// would orphan that subscription. Block — the member cancels in the portal first.

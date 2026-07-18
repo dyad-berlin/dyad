@@ -1,6 +1,5 @@
 <!-- Shared zine footer — used by the (zine) layout and the /why page. -->
 <script lang="ts">
-	import { copy } from '$lib/copy';
 	import { env } from '$env/dynamic/public';
 
 	// Social/blog links render only when configured, following the repo's
@@ -12,14 +11,12 @@
 </script>
 
 <footer class="zine-footer">
-	<!-- Inner wrapper mirrors the .page geometry (1080px + 48px side padding) so the
-	     footer columns align with the page content grid; the top hairline stays full-bleed. -->
 	<div class="footer-inner">
 		<div class="footer-grid">
 			<div class="footer-col">
 				<p class="footer-col-head">Community</p>
-				<a href="/join" class="footer-link">Become a member</a>
-				<a href="/voices" class="footer-link">Voices</a>
+				<a href="/become-a-member" class="footer-link">Become a member</a>
+				<a href="/unfolding" class="footer-link">Unfolding</a>
 				<span class="footer-link footer-soon">Forum (in the making)</span>
 				{#if blogUrl}<a href={blogUrl} class="footer-link" target="_blank" rel="noopener">Blog</a>{/if}
 				{#if instagramUrl}<a href={instagramUrl} class="footer-link" target="_blank" rel="noopener">Instagram</a>{/if}
@@ -40,28 +37,23 @@
 				<a href="/datenschutz" class="footer-link">Privacy</a>
 			</div>
 		</div>
-		<p class="footer-colophon">{copy.landing.zineColophon}</p>
 	</div>
 </footer>
 
 <style>
 	.zine-footer {
 		border-top: 1px solid rgba(240, 236, 230, 0.06);
+		padding: 64px 0 48px;
 	}
 
-	/* Same box geometry as .zine-main .page: content and footer share columns. */
+	/* Footer content aligns to the same 1080px/48px measure as /unfolding's
+	   archive index (.archive): max-width is the full border-box including
+	   padding, so the inner content inset matches exactly, not just the
+	   outer box. */
 	.footer-inner {
 		max-width: 1080px;
 		margin: 0 auto;
-		padding: 64px 48px 48px;
-		box-sizing: border-box;
-	}
-
-	/* Footer content aligns to the same 1080px column as the page content
-	   (see .zine-main .page in the (zine) layout). */
-	.footer-inner {
-		max-width: 1080px;
-		margin: 0 auto;
+		padding: 0 48px;
 	}
 
 	.footer-grid {
@@ -106,19 +98,12 @@
 		color: rgba(240, 236, 230, 0.25);
 	}
 
-	.footer-colophon {
-		font-family: var(--font-mono);
-		font-size: 0.58rem;
-		letter-spacing: 0.06em;
-		color: rgba(240, 236, 230, 0.15);
-		margin: 0;
-		border-top: 1px solid rgba(240, 236, 230, 0.04);
-		padding-top: 24px;
-	}
-
 	@media (max-width: 640px) {
+		.zine-footer {
+			padding: 40px 0 40px;
+		}
 		.footer-inner {
-			padding: 40px 20px 40px;
+			padding: 0 20px;
 		}
 		.footer-grid {
 			grid-template-columns: 1fr 1fr;

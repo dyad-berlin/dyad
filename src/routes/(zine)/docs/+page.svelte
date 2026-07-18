@@ -6,6 +6,7 @@
 	// The hash carries the selection so every topic stays deep-linkable.
 	const sections = new Set([
 		'start',
+		'support-us',
 		'about-why',
 		'about-governance',
 		'about-care',
@@ -21,12 +22,12 @@
 		'guide-leaving'
 	]);
 
-	let active = $state('start');
+	let active = $state('support-us');
 	let pane = $state<HTMLElement | undefined>();
 
 	function fromHash() {
 		const h = (location.hash || '').replace('#', '');
-		active = sections.has(h) ? h : 'start';
+		active = sections.has(h) ? h : 'support-us';
 	}
 
 	function select(id: string) {
@@ -54,7 +55,7 @@
 	<aside class="side">
 		<a href="/" class="side-wordmark">DYAD</a>
 		<nav aria-label="Documentation">
-			<button class="side-link side-top" class:active={active === 'start'} onclick={() => select('start')}>Documentation</button>
+			<button class="side-link side-top" class:active={active === 'support-us'} onclick={() => select('support-us')}>Become a supporter</button>
 
 			<p class="side-head">Community</p>
 			<button class="side-link" class:active={active === 'about-why'} onclick={() => select('about-why')}>Our origin story</button>
@@ -80,11 +81,39 @@
 			<section>
 				<h1>Documentation</h1>
 				<p>Welcome to dyad's documentation. You do not need to be a member to read any of this. If you are considering joining, this is a good place to learn how the community works, how membership functions, which documents govern us, and how we make decisions together. Everything that defines dyad as an organization lives here.</p>
-				<p><strong>Community</strong> holds our origin story, community care, our privacy commitments, and how becoming a member works. <strong>Governance</strong> holds the three working documents that formally define us (the Bylaws, the Member Agreements, and the Community Standards) and how we practice, with step-by-step guides for taking part in decisions.</p>
+				<p><strong>Community</strong> holds our origin story, community care, our privacy commitments, and how becoming a member works. <strong>Governance</strong> holds the three working documents that formally define us (the Bylaws, the Member Agreements, and the Community Standards) and how we practice, with step-by-step guides for taking part in decisions. <strong>Become a supporter</strong> holds what dyad is, why it exists, what we stand for, and why we ask.</p>
 				<p>All three governing documents are working documents. They are starting points rather than final destinations, and they change through the consent process they describe. Ratifying them with the founding members is the first consent round.</p>
 				<p>If you have a question that is not answered here, write to <a href="mailto:hello@dyad.berlin">hello@dyad.berlin</a>.</p>
 				<h3>Attribution and licence</h3>
 				<p>These documents adapt, with gratitude, from the published governance work of <a href="https://www.subvert.fm/">Subvert Cooperative</a>, <a href="https://inclusiveorg.net/">Inclusive Organizing</a>, <a href="https://blackskyweb.xyz/">Blacksky</a>, Glitch, and the <a href="https://democratictech.fund/">Democratic Tech Fund</a>'s Code of Co-operation. In the same spirit, dyad's governing documents are shared under <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>: adapt them for your own community, with attribution.</p>
+			</section>
+		{:else if active === 'support-us'}
+			<section>
+				<p class="doc-kicker">Become a supporter</p>
+				<h2>Become a supporter</h2>
+
+				<h3>What dyad is</h3>
+				<p>dyad is a web application to start and surface face to face conversations, held and governed by the community that uses it. You bring a conversation, something that has been on your mind. We surface the people thinking about it too. You meet them in person, chosen and unhurried, on your own terms.</p>
+
+				<h3>Why it exists</h3>
+				<p>We did not like how being social online felt. The platforms we met on left little room for our humanity, no room for the complexity of what we carry or the meaning we make of it together. So we built a way back to something older: conversation, in person, as how we find our way.</p>
+				<p>We are in service to connection and collective sensemaking, and to a horizon where the capability and the wealth a community generates stay with the community.</p>
+
+				<h3>What we stand for</h3>
+				<p>We take care as seriously as the awareness teams working the door and the floor at the clubs that raised half of Berlin. Someone is always looking out. Nobody is judged for what they need. Harm is met with support first, and punishment last.</p>
+				<ul>
+					<li><strong>Self-determination.</strong> Nobody here decides for you what help looks like, who you are, or what you should want. You choose your rate, your pace, and your exit. We ask. We do not assume.</li>
+					<li><strong>Transparency.</strong> Governance you cannot see is not governance. Every decision is logged where members can read it, and once membership sustains it, the founders' pay becomes an open line item too. We do not ask for your trust. We work to earn it.</li>
+					<li><strong>Interdependency.</strong> We understand, acknowledge and respect the interdependencies that make our lives rich. Nobody meets, thinks, or builds alone here, and the health of the community is everyone's work, not one team's.</li>
+					<li><strong>Economic democracy.</strong> The mission governs the money, not the other way around. Paying is a choice, never a condition of belonging, and what a community generates stays with the community.</li>
+				</ul>
+				<p>We do not allow harassment, discrimination, coercion, or the exploitation of anyone's trust for someone else's extraction. In Berlin this is not abstract, and we name it plainly in our <button class="inline-link" onclick={() => select('standards')}>Community Standards</button>, along with exactly what happens when it occurs.</p>
+
+				<h3>Why support us</h3>
+				<p>dyad is an independent startup, built so far by a team working voluntarily. Paying is a choice, and when you choose to, your contribution is what keeps dyad answering to the people in the room instead of to advertisers or investors chasing growth at any cost.</p>
+				<p>If five hundred of us choose to support dyad financially by the end of August, at whatever rate fits your life, €5, €15, or €25 a month, we stay independent in pursuing the future we are already seeding: a social technology in service to connection and collective sensemaking, held by the people who build and use it. Becoming a supporting member is one of the clearest ways to shape what happens next.</p>
+				<p class="doc-note">Becoming a member does not go through a gate where we accept or decline you. You read and agree to the <button class="inline-link" onclick={() => select('standards')}>Community Standards</button> and the <button class="inline-link" onclick={() => select('agreements')}>Member Agreements</button>, choose a rate that fits you, or none, and you are in.</p>
+				<p><a class="support-cta" href="/become-a-member">Become a member →</a></p>
 			</section>
 		{:else if active === 'about-why'}
 			<section>
@@ -378,12 +407,20 @@
 			<section>
 				<p class="doc-kicker">Community</p>
 				<h2>Becoming a member</h2>
-				<p>The small friction of requesting to join is deliberate, and it is about alignment rather than identity. It considers what you value, never who you are.</p>
+				<h3>Who dyad is for</h3>
+				<p>dyad is for people who seek to meet others and want to do it their way. You bring a conversation — something that has been on your mind. We surface the people thinking about it too. You meet them in person.</p>
+				<p>The environment is nurtured, built and designed by a team that genuinely cares about doing it participatorily, and cares about human development and flourishing. That is not a slogan; it is the way the place is run, and the governance pages show exactly how.</p>
+				<h3>How to join</h3>
+				<p>There is no gate here where we decide to accept you or not. Joining is about alignment, not approval, and the alignment is yours to confirm.</p>
 				<ol>
-					<li><strong>Request to join.</strong> Name, email, and a few honest sentences about why you want to join.</li>
-					<li><strong>Read by members.</strong> Member-reviewers read the request against the published criteria, looking only for alignment with the Community Standards.</li>
-					<li><strong>Welcome, or guidance.</strong> Aligned requests receive an invitation and onboarding. A first decline comes with specific guidance, a second decline unlocks an appeal, and reapplying is always allowed.</li>
+					<li><strong>Read and agree.</strong> The Community Standards and the Member Agreements, in full. Both are short enough to actually read.</li>
+					<li><strong>Choose a rate, or none.</strong> Membership does not require paying. If you choose to, pick whatever fits your life.</li>
+					<li><strong>Create your account.</strong> You are a member from that moment, with a voice equal to everyone else's.</li>
 				</ol>
+				<p><a class="support-cta" href="/become-a-member">Become a member →</a></p>
+				<h3>Belonging &amp; membership</h3>
+				<p>Membership does not require paying. Members who choose to pay — €5, €15 or €25 a month, whichever fits your life — are how the work stays independent: no ads, no data sales, nobody to answer to but the people in the room.</p>
+				<p>Members are not customers. The rules, the program, the culture — members make them with us. There are two roles: <strong>members</strong>, who have a voice in the decisions that shape the community, and <strong>stewards</strong> — members entrusted with keeping things healthy: upholding shared norms, facilitating moderation, carrying out what was decided together.</p>
 			</section>
 		{:else if active === 'process-wrong'}
 			<section>
@@ -518,6 +555,24 @@
 		margin: 0 0 8px;
 		line-height: 1.65;
 		max-width: 62ch;
+	}
+	.support-cta {
+		display: inline-block;
+		font-family: var(--font-serif);
+		font-size: 0.95rem;
+		font-weight: 500;
+		color: rgba(240, 236, 230, 0.92);
+		background: rgba(240, 236, 230, 0.06);
+		border: 1px solid rgba(240, 236, 230, 0.18);
+		border-radius: 6px;
+		padding: 10px 18px;
+		text-decoration: none;
+		margin: 4px 0 12px;
+		transition: background 0.15s, border-color 0.15s;
+	}
+	.support-cta:hover {
+		background: rgba(240, 236, 230, 0.12);
+		border-color: rgba(240, 236, 230, 0.32);
 	}
 	p, li, dd {
 		font-family: var(--font-serif);

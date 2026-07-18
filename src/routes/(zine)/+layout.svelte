@@ -6,27 +6,78 @@
 	// The docs page is a self-contained reference surface; it carries neither
 	// the zine header nor the footer (its own sidebar holds the wordmark).
 	const isDocs = $derived($page.url.pathname.startsWith('/docs'));
+	// Unfolding keeps the header (for nav) but reads as its own paper surface
+	// (see its +layout.svelte), so the header drops its dark fill and floats
+	// transparent over the hero/paper background instead.
+	const isUnfolding = $derived($page.url.pathname.startsWith('/unfolding'));
+
+	// Scroll-aware reveal (Atmos-style): dissolves on scroll down, reappears
+	// on scroll up, always visible near the top. Scoped to /unfolding — the
+	// only variant that's floated (position: fixed) over its content rather
+	// than sitting in normal flow.
+	let headerHidden = $state(false);
+	let lastScrollY = 0;
+
+	function onScroll() {
+		if (!isUnfolding) return;
+		const y = window.scrollY;
+		if (y < 80) {
+			headerHidden = false;
+		} else if (y > lastScrollY) {
+			headerHidden = true; // scrolling down
+		} else if (y < lastScrollY) {
+			headerHidden = false; // scrolling up
+		}
+		lastScrollY = y;
+	}
 </script>
+
+<svelte:window onscroll={onScroll} />
 
 <div class="zine-shell" data-theme="dark">
 	{#if !isDocs}
-	<header class="zine-header">
-		<a href="/" class="zine-wordmark">DYAD</a>
-		<nav class="zine-nav">
-			<a href="/community" class="zine-nav-link">community</a>
-			<a href="/governance" class="zine-nav-link">participatory governance</a>
-			<a href="/docs" class="zine-nav-link">docs</a>
-		</nav>
-		<!-- Mobile: the inline nav is hidden; this disclosure keeps the section
-		     links reachable and in the a11y tree on small screens. -->
-		<details class="zine-nav-mobile">
-			<summary aria-label="Sections">Sections</summary>
-			<nav class="zine-nav-mobile-links">
+	<header
+		class="zine-header"
+		class:zine-header-transparent={isUnfolding}
+		class:zine-header-hidden={isUnfolding && headerHidden}
+		class:zine-header-centered={isUnfolding}
+	>
+		{#if isUnfolding}
+			<!-- Atmos-style: a Menu disclosure at left nests the section links,
+			     DYAD sits centered, an empty spacer on the right balances the
+			     grid so the wordmark centers regardless of the Menu button's
+			     width. Wording/order under Menu matches the landing footer's
+			     row: Documentation, Community, Newsletter. -->
+			<details class="zine-menu">
+				<summary class="zine-menu-toggle">Menu</summary>
+				<nav class="zine-menu-panel">
+					<a href="/docs" class="zine-nav-link">documentation</a>
+					<a href="/community" class="zine-nav-link">community</a>
+					<a href="/unfolding" class="zine-nav-link">newsletter</a>
+				</nav>
+			</details>
+			<a href="/" class="zine-wordmark zine-wordmark-centered">DYAD</a>
+			<span class="zine-header-spacer" aria-hidden="true"></span>
+		{:else}
+			<a href="/" class="zine-wordmark">DYAD</a>
+			<nav class="zine-nav">
 				<a href="/community" class="zine-nav-link">community</a>
 				<a href="/governance" class="zine-nav-link">participatory governance</a>
+				<a href="/unfolding" class="zine-nav-link">unfolding</a>
 				<a href="/docs" class="zine-nav-link">docs</a>
 			</nav>
-		</details>
+			<!-- Mobile: the inline nav is hidden; this disclosure keeps the section
+			     links reachable and in the a11y tree on small screens. -->
+			<details class="zine-nav-mobile">
+				<summary aria-label="Sections">Sections</summary>
+				<nav class="zine-nav-mobile-links">
+					<a href="/community" class="zine-nav-link">community</a>
+					<a href="/governance" class="zine-nav-link">participatory governance</a>
+					<a href="/unfolding" class="zine-nav-link">unfolding</a>
+					<a href="/docs" class="zine-nav-link">docs</a>
+				</nav>
+			</details>
+		{/if}
 	</header>
 	{/if}
 
@@ -106,6 +157,89 @@
 		opacity: 0.09;
 		mix-blend-mode: screen;
 		background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='3'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+	}
+
+	/* Unfolding's header sits in normal flow, like Atmos's own white bar:
+	   solid fill matching the paper ground, pushing the hero image down
+	   rather than floating over it, so there's real margin from the top. */
+	.zine-header-transparent {
+		background: #faf8f3;
+		backdrop-filter: none;
+		border-bottom: 1px solid rgba(20, 20, 20, 0.08);
+		opacity: 1;
+		transform: translateY(0);
+		transition: opacity 0.35s var(--ease-ink, ease), transform 0.35s var(--ease-ink, ease);
+	}
+	.zine-header-transparent::before { display: none; }
+	.zine-header-transparent .zine-wordmark,
+	.zine-header-transparent .zine-nav-link,
+	.zine-header-transparent .zine-nav-mobile summary,
+	.zine-header-transparent .zine-menu-toggle {
+		color: #1b1c1e;
+	}
+	.zine-header-transparent .zine-nav-link:hover { color: #4a5d3f; }
+
+	/* Dissolves on scroll down, reappears on scroll up (see onScroll above). */
+	.zine-header-hidden {
+		opacity: 0;
+		transform: translateY(-12px);
+		pointer-events: none;
+	}
+
+	/* Atmos layout: Menu at left, DYAD centered, an empty spacer at right
+	   balances the grid so the wordmark centers regardless of the Menu
+	   button's own width — three equal-ish columns instead of the default
+	   flex space-between. */
+	.zine-header-centered {
+		display: grid;
+		grid-template-columns: 1fr auto 1fr;
+		align-items: center;
+	}
+
+	.zine-wordmark-centered {
+		justify-self: center;
+	}
+
+	.zine-header-spacer {
+		justify-self: end;
+	}
+
+	.zine-menu {
+		justify-self: start;
+		position: relative;
+	}
+
+	.zine-menu-toggle {
+		font-family: var(--font-mono);
+		font-size: 0.65rem;
+		letter-spacing: 0.06em;
+		color: var(--zine-ink-muted);
+		cursor: pointer;
+		list-style: none;
+		user-select: none;
+	}
+	.zine-menu-toggle::-webkit-details-marker { display: none; }
+	.zine-menu-toggle:hover { color: rgba(240, 236, 230, 0.85); }
+
+	.zine-menu-panel {
+		position: absolute;
+		top: calc(100% + 16px);
+		left: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		padding: 16px 20px;
+		background: #faf8f3;
+		border: 1px solid rgba(20, 20, 20, 0.08);
+		border-radius: 4px;
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+		min-width: 160px;
+	}
+	.zine-menu-panel .zine-nav-link {
+		color: #1b1c1e;
+	}
+	.zine-menu-panel .zine-nav-link:hover {
+		color: #4a5d3f;
 	}
 
 	.zine-wordmark {
