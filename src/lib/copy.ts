@@ -789,8 +789,8 @@ export const copy = {
 
 		// Everyone who reaches this copy (the /membership page, or the paywall
 		// modal on a gated action) is already signed in, and under the
-		// consent-based join flow, that means they are already a member —
-		// see (auth)/become-a-member. This is never a "come join us" pitch;
+		// consent-based join flow, that means they are already a member.
+		// This is never a "come join us" pitch;
 		// it is an invitation to add a financial contribution, which some
 		// product actions are unlocked by.
 		guestHeading: 'Support dyad',
