@@ -101,10 +101,16 @@
 		/* Moss-black family (see app.css dark theme) rather than neutral black. */
 		--zine-bg: #0b0e0c;
 		--zine-bg-translucent: rgba(11, 14, 12, 0.92);
-		--zine-ink: rgba(240, 236, 230, 0.8);
-		--zine-ink-strong: rgba(240, 236, 230, 0.9);
-		--zine-ink-muted: rgba(240, 236, 230, 0.35);
-		--zine-hairline: rgba(240, 236, 230, 0.05);
+		/* The parchment ink hue: one source, alpha steps layered on top. Changing
+		   the hue here re-tints every zine surface at once. */
+		--zine-ink-rgb: 240, 236, 230;
+		--zine-ink: rgba(var(--zine-ink-rgb), 0.8);
+		--zine-ink-strong: rgba(var(--zine-ink-rgb), 0.9);
+		--zine-ink-muted: rgba(var(--zine-ink-rgb), 0.35);
+		/* Extra ink steps consumed by the docs page's prose scale. */
+		--zine-ink-body: rgba(var(--zine-ink-rgb), 0.62);
+		--zine-ink-soft: rgba(var(--zine-ink-rgb), 0.5);
+		--zine-hairline: rgba(var(--zine-ink-rgb), 0.05);
 
 		min-height: 100vh;
 		background: var(--zine-bg);

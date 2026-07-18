@@ -65,9 +65,9 @@
 	},
 	"dependencies": {
 		"@atproto/oauth-client-node": "^0.4.8",
-		"@prefig/upact": "^0.1.1",
-		"@prefig/upact-atproto": "^0.1.0",
-		"@prefig/upact-supabase": "^0.1.0",
+		"@prefig/upact": "^0.1.2",
+		"@prefig/upact-atproto": "^0.1.1",
+		"@prefig/upact-supabase": "^0.1.1",
 		"@supabase/ssr": "^0.8.0",
 		"@supabase/supabase-js": "^2.90.1",
 		"@sveltejs/adapter-cloudflare": "^7.2.5",

@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { othersBeyond, deriveStackLayout, buildParticipantsFromSiblings } from './gathering.js';
+import {
+	othersBeyond,
+	deriveStackLayout,
+	buildParticipantsFromSiblings,
+	cancellablePairs
+} from './gathering.js';
 
 describe('othersBeyond', () => {
 	it('subtracts the identified seats from occupancy', () => {
@@ -77,5 +82,36 @@ describe('buildParticipantsFromSiblings', () => {
 
 	it('empty input yields an empty map', () => {
 		expect(buildParticipantsFromSiblings([], me)).toEqual(new Map());
+	});
+});
+
+describe('cancellablePairs', () => {
+	it('keeps only scheduled pairs', () => {
+		const pairs = [
+			{ username: 'a', meetingId: 'm1', state: 'scheduled' },
+			{ username: 'b', meetingId: 'm2', state: 'awaiting_feedback' },
+			{ username: 'c', meetingId: 'm3', state: 'completed' },
+			{ username: 'd', meetingId: 'm4', state: 'cancelled_late' },
+			{ username: 'e', meetingId: 'm5', state: 'scheduled' }
+		];
+		expect(cancellablePairs(pairs).map((p) => p.meetingId)).toEqual(['m1', 'm5']);
+	});
+
+	it('returns an empty list when no pair is scheduled', () => {
+		expect(
+			cancellablePairs([{ username: 'a', meetingId: 'm1', state: 'completed' }])
+		).toEqual([]);
+	});
+
+	it('is a no-op when every pair is scheduled', () => {
+		const pairs = [
+			{ username: 'a', meetingId: 'm1', state: 'scheduled' },
+			{ username: 'b', meetingId: 'm2', state: 'scheduled' }
+		];
+		expect(cancellablePairs(pairs)).toEqual(pairs);
+	});
+
+	it('empty input yields an empty list', () => {
+		expect(cancellablePairs([])).toEqual([]);
 	});
 });

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { DomainError } from '$lib/domain/errors.js';
 import type {
 	FeedbackForm,
 	FeedbackFormState,
@@ -185,7 +186,17 @@ export class SupabaseFeedbackService implements FeedbackService {
 			p_detail: data.detail ?? null
 		});
 
-		if (error) throw new Error(`Failed to submit concern: ${error.message}`);
+		if (error) {
+			// Per-reporter/per-slot cap inside submit_concern (#57): map the RPC's
+			// token to a clean 429 rather than the generic 500 path. The endpoint is
+			// the primary surface for input validation; this translates the DB-layer
+			// abuse limit to a user-facing status. Dedup is a silent no-op in the RPC
+			// (no error), so only the cap needs translating here.
+			if ((error.message ?? '').includes('concern_cap_reached')) {
+				throw new DomainError('You have filed too many reports for this meeting.', 429);
+			}
+			throw new Error(`Failed to submit concern: ${error.message}`);
+		}
 	}
 
 	async getGatheringRoster(gatheringId: string): Promise<RosterMember[]> {

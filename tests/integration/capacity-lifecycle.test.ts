@@ -465,6 +465,243 @@ describe('Capacity + group feedback lifecycle', () => {
 		});
 	});
 
+	// ── Advance a slot (and its meetings) into the past, then run the sweep. ──
+	async function advancePast(slotId: string): Promise<void> {
+		const past = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+		await adminClient.from('time_slots').update({ start_time: past }).eq('id', slotId).throwOnError();
+		await adminClient
+			.from('meetings')
+			.update({ scheduled_time: past })
+			.eq('slot_id', slotId)
+			.in('state', ['scheduled', 'awaiting_feedback'])
+			.throwOnError();
+		const { error } = await adminClient.rpc('advance_scheduled_meetings');
+		expect(error).toBeNull();
+	}
+
+	// Cancel a meeting out of the seat-occupancy set (state leaves
+	// scheduled/awaiting_feedback). Mirrors what cancel_meeting produces for the
+	// purpose of freeing a seat / dwindling a group.
+	async function cancelMeeting(meetingId: string): Promise<void> {
+		await adminClient
+			.from('meetings')
+			.update({ state: 'cancelled_early', resolved_at: new Date().toISOString() })
+			.eq('id', meetingId)
+			.throwOnError();
+	}
+
+	describe('cancelled-seat refill (#59)', () => {
+		it('cap=1 → accept → cancel → a second distinct accept succeeds (seat freed)', async () => {
+			const { promptId, slotId } = await publishWithCapacity({
+				author: MARCO,
+				authorServices: marcoServices,
+				capacity: 1,
+				title: 'Refill prompt',
+				placeIdSuffix: 'refill'
+			});
+			const invA = await invite(digitServices, DIGIT.id, MARCO.id, promptId, slotId);
+			const invB = await invite(sophieServices, SOPHIE.id, MARCO.id, promptId, slotId);
+
+			const meetingA = await marcoServices.invitation.accept(invA);
+			expect(meetingA).toBeTruthy();
+
+			// Full slot: the second accept is rejected while the seat is occupied.
+			await expect(marcoServices.invitation.accept(invB)).rejects.toMatchObject({ status: 409 });
+
+			// Free the seat, then a FRESH invitation from a distinct inviter accepts.
+			// A cap=1 fill resolves the other pending invites (and the full-slot accept
+			// above consumed invB), so seat-refill is proven with a new invitation
+			// rather than by re-accepting a now-resolved one.
+			await cancelMeeting(meetingA);
+			const invC = await invite(tomServices, TOM.id, MARCO.id, promptId, slotId);
+			const meetingB = await marcoServices.invitation.accept(invC);
+			expect(meetingB).toBeTruthy();
+
+			const { data: active } = await adminClient
+				.from('meetings')
+				.select('id')
+				.eq('slot_id', slotId)
+				.in('state', ['scheduled', 'awaiting_feedback']);
+			expect(active ?? []).toHaveLength(1);
+		});
+	});
+
+	describe('accept-after-advance (#59)', () => {
+		it('a pending invite on an advanced (past) slot is rejected with a clear 409', async () => {
+			const { promptId, slotId } = await publishWithCapacity({
+				author: MARCO,
+				authorServices: marcoServices,
+				capacity: 2,
+				title: 'Accept-after-advance prompt',
+				placeIdSuffix: 'aaa'
+			});
+			const invA = await invite(digitServices, DIGIT.id, MARCO.id, promptId, slotId);
+			const invB = await invite(sophieServices, SOPHIE.id, MARCO.id, promptId, slotId);
+			await marcoServices.invitation.accept(invA); // one meeting; invB stays pending
+
+			await advancePast(slotId);
+
+			// The slot is now in the past — accepting the still-pending invite must
+			// fail with the domain 409, not silently create a meeting on a dead slot.
+			await expect(marcoServices.invitation.accept(invB)).rejects.toMatchObject({ status: 409 });
+
+			const { data: inv } = await adminClient
+				.from('prompt_invitations')
+				.select('state')
+				.eq('id', invB)
+				.single();
+			expect(inv?.state).not.toBe('accepted');
+		});
+	});
+
+	describe('advance idempotency on the group branch (#59)', () => {
+		it('a second advance run mints no duplicate group_feedback and re-transitions nothing', async () => {
+			const { promptId, slotId } = await publishWithCapacity({
+				author: SOPHIE,
+				authorServices: sophieServices,
+				capacity: 2,
+				title: 'Idempotent advance prompt',
+				placeIdSuffix: 'idem'
+			});
+			const invA = await invite(digitServices, DIGIT.id, SOPHIE.id, promptId, slotId);
+			const invB = await invite(tomServices, TOM.id, SOPHIE.id, promptId, slotId);
+			const m1 = await sophieServices.invitation.accept(invA);
+			const m2 = await sophieServices.invitation.accept(invB);
+
+			await advancePast(slotId);
+			// Second sweep — must be a no-op on every unified + legacy table.
+			const { error } = await adminClient.rpc('advance_scheduled_meetings');
+			expect(error).toBeNull();
+
+			// Exactly 3 group_feedback rows (author + 2 joiners), no duplicates.
+			const { data: groupForms } = await adminClient
+				.from('group_feedback')
+				.select('id, reviewer_id')
+				.eq('slot_id', slotId);
+			expect(groupForms ?? []).toHaveLength(3);
+			expect(new Set((groupForms ?? []).map((g) => g.reviewer_id)).size).toBe(3);
+
+			// One gathering, 3 participation, 3 gathering_feedback — all singular.
+			const { data: gatherings } = await adminClient
+				.from('gatherings')
+				.select('id')
+				.eq('slot_id', slotId);
+			expect(gatherings ?? []).toHaveLength(1);
+			const gatheringId = gatherings![0].id;
+			const { data: parts } = await adminClient
+				.from('participation')
+				.select('member_id')
+				.eq('gathering_id', gatheringId);
+			expect(parts ?? []).toHaveLength(3);
+			const { data: gfb } = await adminClient
+				.from('gathering_feedback')
+				.select('reviewer_id')
+				.eq('gathering_id', gatheringId);
+			expect(gfb ?? []).toHaveLength(3);
+
+			// Both meetings completed, and still completed after the second run.
+			const { data: meetings } = await adminClient
+				.from('meetings')
+				.select('state')
+				.in('id', [m1, m2]);
+			for (const mm of meetings ?? []) expect(mm.state).toBe('completed');
+			// No stray per-pair feedback_forms leaked from the group branch.
+			const { data: forms } = await adminClient
+				.from('feedback_forms')
+				.select('id')
+				.in('meeting_id', [m1, m2]);
+			expect(forms ?? []).toHaveLength(0);
+		});
+	});
+
+	describe('concurrent accepts racing the last seat (#59)', () => {
+		it('cap=1: two simultaneous accepts → exactly one meeting (FOR UPDATE serialization)', async () => {
+			const { promptId, slotId } = await publishWithCapacity({
+				author: MARCO,
+				authorServices: marcoServices,
+				capacity: 1,
+				title: 'Race prompt',
+				placeIdSuffix: 'race'
+			});
+			const invA = await invite(digitServices, DIGIT.id, MARCO.id, promptId, slotId);
+			const invB = await invite(sophieServices, SOPHIE.id, MARCO.id, promptId, slotId);
+
+			// Fire both accepts at once. accept_invitation locks the seat set FOR
+			// UPDATE, so exactly one wins and the other sees a full slot (409).
+			const results = await Promise.allSettled([
+				marcoServices.invitation.accept(invA),
+				marcoServices.invitation.accept(invB)
+			]);
+			const fulfilled = results.filter((r) => r.status === 'fulfilled');
+			const rejected = results.filter((r) => r.status === 'rejected');
+			expect(fulfilled).toHaveLength(1);
+			expect(rejected).toHaveLength(1);
+			expect((rejected[0] as PromiseRejectedResult).reason).toMatchObject({ status: 409 });
+
+			const { data: active } = await adminClient
+				.from('meetings')
+				.select('id')
+				.eq('slot_id', slotId)
+				.in('state', ['scheduled', 'awaiting_feedback']);
+			expect(active ?? []).toHaveLength(1);
+		});
+	});
+
+	describe('group dwindling to a pair before advance (#56)', () => {
+		it('cap=2 group → cancel one → advance → the surviving pair gets 1:1 reveal+tags forms, not group_feedback', async () => {
+			// A capacity=2 gathering whose cancellations leave exactly ONE active
+			// meeting advances down the ONE-ON-ONE branch (advance_scheduled_meetings
+			// branches on the LIVE active-meeting count, not the configured capacity).
+			// CONFIRMED behaviour (#56): the meeting that actually happened WAS a pair,
+			// so dyad's pair feedback — per-pair feedback_forms with simultaneous
+			// reveal + adjective tags — is what it gets. group_feedback (collect-only,
+			// no reveal) is NOT minted for the slot.
+			const { promptId, slotId } = await publishWithCapacity({
+				author: SOPHIE,
+				authorServices: sophieServices,
+				capacity: 2,
+				title: 'Dwindle prompt',
+				placeIdSuffix: 'dwindle'
+			});
+			const invA = await invite(digitServices, DIGIT.id, SOPHIE.id, promptId, slotId);
+			const invB = await invite(tomServices, TOM.id, SOPHIE.id, promptId, slotId);
+			const mA = await sophieServices.invitation.accept(invA);
+			const mB = await sophieServices.invitation.accept(invB);
+			expect([mA, mB]).toHaveLength(2);
+
+			// One joiner drops out — the group dwindles to a single active pair
+			// (sophie <-> tom via mB).
+			await cancelMeeting(mA);
+
+			await advancePast(slotId);
+
+			// The surviving meeting rode the 1:1 branch: two directional feedback_forms
+			// (the reveal + tags path), not the group collect-only form.
+			const { data: forms } = await adminClient
+				.from('feedback_forms')
+				.select('reviewer_id, reviewee_id')
+				.eq('meeting_id', mB);
+			expect(forms ?? []).toHaveLength(2);
+			const pairs = new Set((forms ?? []).map((f) => `${f.reviewer_id}->${f.reviewee_id}`));
+			expect(pairs).toEqual(new Set([`${SOPHIE.id}->${TOM.id}`, `${TOM.id}->${SOPHIE.id}`]));
+
+			// No group_feedback for the dwindled slot — the reveal-avoiding group form
+			// is exactly what the pair does NOT get.
+			const { data: groupForms } = await adminClient
+				.from('group_feedback')
+				.select('id')
+				.eq('slot_id', slotId);
+			expect(groupForms ?? []).toHaveLength(0);
+
+			// The cancelled meeting minted no feedback_forms of its own.
+			const { data: cancelledForms } = await adminClient
+				.from('feedback_forms')
+				.select('id')
+				.eq('meeting_id', mA);
+			expect(cancelledForms ?? []).toHaveLength(0);
+		});
+	});
+
 	afterAll(async () => {
 		// Reverse the scope fixtures (prompts referencing the scope are dropped by
 		// cleanTestData first, then the grant + scope row).
