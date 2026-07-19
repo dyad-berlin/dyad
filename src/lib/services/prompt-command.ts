@@ -185,20 +185,27 @@ export class SupabasePromptCommandService implements PromptCommandService {
 
 	async editSlot(slotId: string, authorId: string, updates: Partial<TimeSlotInput>): Promise<void> {
 		const slot = await this.getOwnSlot(slotId, authorId);
-		if (slot.accepted) {
-			throw new DomainError('Cannot edit a slot that has already been booked');
-		}
-		// A retired slot was withdrawn by a whole-gathering cancel — terminal.
-		// Editing it would be a silent no-op (deriveSlotState keeps it hidden),
-		// so reject loudly; the author offers a new time instead.
+		// A retired slot was withdrawn by a whole-gathering cancel — terminal, and
+		// filtered out of the editor load, so it never rides the save-on-close batch.
+		// Any editSlot on it is an explicit re-offer attempt; reject loudly.
 		if (slot.retired_at) {
 			throw new DomainError('This time was withdrawn and cannot be re-offered — add a new time instead');
 		}
 
 		const prompt = await this.getOwnPrompt(slot.prompt_id, authorId);
 
-		// Validate individual fields if provided
-		if (updates.start_time !== undefined) {
+		// Build a VALUE diff. The save-on-close flow (PublishSheet) routes EVERY
+		// persisted slot through editSlot, always sending start_time + duration and
+		// sending `location` ONLY on an intentional re-pick. A presence-based check
+		// would treat every save as a change — expiring all pending invitations and
+		// throwing the whole batch the moment one slot is booked. So diff the two
+		// always-sent fields by value; a present `location` is by contract a change.
+		const fields: Record<string, unknown> = {};
+
+		if (
+			updates.start_time !== undefined &&
+			new Date(updates.start_time).getTime() !== new Date(slot.start_time).getTime()
+		) {
 			const startDate = new Date(updates.start_time);
 			if (isNaN(startDate.getTime())) {
 				throw new DomainError('Start time must be a valid date');
@@ -207,17 +214,19 @@ export class SupabasePromptCommandService implements PromptCommandService {
 			if (startDate < oneHourFromNow) {
 				throw new DomainError('Start time must be at least 1 hour in the future');
 			}
+			fields.start_time = updates.start_time;
 		}
-		if (updates.duration_minutes !== undefined) {
+
+		if (updates.duration_minutes !== undefined && updates.duration_minutes !== slot.duration_minutes) {
 			if (!Number.isInteger(updates.duration_minutes) || updates.duration_minutes < 15 || updates.duration_minutes > 480) {
 				throw new DomainError('Duration must be between 15 and 480 minutes');
 			}
+			fields.duration_minutes = updates.duration_minutes;
 		}
 
-		const fields: Record<string, unknown> = {};
-		if (updates.start_time !== undefined) fields.start_time = updates.start_time;
-		if (updates.duration_minutes !== undefined) fields.duration_minutes = updates.duration_minutes;
-
+		// Location is only present when the author actively re-picked one (the
+		// editor omits it otherwise — exact_location is masked from their client),
+		// so its presence is itself the change signal.
 		if (updates.location) {
 			if (!validateRegion(updates.location, prompt.region)) {
 				throw new DomainError(`Location is outside ${regionLabel(prompt.region)}`);
@@ -229,12 +238,16 @@ export class SupabasePromptCommandService implements PromptCommandService {
 			fields.general_area_lng = area.centroidLng;
 		}
 
-		// No-op when no field actually changed. Skipping the UPDATE here also
-		// skips expirePendingInvitations — the save-on-close flow can route
-		// every persisted slot through editSlot, but only the ones that
-		// actually changed should withdraw their pending invitations.
+		// Genuine no-op: nothing changed. Return BEFORE the booked guard so
+		// re-persisting an unchanged BOOKED slot never wedges the batch save and
+		// never expires its pending invitations.
 		if (Object.keys(fields).length === 0) {
 			return;
+		}
+
+		// A real change to a booked slot is still rejected.
+		if (slot.accepted) {
+			throw new DomainError('Cannot edit a slot that has already been booked');
 		}
 
 		await this.expirePendingInvitations(slotId);
@@ -365,10 +378,22 @@ export class SupabasePromptCommandService implements PromptCommandService {
 	private async getOwnSlot(
 		slotId: string,
 		authorId: string
-	): Promise<{ id: string; prompt_id: string; accepted: boolean; retired_at: string | null }> {
+	): Promise<{
+		id: string;
+		prompt_id: string;
+		accepted: boolean;
+		retired_at: string | null;
+		start_time: string;
+		duration_minutes: number;
+	}> {
 		const { data, error } = await this.supabase
 			.from('time_slots')
-			.select('id, prompt_id, accepted, retired_at, prompts!inner(author_id)')
+			// start_time/duration_minutes let editSlot diff incoming updates against
+			// the STORED values (value-based no-op). exact_location is deliberately
+			// NOT selected — it is column-masked from the author's client (privacy;
+			// exposed only via the get_my_prompt_slots SECURITY DEFINER RPC), and the
+			// editor only sends `location` on an intentional re-pick anyway.
+			.select('id, prompt_id, accepted, retired_at, start_time, duration_minutes, prompts!inner(author_id)')
 			.eq('id', slotId)
 			.single();
 
@@ -384,7 +409,9 @@ export class SupabasePromptCommandService implements PromptCommandService {
 			id: data.id,
 			prompt_id: data.prompt_id,
 			accepted: data.accepted,
-			retired_at: data.retired_at ?? null
+			retired_at: data.retired_at ?? null,
+			start_time: data.start_time,
+			duration_minutes: data.duration_minutes
 		};
 	}
 
