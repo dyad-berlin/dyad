@@ -23,7 +23,7 @@
 	.auth-nav {
 		position: fixed;
 		top: var(--space-6);
-		left: var(--space-6);
+		left: var(--space-10);
 		z-index: 100;
 		display: flex;
 		align-items: center;
