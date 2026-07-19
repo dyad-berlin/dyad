@@ -202,6 +202,9 @@ export const copy = {
 		_routes: ['/conversations/[id]'],
 		_description: 'Viewing a conversation: body, response form, invitation flow, author edit/archive actions.',
 		responsePlaceholder: 'Share your thoughts…',
+		// Referral share — copies this conversation's URL with ?ref=<username>.
+		shareLink: 'share with a friend',
+		shareCopied: 'link copied',
 		slotsTeaser: (authorUsername: string) => `respond to @${authorUsername} to see the times they’ve suggested to meet`,
 		inviteQuestion: (authorUsername: string) => `Would you like to meet @${authorUsername} in person?`,
 		inviteNotePlaceholder: 'Add a note (optional)',
@@ -365,6 +368,11 @@ export const copy = {
 		preferencesLink: 'preferences',
 		membershipLink: 'membership',
 		feedbackLink: 'feedback',
+		// Referral share link — copies /waitlist?ref=<username> so a friend
+		// lands on the waitlist already marked as invited by this member.
+		inviteFriendLink: 'invite a friend',
+		inviteFriendCopied: 'link copied',
+		inviteFriendFallback: 'Copy this link and send it to your friend:',
 	},
 
 	// ── Preferences ────────────────────────────────────────────────────

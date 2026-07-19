@@ -162,6 +162,12 @@
 					<span class="contact-name">{contact.name ?? 'Anonymous'}</span>
 					<span class="contact-email">{contact.email}</span>
 					<span class="badge badge-{contact.status}">{contact.status.replace('_', ' ')}</span>
+					{#if contact.referred_by_username}
+						<span class="badge badge-referred">invited by @{contact.referred_by_username}</span>
+						{#if contact.status !== 'signed_up'}
+							<span class="badge badge-fasttrack">review within 2 days</span>
+						{/if}
+					{/if}
 				</div>
 				{#if contact.based_in}
 					<span class="contact-city">{contact.based_in}</span>
@@ -326,6 +332,8 @@
 	.badge-expired { background: rgba(239,68,68,0.12); color: #dc2626; }
 	.badge-signed_up { background: rgba(61,158,90,0.12); color: #2d7a42; }
 	.badge-provider { background: color-mix(in srgb, var(--color-accent) 12%, transparent); color: var(--color-accent); }
+	.badge-referred { background: rgba(99,102,241,0.12); color: #4f46e5; text-transform: none; }
+	.badge-fasttrack { background: rgba(245,158,11,0.18); color: #92400e; }
 
 	.join-requests { margin-bottom: var(--space-6); }
 	.join-requests h2 { font-size: var(--text-lg); margin: 0 0 var(--space-1) 0; color: var(--text-primary); }

@@ -81,6 +81,22 @@ export const handle: Handle = async ({ event, resolve }) => {
 		return resolve(event);
 	}
 
+	// Referral capture: any user-plane URL can carry ?ref=<username> (a member's
+	// share link — profile or conversation). Persisted as the dyad_ref cookie
+	// that the waitlist form, /signup, and /join already read, so the referral
+	// survives navigation and login redirects. Client-readable by design (the
+	// waitlist form reads document.cookie); disclosed in /datenschutz.
+	const refParam = event.url.searchParams.get('ref');
+	if (refParam && /^[a-z0-9_-]{2,32}$/i.test(refParam)) {
+		event.cookies.set('dyad_ref', refParam.toLowerCase(), {
+			path: '/',
+			maxAge: 60 * 60 * 24 * 30,
+			httpOnly: false,
+			sameSite: 'lax',
+			secure: !dev
+		});
+	}
+
 	event.locals.supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
 		cookies: {
 			getAll: () => event.cookies.getAll(),

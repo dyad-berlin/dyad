@@ -10,7 +10,7 @@ export const load: PageServerLoad = async () => {
 	const [{ data: contacts }, { data: invitations }, { data: joinRequests }] = await Promise.all([
 		supabase
 			.from('contacts')
-			.select('id, email, name, based_in, freewrite, referral_source, created_at')
+			.select('id, email, name, based_in, freewrite, referral_source, referred_by_username, created_at')
 			.order('created_at', { ascending: false }),
 		supabase
 			.from('invitations')
@@ -45,6 +45,15 @@ export const load: PageServerLoad = async () => {
 		else if (inv?.expired) status = 'expired';
 
 		return { ...c, status };
+	});
+
+	// Member-referred contacts are fast-track (review within 2 days) — float
+	// the ones still awaiting action to the top, newest first within each band.
+	waitlist.sort((a, b) => {
+		const aFast = a.referred_by_username && a.status !== 'signed_up' ? 0 : 1;
+		const bFast = b.referred_by_username && b.status !== 'signed_up' ? 0 : 1;
+		if (aFast !== bFast) return aFast - bFast;
+		return a.created_at < b.created_at ? 1 : -1;
 	});
 
 	return { waitlist, joinRequests: joinRequests ?? [] };
