@@ -1,10 +1,18 @@
 <script lang="ts">
-	import { storageUrl } from '$lib/utils/storage-url';
+	import { env } from '$env/dynamic/public';
+
+	// Reel sources: prefer PUBLIC_VIDEO_BASE_URL (sovereign host), else the public
+	// videos bucket. Mirrors /voices — storageUrl() derives from PUBLIC_SUPABASE_URL,
+	// which in local dev is the LOCAL stack (no videos bucket), so the reels wouldn't
+	// play outside prod. This base defaults to the public bucket in every env.
+	const videoBase =
+		env.PUBLIC_VIDEO_BASE_URL ??
+		'https://iwdjpuyuznzukhowxjhk.supabase.co/storage/v1/object/public/videos';
 
 	const voices = [
-		{ src: storageUrl('videos', 'voices/pauline.mp4'), name: 'Pauline' },
-		{ src: storageUrl('videos', 'voices/kaspar.mp4'), name: 'Kaspar' },
-		{ src: storageUrl('videos', 'voices/ali.mp4'), name: 'Ali' }
+		{ src: `${videoBase}/voices/pauline.mp4`, name: 'Pauline' },
+		{ src: `${videoBase}/voices/kaspar.mp4`, name: 'Kaspar' },
+		{ src: `${videoBase}/voices/ali.mp4`, name: 'Ali' }
 	];
 
 	function toggle(e: Event) {
