@@ -929,8 +929,6 @@ export const copy = {
 		_routes: ['/api/contact', '/api/invites'],
 		_description: 'Transactional emails sent server-side. HTML templates in the API route handlers.',
 		inviteSubject: 'Come & join us at Dyad.',
-		inviteBody: (displayName: string, inviteUrl: string, expiryDays: number) =>
-			`Hi ${displayName}, we are letting in groups of people to come and play. We are currently in our private beta and would love for you to take a walk inside and tell us about your experience. You can do this asynchronously via the feedback area on the bottom right with a question mark icon. We are looking forward to bringing the fruits of our love, care and labor to you. Join: ${inviteUrl}. This link expires in ${expiryDays} days.`,
 		waitlistSubject: "What’s in a conversation?",
 		membershipActivatedSubject: 'Your membership is active',
 		membershipActivatedBody:

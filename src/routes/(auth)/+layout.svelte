@@ -12,6 +12,9 @@
 <div class="split-layout">
 	<div class="image-half">
 		<img src={data.authImage} alt="" />
+		{#if data.authImageCredit}
+			<p class="image-credit">{data.authImageCredit}</p>
+		{/if}
 	</div>
 	<div class="form-half">
 		{@render children()}
@@ -69,6 +72,20 @@
 		object-position: center;
 		display: block;
 		border-radius: var(--radius-card);
+	}
+
+	/* Artwork credit — bottom-right corner of the image, above the grain
+	   overlay (z-index 1). */
+	.image-credit {
+		position: absolute;
+		right: var(--space-4);
+		bottom: var(--space-6);
+		z-index: 2;
+		margin: 0;
+		font-size: var(--text-xs);
+		font-style: italic;
+		color: rgba(255, 255, 255, 0.75);
+		text-shadow: 0 1px 8px rgba(0, 0, 0, 0.7);
 	}
 
 	.image-half::after {
