@@ -54,6 +54,12 @@ export interface FeedbackService {
 	 *  reason). Used to render the feature-on-profile toggle next to a
 	 *  revealed feedback card. */
 	getReputationSignalForMeeting(meetingId: string, userId: string): Promise<ReputationSignal | null>;
+	/** ALL of the caller's own feedback_received signals — visible and
+	 *  hidden alike (RLS: "Profile owner reads own signals"), newest first.
+	 *  Powers the /profile "Feedback you've received" management list, so a
+	 *  member can find and feature any past feedback without already
+	 *  knowing which meeting it came from. */
+	getMyReputationSignals(profileId: string): Promise<ReputationSignal[]>;
 	/** Visible feedback_received signals for a profile, newest first — RLS
 	 *  scopes this to visible=true rows for anyone but the profile owner. */
 	getVisibleReputationSignals(profileId: string): Promise<ReputationSignal[]>;
@@ -233,6 +239,18 @@ export class SupabaseFeedbackService implements FeedbackService {
 
 		if (error) throw new Error(`Failed to load reputation signal: ${error.message}`);
 		return data as ReputationSignal | null;
+	}
+
+	async getMyReputationSignals(profileId: string): Promise<ReputationSignal[]> {
+		const { data, error } = await this.supabase
+			.from('reputation_signals')
+			.select('id, profile_id, signal_type, source_meeting_id, visible, content, created_at')
+			.eq('profile_id', profileId)
+			.eq('signal_type', 'feedback_received')
+			.order('created_at', { ascending: false });
+
+		if (error) throw new Error(`Failed to load your feedback: ${error.message}`);
+		return (data ?? []) as ReputationSignal[];
 	}
 
 	async getVisibleReputationSignals(profileId: string): Promise<ReputationSignal[]> {

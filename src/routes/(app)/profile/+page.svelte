@@ -7,6 +7,7 @@
 	import FloatingNav from '$lib/components/FloatingNav.svelte';
 	import ConversationCard from '$lib/components/ConversationCard.svelte';
 	import GatheringCard from '$lib/components/GatheringCard.svelte';
+	import FeatureFeedbackToggle from '$lib/components/FeatureFeedbackToggle.svelte';
 	import { copy } from '$lib/copy';
 	import { formatRelativePast, formatShortDate as formatDate } from '$lib/utils/dates';
 
@@ -333,6 +334,30 @@
 					<span class="attention-who">{copy.profile.feedbackDue}</span>
 					<span class="attention-context">{copy.feedback.howDidItGo}</span>
 				</a>
+			{/each}
+		</section>
+	{/if}
+
+	<!-- Feedback received across every meeting — the one place to find and
+	     feature any of it, rather than only the toggle buried on whichever
+	     specific meeting's own detail page. -->
+	{#if data.receivedFeedback.length > 0}
+		<section class="profile-section">
+			<h2 class="section-title">{copy.profile.receivedFeedbackHeading}</h2>
+			{#each data.receivedFeedback as fb (fb.signalId)}
+				<div class="reveal-card">
+					{#if fb.quote}
+						<blockquote class="reveal-quote">{fb.quote}</blockquote>
+					{/if}
+					{#if fb.tags.length > 0}
+						<ul class="reveal-tags" role="list">
+							{#each fb.tags as tag}
+								<li class="reveal-tag">{tag}</li>
+							{/each}
+						</ul>
+					{/if}
+					<FeatureFeedbackToggle signalId={fb.signalId} initialVisible={fb.visible} />
+				</div>
 			{/each}
 		</section>
 	{/if}

@@ -313,6 +313,11 @@ export const copy = {
 		conversations: 'Conversations',
 		meetings: 'Meetings',
 		needsAttention: 'Needs your attention',
+		// "Feedback you've received" section — every feedback_received signal,
+		// visible or not, each with its own feature-on-profile toggle. The one
+		// place to find and feature past feedback without already knowing
+		// which meeting it came from.
+		receivedFeedbackHeading: "Feedback you've received",
 		noConversations: 'No conversations yet.',
 		noMeetings: 'No meetings yet.',
 		startOne: 'Start one',

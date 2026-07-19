@@ -1,8 +1,9 @@
 import type { PageServerLoad } from './$types';
-import type { LocationRef } from '$lib/domain/types.js';
+import type { LocationRef, FeedbackReceivedContent } from '$lib/domain/types.js';
 import { requireIdentity } from '$lib/services/identity.js';
 import { SupabasePromptQueryService } from '$lib/services/prompt-query.js';
 import { SupabaseMeetingService } from '$lib/services/meeting.js';
+import { SupabaseFeedbackService } from '$lib/services/feedback.js';
 import { buildUsernameMap } from '$lib/server/username-lookup.js';
 import { loadCancellersFor } from '$lib/services/cancellation-query.js';
 import { othersBeyond } from '$lib/domain/gathering.js';
@@ -15,7 +16,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const upactor = requireIdentity(locals);
 	const userId = upactor.id;
 
-	const [prompts, meetings, receivedInvitations, respondedPrompts, feedbackDue, cancelledNotifications] = await Promise.all([
+	const [prompts, meetings, receivedInvitations, respondedPrompts, feedbackDue, cancelledNotifications, myReputationSignals] = await Promise.all([
 		new SupabasePromptQueryService(locals.supabase).getMyPrompts(userId),
 		new SupabaseMeetingService(locals.supabase).getMyMeetings(userId),
 
@@ -96,8 +97,23 @@ export const load: PageServerLoad = async ({ locals }) => {
 					reason: (n.data?.reason as string | null | undefined) ?? null,
 					created_at: n.created_at
 				}));
-			})
+			}),
+
+		// All feedback I've received (visible and hidden) — powers the "Feedback
+		// you've received" section below, so a member can find and feature any
+		// past feedback without already knowing which meeting it came from.
+		new SupabaseFeedbackService(locals.supabase).getMyReputationSignals(userId)
 	]);
+
+	const receivedFeedback = myReputationSignals.map((s) => {
+		const content = s.content as unknown as FeedbackReceivedContent;
+		return {
+			signalId: s.id,
+			visible: s.visible,
+			quote: content.quote ?? null,
+			tags: content.tags ?? []
+		};
+	});
 
 	// Mark cancelled-meeting notifications as read now that the user has loaded
 	// the profile and seen them. The card renders from the loader's snapshot,
@@ -326,6 +342,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		myInvitationStateByPromptId,
 		meetingCountByPromptId,
 		hasFutureValidSlotByPromptId,
+		receivedFeedback,
 		attentionCount: receivedInvitations.length + feedbackDue.length + (cancelledNotifications?.length ?? 0)
 	};
 };
