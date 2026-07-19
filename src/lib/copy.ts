@@ -668,10 +668,6 @@ export const copy = {
 		pageTitle: 'join · dyad. cultivating a culture of conversation',
 		heading: 'Request to join',
 		subtitle: 'For those who seek conversation for its own sake and meet others with humility, critical thinking and deep listening.',
-		// The acceptance intent, stated where the friction happens. Alignment
-		// with community standards — never identity. Membership ≠ paying.
-		intentNote:
-			'Why we ask: no community is for everyone, and this one is for people curious about others — people who understand and respect the interdependencies that make our lives rich. We read every request for alignment with our community standards: what you value, never who you are.',
 		successMessage: "Thank you. We’ll be in touch.",
 		freewriteLabel: 'Why do you want to join?',
 		freewritePlaceholder: "What’s in a conversation?",

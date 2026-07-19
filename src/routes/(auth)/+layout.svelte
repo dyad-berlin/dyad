@@ -6,9 +6,7 @@
 </script>
 
 <nav class="auth-nav">
-	<a href="/" class="logo-link" aria-label="Back to home">
-		<img src="/images/logo.png" alt="dyad" class="site-logo" />
-	</a>
+	<a href="/" class="wordmark" aria-label="DYAD">DYAD</a>
 </nav>
 
 <div class="split-layout">
@@ -32,16 +30,17 @@
 		height: 48px;
 	}
 
-	.logo-link {
-		display: flex;
-		align-items: center;
-	}
-
-	.site-logo {
-		height: 34px;
-		width: auto;
-		filter: brightness(0) invert(1) opacity(0.9);
-		transition: filter 0.2s ease;
+	/* Same text wordmark treatment as the landing page — the old image logo
+	   rendered as a mangled "dy/ad" line-wrap. */
+	.wordmark {
+		font-family: var(--font-serif);
+		font-size: 22px;
+		font-weight: 700;
+		letter-spacing: 0.06em;
+		color: rgba(255, 255, 255, 0.85);
+		text-decoration: none;
+		line-height: 1;
+		text-shadow: 0 1px 16px rgba(0, 0, 0, 0.7), 0 0 3px rgba(0, 0, 0, 0.5);
 	}
 
 	/* === Split layout — mirrors landing page === */

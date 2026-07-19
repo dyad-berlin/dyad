@@ -89,7 +89,6 @@
 		{/if}
 	{:else}
 		<form onsubmit={handleSubmit}>
-			<p class="intent-note">{copy.waitlist.intentNote}</p>
 			<div class="form-group">
 				<label for="freewrite" class="freewrite-label">{copy.waitlist.freewriteLabel}</label>
 				<textarea
@@ -171,14 +170,6 @@
 		margin: 0 0 var(--space-6) 0;
 		color: var(--text-muted);
 		font-size: var(--text-md);
-	}
-
-	.intent-note {
-		margin: 0 0 var(--space-5) 0;
-		color: var(--text-muted);
-		font-size: var(--text-sm);
-		line-height: var(--leading-relaxed);
-		font-style: italic;
 	}
 
 	.success-message {
