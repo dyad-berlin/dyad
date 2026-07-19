@@ -24,10 +24,12 @@ describe('renderInviteEmail — signed footer', () => {
 		expect(html).toMatch(/font-family: 'SangBleu Sunrise', Georgia, serif/);
 	});
 
-	it('retains the dyad logo as a link to dyad.berlin', () => {
+	it('renders a text DYAD wordmark linking to dyad.berlin (not the old logo image)', () => {
 		const html = renderInviteEmail({ inviteUrl: INVITE_URL, expiryDays: EXPIRY });
-		expect(html).toContain('https://dyad.berlin/images/logo-dark.png');
+		expect(html).not.toContain('logo-dark.png');
+		expect(html).not.toContain('<img');
 		expect(html).toContain('<a href="https://dyad.berlin"');
+		expect(html).toContain('>DYAD<');
 	});
 
 	it('renders the invite link', () => {

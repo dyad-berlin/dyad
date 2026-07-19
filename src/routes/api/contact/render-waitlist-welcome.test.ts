@@ -21,10 +21,12 @@ describe('renderWaitlistWelcomeEmail — signed footer', () => {
 		expect(html).toMatch(/font-family: 'SangBleu Sunrise', Georgia, serif/);
 	});
 
-	it('retains the dyad logo linking to dyad.berlin', () => {
+	it('renders a text DYAD wordmark linking to dyad.berlin (not the old logo image)', () => {
 		const html = renderWaitlistWelcomeEmail({ displayName: 'Alex' });
-		expect(html).toContain('https://dyad.berlin/images/logo-dark.png');
+		expect(html).not.toContain('logo-dark.png');
+		expect(html).not.toContain('<img');
 		expect(html).toContain('<a href="https://dyad.berlin"');
+		expect(html).toContain('>DYAD<');
 	});
 
 	it('keeps the body-level "With care, Luna" sign-off intact', () => {

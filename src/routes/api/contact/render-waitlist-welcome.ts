@@ -26,10 +26,15 @@ const SIGNATURE_FONT_FACE = `
 
 // Table layout because Outlook does not reliably render flex/grid.
 // border-collapse + mso-* are Outlook hygiene; without them Outlook injects stray whitespace and borders.
+//
+// The wordmark is text, not the old logo-dark.png image: that image rendered
+// as a broken/mangled "dy/ad" line-wrap in several clients. Text in the same
+// SERIF stack the signature already uses (falls back to Georgia when the
+// self-hosted font doesn't load) can't break like an image can.
 const EMAIL_SIGNED_FOOTER = `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin: 0; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
 					<tr>
 						<td style="vertical-align: middle; padding: 0 ${space[5]} 0 0;">
-							<a href="https://dyad.berlin" style="display: inline-block; text-decoration: none;"><img src="https://dyad.berlin/images/logo-dark.png" alt="dyad" style="height: 48px; width: auto; display: block; border: 0;" /></a>
+							<a href="https://dyad.berlin" style="display: inline-block; text-decoration: none; font-family: ${SERIF}; font-weight: 700; font-size: 22px; letter-spacing: 0.06em; color: ${color.textPrimary}; white-space: nowrap;">DYAD</a>
 						</td>
 						<td style="vertical-align: middle; padding: 0 0 0 ${space[5]}; border-left: 1px solid ${color.borderSubtle};">
 							<p style="font-family: ${SERIF}; font-weight: 300; font-size: ${textSize.base}; line-height: ${leading.tight}; color: ${color.textSecondary}; margin: 0 0 2px;">${copy.email.signature.closing}</p>
