@@ -1,7 +1,6 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import { copy } from '$lib/copy';
-	import FeatureFeedbackToggle from '$lib/components/FeatureFeedbackToggle.svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -112,23 +111,6 @@
 			</label>
 		{/each}
 	</section>
-
-	{#if data.receivedFeedback.length > 0}
-		<section class="events">
-			<p class="section-label">{copy.preferences.feedbackHeading}</p>
-			{#each data.receivedFeedback as fb (fb.signalId)}
-				<div class="feedback-item">
-					<FeatureFeedbackToggle signalId={fb.signalId} initialVisible={fb.visible} compact>
-						<span class="feedback-quote-compact">
-							{#if fb.quote}“{fb.quote}”{/if}
-							{#if fb.tags.length > 0}<em class="feedback-tags-compact">{fb.tags.join(', ')}</em>{/if}
-						</span>
-					</FeatureFeedbackToggle>
-				</div>
-			{/each}
-			<p class="prefs-note">{copy.preferences.feedbackHint}</p>
-		</section>
-	{/if}
 </div>
 
 <style>
@@ -246,23 +228,5 @@
 
 	.pref-row input[type='checkbox']:disabled {
 		cursor: default;
-	}
-
-	.feedback-item + .feedback-item {
-		margin-top: var(--space-3);
-	}
-
-	.feedback-quote-compact {
-		font-size: var(--text-sm);
-		color: var(--text-primary);
-		line-height: var(--leading-relaxed);
-	}
-
-	.feedback-tags-compact {
-		display: block;
-		font-style: normal;
-		font-size: var(--text-xs);
-		color: var(--text-muted);
-		margin-top: 2px;
 	}
 </style>
