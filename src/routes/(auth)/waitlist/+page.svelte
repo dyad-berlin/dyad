@@ -124,7 +124,7 @@
 					bind:value={freewrite}
 					disabled={status === 'sending'}
 					maxlength={2000}
-					rows={4}
+					rows={3}
 				></textarea>
 			</div>
 			<div class="form-group">
@@ -187,14 +187,14 @@
 	}
 
 	h1 {
-		margin: 0 0 var(--space-2) 0;
-		font-size: var(--text-3xl);
+		margin: 0 0 var(--space-1) 0;
+		font-size: var(--text-2xl);
 		font-weight: 300;
 		color: var(--text-primary);
 	}
 
 	.subtitle {
-		margin: 0 0 var(--space-6) 0;
+		margin: 0 0 var(--space-4) 0;
 		color: var(--text-muted);
 		font-size: var(--text-md);
 	}
@@ -204,10 +204,10 @@
 		display: flex;
 		align-items: flex-start;
 		gap: var(--space-3);
-		padding: var(--space-4);
+		padding: var(--space-3);
 		border: 1px solid var(--border-link);
 		border-radius: var(--radius-card);
-		margin-bottom: var(--space-4);
+		margin-bottom: var(--space-3);
 		cursor: pointer;
 		transition: border-color 0.15s, background 0.15s;
 	}
@@ -225,22 +225,22 @@
 	.consent-body {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-1);
+		gap: 2px;
 	}
 	.consent-title {
-		font-size: var(--text-md);
+		font-size: var(--text-base);
 		font-weight: 500;
 		color: var(--text-primary);
 	}
 	.consent-desc {
-		font-size: var(--text-sm);
+		font-size: var(--text-xs);
 		color: var(--text-muted);
-		line-height: var(--leading-relaxed);
+		line-height: var(--leading-normal, 1.5);
 	}
 	.consent-link {
-		font-size: var(--text-sm);
+		font-size: var(--text-xs);
 		color: var(--text-link);
-		margin-top: var(--space-1);
+		margin-top: 2px;
 	}
 	.consent-link:hover {
 		color: var(--text-link-hover);
@@ -266,14 +266,14 @@
 	}
 
 	.form-group {
-		margin-bottom: var(--space-5);
+		margin-bottom: var(--space-3);
 	}
 
 	.freewrite-label {
 		display: block;
 		font-size: var(--text-md);
 		color: var(--text-muted);
-		margin-bottom: var(--space-4);
+		margin-bottom: var(--space-2);
 	}
 
 	textarea {
@@ -306,10 +306,10 @@
 
 	input {
 		width: 100%;
-		padding: var(--space-3);
+		padding: var(--space-2) var(--space-3);
 		border: 1px solid var(--border-link);
 		border-radius: var(--radius-input);
-		font-size: var(--text-lg);
+		font-size: var(--text-base);
 		font-family: inherit;
 		background: var(--bg-canvas);
 		color: var(--text-primary);
@@ -354,7 +354,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--space-2);
-		margin-bottom: var(--space-5);
+		margin-bottom: var(--space-4);
 	}
 	.referral-field label {
 		font-size: var(--text-sm);
