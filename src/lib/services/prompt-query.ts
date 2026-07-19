@@ -42,6 +42,10 @@ async function loadScopeNames(
 }
 
 export interface PublicProfile {
+	// Server-side only — used to look up featured feedback in the route
+	// loader (SupabaseFeedbackService.getVisibleReputationSignals). Never
+	// send this to the client; no internal identifier leaves the page data.
+	id: string;
 	username: string;
 	display_name: string | null;
 	prompts: Array<{
@@ -476,6 +480,7 @@ export class SupabasePromptQueryService implements PromptQueryService {
 			.order('published_at', { ascending: false });
 
 		return {
+			id: profile.id,
 			username: profile.username,
 			display_name: profile.display_name ?? null,
 			prompts: (prompts ?? []) as PublicProfile['prompts']

@@ -8,7 +8,8 @@ import type {
 	AttendanceInput,
 	PublicFeedbackInput,
 	SafetyConcernInput,
-	RosterMember
+	RosterMember,
+	ReputationSignal
 } from '$lib/domain/types.js';
 
 export interface FeedbackInput {
@@ -46,6 +47,19 @@ export interface FeedbackService {
 	getGatheringRoster(gatheringId: string): Promise<RosterMember[]>;
 	/** Records the caller's collect-only "would you meet again" answer. */
 	submitMeetAgain(gatheringId: string, meetAgain: boolean): Promise<void>;
+
+	// ── Feature feedback on profile ──────────────────────────────────────
+	/** The caller's own feedback_received signal for one meeting (null if
+	 *  feedback hasn't locked yet, or a signal wasn't created for some other
+	 *  reason). Used to render the feature-on-profile toggle next to a
+	 *  revealed feedback card. */
+	getReputationSignalForMeeting(meetingId: string, userId: string): Promise<ReputationSignal | null>;
+	/** Visible feedback_received signals for a profile, newest first — RLS
+	 *  scopes this to visible=true rows for anyone but the profile owner. */
+	getVisibleReputationSignals(profileId: string): Promise<ReputationSignal[]>;
+	/** Returns true if the caller's own signal was updated, false otherwise
+	 *  (not found / not owned / not a feedback_received signal). */
+	setReputationSignalVisibility(signalId: string, visible: boolean): Promise<boolean>;
 }
 
 export class SupabaseFeedbackService implements FeedbackService {
@@ -204,5 +218,43 @@ export class SupabaseFeedbackService implements FeedbackService {
 		});
 
 		if (error) throw new Error(`Failed to submit meet-again: ${error.message}`);
+	}
+
+	// ── Feature feedback on profile ──────────────────────────────────────
+
+	async getReputationSignalForMeeting(meetingId: string, userId: string): Promise<ReputationSignal | null> {
+		const { data, error } = await this.supabase
+			.from('reputation_signals')
+			.select('id, profile_id, signal_type, source_meeting_id, visible, content, created_at')
+			.eq('source_meeting_id', meetingId)
+			.eq('profile_id', userId)
+			.eq('signal_type', 'feedback_received')
+			.maybeSingle();
+
+		if (error) throw new Error(`Failed to load reputation signal: ${error.message}`);
+		return data as ReputationSignal | null;
+	}
+
+	async getVisibleReputationSignals(profileId: string): Promise<ReputationSignal[]> {
+		const { data, error } = await this.supabase
+			.from('reputation_signals')
+			.select('id, profile_id, signal_type, source_meeting_id, visible, content, created_at')
+			.eq('profile_id', profileId)
+			.eq('signal_type', 'feedback_received')
+			.eq('visible', true)
+			.order('created_at', { ascending: false });
+
+		if (error) throw new Error(`Failed to load featured feedback: ${error.message}`);
+		return (data ?? []) as ReputationSignal[];
+	}
+
+	async setReputationSignalVisibility(signalId: string, visible: boolean): Promise<boolean> {
+		const { data, error } = await this.supabase.rpc('set_reputation_signal_visibility', {
+			p_signal_id: signalId,
+			p_visible: visible
+		});
+
+		if (error) throw new Error(`Failed to update visibility: ${error.message}`);
+		return data === true;
 	}
 }

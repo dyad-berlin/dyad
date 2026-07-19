@@ -518,6 +518,16 @@ export const copy = {
 		submitting: 'Submitting…',
 		revealIntro: (username: string) => `Here’s what @${username} shared with you:`,
 		revealIntroFallback: "Here’s what they shared with you:",
+		// Feature-on-profile toggle, shown alongside a revealed feedback card
+		// (/feedback/[id] reveal step, /meetings/[id] revealed-section). The
+		// reviewer is never named even here, so featuring publicly only widens
+		// the audience of already-anonymous words — no separate reviewer
+		// consent step.
+		featureToggleLabel: 'Feature this on your profile',
+		featureToggleHint: 'Anyone who visits your profile can see it. Remove it any time.',
+		featuredBadge: 'Featured on your profile',
+		unfeatureLabel: 'Remove from profile',
+		featureError: 'Couldn’t update. Please try again.',
 	},
 
 	// ── Group feedback ───────────────────────────────────────────────────
@@ -867,6 +877,13 @@ export const copy = {
 			hadMembership ? 'renew membership' : 'become a member',
 
 		errorGeneric: 'Couldn’t start checkout. Please try again.',
+	},
+
+	// ── Public profile ────────────────────────────────────────────────
+	publicProfile: {
+		_routes: ['/users/[username]'],
+		_description: 'Public-facing profile any member can view — published conversations plus any feedback the person has chosen to feature.',
+		featuredHeading: 'What people say',
 	},
 
 	// ── Emails ─────────────────────────────────────────────────────────

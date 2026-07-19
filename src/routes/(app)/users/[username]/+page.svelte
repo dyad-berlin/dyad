@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import FloatingNav from '$lib/components/FloatingNav.svelte';
+	import { copy } from '$lib/copy';
 
 	let { data }: { data: PageData } = $props();
 
@@ -18,6 +19,26 @@
 			<h1 class="display-name">@{data.profile.username}</h1>
 		{/if}
 	</div>
+
+	{#if data.featuredFeedback.length > 0}
+		<section class="featured-section">
+			<h2 class="section-title">{copy.publicProfile.featuredHeading}</h2>
+			{#each data.featuredFeedback as fb}
+				<div class="reveal-card">
+					{#if fb.quote}
+						<blockquote class="reveal-quote">{fb.quote}</blockquote>
+					{/if}
+					{#if fb.tags.length > 0}
+						<ul class="reveal-tags" role="list">
+							{#each fb.tags as tag}
+								<li class="reveal-tag">{tag}</li>
+							{/each}
+						</ul>
+					{/if}
+				</div>
+			{/each}
+		</section>
+	{/if}
 
 	{#if data.prompts.length === 0}
 		<p class="empty">No conversations yet.</p>
@@ -55,6 +76,12 @@
 	.profile-header { margin-bottom: var(--space-8); }
 	.display-name { font-size: var(--text-2xl); font-weight: normal; margin: 0 0 var(--space-1); }
 	.username { font-family: var(--font-mono); font-size: var(--text-sm); color: var(--text-muted); margin: 0; }
+
+	/* .reveal-card, .reveal-quote, .reveal-tags, .reveal-tag — shared.css.
+	   Same anonymous quote+tags treatment as the feedback reveal itself —
+	   the person featuring this chose to show it, no reviewer identity
+	   travels with it either place. */
+	.featured-section { margin-bottom: var(--space-8); }
 
 	.empty { color: var(--text-muted); font-size: var(--text-base); }
 

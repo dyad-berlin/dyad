@@ -376,6 +376,16 @@ export interface ReputationSignal {
 	created_at: string;
 }
 
+/** Shape of ReputationSignal.content when signal_type is 'feedback_received'
+ *  — a snapshot taken from feedback_forms at simultaneous-reveal lock time
+ *  (see 20260718090000_feature_feedback_on_profile.sql). Anonymous: no
+ *  reviewer identity travels with the snapshot. */
+export interface FeedbackReceivedContent {
+	feedback_form_id: string;
+	quote: string | null;
+	tags: string[];
+}
+
 // Membership / entitlement
 
 // Billing cadence. Monthly/annual auto-recur; lifetime is a one-time purchase
