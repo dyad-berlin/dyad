@@ -9,16 +9,11 @@ describe('renderWaitlistWelcomeEmail — signed footer', () => {
 		expect(html).toContain('dyad · berlin');
 	});
 
-	it('embeds SangBleu Sunrise via @font-face with a Georgia fallback', () => {
+	it('uses a system serif — no @font-face (unreadable Light weight; Gmail strips it anyway)', () => {
 		const html = renderWaitlistWelcomeEmail({ displayName: 'Alex' });
-		expect(html).toContain('@font-face');
-		expect(html).toContain(
-			"url('https://dyad.berlin/fonts/SangBleuSunrise-Light-WebXL.woff2')"
-		);
-		expect(html).toContain(
-			"url('https://dyad.berlin/fonts/SangBleuSunrise-Regular-WebXL.woff2')"
-		);
-		expect(html).toMatch(/font-family: 'SangBleu Sunrise', Georgia, serif/);
+		expect(html).not.toContain('@font-face');
+		expect(html).not.toContain('SangBleu');
+		expect(html).toMatch(/font-family: Georgia, 'Times New Roman', serif/);
 	});
 
 	it('renders a text DYAD wordmark linking to dyad.berlin (not the old logo image)', () => {

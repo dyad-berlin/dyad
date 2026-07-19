@@ -12,16 +12,11 @@ describe('renderInviteEmail — signed footer', () => {
 		expect(html).toContain('dyad · berlin');
 	});
 
-	it('embeds SangBleu Sunrise via @font-face with a Georgia fallback', () => {
+	it('uses a system serif — no @font-face (unreadable Light weight; Gmail strips it anyway)', () => {
 		const html = renderInviteEmail({ inviteUrl: INVITE_URL, expiryDays: EXPIRY });
-		expect(html).toContain('@font-face');
-		expect(html).toContain(
-			"url('https://dyad.berlin/fonts/SangBleuSunrise-Light-WebXL.woff2')"
-		);
-		expect(html).toContain(
-			"url('https://dyad.berlin/fonts/SangBleuSunrise-Regular-WebXL.woff2')"
-		);
-		expect(html).toMatch(/font-family: 'SangBleu Sunrise', Georgia, serif/);
+		expect(html).not.toContain('@font-face');
+		expect(html).not.toContain('SangBleu');
+		expect(html).toMatch(/font-family: Georgia, 'Times New Roman', serif/);
 	});
 
 	it('renders a text DYAD wordmark linking to dyad.berlin (not the old logo image)', () => {
@@ -36,6 +31,14 @@ describe('renderInviteEmail — signed footer', () => {
 		const html = renderInviteEmail({ inviteUrl: INVITE_URL, expiryDays: EXPIRY });
 		expect(html).toContain(`href="${INVITE_URL}"`);
 		expect(html).toContain('Join dyad');
+	});
+
+	it('always carries a short useful body, even with no opener or message', () => {
+		const html = renderInviteEmail({ inviteUrl: INVITE_URL, expiryDays: EXPIRY });
+		expect(html).toContain('Your request to join dyad is accepted.');
+		expect(html).toContain('https://dyad.berlin/docs#standards');
+		expect(html).toContain('https://dyad.berlin/docs');
+		expect(html).toContain('reply to this email');
 	});
 
 	it('renders the expiry days the caller passes in', () => {
