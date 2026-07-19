@@ -8,6 +8,10 @@
 	function formatDate(iso: string): string {
 		return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 	}
+
+	function formatMonthYear(iso: string): string {
+		return new Date(iso).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+	}
 </script>
 
 <div class="content">
@@ -18,25 +22,27 @@
 		{:else}
 			<h1 class="display-name">@{data.profile.username}</h1>
 		{/if}
+		{#if data.completedCount > 0}
+			<p class="completed-count">{copy.publicProfile.completedCount(data.completedCount)}</p>
+		{/if}
 	</div>
 
 	{#if data.featuredFeedback.length > 0}
 		<section class="featured-section">
 			<h2 class="section-title">{copy.publicProfile.featuredHeading}</h2>
-			{#each data.featuredFeedback as fb}
-				<div class="reveal-card">
-					{#if fb.quote}
-						<blockquote class="reveal-quote">{fb.quote}</blockquote>
-					{/if}
-					{#if fb.tags.length > 0}
-						<ul class="reveal-tags" role="list">
-							{#each fb.tags as tag}
-								<li class="reveal-tag">{tag}</li>
-							{/each}
-						</ul>
-					{/if}
-				</div>
-			{/each}
+			<div class="feedback-grid">
+				{#each data.featuredFeedback as fb}
+					<article class="feedback-card">
+						<p class="feedback-date">{formatMonthYear(fb.created_at)}</p>
+						{#if fb.quote}
+							<p class="feedback-quote">{fb.quote}</p>
+						{/if}
+						{#if fb.tags.length > 0}
+							<p class="feedback-tags">{fb.tags.join(' · ')}</p>
+						{/if}
+					</article>
+				{/each}
+			</div>
 		</section>
 	{/if}
 
@@ -76,12 +82,41 @@
 	.profile-header { margin-bottom: var(--space-8); }
 	.display-name { font-size: var(--text-2xl); font-weight: normal; margin: 0 0 var(--space-1); }
 	.username { font-family: var(--font-mono); font-size: var(--text-sm); color: var(--text-muted); margin: 0; }
+	.completed-count { font-size: var(--text-sm); color: var(--text-muted); margin: var(--space-2) 0 0; }
 
-	/* .reveal-card, .reveal-quote, .reveal-tags, .reveal-tag — shared.css.
-	   Same anonymous quote+tags treatment as the feedback reveal itself —
+	/* Featured feedback — borderless columns, review-listing style: date on
+	   top, quote as plain text, tags as one muted line. Anonymous either way —
 	   the person featuring this chose to show it, no reviewer identity
-	   travels with it either place. */
+	   travels with the snapshot. */
 	.featured-section { margin-bottom: var(--space-8); }
+
+	.feedback-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+		column-gap: var(--space-8);
+		row-gap: var(--space-6);
+	}
+
+	.feedback-card { min-width: 0; }
+
+	.feedback-date {
+		font-size: var(--text-sm);
+		color: var(--text-muted);
+		margin: 0 0 var(--space-2);
+	}
+
+	.feedback-quote {
+		font-size: var(--text-md);
+		line-height: var(--leading-relaxed);
+		color: var(--text-primary);
+		margin: 0;
+	}
+
+	.feedback-tags {
+		font-size: var(--text-sm);
+		color: var(--text-muted);
+		margin: var(--space-2) 0 0;
+	}
 
 	.empty { color: var(--text-muted); font-size: var(--text-base); }
 

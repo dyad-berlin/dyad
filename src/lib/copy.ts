@@ -364,6 +364,7 @@ export const copy = {
 		// Quiet action row in the profile card, next to sign out.
 		preferencesLink: 'preferences',
 		membershipLink: 'membership',
+		feedbackLink: 'feedback',
 	},
 
 	// ── Preferences ────────────────────────────────────────────────────
@@ -423,6 +424,18 @@ export const copy = {
 			'Standalone membership management view, sibling to Preferences. Shows the current plan and a manage link (Stripe portal) for active members, and the ended/lapsed/none states pointing at /membership. Copy for those states is reused from copy.preferences.membership* for now.',
 		title: 'Membership',
 		backToProfile: '← profile',
+	},
+
+	// ── Feedback area (profile) ────────────────────────────────────────
+	// Standalone "feature feedback on your profile" view, sibling to
+	// Preferences and Membership rather than nested under Preferences.
+	feedbackArea: {
+		_routes: ['/profile/feedback'],
+		_description:
+			'Standalone view for reviewing feedback received from meetings and choosing which pieces to feature on the public profile. Sibling to Preferences and Membership. Copy for the list itself is reused from copy.preferences.feedback* for now.',
+		title: 'Feedback',
+		backToProfile: '← profile',
+		empty: "You haven’t received any feedback yet.",
 	},
 
 	// ── Meeting detail ─────────────────────────────────────────────────
@@ -887,8 +900,12 @@ export const copy = {
 	// ── Public profile ────────────────────────────────────────────────
 	publicProfile: {
 		_routes: ['/users/[username]'],
-		_description: 'Public-facing profile any member can view — published conversations plus any feedback the person has chosen to feature.',
+		_description: 'Public-facing profile any member can view — published conversations, a completed-conversations count, plus any feedback the person has chosen to feature.',
 		featuredHeading: 'What people say',
+		// Trust stat under the name: in-person conversations this member has
+		// completed (meetings that reached feedback lock).
+		completedCount: (n: number) =>
+			n === 1 ? '1 conversation completed' : `${n} conversations completed`,
 	},
 
 	// ── Emails ─────────────────────────────────────────────────────────
