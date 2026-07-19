@@ -11,7 +11,7 @@ const ASSETS =
 const imageMap: Record<string, string> = {
 	'/login': '/images/log-in.jpeg',
 	'/join': '/images/log-in.jpeg',
-	'/waitlist': `${ASSETS}/request%20to%20join.webp`
+	'/waitlist': `${ASSETS}/mycelium%20for%20waitlist.webp`
 };
 
 export const load: LayoutLoad = ({ url }) => {
