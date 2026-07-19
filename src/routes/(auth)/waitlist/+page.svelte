@@ -89,6 +89,13 @@
 		{/if}
 	{:else}
 		<form onsubmit={handleSubmit}>
+			<p class="standards-note">
+				{copy.waitlist.standardsNotePre}<a
+					href={copy.waitlist.standardsHref}
+					target="_blank"
+					rel="noopener">{copy.waitlist.standardsLink}</a
+				>{copy.waitlist.standardsNotePost}
+			</p>
 			<div class="form-group">
 				<label for="freewrite" class="freewrite-label">{copy.waitlist.freewriteLabel}</label>
 				<textarea
@@ -170,6 +177,22 @@
 		margin: 0 0 var(--space-6) 0;
 		color: var(--text-muted);
 		font-size: var(--text-md);
+	}
+
+	.standards-note {
+		margin: 0 0 var(--space-5) 0;
+		color: var(--text-muted);
+		font-size: var(--text-sm);
+		line-height: var(--leading-relaxed);
+	}
+
+	.standards-note a {
+		color: inherit;
+		text-decoration: underline;
+	}
+
+	.standards-note a:hover {
+		color: var(--text-primary);
 	}
 
 	.success-message {

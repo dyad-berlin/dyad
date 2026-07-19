@@ -668,6 +668,12 @@ export const copy = {
 		pageTitle: 'join · dyad. cultivating a culture of conversation',
 		heading: 'Request to join',
 		subtitle: 'For those who seek conversation for its own sake and meet others with humility, critical thinking and deep listening.',
+		// Standards acknowledgement, stated where the friction happens. The
+		// linked words render as an anchor to the Community Standards in /docs.
+		standardsNotePre: 'We expect you to acknowledge our ',
+		standardsLink: 'community standards',
+		standardsHref: '/docs#standards',
+		standardsNotePost: ' to begin with. If you haven’t come across them yet, give them a read.',
 		successMessage: "Thank you. We’ll be in touch.",
 		freewriteLabel: 'Why do you want to join?',
 		freewritePlaceholder: "What’s in a conversation?",
