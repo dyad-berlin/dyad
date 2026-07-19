@@ -667,13 +667,19 @@ export const copy = {
 		// /waitlist page
 		pageTitle: 'join · dyad. cultivating a culture of conversation',
 		heading: 'Request to join',
-		subtitle: 'For those who seek conversation for its own sake and meet others with humility, critical thinking and deep listening.',
-		// Standards acknowledgement, stated where the friction happens. The
-		// linked words render as an anchor to the Community Standards in /docs.
-		standardsNotePre: 'We expect you to acknowledge our ',
-		standardsLink: 'community standards',
-		standardsHref: '/docs#standards',
-		standardsNotePost: ' to begin with. If you haven’t come across them yet, give them a read.',
+		subtitle: 'For those who seek conversations and expect to find them their way.',
+		// Acknowledgement cards — same consent treatment as the membership
+		// flow's common-ground step. Both must be checked before the request
+		// sends; each card links its full document in /docs.
+		consentStandardsTitle: 'Community Standards',
+		consentStandardsDesc: 'I have read and agree to the Community Standards: what we do not tolerate, and what happens when something goes wrong.',
+		consentStandardsLinkLabel: 'Read the Community Standards →',
+		consentStandardsHref: '/docs#standards',
+		consentAgreementsTitle: 'Member Agreements',
+		consentAgreementsDesc: 'I have read and agree to the Member Agreements: who can join, what membership includes, and what it is not.',
+		consentAgreementsLinkLabel: 'Read the Member Agreements →',
+		consentAgreementsHref: '/docs#agreements',
+		consentRequired: 'Please confirm the Community Standards and Member Agreements before requesting to join.',
 		successMessage: "Thank you. We’ll be in touch.",
 		freewriteLabel: 'Why do you want to join?',
 		freewritePlaceholder: "What’s in a conversation?",

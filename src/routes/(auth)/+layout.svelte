@@ -86,15 +86,22 @@
 		z-index: 1;
 	}
 
-	/* Form — right half, vertically centered */
+	/* Form — right half, vertically centered. Centering happens via auto
+	   margins on the card (not align-items: center) so that content taller
+	   than the viewport top-aligns and scrolls instead of clipping above. */
 	.form-half {
 		width: 50%;
 		height: 100%;
 		display: flex;
-		align-items: center;
 		justify-content: center;
 		padding: 2rem;
 		box-sizing: border-box;
+		overflow-y: auto;
+	}
+
+	.form-half > :global(.auth-card) {
+		margin-top: auto;
+		margin-bottom: auto;
 	}
 
 	/* === Mobile — image on top, form below === */

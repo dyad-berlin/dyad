@@ -9,6 +9,9 @@
 	let freewrite = $state('');
 	let referralSource = $state('');
 	let referralOther = $state('');
+	// Acknowledgement gate — both must be checked before the request sends.
+	let agreedStandards = $state(false);
+	let agreedAgreements = $state(false);
 	// The newsletter opt-in happens on Substack (they are the controller); we
 	// only show the link after signup, and only when the URL is configured.
 	const newsletterUrl = (env.PUBLIC_NEWSLETTER_URL ?? '').trim();
@@ -31,6 +34,12 @@
 			(referralSource === 'other' && !referralOther.trim())
 		) {
 			errorMsg = copy.waitlist.allRequired;
+			status = 'error';
+			return;
+		}
+
+		if (!agreedStandards || !agreedAgreements) {
+			errorMsg = copy.waitlist.consentRequired;
 			status = 'error';
 			return;
 		}
@@ -89,13 +98,24 @@
 		{/if}
 	{:else}
 		<form onsubmit={handleSubmit}>
-			<p class="standards-note">
-				{copy.waitlist.standardsNotePre}<a
-					href={copy.waitlist.standardsHref}
-					target="_blank"
-					rel="noopener">{copy.waitlist.standardsLink}</a
-				>{copy.waitlist.standardsNotePost}
-			</p>
+			<label class="consent-card" class:checked={agreedStandards}>
+				<input type="checkbox" bind:checked={agreedStandards} disabled={status === 'sending'} />
+				<span class="consent-body">
+					<span class="consent-title">{copy.waitlist.consentStandardsTitle}</span>
+					<span class="consent-desc">{copy.waitlist.consentStandardsDesc}</span>
+					<a href={copy.waitlist.consentStandardsHref} target="_blank" rel="noopener" class="consent-link">{copy.waitlist.consentStandardsLinkLabel}</a>
+				</span>
+			</label>
+
+			<label class="consent-card" class:checked={agreedAgreements}>
+				<input type="checkbox" bind:checked={agreedAgreements} disabled={status === 'sending'} />
+				<span class="consent-body">
+					<span class="consent-title">{copy.waitlist.consentAgreementsTitle}</span>
+					<span class="consent-desc">{copy.waitlist.consentAgreementsDesc}</span>
+					<a href={copy.waitlist.consentAgreementsHref} target="_blank" rel="noopener" class="consent-link">{copy.waitlist.consentAgreementsLinkLabel}</a>
+				</span>
+			</label>
+
 			<div class="form-group">
 				<label for="freewrite" class="freewrite-label">{copy.waitlist.freewriteLabel}</label>
 				<textarea
@@ -179,20 +199,51 @@
 		font-size: var(--text-md);
 	}
 
-	.standards-note {
-		margin: 0 0 var(--space-5) 0;
-		color: var(--text-muted);
+	/* Acknowledgement cards — same treatment as the membership consent step. */
+	.consent-card {
+		display: flex;
+		align-items: flex-start;
+		gap: var(--space-3);
+		padding: var(--space-4);
+		border: 1px solid var(--border-link);
+		border-radius: var(--radius-card);
+		margin-bottom: var(--space-4);
+		cursor: pointer;
+		transition: border-color 0.15s, background 0.15s;
+	}
+	.consent-card.checked {
+		border-color: var(--text-primary);
+		background: color-mix(in srgb, var(--text-primary) 5%, transparent);
+	}
+	.consent-card input[type='checkbox'] {
+		margin-top: 3px;
+		width: 18px;
+		height: 18px;
+		accent-color: var(--text-primary);
+		flex-shrink: 0;
+	}
+	.consent-body {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-1);
+	}
+	.consent-title {
+		font-size: var(--text-md);
+		font-weight: 500;
+		color: var(--text-primary);
+	}
+	.consent-desc {
 		font-size: var(--text-sm);
+		color: var(--text-muted);
 		line-height: var(--leading-relaxed);
 	}
-
-	.standards-note a {
-		color: inherit;
-		text-decoration: underline;
+	.consent-link {
+		font-size: var(--text-sm);
+		color: var(--text-link);
+		margin-top: var(--space-1);
 	}
-
-	.standards-note a:hover {
-		color: var(--text-primary);
+	.consent-link:hover {
+		color: var(--text-link-hover);
 	}
 
 	.success-message {
@@ -271,6 +322,28 @@
 	}
 
 	input:disabled {
+		opacity: var(--opacity-disabled);
+		cursor: not-allowed;
+	}
+
+	select {
+		width: 100%;
+		padding: var(--space-3);
+		border: 1px solid var(--border-link);
+		border-radius: var(--radius-input);
+		font-size: var(--text-base);
+		font-family: inherit;
+		background: var(--bg-canvas);
+		color: var(--text-primary);
+		transition: border-color 0.2s;
+	}
+
+	select:focus {
+		outline: none;
+		border-color: var(--text-muted);
+	}
+
+	select:disabled {
 		opacity: var(--opacity-disabled);
 		cursor: not-allowed;
 	}
