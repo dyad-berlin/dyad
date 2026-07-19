@@ -313,11 +313,6 @@ export const copy = {
 		conversations: 'Conversations',
 		meetings: 'Meetings',
 		needsAttention: 'Needs your attention',
-		// "Feedback you've received" section — every feedback_received signal,
-		// visible or not, each with its own feature-on-profile toggle. The one
-		// place to find and feature past feedback without already knowing
-		// which meeting it came from.
-		receivedFeedbackHeading: "Feedback you've received",
 		noConversations: 'No conversations yet.',
 		noMeetings: 'No meetings yet.',
 		startOne: 'Start one',
@@ -397,6 +392,11 @@ export const copy = {
 		// Must not reference a sign-up/account email or treat contact as identity.
 		notificationPrefsNote:
 			"By default, dyad doesn’t send notifications. Choose what you’d like to receive; you can change this anytime.",
+		// Compact list — every feedback_received signal (visible or not), one
+		// row per item, matching the emailPrefsHeading/pref-row pattern above
+		// rather than the fuller card shown inline on a meeting's reveal.
+		feedbackHeading: 'Feature feedback on your profile',
+		feedbackHint: 'Anyone who visits your profile can see what you check. Change your mind any time.',
 		membershipHeading: 'Membership',
 		membershipManage: 'manage membership',
 		membershipManageError: 'We couldn’t open the membership portal just now. Please try again.',
