@@ -5,11 +5,13 @@ test.describe('Smoke tests', () => {
 	test('landing page loads for anonymous users', async ({ page }) => {
 		await page.goto('/');
 		await expect(page.locator('.left-title')).toBeVisible();
-		// The hero Join CTA opens the waitlist dialog with its "Join waitlist" button.
-		// Pin to the stable data-testid — the header Join was folded into the hero
-		// action group, so a class/text selector would be ambiguous.
+		// The hero Join CTA navigates straight to /waitlist (no modal — the
+		// waitlist-mode dialog is archived). Pin to the stable data-testid — the
+		// header Join was folded into the hero action group, so a class/text
+		// selector would be ambiguous.
 		await page.locator('[data-testid="join-cta"]').click();
-		await expect(page.getByRole('button', { name: /join waitlist/i })).toBeVisible();
+		await expect(page).toHaveURL('/waitlist');
+		await expect(page.getByRole('button', { name: /request to join/i })).toBeVisible();
 	});
 
 	test('Sophie can log in and see discover page', async ({ browser }) => {

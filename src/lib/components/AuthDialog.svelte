@@ -153,6 +153,7 @@
 	<div class="auth-overlay" onclick={(e) => { if (e.target === e.currentTarget) hide(); }}>
 		<div
 			class="auth-dialog"
+			class:full-bleed-mobile={currentMode === 'waitlist'}
 			role="dialog"
 			aria-modal="true"
 			aria-labelledby="auth-dialog-title"
@@ -324,7 +325,7 @@
 				<a href="/login?mode=reset" class="link-btn" onclick={hide}>{copy.auth.forgotPassword}</a>
 			</p>
 			<p class="mode-switch">
-				{copy.auth.dontHaveAccount} <button class="link-btn" onclick={() => switchMode('waitlist')}>{copy.auth.join}</button>
+				{copy.auth.dontHaveAccount} <a href="/waitlist" class="link-btn" onclick={hide}>{copy.auth.join}</a>
 			</p>
 		{/if}
 			</div>
@@ -544,24 +545,25 @@
 
 	a.link-btn { text-decoration: underline; }
 
-	/* Mobile — same breakpoint as the (auth) layout. A floating card with
-	   fixed side padding left almost no room for the consent cards/inputs
-	   on a phone width; go edge-to-edge like the standalone /waitlist page
-	   does (no side image there either), scrolling naturally instead of
-	   being boxed into a small inset dialog. */
+	/* Mobile, waitlist mode only (archived path — Join now goes straight to
+	   /waitlist as a full page; this stays scoped in case the modal path is
+	   ever reused). Login keeps its normal floating-card overlay on mobile,
+	   same as desktop. A floating card with fixed side padding left almost no
+	   room for the consent cards/inputs on a phone width; go edge-to-edge like
+	   the standalone /waitlist page does instead. */
 	@media (max-width: 430px) {
-		.auth-overlay {
+		.auth-overlay:has(.full-bleed-mobile) {
 			padding: 0;
 			align-items: flex-start;
 		}
 
-		.auth-dialog {
+		.auth-dialog.full-bleed-mobile {
 			max-width: 100%;
 			min-height: 100vh;
 			border-radius: 0;
 		}
 
-		.dialog-content {
+		.auth-dialog.full-bleed-mobile .dialog-content {
 			padding: var(--space-6) var(--space-4);
 		}
 	}

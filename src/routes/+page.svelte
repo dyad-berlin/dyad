@@ -19,8 +19,10 @@
 
 	const conversations = $derived<PromptSummary[]>(data.mapPrompts ?? []);
 
-	function openAuth(mode: 'waitlist' | 'login') {
-		authDialog?.show(mode);
+	// Join no longer opens a modal — it navigates straight to /waitlist (plain
+	// href, no intercept). Login still opens in a dialog over the landing page.
+	function openLogin() {
+		authDialog?.show('login');
 	}
 
 	function closeConversation() {
@@ -73,9 +75,9 @@
 				<h1 class="left-title">{og.headlineLine1}<br />{og.headlineLine2}</h1>
 				<p class="left-sub">{og.subcopy}</p>
 				<div class="left-links">
-					<!-- href fallbacks so each action degrades without JS -->
-					<a href="/waitlist" class="btn-join" data-testid="join-cta" onclick={(e) => { e.preventDefault(); openAuth('waitlist'); }}>{og.joinWaitlist}</a>
-					<a href="/login" class="text-link" onclick={(e) => { e.preventDefault(); openAuth('login'); }}>{og.logIn}</a>
+					<a href="/waitlist" class="btn-join" data-testid="join-cta">{og.joinWaitlist}</a>
+					<!-- href fallback so this action degrades without JS -->
+					<a href="/login" class="text-link" onclick={(e) => { e.preventDefault(); openLogin(); }}>{og.logIn}</a>
 				</div>
 			</header>
 
@@ -143,7 +145,7 @@
 						{#if selected.body_snippet}
 							<p class="map-card-snippet">{selected.body_snippet}</p>
 						{/if}
-						<a href="/waitlist" class="map-card-cta" onclick={(e) => { e.preventDefault(); openAuth('waitlist'); }}>{og.mapCardCta}</a>
+						<a href="/waitlist" class="map-card-cta">{og.mapCardCta}</a>
 					</div>
 				</div>
 			{/if}
