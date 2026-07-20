@@ -20,7 +20,7 @@
 				<a href="/newsletter" class="footer-link">Newsletter</a>
 				{#if blogUrl}<a href={blogUrl} class="footer-link" target="_blank" rel="noopener">Blog</a>{/if}
 				{#if instagramUrl}<a href={instagramUrl} class="footer-link" target="_blank" rel="noopener">Instagram</a>{/if}
-				{#if blueskyUrl}<a href={blueskyUrl} class="footer-link" target="_blank" rel="noopener">Bluesky</a>{/if}
+				{#if blueskyUrl}<a href={blueskyUrl} class="footer-link" target="_blank" rel="noopener">Bluesky &amp; Blacksky</a>{/if}
 				{#if youtubeUrl}<a href={youtubeUrl} class="footer-link" target="_blank" rel="noopener">YouTube</a>{/if}
 			</div>
 			<div class="footer-col">
@@ -55,14 +55,12 @@
 		padding: 0 48px;
 	}
 
-	/* Three compact, left-hugging columns — Community, Resources, Legal —
-	   rather than stretched across the full 1080px measure. Community
-	   carries the most content (membership + social); Resources nests
-	   About Us/Community/Governance as links into /docs; Legal is short. */
+	/* Three columns spread across the same measure the page content itself
+	   uses (.footer-inner's 1080px/48px, matching .page and .archive) rather
+	   than left-hugging at a fixed column width. */
 	.footer-grid {
 		display: grid;
-		grid-template-columns: repeat(3, minmax(0, 180px));
-		justify-content: start;
+		grid-template-columns: repeat(3, 1fr);
 		gap: 40px;
 		margin-bottom: 56px;
 	}

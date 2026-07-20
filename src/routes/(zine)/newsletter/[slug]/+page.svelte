@@ -32,7 +32,6 @@
 			<hr />
 			<p class="essay-date-row">{formatEditorialDate(entry.date)}</p>
 			<p class="essay-byline">words by Luna</p>
-			<p class="essay-standfirst">Unfolding is our weekly meditation on building social technology in service of collective sensemaking and community. From our open-source infrastructure, designed to resist extraction and mission drift, to practising collective governance with our community and moving toward collective ownership, we share the thinking and work behind Dyad.</p>
 		</header>
 
 		<div class="essay-body">
@@ -171,18 +170,6 @@
 		font-size: 0.85rem;
 		color: var(--paper-ink-soft);
 		margin: 0 0 28px;
-	}
-
-	/* Masthead standfirst — bold, same serif as the body, sits where Atmos
-	   runs its recurring "Welcome to..." line: under the byline, before the
-	   epigraph. Same on every entry, not per-post content. */
-	.essay-standfirst {
-		font-family: var(--font-serif);
-		font-weight: 700;
-		font-size: 1rem;
-		line-height: 1.5;
-		color: var(--paper-ink);
-		margin: 0 0 56px;
 	}
 
 	/* Reading column — SangBleu Sunrise throughout, matching /docs; the sans
