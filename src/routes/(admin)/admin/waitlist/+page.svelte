@@ -23,14 +23,19 @@
 
 	const MESSAGE_MAX = 2000;
 
-	async function send(email: string, name: string | null, message: string) {
+	async function send(email: string, name: string | null, message: string, recipientName: string | null) {
 		invitingEmail = email;
 		inviteResult = null;
 		try {
 			const res = await fetch('/admin/invites/api', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ email, name, message: message.trim() || undefined })
+				body: JSON.stringify({
+					email,
+					name,
+					message: message.trim() || undefined,
+					recipientName: recipientName?.trim() || undefined
+				})
 			});
 			const body = await res.json();
 			if (res.ok) {
@@ -51,14 +56,14 @@
 		}
 	}
 
-	async function inviteWaitlisted(email: string) {
+	async function inviteWaitlisted(contact: { email: string; name: string | null }) {
 		// Personalized path: the admin wrote the opener/message by hand.
-		const opener = openerByEmail[email] ?? '';
-		const msg = messageByEmail[email] ?? '';
-		await send(email, opener.trim() || null, msg);
+		const opener = openerByEmail[contact.email] ?? '';
+		const msg = messageByEmail[contact.email] ?? '';
+		await send(contact.email, opener.trim() || null, msg, contact.name);
 		if (inviteResult && !inviteResult.message.startsWith('Failed') && !inviteResult.message.startsWith('Network')) {
-			const { [email]: _o, ...restOpeners } = openerByEmail;
-			const { [email]: _m, ...restMessages } = messageByEmail;
+			const { [contact.email]: _o, ...restOpeners } = openerByEmail;
+			const { [contact.email]: _m, ...restMessages } = messageByEmail;
 			openerByEmail = restOpeners;
 			messageByEmail = restMessages;
 			expandedEmail = null;
@@ -69,8 +74,7 @@
 	 *  greeting built from the name the person gave on the waitlist form.
 	 *  Nothing to type — the template (copy.email.invite*) carries the words. */
 	async function acceptWithTemplate(contact: { email: string; name: string | null }) {
-		const opener = contact.name?.trim() ? `Hi ${contact.name.trim()},` : null;
-		await send(contact.email, opener, '');
+		await send(contact.email, null, '', contact.name);
 	}
 
 	function formatDate(iso: string): string {
@@ -162,6 +166,16 @@
 					<span class="contact-name">{contact.name ?? 'Anonymous'}</span>
 					<span class="contact-email">{contact.email}</span>
 					<span class="badge badge-{contact.status}">{contact.status.replace('_', ' ')}</span>
+					{#if contact.referred_by_username}
+						{#if contact.referrerVerified}
+							<span class="badge badge-referred">invited by @{contact.referred_by_username}</span>
+							{#if contact.status === 'not_invited'}
+								<span class="badge badge-fasttrack">review within 2 days</span>
+							{/if}
+						{:else}
+							<span class="badge badge-referred">claims referral by @{contact.referred_by_username} (no such member)</span>
+						{/if}
+					{/if}
 				</div>
 				{#if contact.based_in}
 					<span class="contact-city">{contact.based_in}</span>
@@ -210,7 +224,7 @@
 					{#if expandedEmail === contact.email}
 						<button
 							class="btn-primary"
-							onclick={() => inviteWaitlisted(contact.email)}
+							onclick={() => inviteWaitlisted(contact)}
 							disabled={invitingEmail === contact.email}
 						>
 							{invitingEmail === contact.email
@@ -326,6 +340,8 @@
 	.badge-expired { background: rgba(239,68,68,0.12); color: #dc2626; }
 	.badge-signed_up { background: rgba(61,158,90,0.12); color: #2d7a42; }
 	.badge-provider { background: color-mix(in srgb, var(--color-accent) 12%, transparent); color: var(--color-accent); }
+	.badge-referred { background: rgba(99,102,241,0.12); color: #4f46e5; text-transform: none; }
+	.badge-fasttrack { background: rgba(245,158,11,0.18); color: #92400e; }
 
 	.join-requests { margin-bottom: var(--space-6); }
 	.join-requests h2 { font-size: var(--text-lg); margin: 0 0 var(--space-1) 0; color: var(--text-primary); }

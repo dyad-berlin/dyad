@@ -39,13 +39,17 @@ export const PATCH: RequestHandler = async ({ params, request, locals }) => {
 	try {
 		const newState = await service.submit(params.id, body);
 
-		// If both parties submitted (locked), return revealed feedback directly
-		// to eliminate a second client round trip
+		// If both parties submitted (locked), return revealed feedback and the
+		// caller's own reputation signal (feature-on-profile toggle source)
+		// directly, to eliminate extra client round trips.
 		if (newState === 'locked') {
 			const form = await service.getFormById(params.id, upactor.id);
 			if (form) {
-				const revealed = await service.getRevealedFeedback(form.meeting_id, upactor.id);
-				return json({ ok: true, state: newState, revealed });
+				const [revealed, reputationSignal] = await Promise.all([
+					service.getRevealedFeedback(form.meeting_id, upactor.id),
+					service.getReputationSignalForMeeting(form.meeting_id, upactor.id)
+				]);
+				return json({ ok: true, state: newState, revealed, reputationSignal });
 			}
 		}
 

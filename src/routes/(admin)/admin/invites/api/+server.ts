@@ -56,7 +56,7 @@ export const POST: RequestHandler = async ({ request }) => {
 	} catch {
 		return json({ error: 'Invalid JSON body' }, { status: 400 });
 	}
-	const { email, name, message, scope, signatureClosing, signatureNames } = body;
+	const { email, name, message, recipientName, scope, signatureClosing, signatureNames } = body;
 
 	if (!email || typeof email !== 'string') {
 		error(400, 'Email is required');
@@ -79,6 +79,7 @@ export const POST: RequestHandler = async ({ request }) => {
 	// in the renderer when omitted; empty strings are treated as omitted.
 	const validatedSignatureClosing = validateShortText(signatureClosing, 'signatureClosing');
 	const validatedSignatureNames = validateShortText(signatureNames, 'signatureNames');
+	const validatedRecipientName = validateShortText(recipientName, 'recipientName');
 
 	// Validate optional scope. Must reference an existing, non-retired scope.
 	// FK enforces existence; we validate non-retired in app layer (FK doesn't
@@ -124,7 +125,7 @@ export const POST: RequestHandler = async ({ request }) => {
 				opener: buildOpener(name),
 				inviteUrl,
 				message: trimmedMessage,
-				expiryDays: INVITE_EXPIRY_DAYS,
+				recipientName: validatedRecipientName,
 				signatureClosing: validatedSignatureClosing,
 				signatureNames: validatedSignatureNames
 			})
@@ -177,7 +178,7 @@ export const POST: RequestHandler = async ({ request }) => {
 			opener: buildOpener(name),
 			inviteUrl,
 			message: trimmedMessage,
-			expiryDays: INVITE_EXPIRY_DAYS,
+			recipientName: validatedRecipientName,
 			signatureClosing: validatedSignatureClosing,
 			signatureNames: validatedSignatureNames
 		})

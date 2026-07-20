@@ -18,6 +18,9 @@ export interface MeetingService {
 		reason?: string,
 		pairMeetingIds?: string[]
 	): Promise<{ tier: CancellationTier; joiners: { joinerId: string; meetingId: string }[] }>;
+	/** Aggregate only — meetings RLS is participants-only, so this goes through
+	 *  a DEFINER function that exposes the completed count and nothing else. */
+	countCompleted(profileId: string): Promise<number>;
 }
 
 export class SupabaseMeetingService implements MeetingService {
@@ -109,5 +112,13 @@ export class SupabaseMeetingService implements MeetingService {
 			tier: rows[0].tier,
 			joiners: rows.map((r) => ({ joinerId: r.joiner_id, meetingId: r.meeting_id }))
 		};
+	}
+
+	async countCompleted(profileId: string): Promise<number> {
+		const { data, error } = await this.supabase.rpc('count_completed_meetings', {
+			p_profile_id: profileId
+		});
+		if (error) throw new Error(`Failed to count completed meetings: ${error.message}`);
+		return (data as number) ?? 0;
 	}
 }

@@ -163,7 +163,7 @@
 /* ── Reveal card (feedback reveal) ─────────────────────────── */
 .reveal-card { padding: var(--space-5); border: 1px solid var(--border-link); border-radius: var(--radius-card); margin-bottom: var(--space-3); }
 .reveal-noshow { font-size: var(--text-sm); color: var(--text-muted); font-style: italic; margin: 0 0 var(--space-3); }
-.reveal-quote { font-size: var(--text-md); line-height: var(--leading-relaxed); margin: 0 0 var(--space-4); padding-left: var(--space-4); border-left: 2px solid var(--text-muted); color: var(--text-primary); }
+.reveal-quote { font-size: var(--text-md); line-height: var(--leading-relaxed); margin: 0 0 var(--space-4); color: var(--text-primary); }
 .reveal-tags { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: var(--space-1); }
 .reveal-tag { font-size: var(--text-xs); padding: var(--space-1) var(--space-3); background: var(--bg-control); border-radius: var(--radius-card); color: var(--text-primary); }
 

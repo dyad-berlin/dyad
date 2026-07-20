@@ -143,26 +143,23 @@ export const copy = {
 		// Footer links (left column). The legal-notice link is labelled
 		// "Impressum" — the page at /impressum is a legal notice, not terms
 		// of service, and German visitors look for it by that name.
-		footerCommunity: 'Community',
-		footerVoices: 'Voices',
-		footerGovernance: 'Governance',
-		footerImpressum: 'Impressum',
-		footerAgb: 'AGB',
-		footerPrivacy: 'Privacy',
+		footerDocs: 'Documentation',
+		footerCommunity: 'Wiggling',
+		footerNewsletter: 'Newsletter',
+		footerLegal: 'Legal',
 		// Hero headline + supporting line (display copy; sentence case is the
 		// intentional brand styling — see CLAUDE.md § UI conventions).
-		headlineLine1: 'Collectively owned',
-		headlineLine2: 'offline social network',
-		// "Steward-owned" removed 2026-07-14 — dyad is not yet steward-owned.
-		// The archived ownership page lives at src/lib/archive/StewardOwnershipPage.svelte.
+		// "Collectively owned" removed 2026-07-20 — same reason "Steward-owned"
+		// was removed 2026-07-14: dyad is not yet collectively owned. The
+		// subcopy states it as a "to be" — a stated direction, not a present
+		// claim. The archived ownership page lives at
+		// src/lib/archive/StewardOwnershipPage.svelte.
+		headlineLine1: 'An offline',
+		headlineLine2: 'social network',
 		subcopy:
-			'A place online to find conversations, people and communities offline. Open source. Governed by the communities who use it.',
+			'A place to find conversations, people, and communities where you live. Open source. To be collectively owned and governed.',
 		// CTA on the map card that floats over a selected conversation.
 		mapCardCta: 'Join to read & meet',
-		// ZineFooter colophon. Centralized here so the edition/date is config,
-		// not a string literal scattered in a component (no hardcoded dates).
-		zineColophon:
-			'DYAD — Building social technology as civic infrastructure. Draft Edition, June 2026. Currently in beta in Berlin.',
 	},
 
 	// ── Voices ─────────────────────────────────────────────────────────
@@ -202,6 +199,9 @@ export const copy = {
 		_routes: ['/conversations/[id]'],
 		_description: 'Viewing a conversation: body, response form, invitation flow, author edit/archive actions.',
 		responsePlaceholder: 'Share your thoughts…',
+		// Referral share — copies this conversation's URL with ?ref=<username>.
+		shareLink: 'share with a friend',
+		shareCopied: 'link copied',
 		slotsTeaser: (authorUsername: string) => `respond to @${authorUsername} to see the times they’ve suggested to meet`,
 		inviteQuestion: (authorUsername: string) => `Would you like to meet @${authorUsername} in person?`,
 		inviteNotePlaceholder: 'Add a note (optional)',
@@ -364,6 +364,19 @@ export const copy = {
 		// Quiet action row in the profile card, next to sign out.
 		preferencesLink: 'preferences',
 		membershipLink: 'membership',
+		feedbackLink: 'feedback',
+		// Referral share link — copies /waitlist?ref=<username> so a friend
+		// lands on the waitlist already marked as invited by this member.
+		inviteFriendLink: 'invite a friend',
+		inviteFriendCopied: 'link copied',
+		inviteFriendFallback: 'Copy this link and send it to your friend:',
+		// Quiet site-links row at the bottom of the profile page — the same
+		// destinations as the landing/zine footer, so a signed-in member never
+		// has to sign out to reach documentation or the legal pages.
+		footerDocs: 'Documentation',
+		footerCommunity: 'Wiggling',
+		footerNewsletter: 'Newsletter',
+		footerLegal: 'Legal',
 	},
 
 	// ── Preferences ────────────────────────────────────────────────────
@@ -392,6 +405,11 @@ export const copy = {
 		// Must not reference a sign-up/account email or treat contact as identity.
 		notificationPrefsNote:
 			"By default, dyad doesn’t send notifications. Choose what you’d like to receive; you can change this anytime.",
+		// Compact list — every feedback_received signal (visible or not), one
+		// row per item, matching the emailPrefsHeading/pref-row pattern above
+		// rather than the fuller card shown inline on a meeting's reveal.
+		feedbackHeading: 'Feature feedback on your profile',
+		feedbackHint: 'Anyone who visits your profile can see what you check. Change your mind any time.',
 		membershipHeading: 'Membership',
 		membershipManage: 'manage membership',
 		membershipManageError: 'We couldn’t open the membership portal just now. Please try again.',
@@ -418,6 +436,18 @@ export const copy = {
 			'Standalone membership management view, sibling to Preferences. Shows the current plan and a manage link (Stripe portal) for active members, and the ended/lapsed/none states pointing at /membership. Copy for those states is reused from copy.preferences.membership* for now.',
 		title: 'Membership',
 		backToProfile: '← profile',
+	},
+
+	// ── Feedback area (profile) ────────────────────────────────────────
+	// Standalone "feature feedback on your profile" view, sibling to
+	// Preferences and Membership rather than nested under Preferences.
+	feedbackArea: {
+		_routes: ['/profile/feedback'],
+		_description:
+			'Standalone view for reviewing feedback received from meetings and choosing which pieces to feature on the public profile. Sibling to Preferences and Membership. Copy for the list itself is reused from copy.preferences.feedback* for now.',
+		title: 'Feedback',
+		backToProfile: '← profile',
+		empty: "You haven’t received any feedback yet.",
 	},
 
 	// ── Meeting detail ─────────────────────────────────────────────────
@@ -518,6 +548,16 @@ export const copy = {
 		submitting: 'Submitting…',
 		revealIntro: (username: string) => `Here’s what @${username} shared with you:`,
 		revealIntroFallback: "Here’s what they shared with you:",
+		// Feature-on-profile toggle, shown alongside a revealed feedback card
+		// (/feedback/[id] reveal step, /meetings/[id] revealed-section). The
+		// reviewer is never named even here, so featuring publicly only widens
+		// the audience of already-anonymous words — no separate reviewer
+		// consent step.
+		featureToggleLabel: 'Feature this on your profile',
+		featureToggleHint: 'Anyone who visits your profile can see it. Remove it any time.',
+		featuredBadge: 'Featured on your profile',
+		unfeatureLabel: 'Remove from profile',
+		featureError: 'Couldn’t update. Please try again.',
 	},
 
 	// ── Group feedback ───────────────────────────────────────────────────
@@ -603,7 +643,6 @@ export const copy = {
 		joinWaitlist: 'Join the waitlist',
 		joinWaitlistButton: 'Join waitlist',
 		sendingWaitlist: 'Sending…',
-		whatsOnYourMind: 'dyad is an offline network for conversations — for people who want a direct way to meet each other, in an environment built by a team that cares about human development and flourishing. Why do you want to join us?',
 		thoughtPlaceholder: "What’s in a conversation?",
 		city: 'City',
 		cityPlaceholder: 'Berlin',
@@ -628,14 +667,29 @@ export const copy = {
 		newsletterCta: 'Subscribe on Substack',
 		cityExpansionNote: 'We’re currently active in Berlin and will expand to other cities soon.',
 
-		// /waitlist page
+		// /waitlist page + waitlist modal — shared intro under the "Request to
+		// join" heading. introDocsLink renders inline inside introPre/introPost;
+		// introJoin is the second paragraph, naming what the consent cards below
+		// it are for.
 		pageTitle: 'join · dyad. cultivating a culture of conversation',
 		heading: 'Request to join',
-		subtitle: 'For those who seek conversation for its own sake and meet others with humility, critical thinking and deep listening.',
-		// The acceptance intent, stated where the friction happens. Alignment
-		// with community standards — never identity. Membership ≠ paying.
-		intentNote:
-			'Why we ask: no community is for everyone, and this one is for people curious about others — people who understand and respect the interdependencies that make our lives rich. We read every request for alignment with our community standards: what you value, never who you are.',
+		introPre: 'Dyad is an offline network where people meet on their own terms and can take part in shaping the product and its policies. We review each request to preserve an environment where people feel safe enough to take part and enjoy being here. We detail our thinking and processes in the ',
+		introDocsLink: 'documentation section',
+		introDocsHref: '/docs',
+		introPost: '.',
+		introJoin: 'To join, please read and acknowledge the Community Standards and Member Agreements, and tell us why you would like to join.',
+		// Acknowledgement cards — same consent treatment as the membership
+		// flow's common-ground step. Both must be checked before the request
+		// sends; each card links its full document in /docs.
+		consentStandardsTitle: 'Community Standards',
+		consentStandardsDesc: 'I have read and agree to the Community Standards: what we do not tolerate, and what happens when something goes wrong.',
+		consentStandardsLinkLabel: 'Read the Community Standards →',
+		consentStandardsHref: '/docs#standards',
+		consentAgreementsTitle: 'Member Agreements',
+		consentAgreementsDesc: 'I have read and agree to the Member Agreements: who can join, what membership includes, and what it is not.',
+		consentAgreementsLinkLabel: 'Read the Member Agreements →',
+		consentAgreementsHref: '/docs#agreements',
+		consentRequired: 'Please confirm the Community Standards and Member Agreements before requesting to join.',
 		successMessage: "Thank you. We’ll be in touch.",
 		freewriteLabel: 'Why do you want to join?',
 		freewritePlaceholder: "What’s in a conversation?",
@@ -791,17 +845,15 @@ export const copy = {
 		// Accessible name for the paywall modal dialog (screen readers).
 		dialogLabel: 'Membership',
 
-		guestHeading: 'Join Us as a Member',
+		// Everyone who reaches this copy (the /membership page, or the paywall
+		// modal on a gated action) is already signed in, and under the
+		// consent-based join flow, that means they are already a member.
+		// This is never a "come join us" pitch;
+		// it is an invitation to add a financial contribution, which some
+		// product actions are unlocked by.
+		guestHeading: 'Support dyad',
 		guestIntro:
-			'dyad is built by a small team working voluntarily, because we believe people who seek to meet others should be able to do it their way — in a place designed with them, not just for them. Membership keeps this work independent and opens everything members do. You are welcome to look around without paying.',
-		// The fuller invitation, shown on the /membership page only (the modal
-		// stays compact). Written in the founders' voice: what is true, plainly.
-		pageStory: [
-			'We have been building dyad voluntarily — alongside our jobs, out of our own pockets — because we feel passionate about a way of meeting each other that we could not find anywhere: chosen, unhurried, in person, on your own terms.',
-			'We care about doing this participatorily. The people who use dyad shape its rules, its program and its culture with us. We care about human development and flourishing, and we try to build like it.',
-			'We do not ask for trust; we work to earn it — by staying in service to connection, collective sensemaking and community, and by keeping dyad independent: no ads, no data sales, nobody to answer to but the people in the room.',
-			'Membership is how this stays possible. And if paying is not right for you now, you are still welcome to be here.'
-		],
+			'You are already a member. Starting and joining conversations is unlocked by a financial contribution, because that is what keeps dyad independent: no ads, no data sales, nobody to answer to but the people in the room. Paying is a choice, and you are welcome here either way.',
 		lapsedHeading: 'Renew Your Membership',
 		lapsedIntro:
 			'Your membership has lapsed, so the member-only actions are paused for now. Renewing turns them back on. Everything you have already made stays exactly as it is, and you can stop anytime.',
@@ -829,11 +881,7 @@ export const copy = {
 		monthlySupporterName: 'Supporter',
 		monthlySupporterPrice: '€17',
 		monthlySupporterNote: 'A higher rate that helps fund the lower one.',
-		becomeMemberCta: 'become a member',
-		// Membership is currently open to people based in Berlin. Self-declared at
-		// the paywall — the only place location is asked about.
-		berlinConfirmLabel: 'I’m based in Berlin. Membership is open to Berlin residents for now.',
-		berlinRequired: 'Membership is currently open to people based in Berlin.',
+		becomeMemberCta: 'start supporting dyad',
 		billingNote: 'Billed securely via Stripe. Cancel anytime.',
 		// Lifetime is a one-time payment — there is no subscription to cancel,
 		// so the note drops "Cancel anytime" for that cadence.
@@ -869,14 +917,23 @@ export const copy = {
 		errorGeneric: 'Couldn’t start checkout. Please try again.',
 	},
 
+	// ── Public profile ────────────────────────────────────────────────
+	publicProfile: {
+		_routes: ['/users/[username]'],
+		_description: 'Public-facing profile any member can view — published conversations, a completed-conversations count, plus any feedback the person has chosen to feature.',
+		featuredHeading: 'What people say',
+		// Trust stat under the name: in-person conversations this member has
+		// completed (meetings that reached feedback lock).
+		completedCount: (n: number) =>
+			n === 1 ? '1 conversation completed' : `${n} conversations completed`,
+	},
+
 	// ── Emails ─────────────────────────────────────────────────────────
 	email: {
 		_routes: ['/api/contact', '/api/invites'],
 		_description: 'Transactional emails sent server-side. HTML templates in the API route handlers.',
-		inviteSubject: 'Come & join us at Dyad.',
-		inviteBody: (displayName: string, inviteUrl: string, expiryDays: number) =>
-			`Hi ${displayName}, we are letting in groups of people to come and play. We are currently in our private beta and would love for you to take a walk inside and tell us about your experience. You can do this asynchronously via the feedback area on the bottom right with a question mark icon. We are looking forward to bringing the fruits of our love, care and labor to you. Join: ${inviteUrl}. This link expires in ${expiryDays} days.`,
-		waitlistSubject: "What’s in a conversation?",
+		inviteSubject: 'Welcome to Dyad',
+		waitlistSubject: "Cultivating a culture of conversation with Dyad",
 		membershipActivatedSubject: 'Your membership is active',
 		membershipActivatedBody:
 			'Thank you for joining us as a member. Your membership is active. We build dyad to stay independent and in service to connection, collective sensemaking and community — your membership is what makes that possible, and it’s what lets you start conversations, respond, and meet. You can review or manage it any time.',
