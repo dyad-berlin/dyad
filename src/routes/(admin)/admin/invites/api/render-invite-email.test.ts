@@ -5,11 +5,11 @@ const INVITE_URL = 'https://dyad.berlin/join?token=test-token';
 const EXPIRY = 14;
 
 describe('renderInviteEmail — signed footer', () => {
-	it('includes the dyad signature names', () => {
+	it('includes the dyad signature names, no brand line (dropped from the footer)', () => {
 		const html = renderInviteEmail({ inviteUrl: INVITE_URL, expiryDays: EXPIRY });
 		expect(html).toContain('With care and joy,');
 		expect(html).toContain('Luna and Fiore');
-		expect(html).toContain('dyad · berlin');
+		expect(html).not.toContain('dyad · berlin');
 	});
 
 	it('embeds SangBleu Sunrise Bold + Regular via @font-face, Georgia fallback (no Light weight)', () => {
@@ -32,12 +32,16 @@ describe('renderInviteEmail — signed footer', () => {
 	it('renders the invite link', () => {
 		const html = renderInviteEmail({ inviteUrl: INVITE_URL, expiryDays: EXPIRY });
 		expect(html).toContain(`href="${INVITE_URL}"`);
-		expect(html).toContain('Join dyad');
+		expect(html).toContain('Welcome to Dyad');
 	});
 
 	it('always carries a short useful body, even with no opener or message', () => {
 		const html = renderInviteEmail({ inviteUrl: INVITE_URL, expiryDays: EXPIRY });
-		expect(html).toContain('Your request to join dyad is accepted.');
+		expect(html).toContain('We are delighted to cross paths with you and would love for you to join us.');
+		expect(html).toContain('Support Dyad');
+		expect(html).toContain('sliding scale');
+		expect(html).toContain('If 500 of us contribute, Dyad stays independent.');
+		expect(html).toContain('first social technology company owned by the people who use it');
 		expect(html).toContain('https://dyad.berlin/docs#standards');
 		expect(html).toContain('https://dyad.berlin/docs');
 		expect(html).toContain('reply to this email');
@@ -45,10 +49,10 @@ describe('renderInviteEmail — signed footer', () => {
 
 	it('renders the expiry days the caller passes in', () => {
 		expect(renderInviteEmail({ inviteUrl: INVITE_URL, expiryDays: 14 })).toContain(
-			'expires in 14 days'
+			'expire in 14 days'
 		);
 		expect(renderInviteEmail({ inviteUrl: INVITE_URL, expiryDays: 30 })).toContain(
-			'expires in 30 days'
+			'expire in 30 days'
 		);
 	});
 });
@@ -177,16 +181,5 @@ describe('renderInviteEmail — signature overrides', () => {
 		expect(html).toContain('&lt;img src=x onerror=alert(2)&gt;');
 		expect(html).not.toContain('<script>alert(1)</script>');
 		expect(html).not.toContain('<img src=x onerror=alert(2)>');
-	});
-
-	it('never lets the brand line be overridden', () => {
-		// brand is not part of the params; confirm it always renders the canonical value
-		const html = renderInviteEmail({
-			inviteUrl: INVITE_URL,
-			expiryDays: EXPIRY,
-			signatureClosing: 'Anything,',
-			signatureNames: 'Anyone'
-		});
-		expect(html).toContain('dyad · berlin');
 	});
 });
