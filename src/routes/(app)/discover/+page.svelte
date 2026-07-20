@@ -421,8 +421,8 @@
 		display: flex;
 	}
 	.list-pane {
-		width: 24rem;
-		max-width: 42vw;
+		width: 26rem;
+		max-width: 44vw;
 		display: flex;
 		flex-direction: column;
 		background: var(--bg-canvas);
