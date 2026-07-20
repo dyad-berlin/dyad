@@ -17,7 +17,7 @@
 			<div class="footer-col">
 				<p class="footer-col-head">Community</p>
 				<a href="/waitlist" class="footer-link">Become a member</a>
-				<a href="/unfolding" class="footer-link">Newsletter</a>
+				<a href="/newsletter" class="footer-link">Newsletter</a>
 				<span class="footer-link footer-soon">Forum (in the making)</span>
 				{#if blogUrl}<a href={blogUrl} class="footer-link" target="_blank" rel="noopener">Blog</a>{/if}
 				{#if instagramUrl}<a href={instagramUrl} class="footer-link" target="_blank" rel="noopener">Instagram</a>{/if}
@@ -48,7 +48,7 @@
 		padding: 64px 0 48px;
 	}
 
-	/* Footer content aligns to the same 1080px/48px measure as /unfolding's
+	/* Footer content aligns to the same 1080px/48px measure as /newsletter's
 	   archive index (.archive): max-width is the full border-box including
 	   padding, so the inner content inset matches exactly, not just the
 	   outer box. */

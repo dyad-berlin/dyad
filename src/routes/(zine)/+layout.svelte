@@ -3,13 +3,14 @@
 	import ZineFooter from '$lib/components/ZineFooter.svelte';
 	let { children } = $props();
 
-	// Unfolding keeps the header (for nav) but floats it (position: fixed,
-	// scroll-aware reveal below) over its hero/paper background instead of
-	// sitting sticky in normal flow like the rest of the zine.
-	const isUnfolding = $derived($page.url.pathname.startsWith('/unfolding'));
+	// The newsletter (Unfolding is its first series; more will follow) keeps
+	// the header (for nav) but floats it (position: fixed, scroll-aware
+	// reveal below) over its hero/paper background instead of sitting sticky
+	// in normal flow like the rest of the zine.
+	const isUnfolding = $derived($page.url.pathname.startsWith('/newsletter'));
 
 	// Scroll-aware reveal (Atmos-style): dissolves on scroll down, reappears
-	// on scroll up, always visible near the top. Scoped to /unfolding — the
+	// on scroll up, always visible near the top. Scoped to /newsletter — the
 	// only variant that's floated (position: fixed) over its content rather
 	// than sitting in normal flow.
 	let headerHidden = $state(false);
@@ -78,7 +79,7 @@
 			<nav class="zine-menu-primary" aria-label="Sections">
 				<a href="/docs" onclick={closeMenu}>Documentation</a>
 				<a href="/community" onclick={closeMenu}>Wiggling</a>
-				<a href="/unfolding" onclick={closeMenu}>Newsletter</a>
+				<a href="/newsletter" onclick={closeMenu}>Newsletter</a>
 			</nav>
 
 			<!-- Governance isn't listed here — it's a subsection reachable from

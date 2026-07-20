@@ -85,7 +85,7 @@
 			<footer class="site-footer">
 				<a href="/docs" class="footer-link">{og.footerDocs}</a>
 				<a href="/community" class="footer-link">{og.footerCommunity}</a>
-				<a href="/unfolding" class="footer-link">{og.footerNewsletter}</a>
+				<a href="/newsletter" class="footer-link">{og.footerNewsletter}</a>
 				<a href="/legal" class="footer-link">{og.footerLegal}</a>
 			</footer>
 	</section>

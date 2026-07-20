@@ -1,5 +1,5 @@
 // Unfolding — dyad's weekly newsletter. One entry here is one published
-// essay at /unfolding/[slug]. Extracted to a single data module because
+// essay at /newsletter/[slug]. Extracted to a single data module because
 // the same entries back both the archive index and the individual pages.
 //
 // We publish weekly and are only getting started: this file holds
@@ -29,7 +29,7 @@ export const unfoldingEntries: UnfoldingEntry[] = [
 		title: 'Conversation: A primal technology for sensemaking',
 		quote: 'We humanize what is going on in the world and in ourselves only by speaking of it.',
 		quoteAttr: 'Hannah Arendt, Men in Dark Times',
-		date: '2026-06-08',
+		date: '2026-07-20',
 		paragraphs: [
 			'Over the past two years now, we have been meticulously at work. Working first to understand how we arrived at a digital environment that feels so intrusive, hostile, exhausting, and then to build new world precious, full of life by virtue of serving the life within. Dyad is the product of such care and intention.',
 			'We did not like how being social online felt. We lacked the humanity the platforms we meet on allowed for. We are stripped down to a certain version of ourselves, and not the version we wanted to come forth. The complexity of our experiences, the intricacy of making sense of them, and with that, discovering and nurturing the meaning of our lives.',

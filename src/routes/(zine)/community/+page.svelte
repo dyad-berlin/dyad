@@ -52,7 +52,7 @@
 
 <style>
 	/* Shared zine page chrome lives in the (zine) +layout.svelte. Section
-	   label + description mirror /unfolding's archive-head treatment
+	   label + description mirror /newsletter's archive-head treatment
 	   (sans-serif uppercase label, italic serif standfirst, wide column). */
 	.section-label {
 		font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;

@@ -21,7 +21,7 @@
 	</header>
 
 	{#if featured}
-		<a href="/unfolding/{featured.slug}" class="featured">
+		<a href="/newsletter/{featured.slug}" class="featured">
 			{#if featured.heroImage}
 				<img class="featured-hero" src={storageUrl('newsletter assets', featured.heroImage)} alt="" />
 			{:else}
@@ -38,7 +38,7 @@
 
 	<div class="grid">
 		{#each rest as entry}
-			<a href="/unfolding/{entry.slug}" class="card">
+			<a href="/newsletter/{entry.slug}" class="card">
 				{#if entry.heroImage}
 					<img class="card-hero" src={storageUrl('newsletter assets', entry.heroImage)} alt="" />
 				{:else}
