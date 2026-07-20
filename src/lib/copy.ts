@@ -638,7 +638,6 @@ export const copy = {
 		joinWaitlist: 'Join the waitlist',
 		joinWaitlistButton: 'Join waitlist',
 		sendingWaitlist: 'Sending…',
-		whatsOnYourMind: 'dyad is an offline network for conversations — for people who want a direct way to meet each other, in an environment built by a team that cares about human development and flourishing. Why do you want to join us?',
 		thoughtPlaceholder: "What’s in a conversation?",
 		city: 'City',
 		cityPlaceholder: 'Berlin',
@@ -663,10 +662,17 @@ export const copy = {
 		newsletterCta: 'Subscribe on Substack',
 		cityExpansionNote: 'We’re currently active in Berlin and will expand to other cities soon.',
 
-		// /waitlist page
+		// /waitlist page + waitlist modal — shared intro under the "Request to
+		// join" heading. introDocsLink renders inline inside introPre/introPost;
+		// introJoin is the second paragraph, naming what the consent cards below
+		// it are for.
 		pageTitle: 'join · dyad. cultivating a culture of conversation',
 		heading: 'Request to join',
-		subtitle: 'For those who seek conversations and expect to find them their way.',
+		introPre: 'Dyad is an offline network where people meet on their own terms and can take part in shaping the product and its policies. We review each request to preserve an environment where people feel safe enough to take part and enjoy being here. We detail our thinking and processes in the ',
+		introDocsLink: 'documentation section',
+		introDocsHref: '/docs',
+		introPost: '.',
+		introJoin: 'To join, please read and acknowledge the Community Standards and Membership Agreement, and tell us why you would like to join.',
 		// Acknowledgement cards — same consent treatment as the membership
 		// flow's common-ground step. Both must be checked before the request
 		// sends; each card links its full document in /docs.
@@ -843,14 +849,6 @@ export const copy = {
 		guestHeading: 'Support dyad',
 		guestIntro:
 			'You are already a member. Starting and joining conversations is unlocked by a financial contribution, because that is what keeps dyad independent: no ads, no data sales, nobody to answer to but the people in the room. Paying is a choice, and you are welcome here either way.',
-		// The fuller invitation, shown on the /membership page only (the modal
-		// stays compact). Written in the founders' voice: what is true, plainly.
-		pageStory: [
-			'We have been building dyad voluntarily — alongside our jobs, out of our own pockets — because we feel passionate about a way of meeting each other that we could not find anywhere: chosen, unhurried, in person, on your own terms.',
-			'We care about doing this participatorily. The people who use dyad shape its rules, its program and its culture with us. We care about human development and flourishing, and we try to build like it.',
-			'We do not ask for trust; we work to earn it — by staying in service to connection, collective sensemaking and community, and by keeping dyad independent: no ads, no data sales, nobody to answer to but the people in the room.',
-			'Your contribution is how this stays possible. If paying is not right for you now, you are still a member here, and you can add a contribution any time.'
-		],
 		lapsedHeading: 'Renew Your Membership',
 		lapsedIntro:
 			'Your membership has lapsed, so the member-only actions are paused for now. Renewing turns them back on. Everything you have already made stays exactly as it is, and you can stop anytime.',

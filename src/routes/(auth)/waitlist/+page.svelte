@@ -85,7 +85,10 @@
 
 <div class="auth-card">
 	<h1>{copy.waitlist.heading}</h1>
-	<p class="subtitle">{copy.waitlist.subtitle}</p>
+	<p class="subtitle">
+		{copy.waitlist.introPre}<a href={copy.waitlist.introDocsHref} target="_blank" rel="noopener">{copy.waitlist.introDocsLink}</a>{copy.waitlist.introPost}
+	</p>
+	<p class="subtitle">{copy.waitlist.introJoin}</p>
 
 	{#if status === 'sent'}
 		<div class="success-message">{copy.waitlist.successMessage}</div>
@@ -199,9 +202,20 @@
 	}
 
 	.subtitle {
-		margin: 0 0 var(--space-4) 0;
+		margin: 0 0 var(--space-3) 0;
 		color: var(--text-muted);
-		font-size: var(--text-md);
+		font-size: var(--text-sm);
+		line-height: var(--leading-relaxed);
+	}
+	.subtitle:last-of-type {
+		margin-bottom: var(--space-4);
+	}
+	.subtitle a {
+		color: inherit;
+		text-decoration: underline;
+	}
+	.subtitle a:hover {
+		color: var(--text-primary);
 	}
 
 	/* Acknowledgement cards — same treatment as the membership consent step. */
