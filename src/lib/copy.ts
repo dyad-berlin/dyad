@@ -151,12 +151,15 @@ export const copy = {
 		footerPrivacy: 'Privacy',
 		// Hero headline + supporting line (display copy; sentence case is the
 		// intentional brand styling — see CLAUDE.md § UI conventions).
-		headlineLine1: 'Collectively owned',
-		headlineLine2: 'offline social network',
-		// "Steward-owned" removed 2026-07-14 — dyad is not yet steward-owned.
-		// The archived ownership page lives at src/lib/archive/StewardOwnershipPage.svelte.
+		// "Collectively owned" removed 2026-07-20 — same reason "Steward-owned"
+		// was removed 2026-07-14: dyad is not yet collectively owned. The
+		// subcopy states it as a "to be" — a stated direction, not a present
+		// claim. The archived ownership page lives at
+		// src/lib/archive/StewardOwnershipPage.svelte.
+		headlineLine1: 'An offline',
+		headlineLine2: 'social network',
 		subcopy:
-			'A place online to find conversations, people and communities offline. Open source. Governed by the communities who use it.',
+			'A place to find conversations, people, and communities where you live. Open source. To be collectively owned and governed.',
 		// CTA on the map card that floats over a selected conversation.
 		mapCardCta: 'Join to read & meet',
 		// ZineFooter colophon. Centralized here so the edition/date is config,
