@@ -9,11 +9,10 @@
 		env.PUBLIC_VIDEO_BASE_URL ??
 		'https://iwdjpuyuznzukhowxjhk.supabase.co/storage/v1/object/public/videos';
 
-	const voices = [
-		{ src: `${videoBase}/voices/pauline.mp4`, name: 'Pauline' },
-		{ src: `${videoBase}/voices/kaspar.mp4`, name: 'Kaspar' },
-		{ src: `${videoBase}/voices/ali.mp4`, name: 'Ali' }
-	];
+	// Kaspar and Ali archived per review — Pauline only, for now.
+	// { src: `${videoBase}/voices/kaspar.mp4`, name: 'Kaspar' },
+	// { src: `${videoBase}/voices/ali.mp4`, name: 'Ali' }
+	const voices = [{ src: `${videoBase}/voices/pauline.mp4`, name: 'Pauline' }];
 
 	function toggle(e: Event) {
 		const el = e.currentTarget as HTMLVideoElement;
@@ -57,7 +56,7 @@
 		font-family: var(--font-serif);
 		font-size: clamp(1.5rem, 3vw, 2.4rem);
 		font-weight: 400;
-		color: rgba(240, 236, 230, 0.88);
+		color: var(--zine-ink-strong, rgba(27, 28, 30, 0.9));
 		margin: 0 0 16px;
 		line-height: 1.3;
 		letter-spacing: -0.01em;
@@ -65,15 +64,17 @@
 	}
 
 	.page-attr a {
-		color: rgba(240, 236, 230, 0.7);
+		color: var(--zine-ink, rgba(27, 28, 30, 0.8));
 		text-decoration: underline;
 	}
 
 	/* Card row: grid like every other zine card group — the grid defines
-	   widths, no arbitrary max-widths (see dyad.berlin layout conventions). */
+	   widths, no arbitrary max-widths (see dyad.berlin layout conventions).
+	   One voice today (Kaspar/Ali archived); a single narrow column reads
+	   better than a lone card stretched across three. */
 	.voices-grid {
 		display: grid;
-		grid-template-columns: repeat(3, 1fr);
+		grid-template-columns: minmax(0, 280px);
 		gap: 28px;
 		margin-top: 40px;
 	}
@@ -92,11 +93,7 @@
 
 	.voice-card figcaption {
 		font-size: var(--text-sm, 0.8rem);
-		color: var(--zine-ink-muted, rgba(240, 236, 230, 0.35));
+		color: var(--zine-ink-muted, rgba(27, 28, 30, 0.35));
 		margin-top: 12px;
-	}
-
-	@media (max-width: 760px) {
-		.voices-grid { grid-template-columns: 1fr; }
 	}
 </style>
