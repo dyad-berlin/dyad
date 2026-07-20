@@ -37,6 +37,20 @@ export function deriveStackLayout(
 }
 
 /**
+ * The subset of gathering pairs that can still be cancelled — i.e. the pairs
+ * whose meeting is still `scheduled`. A pair that already advanced
+ * (`awaiting_feedback`/`completed`) or was already cancelled is not part of the
+ * cancellable set: the cancel dialog must not offer it as a checkbox, and the
+ * "all N people" copy must not count it (the cancel_gathering RPC only touches
+ * `scheduled` rows, so counting advanced pairs overstates the act). Keeping the
+ * derivation here makes the roster-freshness rule testable and shared with the
+ * display roster, which still shows every state.
+ */
+export function cancellablePairs<T extends { state: string }>(pairs: T[]): T[] {
+	return pairs.filter((p) => p.state === 'scheduled');
+}
+
+/**
  * Build the otherId → meetingId map from a meeting's slot siblings.
  *
  * A group conversation is N two-person meetings sharing one slot; the people

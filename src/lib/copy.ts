@@ -143,9 +143,9 @@ export const copy = {
 		// Footer links (left column). The legal-notice link is labelled
 		// "Impressum" — the page at /impressum is a legal notice, not terms
 		// of service, and German visitors look for it by that name.
+		footerDocs: 'Documentation',
 		footerCommunity: 'Community',
-		footerVoices: 'Voices',
-		footerGovernance: 'Governance',
+		footerNewsletter: 'Newsletter',
 		footerImpressum: 'Impressum',
 		footerAgb: 'AGB',
 		footerPrivacy: 'Privacy',
@@ -162,10 +162,6 @@ export const copy = {
 			'A place to find conversations, people, and communities where you live. Open source. To be collectively owned and governed.',
 		// CTA on the map card that floats over a selected conversation.
 		mapCardCta: 'Join to read & meet',
-		// ZineFooter colophon. Centralized here so the edition/date is config,
-		// not a string literal scattered in a component (no hardcoded dates).
-		zineColophon:
-			'DYAD — Building social technology as civic infrastructure. Draft Edition, June 2026. Currently in beta in Berlin.',
 	},
 
 	// ── Voices ─────────────────────────────────────────────────────────
@@ -838,16 +834,22 @@ export const copy = {
 		// Accessible name for the paywall modal dialog (screen readers).
 		dialogLabel: 'Membership',
 
-		guestHeading: 'Join Us as a Member',
+		// Everyone who reaches this copy (the /membership page, or the paywall
+		// modal on a gated action) is already signed in, and under the
+		// consent-based join flow, that means they are already a member.
+		// This is never a "come join us" pitch;
+		// it is an invitation to add a financial contribution, which some
+		// product actions are unlocked by.
+		guestHeading: 'Support dyad',
 		guestIntro:
-			'dyad is built by a small team working voluntarily, because we believe people who seek to meet others should be able to do it their way — in a place designed with them, not just for them. Membership keeps this work independent and opens everything members do. You are welcome to look around without paying.',
+			'You are already a member. Starting and joining conversations is unlocked by a financial contribution, because that is what keeps dyad independent: no ads, no data sales, nobody to answer to but the people in the room. Paying is a choice, and you are welcome here either way.',
 		// The fuller invitation, shown on the /membership page only (the modal
 		// stays compact). Written in the founders' voice: what is true, plainly.
 		pageStory: [
 			'We have been building dyad voluntarily — alongside our jobs, out of our own pockets — because we feel passionate about a way of meeting each other that we could not find anywhere: chosen, unhurried, in person, on your own terms.',
 			'We care about doing this participatorily. The people who use dyad shape its rules, its program and its culture with us. We care about human development and flourishing, and we try to build like it.',
 			'We do not ask for trust; we work to earn it — by staying in service to connection, collective sensemaking and community, and by keeping dyad independent: no ads, no data sales, nobody to answer to but the people in the room.',
-			'Membership is how this stays possible. And if paying is not right for you now, you are still welcome to be here.'
+			'Your contribution is how this stays possible. If paying is not right for you now, you are still a member here, and you can add a contribution any time.'
 		],
 		lapsedHeading: 'Renew Your Membership',
 		lapsedIntro:
@@ -876,11 +878,7 @@ export const copy = {
 		monthlySupporterName: 'Supporter',
 		monthlySupporterPrice: '€17',
 		monthlySupporterNote: 'A higher rate that helps fund the lower one.',
-		becomeMemberCta: 'become a member',
-		// Membership is currently open to people based in Berlin. Self-declared at
-		// the paywall — the only place location is asked about.
-		berlinConfirmLabel: 'I’m based in Berlin. Membership is open to Berlin residents for now.',
-		berlinRequired: 'Membership is currently open to people based in Berlin.',
+		becomeMemberCta: 'start supporting dyad',
 		billingNote: 'Billed securely via Stripe. Cancel anytime.',
 		// Lifetime is a one-time payment — there is no subscription to cancel,
 		// so the note drops "Cancel anytime" for that cadence.

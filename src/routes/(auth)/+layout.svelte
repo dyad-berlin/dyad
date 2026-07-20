@@ -103,17 +103,18 @@
 		z-index: 1;
 	}
 
-	/* Form — right half, vertically centered. Centering happens via auto
-	   margins on the card (not align-items: center) so that content taller
-	   than the viewport top-aligns and scrolls instead of clipping above. */
+	/* Form — right half, vertically centered. Scrolls when the form is
+	   taller than the viewport (the waitlist form is); centering comes from
+	   the card's auto margins, which collapse to 0 on overflow so the top
+	   of the form always stays reachable. */
 	.form-half {
 		width: 50%;
 		height: 100%;
 		display: flex;
 		justify-content: center;
+		overflow-y: auto;
 		padding: 2rem;
 		box-sizing: border-box;
-		overflow-y: auto;
 	}
 
 	.form-half > :global(.auth-card) {

@@ -152,6 +152,16 @@ export class SupabasePromptQueryService implements PromptQueryService {
 	}): Promise<PromptSummary[]> {
 		const limit = params.limit ?? 20;
 
+		// Over-fetch a wider candidate window than `limit`. A "reactivated"
+		// conversation — fresh time_slots added to an old published prompt —
+		// keeps its original published_at and ranks below newer posts. Fetching
+		// exactly `limit` rows ordered by published_at cuts it off before we ever
+		// load its slots, so it vanishes from discover while the landing map
+		// (which over-fetches a wider window) still shows it (#99). Fetch a wider
+		// pool, slot-filter, rank by soonest slot, then trim to `limit` — so a
+		// reactivated conversation with an imminent slot resurfaces near the top.
+		const candidateWindow = Math.max(limit + 20, limit * 2);
+
 		// Fetch published prompts (including own — per discover visibility policy).
 		// Public-listing methods MUST filter `hidden_at IS NULL` AND audience_scope.
 		// Detail / own-author methods MUST NOT — direct URL access for invitees,
@@ -166,7 +176,7 @@ export class SupabasePromptQueryService implements PromptQueryService {
 		query = applyAudienceFilter(query, params.scopes, params.homeScope);
 		query = query
 			.order('published_at', { ascending: false })
-			.limit(limit);
+			.limit(candidateWindow);
 
 		if (params.cursor) {
 			query = query.lt('published_at', params.cursor);
@@ -230,8 +240,20 @@ export class SupabasePromptQueryService implements PromptQueryService {
 			});
 		}
 
-		// Stable sort: keep published_at order from DB (no soonest_slot re-sort)
-		return summaries;
+		// Rank by soonest upcoming slot (ascending): the discover list leads with
+		// what is happening soonest, not what was posted most recently (#100).
+		// `soonest_slot` is the earliest available slot (slots are start_time-asc);
+		// every summary here has at least one, so it is non-null in practice, but
+		// guard defensively and sink any null to the end.
+		summaries.sort((a, b) => {
+			const at = a.soonest_slot ? new Date(a.soonest_slot).getTime() : Number.POSITIVE_INFINITY;
+			const bt = b.soonest_slot ? new Date(b.soonest_slot).getTime() : Number.POSITIVE_INFINITY;
+			return at - bt;
+		});
+
+		// Trim the over-fetched candidate window (see `candidateWindow` above) back
+		// to the requested page size, keeping the soonest conversations.
+		return summaries.slice(0, limit);
 	}
 
 	async getPublishedPromptsPublic(params: {

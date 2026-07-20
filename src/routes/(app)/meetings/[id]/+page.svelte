@@ -8,7 +8,7 @@
 	import FeatureFeedbackToggle from '$lib/components/FeatureFeedbackToggle.svelte';
 	import { generateICS, downloadICS } from '$lib/utils/calendar.js';
 	import { formatShortDate } from '$lib/utils/dates.js';
-	import { othersBeyond } from '$lib/domain/gathering.js';
+	import { othersBeyond, cancellablePairs } from '$lib/domain/gathering.js';
 	import { capture } from '$lib/analytics';
 	import type { PageData } from './$types';
 	import { copy } from '$lib/copy';
@@ -35,9 +35,16 @@
 	let entirety = $state(false);
 	let selectedPairs = $state(new Set<string>());
 	const isGroupGathering = $derived(data.slotOccupied > 1);
-	const authorChoosesScope = $derived(data.isPromptAuthor && data.gathering.length >= 2);
+	// Roster freshness: the cancel dialog acts only on pairs still scheduled. A
+	// pair that advanced (awaiting_feedback/completed) or was cancelled since
+	// page load is not offered as a checkbox and is not counted — the
+	// cancel_gathering RPC only touches scheduled rows, so counting advanced
+	// pairs would overstate "all N people". The display room above still shows
+	// every state.
+	const cancellableRoster = $derived(cancellablePairs(data.gathering));
+	const authorChoosesScope = $derived(data.isPromptAuthor && cancellableRoster.length >= 2);
 	const joinerLeaving = $derived(!data.isPromptAuthor && isGroupGathering);
-	const selectionCount = $derived(entirety ? data.gathering.length : selectedPairs.size);
+	const selectionCount = $derived(entirety ? cancellableRoster.length : selectedPairs.size);
 
 	// Copy-on-write: runes track by assignment, never mutate the Set in place.
 	function togglePair(meetingId: string) {
@@ -380,7 +387,7 @@
 					     open for the rest), or the entirety (the time is withdrawn).
 					     Defaults to just this pair selected. -->
 					<div class="cancel-scope" aria-label={copy.meeting.cancelTitleChoice}>
-						{#each data.gathering as pair (pair.meetingId)}
+						{#each cancellableRoster as pair (pair.meetingId)}
 							<label class="scope-option" class:scope-option--muted={entirety}>
 								<input
 									type="checkbox"
@@ -401,8 +408,8 @@
 				<p class="cancel-body" class:cancel-body--late={!isEarly}>
 					{#if authorChoosesScope && entirety}
 						{isEarly
-							? copy.meeting.cancelBodyGatheringEarly(data.gathering.length)
-							: copy.meeting.cancelBodyGatheringLate(data.gathering.length)}
+							? copy.meeting.cancelBodyGatheringEarly(cancellableRoster.length)
+							: copy.meeting.cancelBodyGatheringLate(cancellableRoster.length)}
 					{:else if authorChoosesScope}
 						{isEarly
 							? copy.meeting.cancelBodySelectionEarly(selectionCount)

@@ -6,7 +6,7 @@ import { SupabaseFeedbackService } from '$lib/services/feedback.js';
 import { SupabasePromptQueryService } from '$lib/services/prompt-query.js';
 import { loadCancellersFor } from '$lib/services/cancellation-query.js';
 import { buildParticipantsFromSiblings } from '$lib/domain/gathering.js';
-import type { RevealedFeedback, FeedbackForm, ReputationSignal } from '$lib/domain/types.js';
+import type { RevealedFeedback, FeedbackForm, ReputationSignal, MeetingState } from '$lib/domain/types.js';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	const upactor = requireIdentity(locals);
@@ -72,7 +72,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		// each participant with the meeting row that pairs them with the viewer, so
 		// the unified card can pin-link the author to each pair's detail page; empty
 		// when the slot can't be read (we fall back to the single partner below).
-		(async (): Promise<{ slotId: string | null; participants: { username: string; meetingId: string }[] }> => {
+		(async (): Promise<{ slotId: string | null; participants: { username: string; meetingId: string; state: MeetingState }[] }> => {
 			const { data: thisRow } = await locals.supabase
 				.from('meetings')
 				.select('slot_id')
@@ -81,13 +81,18 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			if (!thisRow?.slot_id) return { slotId: null, participants: [] };
 			const { data: siblings } = await locals.supabase
 				.from('meetings')
-				.select('id, participant_a, participant_b')
+				.select('id, participant_a, participant_b, state')
 				.eq('slot_id', thisRow.slot_id)
 				.in('state', ['scheduled', 'awaiting_feedback', 'completed']);
 			// RLS guarantees the viewer is on every returned row, so each row
 			// contributes exactly one other participant.
 			const meetingIdByOther = buildParticipantsFromSiblings(siblings ?? [], userId);
 			if (meetingIdByOther.size === 0) return { slotId: thisRow.slot_id, participants: [] };
+			// Per-pair state travels with the roster so the cancel dialog can show
+			// only cancellable (scheduled) pairs while the display room shows all.
+			const stateByMeetingId = new Map(
+				(siblings ?? []).map((s: { id: string; state: MeetingState }) => [s.id, s.state])
+			);
 			const { data: profs } = await locals.supabase
 				.from('profiles')
 				.select('id, username')
@@ -97,7 +102,8 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 				slotId: thisRow.slot_id,
 				participants: [...meetingIdByOther].map(([id, meetingId]) => ({
 					username: nameById.get(id) ?? 'someone',
-					meetingId
+					meetingId,
+					state: stateByMeetingId.get(meetingId) ?? 'scheduled'
 				}))
 			};
 		})(),

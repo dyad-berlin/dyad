@@ -89,13 +89,13 @@
 			void goto('/membership');
 		}
 	}
-	let viewMode = $state<'list' | 'map'>('map');
+	let viewMode = $state<'list' | 'map' | 'split'>('split');
 	let mapCenter = $state<[number, number] | null>(null);
 	let mapZoom = $state<number | null>(null);
 
 	// Persist the list/map choice alongside map position so returning from a
 	// conversation restores the view the member was using, not the map default.
-	export const snapshot: Snapshot<{ center: [number, number] | null; zoom: number | null; view?: 'list' | 'map' }> = {
+	export const snapshot: Snapshot<{ center: [number, number] | null; zoom: number | null; view?: 'list' | 'map' | 'split' }> = {
 		capture: () => ({ center: mapCenter, zoom: mapZoom, view: viewMode }),
 		restore: (value) => { mapCenter = value.center; mapZoom = value.zoom; if (value.view) viewMode = value.view; }
 	};
@@ -249,59 +249,88 @@
 	<title>Discover · dyad.berlin</title>
 </svelte:head>
 
-{#if viewMode === 'map'}
+{#snippet mapBlock()}
+	<MapView
+		prompts={filteredPrompts}
+		slotFilter={mapSlotFilter}
+		onSelectPin={handlePinSelect}
+		onMapClick={closeSheet}
+		initialCenter={mapCenter ?? data.mapCenter}
+		initialZoom={mapZoom}
+		onMoveEnd={(c, z) => { mapCenter = c; mapZoom = z; }}
+	/>
+{/snippet}
+
+{#snippet listBlock()}
+	{#if data.prompts.length === 0}
+		<div class="empty-state">
+			<p>{copy.discover.noConversations}</p>
+			<p class="empty-hint">{copy.discover.checkBackSoon}</p>
+			<a href="/conversations/new" class="btn-primary btn-primary--sm" style="margin-top: var(--space-4); display: inline-block; text-decoration: none;">{copy.discover.startConversation}</a>
+		</div>
+	{:else if filteredPrompts.length === 0}
+		<div class="empty-state">
+			<p>{copy.discover.noMatchingFilters}</p>
+			<button class="clear-filters-link" onclick={clearFilters}>{copy.common.clearFilters}</button>
+		</div>
+	{:else}
+		<div class="prompt-list">
+			{#each filteredPrompts as prompt}
+				<ConversationCard
+					title={prompt.title ?? 'Untitled'}
+					coverUrl={prompt.cover_image_url}
+					snippet={prompt.body_snippet}
+					metaLeft={slotDates(prompt.available_slots)}
+					metaRight={uniqueAreas(prompt.available_slots)}
+					conversationType={prompt.capacity === 1 ? '1on1' : 'group'}
+					href={`/conversations/${prompt.id}`}
+					audienceScopeName={prompt.audience_scope_name}
+				/>
+			{/each}
+		</div>
+	{/if}
+{/snippet}
+
+{#if viewMode === 'split'}
+	<div class="split">
+		<aside class="list-pane">
+			<div class="list-head">
+				<span class="list-title">Conversations</span>
+				<button class="expand-btn" onclick={() => (viewMode = 'list')} aria-label="Expand to full list">expand ⤢</button>
+			</div>
+			<div class="list-scroll">
+				{@render listBlock()}
+			</div>
+		</aside>
+		<div class="map-pane map-pane--split">
+			{@render mapBlock()}
+		</div>
+	</div>
+	{#if selectedPinItems.length > 0}
+		<BottomSheet items={selectedPinItems} />
+	{/if}
+{:else if viewMode === 'map'}
 	<div class="map-pane">
-		<MapView
-			prompts={filteredPrompts}
-			slotFilter={mapSlotFilter}
-			onSelectPin={handlePinSelect}
-			onMapClick={closeSheet}
-			initialCenter={mapCenter ?? data.mapCenter}
-			initialZoom={mapZoom}
-			onMoveEnd={(c, z) => { mapCenter = c; mapZoom = z; }}
-		/>
+		{@render mapBlock()}
 	</div>
 	{#if selectedPinItems.length > 0}
 		<BottomSheet items={selectedPinItems} />
 	{/if}
 {:else}
-<div class="content">
-			{#if data.prompts.length === 0}
-				<div class="empty-state">
-					<p>{copy.discover.noConversations}</p>
-					<p class="empty-hint">{copy.discover.checkBackSoon}</p>
-					<a href="/conversations/new" class="btn-primary btn-primary--sm" style="margin-top: var(--space-4); display: inline-block; text-decoration: none;">{copy.discover.startConversation}</a>
-				</div>
-			{:else if filteredPrompts.length === 0}
-					<div class="empty-state">
-						<p>{copy.discover.noMatchingFilters}</p>
-						<button class="clear-filters-link" onclick={clearFilters}>{copy.common.clearFilters}</button>
-					</div>
-				{:else}
-					<div class="prompt-list">
-						{#each filteredPrompts as prompt}
-							<ConversationCard
-								title={prompt.title ?? 'Untitled'}
-								coverUrl={prompt.cover_image_url}
-								snippet={prompt.body_snippet}
-								metaLeft={slotDates(prompt.available_slots)}
-								metaRight={uniqueAreas(prompt.available_slots)}
-								conversationType={prompt.capacity === 1 ? '1on1' : 'group'}
-								href={`/conversations/${prompt.id}`}
-								audienceScopeName={prompt.audience_scope_name}
-							/>
-						{/each}
-					</div>
-				{/if}
+	<div class="content list-full">
+		<div class="list-head">
+			<button class="expand-btn" onclick={() => (viewMode = 'split')} aria-label="Back to map and list">‹ map + list</button>
 		</div>
-	{/if}
+		{@render listBlock()}
+	</div>
+{/if}
 
 <div class="floating-nav-wrapper">
 	<FloatingNav
 		variant="discover"
 		active={viewMode === 'map' ? 'map' : ''}
 		attentionCount={data.attentionCount ?? 0}
-		onMapClick={() => viewMode = viewMode === 'map' ? 'list' : 'map'}
+		onMapClick={() => viewMode = viewMode === 'map' ? 'split' : 'map'}
 		{weekDates}
 		selectedDays={selectedDates}
 		onToggleDay={toggleDate}
@@ -384,4 +413,61 @@
 	}
 
 	/* .btn-primary / .btn-primary--sm live in shared.css; see ConversationCard.svelte for list items. */
+
+	/* === Split: conversation list (left) + map (right) === */
+	.split {
+		position: fixed;
+		inset: 0;
+		display: flex;
+	}
+	.list-pane {
+		width: 24rem;
+		max-width: 42vw;
+		display: flex;
+		flex-direction: column;
+		background: var(--bg-canvas);
+		border-right: 1px solid var(--border-link);
+		z-index: 1;
+	}
+	.list-head {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--space-3);
+		padding: var(--space-4) var(--space-4) var(--space-2);
+	}
+	.list-title {
+		font-size: var(--text-lg);
+		font-weight: 500;
+		color: var(--text-primary);
+	}
+	.expand-btn {
+		background: none;
+		border: 1px solid var(--border-link);
+		border-radius: var(--radius-card);
+		padding: var(--space-1) var(--space-3);
+		font-size: var(--text-sm);
+		color: var(--text-primary);
+		cursor: pointer;
+	}
+	.expand-btn:hover { border-color: var(--text-primary); }
+	.list-scroll {
+		flex: 1;
+		overflow-y: auto;
+		padding: 0 var(--space-4) var(--nav-clearance);
+	}
+	.list-scroll .prompt-list { margin-top: var(--space-2); margin-bottom: 0; }
+	.map-pane--split {
+		position: relative;
+		inset: auto;
+		flex: 1;
+	}
+	.list-full { margin: 0 auto; }
+
+	/* Stack on narrow screens: full-width list, map hidden (toggle to map via nav). */
+	@media (max-width: 768px) {
+		.split { position: static; flex-direction: column; }
+		.list-pane { width: 100%; max-width: none; border-right: none; }
+		.map-pane--split { display: none; }
+	}
 </style>

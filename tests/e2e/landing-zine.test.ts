@@ -18,8 +18,8 @@ test.describe('Zine pages — smoke', () => {
 			expect(response?.status()).toBe(200);
 			// Wordmark in the zine header.
 			await expect(page.locator('.zine-wordmark')).toBeVisible();
-			// ZineFooter colophon (centralized copy) anchors the bottom of the page.
-			await expect(page.locator('.footer-colophon')).toBeVisible();
+			// ZineFooter renders its column headers at the bottom of the page.
+			await expect(page.locator('.footer-col-head').first()).toBeVisible();
 		});
 	}
 });

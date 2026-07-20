@@ -184,6 +184,11 @@
 				capture('response_sent');
 				clearResponseDraft();
 				responseStatus = 'sent';
+				// Clear cached loader data so the new response is reflected on the
+				// first subsequent view — both this page's own response list and the
+				// profile "Responded" tab, which otherwise showed a stale snapshot
+				// until a hard reload (#72). Mirrors the invite/withdraw flows below.
+				await invalidateAll();
 			} else {
 				const err = await res.json().catch(() => ({}));
 				if (isMembershipGate(err)) {
@@ -257,6 +262,20 @@
 				invitationBySlotId = rest;
 				inviteStatus = 'idle';
 				selectedSlotId = null;
+				await invalidateAll();
+			} else if (res.status === 404) {
+				// The invitation is already resolved — most often the author called
+				// the time off (a whole-gathering cancel retires the slot and
+				// cancels its pending invitations) between this page loading and the
+				// withdraw firing. The raw service message ("Invitation not found,
+				// already resolved, or not yours") is neither calm nor accurate for
+				// this responder, whose intent (not attending) is already satisfied.
+				// Clear the dead invitation locally and refresh to the true slot
+				// state (likely retired), with a plain explanation.
+				invitedSlotIds = new Set([...invitedSlotIds].filter(id => id !== slotId));
+				const { [slotId]: _, ...rest } = invitationBySlotId;
+				invitationBySlotId = rest;
+				withdrawError = copy.conversation.timeNoLongerOffered;
 				await invalidateAll();
 			} else {
 				// Keep local state untouched so the UI stays truthful — the server
