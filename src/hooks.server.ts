@@ -251,7 +251,11 @@ export const handle: Handle = async ({ event, resolve }) => {
 			pathname.startsWith('/favicon') ||
 			pathname.startsWith('/impressum') ||
 			pathname.startsWith('/datenschutz') ||
-			pathname.startsWith('/agb');
+			pathname.startsWith('/agb') ||
+			// The consolidated legal page — every footer links here now, so an
+			// expired guest must be able to reach it just like the three legacy
+			// legal routes above.
+			pathname.startsWith('/legal');
 
 		if (!isExempt) {
 			// Load the access context once per request: active scope memberships

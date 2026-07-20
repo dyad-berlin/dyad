@@ -9,7 +9,7 @@ import { test, expect } from '@playwright/test';
 // self-contained master-detail surface with its own chrome (no zine header
 // wordmark), so it's excluded from this wordmark+footer smoke.
 
-const ZINE_PAGES = ['/community', '/governance', '/community-care', '/voices'];
+const ZINE_PAGES = ['/community', '/community-care', '/voices'];
 
 test.describe('Zine pages — smoke', () => {
 	for (const path of ZINE_PAGES) {

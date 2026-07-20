@@ -8,5 +8,5 @@
 		<li><strong>Consent round, 72 hours.</strong> Members read it. Anyone may object, with a reason. Bylaws changes run for two weeks.</li>
 		<li><strong>Outcome.</strong> With no reasoned objection, the change is made and recorded in the decision log. With a reasoned objection, the proposer resolves it and the round runs again, or the proposal is withdrawn. That is logged as well.</li>
 	</ol>
-	<p>The full flow, together with who decides what, lives on the <a href="/governance">participatory governance page</a> as a diagram.</p>
+	<p>The full flow, together with who decides what, lives in the <a href="/docs#about-governance">How we practice</a> section.</p>
 </section>
