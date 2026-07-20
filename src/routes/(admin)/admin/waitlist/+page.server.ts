@@ -36,6 +36,22 @@ export const load: PageServerLoad = async () => {
 		}
 	}
 
+	// The referral value arrives from an anonymous endpoint (cookie-fed), so it
+	// is member-attested only when the username actually resolves to a member.
+	// Service-role lookup here — verify before granting fast-track trust.
+	const claimedReferrers = [
+		...new Set(
+			(contacts ?? [])
+				.map((c) => c.referred_by_username?.toLowerCase())
+				.filter((u): u is string => Boolean(u))
+		)
+	];
+	const { data: referrerRows } =
+		claimedReferrers.length > 0
+			? await supabase.from('profiles').select('username').in('username', claimedReferrers)
+			: { data: [] };
+	const realReferrers = new Set((referrerRows ?? []).map((r) => r.username.toLowerCase()));
+
 	// Merge contacts with invitation status
 	const waitlist = (contacts ?? []).map(c => {
 		const inv = inviteMap.get(c.email);
@@ -44,14 +60,18 @@ export const load: PageServerLoad = async () => {
 		else if (inv && !inv.expired) status = 'invited';
 		else if (inv?.expired) status = 'expired';
 
-		return { ...c, status };
+		const referrerVerified = Boolean(
+			c.referred_by_username && realReferrers.has(c.referred_by_username.toLowerCase())
+		);
+		return { ...c, status, referrerVerified };
 	});
 
 	// Member-referred contacts are fast-track (review within 2 days) — float
-	// the ones still awaiting action to the top, newest first within each band.
+	// the ones still awaiting action (not yet invited) to the top, newest
+	// first within each band. Unverified referrer claims get no boost.
 	waitlist.sort((a, b) => {
-		const aFast = a.referred_by_username && a.status !== 'signed_up' ? 0 : 1;
-		const bFast = b.referred_by_username && b.status !== 'signed_up' ? 0 : 1;
+		const aFast = a.referrerVerified && a.status === 'not_invited' ? 0 : 1;
+		const bFast = b.referrerVerified && b.status === 'not_invited' ? 0 : 1;
 		if (aFast !== bFast) return aFast - bFast;
 		return a.created_at < b.created_at ? 1 : -1;
 	});

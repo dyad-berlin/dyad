@@ -167,9 +167,13 @@
 					<span class="contact-email">{contact.email}</span>
 					<span class="badge badge-{contact.status}">{contact.status.replace('_', ' ')}</span>
 					{#if contact.referred_by_username}
-						<span class="badge badge-referred">invited by @{contact.referred_by_username}</span>
-						{#if contact.status !== 'signed_up'}
-							<span class="badge badge-fasttrack">review within 2 days</span>
+						{#if contact.referrerVerified}
+							<span class="badge badge-referred">invited by @{contact.referred_by_username}</span>
+							{#if contact.status === 'not_invited'}
+								<span class="badge badge-fasttrack">review within 2 days</span>
+							{/if}
+						{:else}
+							<span class="badge badge-referred">claims referral by @{contact.referred_by_username} (no such member)</span>
 						{/if}
 					{/if}
 				</div>
