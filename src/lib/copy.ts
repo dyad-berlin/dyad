@@ -146,9 +146,7 @@ export const copy = {
 		footerDocs: 'Documentation',
 		footerCommunity: 'Wiggling',
 		footerNewsletter: 'Newsletter',
-		footerImpressum: 'Impressum',
-		footerAgb: 'AGB',
-		footerPrivacy: 'Privacy',
+		footerLegal: 'Legal',
 		// Hero headline + supporting line (display copy; sentence case is the
 		// intentional brand styling — see CLAUDE.md § UI conventions).
 		// "Collectively owned" removed 2026-07-20 — same reason "Steward-owned"

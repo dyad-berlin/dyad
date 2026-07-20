@@ -84,13 +84,7 @@
 				<a href="/docs" class="footer-link">{og.footerDocs}</a>
 				<a href="/community" class="footer-link">{og.footerCommunity}</a>
 				<a href="/unfolding" class="footer-link">{og.footerNewsletter}</a>
-				<!-- Impressum + Privacy stay together so a wrap never orphans one of
-				     the legal links on its own line — they break as a pair. -->
-				<span class="footer-legal">
-					<a href="/impressum" class="footer-link">{og.footerImpressum}</a>
-					<a href="/agb" class="footer-link">{og.footerAgb}</a>
-					<a href="/datenschutz" class="footer-link">{og.footerPrivacy}</a>
-				</span>
+				<a href="/legal" class="footer-link">{og.footerLegal}</a>
 			</footer>
 	</section>
 
@@ -478,13 +472,6 @@
 		margin-top: var(--space-5);
 		padding-top: var(--space-4);
 		border-top: 1px solid var(--border-subtle);
-	}
-
-	/* The legal pair wraps as one unit; its inner gap matches the footer's
-	   column-gap so spacing stays uniform when it sits inline. */
-	.footer-legal {
-		display: inline-flex;
-		column-gap: var(--space-5);
 	}
 
 	.footer-link {
