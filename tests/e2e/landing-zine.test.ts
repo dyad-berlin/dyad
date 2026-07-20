@@ -42,7 +42,9 @@ test.describe('Landing — pin → card → Join funnel (best effort)', () => {
 		await marker.click();
 		await expect(page.locator('.map-card')).toBeVisible();
 
+		// The CTA is now a plain link to /waitlist (the modal was archived).
 		await page.locator('.map-card-cta').click();
-		await expect(page.getByRole('button', { name: /join waitlist/i })).toBeVisible();
+		await page.waitForURL(/\/waitlist/);
+		await expect(page.getByRole('button', { name: /request to join/i })).toBeVisible();
 	});
 });
