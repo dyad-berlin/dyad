@@ -3,8 +3,8 @@ import { storageUrl } from '$lib/utils/storage-url';
 
 const imageMap: Record<string, { src: string; credit?: string }> = {
 	'/login': {
-		src: storageUrl('uploads', 'sign in.webp'),
-		credit: "A pitcher plant in “silent caress, tender flesh” by Jack Davison for The Plant Magazine"
+		src: storageUrl('uploads', 'mycelium for waitlist.webp'),
+		credit: 'Grafted (2022), painting by artist Klari Reis'
 	},
 	'/join': { src: '/images/log-in.jpeg' },
 	'/waitlist': {
