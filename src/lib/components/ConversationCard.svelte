@@ -252,7 +252,8 @@
 
 	.meta-row {
 		display: flex;
-		gap: var(--space-3);
+		flex-wrap: wrap;
+		gap: var(--space-1) var(--space-3);
 		align-items: center;
 		margin-bottom: var(--space-1);
 	}
@@ -264,6 +265,13 @@
 		text-transform: uppercase;
 		letter-spacing: 0.04em;
 		color: var(--text-muted);
+	}
+
+	/* A date cluster ("21 TUE · 23 THU") must move to a new line whole, never
+	   fracture mid-chip when the card is narrow. Neighbourhoods (meta-right)
+	   may wrap between words — lists can be long. */
+	.meta-left {
+		white-space: nowrap;
 	}
 
 	.meta-right {
@@ -361,5 +369,34 @@
 	.meta-author.anonymised {
 		filter: blur(4px);
 		user-select: none;
+	}
+
+	/* ── Narrow containers (e.g. the discover split-view list pane) ──
+	   The card adapts to the width it's GIVEN, not the viewport: below
+	   ~420px of container the full variant tightens — less padding (the
+	   host pane already pads), smaller thumb, meta clusters stacking as
+	   whole lines, 2-line snippet — so nothing fractures mid-chip. */
+	.card-shell {
+		container-type: inline-size;
+	}
+
+	@container (max-width: 420px) {
+		.row:not(.profile):not(.compact) {
+			gap: var(--space-4);
+			padding: var(--space-5) var(--space-1);
+		}
+		.row:not(.profile):not(.compact) .thumb {
+			width: 72px;
+			min-height: 80px;
+		}
+		.row:not(.profile):not(.compact) .meta-right {
+			margin-left: 0;
+			flex-basis: 100%;
+		}
+		.row:not(.profile):not(.compact) .snippet {
+			font-size: var(--text-sm);
+			-webkit-line-clamp: 2;
+			line-clamp: 2;
+		}
 	}
 </style>
