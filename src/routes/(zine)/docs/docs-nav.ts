@@ -43,8 +43,8 @@ export interface DocSection {
 
 export const docSections: DocSection[] = [
 	{ id: 'start', title: 'Documentation', group: 'top', component: Start },
+	{ id: 'support-us', title: 'Become a member', group: 'top', component: SupportUs },
 
-	{ id: 'support-us', title: 'Become a supporter', group: 'community', component: SupportUs },
 	{ id: 'about-why', title: 'Our origin story', group: 'community', component: OriginStory },
 	{ id: 'about-care', title: 'Community care', group: 'community', component: CommunityCare },
 	{ id: 'privacy', title: 'Privacy commitments', group: 'community', component: Privacy },

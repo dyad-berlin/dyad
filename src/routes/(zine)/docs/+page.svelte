@@ -5,7 +5,7 @@
 	// Master–detail: the sidebar picks a topic, the pane shows only that topic.
 	// The hash carries the selection so every topic stays deep-linkable. The
 	// topics themselves are declared once in ./docs-nav.
-	const topItem = docSections.find((s) => s.group === 'top')!;
+	const topItems = docSections.filter((s) => s.group === 'top');
 	const community = docSections.filter((s) => s.group === 'community');
 	const governance = docSections.filter((s) => s.group === 'governance');
 
@@ -42,9 +42,10 @@
 
 <div class="docs">
 	<aside class="side">
-		<a href="/" class="side-wordmark">DYAD</a>
 		<nav aria-label="Documentation">
-			<button class="side-link side-top" class:active={active === topItem.id} onclick={() => select(topItem.id)}>{topItem.title}</button>
+			{#each topItems as item (item.id)}
+				<button class="side-link side-top" class:active={active === item.id} onclick={() => select(item.id)}>{item.title}</button>
+			{/each}
 
 			<p class="side-head">Community</p>
 			{#each community as item (item.id)}
