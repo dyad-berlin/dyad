@@ -378,7 +378,7 @@ export interface ReputationSignal {
 
 /** Shape of ReputationSignal.content when signal_type is 'feedback_received'
  *  — a snapshot taken from feedback_forms at simultaneous-reveal lock time
- *  (see 20260718090000_feature_feedback_on_profile.sql). Anonymous: no
+ *  (see 20260720080000_feature_feedback_on_profile.sql). Anonymous: no
  *  reviewer identity travels with the snapshot. */
 export interface FeedbackReceivedContent {
 	feedback_form_id: string;

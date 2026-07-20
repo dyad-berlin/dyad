@@ -37,6 +37,13 @@ ALTER TABLE reputation_signals
   ADD CONSTRAINT uq_reputation_signal_profile_meeting_type
   UNIQUE (profile_id, source_meeting_id, signal_type);
 
+-- The 20260401 table default was TRUE (nothing wrote to the table then).
+-- Both insert paths below pass visible explicitly, but consent-by-default
+-- must be structural: a future insert path that omits the column must not
+-- auto-publish private feedback.
+ALTER TABLE reputation_signals
+  ALTER COLUMN visible SET DEFAULT FALSE;
+
 -- ============================================
 -- submit_feedback — now also snapshots a reputation_signals row on lock
 -- ============================================
@@ -70,7 +77,7 @@ BEGIN
     RAISE EXCEPTION 'Form not found or not editable';
   END IF;
 
-  IF v_form.reviewer_id != (SELECT auth.uid()) THEN
+  IF v_form.reviewer_id != app.current_user_id() THEN
     RAISE EXCEPTION 'Not authorized';
   END IF;
 
