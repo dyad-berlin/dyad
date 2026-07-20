@@ -144,7 +144,7 @@ export const copy = {
 		// "Impressum" — the page at /impressum is a legal notice, not terms
 		// of service, and German visitors look for it by that name.
 		footerDocs: 'Documentation',
-		footerCommunity: 'Community',
+		footerCommunity: 'Wiggling',
 		footerNewsletter: 'Newsletter',
 		footerImpressum: 'Impressum',
 		footerAgb: 'AGB',
