@@ -37,22 +37,21 @@ describe('renderInviteEmail — signed footer', () => {
 
 	it('always carries a short useful body, even with no opener or message', () => {
 		const html = renderInviteEmail({ inviteUrl: INVITE_URL, expiryDays: EXPIRY });
-		expect(html).toContain('We are delighted to cross paths with you and would love for you to join us.');
+		expect(html).toContain('We are writing to welcome you in Dyad.');
 		expect(html).toContain('Support Dyad');
-		expect(html).toContain('sliding scale');
-		expect(html).toContain('If 500 of us contribute, Dyad stays independent.');
-		expect(html).toContain('first social technology company owned by the people who use it');
+		expect(html).toContain('Six weeks to be joined by 500 supporting members');
+		expect(html).toContain('steward ownership');
 		expect(html).toContain('https://dyad.berlin/docs#standards');
 		expect(html).toContain('https://dyad.berlin/docs');
-		expect(html).toContain('reply to this email');
+		expect(html).toContain('luna@dyad.berlin');
 	});
 
 	it('renders the expiry days the caller passes in', () => {
 		expect(renderInviteEmail({ inviteUrl: INVITE_URL, expiryDays: 14 })).toContain(
-			'expire in 14 days'
+			'expires in 14 days'
 		);
 		expect(renderInviteEmail({ inviteUrl: INVITE_URL, expiryDays: 30 })).toContain(
-			'expire in 30 days'
+			'expires in 30 days'
 		);
 	});
 });

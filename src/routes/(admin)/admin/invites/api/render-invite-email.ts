@@ -87,25 +87,31 @@ export function renderInviteEmail(params: {
 
 	return `${SIGNATURE_FONT_FACE}
 			<div style="font-family: Helvetica, Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 40px 20px; color: ${color.textPrimary}; line-height: ${leading.relaxed};">${openerBlock}${personalBlock}
-				<p>We are delighted to cross paths with you and would love for you to join us.</p>
-				<p>A few things to help you find your way:</p>
-				<p>We expect everyone to read and respect our ${link('https://dyad.berlin/docs#standards', 'Community Standards')}. They live in the ${link('https://dyad.berlin/docs', 'documentation section')}, alongside resources that make the thinking and decisions behind Dyad legible.</p>
-				<p>You can start a conversation or find people looking to meet, one-to-one or in a group, over the coming seven days.</p>
+				<p>We are writing to welcome you in Dyad.</p>
+				<p>A few things to help you get started:</p>
+				<p>We expect everyone to read and respect our ${link('https://dyad.berlin/docs#standards', 'Community Standards')}. They live in our documentation, alongside resources that make our thinking behind all decisions at Dyad legible.</p>
+				<p>Once you log in, you'll get to start conversations, pick if you'd like to meet someone one on one or create one for a group, and discover others in your city this week.</p>
+				<p>Dyad is, and will always be, a work in progress. We welcome your involvement in shaping it.</p>
 				<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin: 0 0 ${space[6]}; border-collapse: collapse;">
 					<tr>
 						<td align="center" style="padding: ${space[8]} ${space[6]}; background: #f7f4ee; border: 1px solid #e6dfd2; border-radius: 10px;">
 							<p style="margin: 0 0 ${space[2]}; font-family: Helvetica, Arial, sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: #4a5d3f;">Support Dyad</p>
-							<p style="margin: 0 0 ${space[4]}; font-family: ${SERIF}; font-weight: 700; font-size: 21px; line-height: 1.3; color: ${color.textPrimary};">If 500 of us contribute, Dyad stays independent.</p>
-							<p style="margin: 0 0 ${space[5]};"><a href="https://dyad.berlin/membership" style="font-family: Helvetica, Arial, sans-serif; font-size: 15px; font-weight: 700; color: #4a5d3f; text-decoration: underline;">Choose a contribution that fits you →</a></p>
-							<p style="margin: 0 0 ${space[3]}; font-family: ${SERIF}; font-size: 15px; line-height: ${leading.relaxed}; color: ${color.textSecondary}; text-align: left;">Contributions are sliding scale, so you pay what fits you, and there is a limited way to take part as a guest if paying is not right for you yet. Contributions are how we stay independent and accountable to the people who use Dyad, not to advertisers or investors.</p>
-							<p style="margin: 0; font-family: ${SERIF}; font-size: 15px; line-height: ${leading.relaxed}; color: ${color.textSecondary}; text-align: left;">The ambition beyond that: Dyad becoming the first social technology company owned by the people who use it. Contributing, or sharing Dyad with someone who might want to join, helps bring that closer.</p>
+							<p style="margin: 0 0 ${space[5]}; font-family: ${SERIF}; font-weight: 700; font-size: 21px; line-height: 1.3; color: ${color.textPrimary};">Six weeks to be joined by 500 supporting members</p>
+							<p style="margin: 0 0 ${space[3]}; font-family: ${SERIF}; font-size: 15px; line-height: ${leading.relaxed}; color: ${color.textSecondary}; text-align: left;">From the start, our aim has been to build social technology that gives people shared ground to meet on terms they shape together, while keeping Dyad independent of advertising, extraction, and outside control.</p>
+							<p style="margin: 0 0 ${space[3]}; font-family: ${SERIF}; font-size: 15px; line-height: ${leading.relaxed}; color: ${color.textSecondary}; text-align: left;">That independence has also been our greatest challenge. After a year of bootstrapping the work, we are moving toward a member-funded model with our beta launch.</p>
+							<p style="margin: 0 0 ${space[6]}; font-family: ${SERIF}; font-size: 15px; line-height: ${leading.relaxed}; color: ${color.textSecondary}; text-align: left;">Over the next six weeks, we aim to reach 500 supporting members. Their contributions will allow us to sustain our operations, keep developing Dyad with the community, and begin our transition toward steward ownership.</p>
+							<table role="presentation" cellpadding="0" cellspacing="0" border="0">
+								<tr>
+									<td style="border-radius: 6px; background: #1a1a1a;">
+										<a href="${params.inviteUrl}" style="display: inline-block; padding: ${space[3]} ${space[6]}; font-family: Helvetica, Arial, sans-serif; font-size: 15px; font-weight: 700; color: #ffffff; text-decoration: none; border-radius: 6px;">Welcome to Dyad</a>
+									</td>
+								</tr>
+							</table>
 						</td>
 					</tr>
 				</table>
-				<p>Dyad is, and will always be, a work in progress. We welcome your involvement in shaping it.</p>
-				<p>Should anything feel unclear, reply to this email or use the feedback button in the app, and one of us will help.</p>
-				<p style="font-size: ${textSize.base}; color: ${color.textMuted};">Your personal invitation link will expire in ${params.expiryDays} days:</p>
-				<p><a href="${params.inviteUrl}" style="color: ${color.textPrimary}; font-weight: bold; text-decoration: underline;">Welcome to Dyad</a></p>
+				<p style="font-size: ${textSize.base}; color: ${color.textMuted};">Your personal invitation link expires in ${params.expiryDays} days.</p>
+				<p>Should anything feel unclear, shoot this email to <a href="mailto:luna@dyad.berlin" style="color: ${color.textPrimary}; text-decoration: underline;">luna@dyad.berlin</a>.</p>
 				<hr style="border: none; border-top: 1px solid ${color.borderSubtle}; margin: ${space[8]} 0 ${space[4]};" />
 				${renderSignedFooter(closing, names)}
 			</div>
