@@ -3,11 +3,28 @@ import { copy } from '$lib/copy';
 import { tokens } from '$lib/design-tokens.js';
 
 const { color, textSize, space, leading, letterSpacing } = tokens;
-// Georgia only — no @font-face. The self-hosted SangBleu Light rendered
-// nearly unreadable in the clients that honoured it (thin 300 weight at
-// small sizes) and was ignored by the rest (Gmail strips @font-face).
-// A system serif at regular weight reads everywhere.
-const SERIF = "Georgia, 'Times New Roman', serif";
+// SangBleu Sunrise, Bold + Regular only — the Light/300 weight is what
+// actually read as "nearly unreadable" at small sizes; Bold and Regular
+// hold up fine. Georgia is the fallback for clients that strip @font-face
+// (Gmail included) — same weights, so the fallback isn't a downgrade.
+const SERIF = "'SangBleu Sunrise', Georgia, 'Times New Roman', serif";
+const SIGNATURE_FONT_FACE = `
+			<style>
+				@font-face {
+					font-family: 'SangBleu Sunrise';
+					src: url('https://dyad.berlin/fonts/SangBleuSunrise-Regular-WebXL.woff2') format('woff2');
+					font-weight: 400;
+					font-style: normal;
+					font-display: swap;
+				}
+				@font-face {
+					font-family: 'SangBleu Sunrise';
+					src: url('https://dyad.berlin/fonts/SangBleuSunrise-Bold-WebXL.woff2') format('woff2');
+					font-weight: 700;
+					font-style: normal;
+					font-display: swap;
+				}
+			</style>`;
 
 // Table layout because Outlook does not reliably render flex/grid.
 // border-collapse + mso-* are Outlook hygiene; without them Outlook injects stray whitespace and borders.
@@ -69,7 +86,7 @@ export function renderInviteEmail(params: {
 	const link = (href: string, label: string) =>
 		`<a href="${href}" style="color: ${color.textPrimary}; text-decoration: underline;">${label}</a>`;
 
-	return `
+	return `${SIGNATURE_FONT_FACE}
 			<div style="font-family: Helvetica, Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 40px 20px; color: ${color.textPrimary}; line-height: ${leading.relaxed};">${openerBlock}${personalBlock}
 				<p>Your request to join dyad is accepted. Create your account with your personal invitation link:</p>
 				<p><a href="${params.inviteUrl}" style="color: ${color.textPrimary}; font-weight: bold; text-decoration: underline;">Join dyad</a></p>

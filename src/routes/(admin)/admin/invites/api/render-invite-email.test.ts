@@ -12,11 +12,13 @@ describe('renderInviteEmail — signed footer', () => {
 		expect(html).toContain('dyad · berlin');
 	});
 
-	it('uses a system serif — no @font-face (unreadable Light weight; Gmail strips it anyway)', () => {
+	it('embeds SangBleu Sunrise Bold + Regular via @font-face, Georgia fallback (no Light weight)', () => {
 		const html = renderInviteEmail({ inviteUrl: INVITE_URL, expiryDays: EXPIRY });
-		expect(html).not.toContain('@font-face');
-		expect(html).not.toContain('SangBleu');
-		expect(html).toMatch(/font-family: Georgia, 'Times New Roman', serif/);
+		expect(html).toContain('@font-face');
+		expect(html).toContain("url('https://dyad.berlin/fonts/SangBleuSunrise-Regular-WebXL.woff2')");
+		expect(html).toContain("url('https://dyad.berlin/fonts/SangBleuSunrise-Bold-WebXL.woff2')");
+		expect(html).not.toContain('SangBleuSunrise-Light');
+		expect(html).toMatch(/font-family: 'SangBleu Sunrise', Georgia, 'Times New Roman', serif/);
 	});
 
 	it('renders a text DYAD wordmark linking to dyad.berlin (not the old logo image)', () => {

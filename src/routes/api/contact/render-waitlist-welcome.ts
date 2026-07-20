@@ -2,11 +2,28 @@ import { copy } from '$lib/copy';
 import { tokens } from '$lib/design-tokens.js';
 
 const { color, textSize, space, leading, letterSpacing } = tokens;
-// Georgia only — no @font-face. The self-hosted SangBleu Light rendered
-// nearly unreadable in the clients that honoured it (thin 300 weight at
-// small sizes) and was ignored by the rest (Gmail strips @font-face).
-// A system serif at regular weight reads everywhere.
-const SERIF = "Georgia, 'Times New Roman', serif";
+// SangBleu Sunrise, Bold + Regular only — the Light/300 weight is what
+// actually read as "nearly unreadable" at small sizes; Bold and Regular
+// hold up fine. Georgia is the fallback for clients that strip @font-face
+// (Gmail included) — same weights, so the fallback isn't a downgrade.
+const SERIF = "'SangBleu Sunrise', Georgia, 'Times New Roman', serif";
+const SIGNATURE_FONT_FACE = `
+			<style>
+				@font-face {
+					font-family: 'SangBleu Sunrise';
+					src: url('https://dyad.berlin/fonts/SangBleuSunrise-Regular-WebXL.woff2') format('woff2');
+					font-weight: 400;
+					font-style: normal;
+					font-display: swap;
+				}
+				@font-face {
+					font-family: 'SangBleu Sunrise';
+					src: url('https://dyad.berlin/fonts/SangBleuSunrise-Bold-WebXL.woff2') format('woff2');
+					font-weight: 700;
+					font-style: normal;
+					font-display: swap;
+				}
+			</style>`;
 
 // Table layout because Outlook does not reliably render flex/grid.
 // border-collapse + mso-* are Outlook hygiene; without them Outlook injects stray whitespace and borders.
@@ -34,7 +51,7 @@ const EMAIL_SIGNED_FOOTER = `<table role="presentation" cellpadding="0" cellspac
  * does not re-escape, to avoid double-encoding entities like `&amp;`.
  */
 export function renderWaitlistWelcomeEmail(params: { displayName: string }): string {
-	return `
+	return `${SIGNATURE_FONT_FACE}
 			<div style="font-family: Helvetica, Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 40px 20px; color: ${color.textPrimary}; line-height: ${leading.relaxed};">
 				<p>Hi ${params.displayName},</p>
 				<p>This question has been one that animated our path in building a piece of social technology as civic infrastructure. So naturally, Dyad became a community of and for people who want company on shared questions, ideas, experiences and all that can be the start of a conversation. All conversations are in person, and we create the digital experience to minimize the time you spend online, and have it a joyful, ad-free roaming experience.</p>
