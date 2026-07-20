@@ -32,7 +32,7 @@
 			<hr />
 			<p class="essay-date-row">{formatEditorialDate(entry.date)}</p>
 			<p class="essay-byline">words by Luna</p>
-			<p class="essay-standfirst">Unfolding is our weekly meditations on building a collectively owned and governed social technology company.</p>
+			<p class="essay-standfirst">Unfolding is our weekly meditation on building social technology in service of collective sensemaking and community. From our open-source infrastructure, designed to resist extraction and mission drift, to practising collective governance with our community and moving toward collective ownership, we share the thinking and work behind Dyad.</p>
 		</header>
 
 		<div class="essay-body">

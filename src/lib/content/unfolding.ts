@@ -26,7 +26,7 @@ export const unfoldingEntries: UnfoldingEntry[] = [
 	{
 		slug: 'conversation-is-a-fundamental-technology',
 		kicker: 'Origin story · post 1',
-		title: 'Conversation is a fundamental technology for sensemaking',
+		title: 'Conversation: A primal technology for sensemaking',
 		quote: 'We humanize what is going on in the world and in ourselves only by speaking of it.',
 		quoteAttr: 'Hannah Arendt, Men in Dark Times',
 		date: '2026-06-08',

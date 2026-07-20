@@ -10,14 +10,14 @@
 	<title>Unfolding · dyad.</title>
 	<meta
 		name="description"
-		content="Unfolding is our weekly meditations on building a collectively owned and governed social technology company."
+		content="Unfolding is our weekly meditation on building social technology in service of collective sensemaking and community. From our open-source infrastructure, designed to resist extraction and mission drift, to practising collective governance with our community and moving toward collective ownership, we share the thinking and work behind Dyad."
 	/>
 </svelte:head>
 
 <div class="archive">
 	<header class="archive-head">
 		<p class="section-label">Unfolding</p>
-		<h1 class="archive-title">Unfolding is our weekly meditations on building a collectively owned and governed social technology company.</h1>
+		<h1 class="archive-title">Unfolding is our weekly meditation on building social technology in service of collective sensemaking and community. From our open-source infrastructure, designed to resist extraction and mission drift, to practising collective governance with our community and moving toward collective ownership, we share the thinking and work behind Dyad.</h1>
 	</header>
 
 	{#if featured}
@@ -81,7 +81,7 @@
 		line-height: 1.5;
 		color: var(--paper-ink-soft);
 		margin: 0;
-		max-width: 44ch;
+		max-width: 80ch;
 		letter-spacing: -0.005em;
 	}
 
