@@ -85,6 +85,9 @@
 
 <div class="auth-card">
 	<h1>{copy.waitlist.heading}</h1>
+	<p class="already-member">
+		{copy.auth.alreadyHaveAccount} <a href="/login">{copy.auth.logIn}</a>
+	</p>
 	<p class="subtitle">
 		{copy.waitlist.introPre}<a href={copy.waitlist.introDocsHref} target="_blank" rel="noopener">{copy.waitlist.introDocsLink}</a>{copy.waitlist.introPost}
 	</p>
@@ -199,6 +202,16 @@
 		font-size: var(--text-2xl);
 		font-weight: 300;
 		color: var(--text-primary);
+	}
+
+	.already-member {
+		margin: 0 0 var(--space-4) 0;
+		color: var(--text-muted);
+		font-size: var(--text-sm);
+	}
+	.already-member a {
+		color: var(--text-primary);
+		text-decoration: underline;
 	}
 
 	.subtitle {
