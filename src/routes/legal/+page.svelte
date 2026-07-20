@@ -1,42 +1,53 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import ImpressumContent from '$lib/components/legal/ImpressumContent.svelte';
 	import AgbContent from '$lib/components/legal/AgbContent.svelte';
 	import DatenschutzContent from '$lib/components/legal/DatenschutzContent.svelte';
+
+	const DOCS = ['impressum', 'agb', 'datenschutz'] as const;
+	type DocId = (typeof DOCS)[number];
+	const LABELS: Record<DocId, string> = { impressum: 'Impressum', agb: 'AGB', datenschutz: 'Privacy' };
+
+	let active = $state<DocId>('impressum');
+
+	function fromHash() {
+		const h = (location.hash || '').replace('#', '');
+		active = (DOCS as readonly string[]).includes(h) ? (h as DocId) : 'impressum';
+	}
+
+	function select(id: DocId) {
+		active = id;
+		// Keep the URL shareable without triggering the browser's own scroll-to-id.
+		history.replaceState(null, '', '#' + id);
+	}
+
+	onMount(fromHash);
 </script>
+
+<svelte:window onhashchange={fromHash} />
 
 <svelte:head>
 	<title>legal · dyad. cultivating a culture of conversation</title>
 </svelte:head>
 
 <main class="legal-page">
-	<a href="/" class="back-link">
-		<svg width="16" height="16" viewBox="0 0 20 20" fill="none" style="vertical-align:middle;margin-right:4px"><path d="M12 15l-5-5 5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-		dyad.berlin
-	</a>
-
 	<h1 class="legal-title">Legal</h1>
 
-	<nav class="legal-jump" aria-label="Jump to document">
-		<a href="#impressum">Impressum</a>
-		<a href="#agb">AGB</a>
-		<a href="#datenschutz">Privacy</a>
+	<nav class="legal-tabs" role="group" aria-label="Legal document">
+		{#each DOCS as id (id)}
+			<button type="button" class:active={active === id} aria-pressed={active === id} onclick={() => select(id)}>
+				{LABELS[id]}
+			</button>
+		{/each}
 	</nav>
 
-	<section id="impressum" class="legal-section">
+	{#if active === 'impressum'}
 		<ImpressumContent />
-	</section>
-
-	<hr class="legal-divider" />
-
-	<section id="agb" class="legal-section">
+	{:else if active === 'agb'}
 		<AgbContent />
-	</section>
-
-	<hr class="legal-divider" />
-
-	<section id="datenschutz" class="legal-section">
+	{:else}
 		<DatenschutzContent />
-	</section>
+	{/if}
 </main>
 
 <style>
@@ -70,32 +81,27 @@
 		margin: 0 0 var(--space-6);
 	}
 
-	.legal-jump {
+	/* Same tab treatment as each document's own DE/EN toggle. */
+	.legal-tabs {
 		display: flex;
-		gap: var(--space-4);
+		gap: var(--space-1);
 		margin-bottom: var(--space-10);
-		padding-bottom: var(--space-4);
-		border-bottom: 1px solid var(--border-subtle);
 	}
 
-	.legal-jump a {
-		font-size: var(--text-sm);
+	.legal-tabs button {
+		font: inherit;
+		font-size: var(--text-base);
+		padding: var(--space-1) var(--space-3);
+		border: 1px solid currentColor;
+		border-radius: var(--radius-input);
+		background: transparent;
 		color: var(--text-muted);
-		text-decoration: underline;
-		text-underline-offset: 2px;
+		cursor: pointer;
+		transition: color 0.2s, border-color 0.2s;
 	}
 
-	.legal-jump a:hover {
+	.legal-tabs button.active {
 		color: var(--text-primary);
-	}
-
-	.legal-section {
-		scroll-margin-top: var(--space-8);
-	}
-
-	.legal-divider {
-		border: none;
-		border-top: 1px solid var(--border-subtle);
-		margin: var(--space-10) 0;
+		border-color: var(--text-primary);
 	}
 </style>
