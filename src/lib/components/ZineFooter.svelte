@@ -1,4 +1,4 @@
-<!-- Shared zine footer — used by the (zine) layout and the /why page. -->
+<!-- Shared zine footer — used by the (zine) layout. -->
 <script lang="ts">
 	import { env } from '$env/dynamic/public';
 
@@ -18,7 +18,6 @@
 				<p class="footer-col-head">Community</p>
 				<a href="/waitlist" class="footer-link">Become a member</a>
 				<a href="/newsletter" class="footer-link">Newsletter</a>
-				<span class="footer-link footer-soon">Forum (in the making)</span>
 				{#if blogUrl}<a href={blogUrl} class="footer-link" target="_blank" rel="noopener">Blog</a>{/if}
 				{#if instagramUrl}<a href={instagramUrl} class="footer-link" target="_blank" rel="noopener">Instagram</a>{/if}
 				{#if blueskyUrl}<a href={blueskyUrl} class="footer-link" target="_blank" rel="noopener">Bluesky</a>{/if}
@@ -26,11 +25,9 @@
 			</div>
 			<div class="footer-col">
 				<p class="footer-col-head">Resources</p>
-				<a href="/docs" class="footer-link">Documentation</a>
-			</div>
-			<div class="footer-col">
-				<p class="footer-col-head">About us</p>
-				<a href="/why" class="footer-link">About</a>
+				<a href="/docs#about-why" class="footer-link">About Us</a>
+				<a href="/docs#about-care" class="footer-link">Community</a>
+				<a href="/docs#bylaws" class="footer-link">Governance</a>
 			</div>
 			<div class="footer-col">
 				<p class="footer-col-head">Legal</p>
@@ -58,13 +55,13 @@
 		padding: 0 48px;
 	}
 
-	/* Four compact, left-hugging columns — Community, Resources, About us,
-	   Legal — rather than stretched across the full 1080px measure.
-	   Community carries the most content (membership + social); the other
-	   three are intentionally short. */
+	/* Three compact, left-hugging columns — Community, Resources, Legal —
+	   rather than stretched across the full 1080px measure. Community
+	   carries the most content (membership + social); Resources nests
+	   About Us/Community/Governance as links into /docs; Legal is short. */
 	.footer-grid {
 		display: grid;
-		grid-template-columns: repeat(4, minmax(0, 180px));
+		grid-template-columns: repeat(3, minmax(0, 180px));
 		justify-content: start;
 		gap: 40px;
 		margin-bottom: 56px;
