@@ -932,8 +932,8 @@ export const copy = {
 	email: {
 		_routes: ['/api/contact', '/api/invites'],
 		_description: 'Transactional emails sent server-side. HTML templates in the API route handlers.',
-		inviteSubject: 'Come & join us at Dyad.',
-		waitlistSubject: "What’s in a conversation?",
+		inviteSubject: 'Welcome to Dyad.',
+		waitlistSubject: "Dyad, for a culture of conversations",
 		membershipActivatedSubject: 'Your membership is active',
 		membershipActivatedBody:
 			'Thank you for joining us as a member. Your membership is active. We build dyad to stay independent and in service to connection, collective sensemaking and community — your membership is what makes that possible, and it’s what lets you start conversations, respond, and meet. You can review or manage it any time.',

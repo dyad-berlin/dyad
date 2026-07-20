@@ -2,11 +2,11 @@ import { describe, it, expect } from 'vitest';
 import { renderWaitlistWelcomeEmail } from './render-waitlist-welcome.js';
 
 describe('renderWaitlistWelcomeEmail — signed footer', () => {
-	it('includes the dyad signature names', () => {
+	it('includes the dyad signature names, no brand line (dropped from the footer)', () => {
 		const html = renderWaitlistWelcomeEmail({ displayName: 'Alex' });
 		expect(html).toContain('With care and joy,');
 		expect(html).toContain('Luna and Fiore');
-		expect(html).toContain('dyad · berlin');
+		expect(html).not.toContain('dyad · berlin');
 	});
 
 	it('embeds SangBleu Sunrise Bold + Regular via @font-face, Georgia fallback (no Light weight)', () => {
@@ -26,9 +26,12 @@ describe('renderWaitlistWelcomeEmail — signed footer', () => {
 		expect(html).toContain('>DYAD<');
 	});
 
-	it('keeps the body-level "With care, Luna" sign-off intact', () => {
+	it('carries the new waitlist-confirmation body copy, no separate body-level sign-off', () => {
 		const html = renderWaitlistWelcomeEmail({ displayName: 'Alex' });
-		expect(html).toContain('With care,<br/>Luna');
+		expect(html).toContain('You are now on the waitlist for Dyad.');
+		expect(html).toContain('We look forward to meeting you for a conversation.');
+		// The only sign-off is the shared footer table now.
+		expect(html).not.toContain('With care,<br/>Luna');
 	});
 
 	it('renders the supplied displayName in the greeting', () => {
