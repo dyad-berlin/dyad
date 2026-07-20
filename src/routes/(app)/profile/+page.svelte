@@ -477,6 +477,13 @@
 		{/if}
 	{/if}
 
+	<footer class="site-links">
+		<a href="/docs" class="site-links-link">{copy.profile.footerDocs}</a>
+		<a href="/community" class="site-links-link">{copy.profile.footerCommunity}</a>
+		<a href="/newsletter" class="site-links-link">{copy.profile.footerNewsletter}</a>
+		<a href="/legal" class="site-links-link">{copy.profile.footerLegal}</a>
+	</footer>
+
 </div>
 
 <FloatingNav variant="profile" attentionCount={data.attentionCount} />
@@ -486,6 +493,26 @@
 		width: 100%;
 		max-width: var(--content-standard);
 		padding-bottom: var(--nav-clearance);
+	}
+
+	.site-links {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-5);
+		margin-top: var(--space-10);
+		padding-top: var(--space-4);
+		border-top: 1px solid var(--border-subtle);
+	}
+
+	.site-links-link {
+		font-family: var(--font-mono);
+		font-size: var(--text-xs);
+		letter-spacing: 0.04em;
+		color: var(--text-muted);
+	}
+
+	.site-links-link:hover {
+		color: var(--text-primary);
 	}
 
 	/* Profile card — clean identity */

@@ -91,15 +91,6 @@
 		color: rgba(27, 28, 30, 0.85);
 	}
 
-	/* Not yet a destination — quieter than the live links, not interactive. */
-	.footer-soon {
-		color: rgba(27, 28, 30, 0.25);
-		cursor: default;
-	}
-	.footer-soon:hover {
-		color: rgba(27, 28, 30, 0.25);
-	}
-
 	@media (max-width: 640px) {
 		.zine-footer {
 			padding: 40px 0 40px;

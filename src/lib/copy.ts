@@ -370,6 +370,13 @@ export const copy = {
 		inviteFriendLink: 'invite a friend',
 		inviteFriendCopied: 'link copied',
 		inviteFriendFallback: 'Copy this link and send it to your friend:',
+		// Quiet site-links row at the bottom of the profile page — the same
+		// destinations as the landing/zine footer, so a signed-in member never
+		// has to sign out to reach documentation or the legal pages.
+		footerDocs: 'Documentation',
+		footerCommunity: 'Wiggling',
+		footerNewsletter: 'Newsletter',
+		footerLegal: 'Legal',
 	},
 
 	// ── Preferences ────────────────────────────────────────────────────
