@@ -5,6 +5,7 @@
 	import ConversationCard from '$lib/components/ConversationCard.svelte';
 	import UserHandle from '$lib/components/UserHandle.svelte';
 	import NotificationHint from '$lib/components/NotificationHint.svelte';
+	import FeatureFeedbackToggle from '$lib/components/FeatureFeedbackToggle.svelte';
 	import { generateICS, downloadICS } from '$lib/utils/calendar.js';
 	import { formatShortDate } from '$lib/utils/dates.js';
 	import { othersBeyond, cancellablePairs } from '$lib/domain/gathering.js';
@@ -341,6 +342,9 @@
 								<li class="reveal-tag">{tag}</li>
 							{/each}
 						</ul>
+					{/if}
+					{#if data.reputationSignal && (fb.share_with_person || fb.rating_tags.length > 0)}
+						<FeatureFeedbackToggle signalId={data.reputationSignal.id} initialVisible={data.reputationSignal.visible} />
 					{/if}
 				</div>
 			{/each}

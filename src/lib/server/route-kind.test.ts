@@ -90,6 +90,34 @@ describe('routeKind — secondary apex + alias hosts (conference domain)', () =>
 	});
 });
 
+describe('routeKind — dyad.social serves the app (future primary)', () => {
+	const SOCIAL_OPTS = {
+		...PROD_OPTS,
+		secondaryApexHostnames: ['dyad.social'],
+		aliasHostnames: ['www.dyad.social']
+	} as const;
+
+	it('dyad.social → user on app paths (the URL stays dyad.social)', () => {
+		expect(routeKind(new URL('https://dyad.social/'), SOCIAL_OPTS)).toBe('user');
+		expect(routeKind(new URL('https://dyad.social/discover'), SOCIAL_OPTS)).toBe('user');
+		expect(routeKind(new URL('https://dyad.social/join?token=x'), SOCIAL_OPTS)).toBe('user');
+	});
+
+	it('dyad.social /admin/* → apex-redirect (admin never served off-canonical)', () => {
+		expect(routeKind(new URL('https://dyad.social/admin/members'), SOCIAL_OPTS)).toBe(
+			'apex-redirect'
+		);
+	});
+
+	it('www.dyad.social → alias-redirect', () => {
+		expect(routeKind(new URL('https://www.dyad.social/'), SOCIAL_OPTS)).toBe('alias-redirect');
+	});
+
+	it('without the options, dyad.social stays rejected (back-compat)', () => {
+		expect(routeKind(new URL('https://dyad.social/'), PROD_OPTS)).toBe('reject');
+	});
+});
+
 describe('routeKind — non-canonical hostnames are rejected', () => {
 	it('attacker-controlled hostname + non-admin path → reject', () => {
 		expect(routeKind(new URL('https://attacker.example.com/discover'), PROD_OPTS)).toBe('reject');

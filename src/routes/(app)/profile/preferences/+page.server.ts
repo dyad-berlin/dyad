@@ -6,7 +6,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const upactor = requireIdentity(locals);
 
 	// This page only loads notification settings. Membership management moved to
-	// /profile/membership, which reads membership state from the (app) layout loader.
+	// /profile/membership, and featured feedback to /profile/feedback, both of
+	// which read their own state independently of this loader.
 	const { data, error } = await locals.supabase
 		.from('notification_settings')
 		.select('email, invitation_received, invitation_answered, meeting_cancelled')

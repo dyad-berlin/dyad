@@ -84,6 +84,15 @@ export const POST: RequestHandler = async ({ request, locals, getClientAddress }
 		return json({ error: 'Referred by username is too long' }, { status: 400 });
 	}
 
+	// Same shape rule as the hooks ?ref= cookie guard: anything else is not a
+	// username we could have issued, so drop it rather than store attacker-
+	// controlled text that the admin board would render as a member referral.
+	const referredBy =
+		typeof referred_by_username === 'string' &&
+		/^[a-z0-9_-]{2,32}$/i.test(referred_by_username.trim())
+			? referred_by_username.trim().toLowerCase()
+			: null;
+
 	// "Where did you spot us?" — option key or free text; member-stated, optional.
 	if (referral_source !== undefined && typeof referral_source !== 'string') {
 		return json({ error: 'Referral source must be a string' }, { status: 400 });
@@ -113,8 +122,8 @@ export const POST: RequestHandler = async ({ request, locals, getClientAddress }
 		based_in: (typeof based_in === 'string' ? based_in.trim() : null) || null,
 		freewrite: (typeof freewrite === 'string' ? freewrite.trim() : null) || null,
 	};
-	if (typeof referred_by_username === 'string' && referred_by_username.trim()) {
-		insertRow.referred_by_username = referred_by_username.trim();
+	if (referredBy) {
+		insertRow.referred_by_username = referredBy;
 	}
 	if (typeof referral_source === 'string' && referral_source.trim()) {
 		insertRow.referral_source = referral_source.trim();

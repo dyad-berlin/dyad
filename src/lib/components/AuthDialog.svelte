@@ -25,6 +25,9 @@
 	let email = $state('');
 	let referralSource = $state('');
 	let referralOther = $state('');
+	// Acknowledgement gate — same requirement as the /waitlist page.
+	let agreedStandards = $state(false);
+	let agreedAgreements = $state(false);
 	// The newsletter opt-in lives on Substack (they are the controller); we
 	// only show the link after signup, and only when the URL is configured.
 	const newsletterUrl = (env.PUBLIC_NEWSLETTER_URL ?? '').trim();
@@ -80,6 +83,10 @@
 			!referralSource || (referralSource === 'other' && !referralOther.trim())
 		) {
 			error = copy.waitlist.allRequired;
+			return;
+		}
+		if (!agreedStandards || !agreedAgreements) {
+			error = copy.waitlist.consentRequired;
 			return;
 		}
 		loading = true;
@@ -146,6 +153,7 @@
 	<div class="auth-overlay" onclick={(e) => { if (e.target === e.currentTarget) hide(); }}>
 		<div
 			class="auth-dialog"
+			class:full-bleed-mobile={currentMode === 'waitlist'}
 			role="dialog"
 			aria-modal="true"
 			aria-labelledby="auth-dialog-title"
@@ -155,7 +163,7 @@
 		<button class="close-btn" onclick={hide} aria-label="Close">&times;</button>
 
 		{#if currentMode === 'waitlist'}
-			<h2 id="auth-dialog-title" class="dialog-title">{copy.waitlist.joinWaitlist}</h2>
+			<h2 id="auth-dialog-title" class="dialog-title">{copy.waitlist.heading}</h2>
 
 			{#if success}
 				<div class="success-message">
@@ -173,9 +181,32 @@
 					{/if}
 				</div>
 			{:else}
+				<p class="dialog-intro">
+					{copy.waitlist.introPre}<a href={copy.waitlist.introDocsHref} target="_blank" rel="noopener">{copy.waitlist.introDocsLink}</a>{copy.waitlist.introPost}
+				</p>
+				<p class="dialog-intro">{copy.waitlist.introJoin}</p>
+
+				<label class="consent-card" class:checked={agreedStandards}>
+					<input type="checkbox" bind:checked={agreedStandards} disabled={loading} />
+					<span class="consent-body">
+						<span class="consent-title">{copy.waitlist.consentStandardsTitle}</span>
+						<span class="consent-desc">{copy.waitlist.consentStandardsDesc}</span>
+						<a href={copy.waitlist.consentStandardsHref} target="_blank" rel="noopener" class="consent-link">{copy.waitlist.consentStandardsLinkLabel}</a>
+					</span>
+				</label>
+
+				<label class="consent-card" class:checked={agreedAgreements}>
+					<input type="checkbox" bind:checked={agreedAgreements} disabled={loading} />
+					<span class="consent-body">
+						<span class="consent-title">{copy.waitlist.consentAgreementsTitle}</span>
+						<span class="consent-desc">{copy.waitlist.consentAgreementsDesc}</span>
+						<a href={copy.waitlist.consentAgreementsHref} target="_blank" rel="noopener" class="consent-link">{copy.waitlist.consentAgreementsLinkLabel}</a>
+					</span>
+				</label>
+
 				<form onsubmit={(e) => { e.preventDefault(); submitWaitlist(); }}>
 					<label class="field">
-						<span class="field-label">{copy.waitlist.whatsOnYourMind}</span>
+						<span class="field-label">{copy.waitlist.freewriteLabel}</span>
 						<textarea
 							bind:value={freewrite}
 							rows={3}
@@ -294,7 +325,7 @@
 				<a href="/login?mode=reset" class="link-btn" onclick={hide}>{copy.auth.forgotPassword}</a>
 			</p>
 			<p class="mode-switch">
-				{copy.auth.dontHaveAccount} <button class="link-btn" onclick={() => switchMode('waitlist')}>{copy.auth.join}</button>
+				{copy.auth.dontHaveAccount} <a href="/waitlist" class="link-btn" onclick={hide}>{copy.auth.join}</a>
 			</p>
 		{/if}
 			</div>
@@ -347,6 +378,70 @@
 		font-size: var(--text-xl);
 		font-weight: 500;
 		margin: 0 0 var(--space-6);
+	}
+
+	.dialog-intro {
+		margin: 0 0 var(--space-3) 0;
+		color: var(--text-muted);
+		font-size: var(--text-sm);
+		line-height: var(--leading-relaxed);
+	}
+	.dialog-intro:last-of-type {
+		margin-bottom: var(--space-4);
+	}
+	.dialog-intro a {
+		color: inherit;
+		text-decoration: underline;
+	}
+	.dialog-intro a:hover {
+		color: var(--text-primary);
+	}
+
+	/* Acknowledgement cards — same treatment as the /waitlist page. */
+	.consent-card {
+		display: flex;
+		align-items: flex-start;
+		gap: var(--space-3);
+		padding: var(--space-3);
+		border: 1px solid var(--border-link);
+		border-radius: var(--radius-card);
+		margin-bottom: var(--space-3);
+		cursor: pointer;
+		transition: border-color 0.15s, background 0.15s;
+	}
+	.consent-card.checked {
+		border-color: var(--text-primary);
+		background: color-mix(in srgb, var(--text-primary) 5%, transparent);
+	}
+	.consent-card input[type='checkbox'] {
+		margin-top: 3px;
+		width: 18px;
+		height: 18px;
+		accent-color: var(--text-primary);
+		flex-shrink: 0;
+	}
+	.consent-body {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+	}
+	.consent-title {
+		font-size: var(--text-base);
+		font-weight: 500;
+		color: var(--text-primary);
+	}
+	.consent-desc {
+		font-size: var(--text-xs);
+		color: var(--text-muted);
+		line-height: var(--leading-normal, 1.5);
+	}
+	.consent-link {
+		font-size: var(--text-xs);
+		color: var(--text-link);
+		margin-top: 2px;
+	}
+	.consent-link:hover {
+		color: var(--text-link-hover);
 	}
 
 	.field {
@@ -449,4 +544,27 @@
 	}
 
 	a.link-btn { text-decoration: underline; }
+
+	/* Mobile, waitlist mode only (archived path — Join now goes straight to
+	   /waitlist as a full page; this stays scoped in case the modal path is
+	   ever reused). Login keeps its normal floating-card overlay on mobile,
+	   same as desktop. A floating card with fixed side padding left almost no
+	   room for the consent cards/inputs on a phone width; go edge-to-edge like
+	   the standalone /waitlist page does instead. */
+	@media (max-width: 430px) {
+		.auth-overlay:has(.full-bleed-mobile) {
+			padding: 0;
+			align-items: flex-start;
+		}
+
+		.auth-dialog.full-bleed-mobile {
+			max-width: 100%;
+			min-height: 100vh;
+			border-radius: 0;
+		}
+
+		.auth-dialog.full-bleed-mobile .dialog-content {
+			padding: var(--space-6) var(--space-4);
+		}
+	}
 </style>

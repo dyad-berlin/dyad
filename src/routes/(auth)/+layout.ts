@@ -1,13 +1,22 @@
 import type { LayoutLoad } from './$types';
+import { storageUrl } from '$lib/utils/storage-url';
 
-const imageMap: Record<string, string> = {
-	'/login': '/images/log-in.jpeg',
-	'/join': '/images/log-in.jpeg',
-	'/waitlist': '/images/sign-in.jpeg'
+const imageMap: Record<string, { src: string; credit?: string }> = {
+	'/login': {
+		src: storageUrl('uploads', 'mycelium for waitlist.webp'),
+		credit: 'Grafted (2022), painting by artist Klari Reis'
+	},
+	'/join': { src: '/images/log-in.jpeg' },
+	'/waitlist': {
+		src: storageUrl('uploads', 'mycelium for waitlist.webp'),
+		credit: 'Grafted (2022), painting by artist Klari Reis'
+	}
 };
 
 export const load: LayoutLoad = ({ url }) => {
+	const image = imageMap[url.pathname] ?? { src: '/images/log-in.jpeg' };
 	return {
-		authImage: imageMap[url.pathname] ?? '/images/log-in.jpeg'
+		authImage: image.src,
+		authImageCredit: image.credit ?? null
 	};
 };

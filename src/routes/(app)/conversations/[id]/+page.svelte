@@ -26,6 +26,20 @@
 	// conversation they were paywalled on. Passed to the paywall modal as returnTo.
 	const returnPath = $derived(`/conversations/${data.prompt.id}`);
 
+	// Referral share: the link carries ?ref=<username> so a friend who follows
+	// it is marked as referred (dyad_ref cookie → waitlist fast-track).
+	let shareCopied = $state(false);
+	async function copyShareLink() {
+		const url = `${location.origin}/conversations/${data.prompt.id}${data.username ? `?ref=${data.username}` : ''}`;
+		try {
+			await navigator.clipboard.writeText(url);
+			shareCopied = true;
+			setTimeout(() => (shareCopied = false), 2000);
+		} catch {
+			prompt(copy.profile.inviteFriendFallback, url);
+		}
+	}
+
 	// ── Membership paywall modal ────────────────────────────────────────────
 	// A gated action (respond / invite / accept) returns a 403 with a `reason`
 	// (join | renew | ended). We open one calm modal over the page rather than
@@ -480,6 +494,10 @@
 		<p class="size-label">{sizeLabel}</p>
 	{/if}
 
+	<button type="button" class="share-link" onclick={copyShareLink}>
+		{shareCopied ? copy.conversation.shareCopied : copy.conversation.shareLink}
+	</button>
+
 	{#if isOwnPrompt && data.prompt.state === 'published'}
 		<ConfirmDialog
 			bind:this={unpublishDialog}
@@ -784,6 +802,18 @@
 	}
 	/* Base tint only — hover comes from the shared .user-handle treatment. */
 	.meta-author { color: var(--text-muted); }
+	.share-link {
+		background: none;
+		border: none;
+		padding: 0;
+		margin: 0 0 var(--space-6);
+		font-family: inherit;
+		font-size: var(--text-sm);
+		color: var(--text-muted);
+		text-decoration: underline;
+		cursor: pointer;
+	}
+	.share-link:hover { color: var(--text-primary); }
 	.body { font-size: var(--text-md); line-height: var(--leading-relaxed); margin-bottom: var(--space-10); }
 	.body :global(p) { margin: 0 0 0.75em; }
 	.body :global(h1), .body :global(h2) { margin: 1.2em 0 0.5em; font-weight: 500; }

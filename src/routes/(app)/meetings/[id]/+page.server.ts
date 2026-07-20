@@ -6,7 +6,7 @@ import { SupabaseFeedbackService } from '$lib/services/feedback.js';
 import { SupabasePromptQueryService } from '$lib/services/prompt-query.js';
 import { loadCancellersFor } from '$lib/services/cancellation-query.js';
 import { buildParticipantsFromSiblings } from '$lib/domain/gathering.js';
-import type { RevealedFeedback, FeedbackForm, MeetingState } from '$lib/domain/types.js';
+import type { RevealedFeedback, FeedbackForm, ReputationSignal, MeetingState } from '$lib/domain/types.js';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	const upactor = requireIdentity(locals);
@@ -34,7 +34,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	const feedbackService = new SupabaseFeedbackService(locals.supabase);
 
 	// Fan out all secondary queries in parallel
-	const [{ data: otherProfile }, { data: prompt }, invitation, revealedFeedback, myFeedbackForm, gathering, slotOccupancy] = await Promise.all([
+	const [{ data: otherProfile }, { data: prompt }, invitation, revealedFeedback, reputationSignal, myFeedbackForm, gathering, slotOccupancy] = await Promise.all([
 		locals.supabase.from('profiles').select('username').eq('id', otherId).single(),
 		locals.supabase.from('prompts').select('id, title, cover_image_url, state, author_id, published_at').eq('id', meeting.prompt_id).single(),
 		// The invitation that created THIS specific meeting. Meeting.invitation_id
@@ -54,6 +54,11 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		meeting.state === 'completed'
 			? feedbackService.getRevealedFeedback(params.id, userId)
 			: [] as RevealedFeedback[],
+		// The caller's own reputation signal for this meeting (feature-on-profile
+		// toggle source) — same lock-time condition as revealedFeedback above.
+		meeting.state === 'completed'
+			? feedbackService.getReputationSignalForMeeting(params.id, userId)
+			: null as ReputationSignal | null,
 		// Load own feedback form state for awaiting_feedback meetings
 		(meeting.state === 'awaiting_feedback' || meeting.state === 'completed')
 			? feedbackService.getMyForm(params.id, userId)
@@ -157,6 +162,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		invitationFromMe: invitation ? invitation.inviter_id === userId : false,
 		invitationCreatedAt: invitation?.created_at ?? null,
 		revealedFeedback,
+		reputationSignal,
 		myFeedbackForm: myFeedbackForm ? { id: myFeedbackForm.id, state: myFeedbackForm.state } : null
 	};
 };

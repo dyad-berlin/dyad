@@ -1,19 +1,27 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import { page } from '$app/stores';
 	import type { LayoutData } from './$types';
 
 	let { data, children }: { data: LayoutData; children: Snippet } = $props();
+
+	// Waitlist and login keep the moss-dark theme (join is light/paper like
+	// the rest of the app) — a deliberate exception, not the section default.
+	const isDarkAuth = $derived(
+		$page.url.pathname.startsWith('/waitlist') || $page.url.pathname.startsWith('/login')
+	);
 </script>
 
 <nav class="auth-nav">
-	<a href="/" class="logo-link" aria-label="Back to home">
-		<img src="/images/logo.png" alt="dyad" class="site-logo" />
-	</a>
+	<a href="/" class="wordmark" aria-label="DYAD">DYAD</a>
 </nav>
 
-<div class="split-layout">
+<div class="split-layout" data-theme={isDarkAuth ? 'dark' : undefined}>
 	<div class="image-half">
 		<img src={data.authImage} alt="" />
+		{#if data.authImageCredit}
+			<p class="image-credit">{data.authImageCredit}</p>
+		{/if}
 	</div>
 	<div class="form-half">
 		{@render children()}
@@ -25,23 +33,24 @@
 	.auth-nav {
 		position: fixed;
 		top: var(--space-6);
-		left: var(--space-6);
+		left: var(--space-10);
 		z-index: 100;
 		display: flex;
 		align-items: center;
 		height: 48px;
 	}
 
-	.logo-link {
-		display: flex;
-		align-items: center;
-	}
-
-	.site-logo {
-		height: 34px;
-		width: auto;
-		filter: brightness(0) invert(1) opacity(0.9);
-		transition: filter 0.2s ease;
+	/* Same text wordmark treatment as the landing page — the old image logo
+	   rendered as a mangled "dy/ad" line-wrap. */
+	.wordmark {
+		font-family: var(--font-serif);
+		font-size: 22px;
+		font-weight: 700;
+		letter-spacing: 0.06em;
+		color: rgba(255, 255, 255, 0.85);
+		text-decoration: none;
+		line-height: 1;
+		text-shadow: 0 1px 16px rgba(0, 0, 0, 0.7), 0 0 3px rgba(0, 0, 0, 0.5);
 	}
 
 	/* === Split layout — mirrors landing page === */
@@ -72,6 +81,20 @@
 		border-radius: var(--radius-card);
 	}
 
+	/* Artwork credit — bottom-right corner of the image, above the grain
+	   overlay (z-index 1). */
+	.image-credit {
+		position: absolute;
+		right: var(--space-4);
+		bottom: var(--space-6);
+		z-index: 2;
+		margin: 0;
+		font-size: var(--text-xs);
+		font-style: italic;
+		color: rgba(255, 255, 255, 0.75);
+		text-shadow: 0 1px 8px rgba(0, 0, 0, 0.7);
+	}
+
 	.image-half::after {
 		content: '';
 		position: absolute;
@@ -87,15 +110,23 @@
 		z-index: 1;
 	}
 
-	/* Form — right half, vertically centered */
+	/* Form — right half, vertically centered. Scrolls when the form is
+	   taller than the viewport (the waitlist form is); centering comes from
+	   the card's auto margins, which collapse to 0 on overflow so the top
+	   of the form always stays reachable. */
 	.form-half {
 		width: 50%;
 		height: 100%;
 		display: flex;
-		align-items: center;
 		justify-content: center;
+		overflow-y: auto;
 		padding: 2rem;
 		box-sizing: border-box;
+	}
+
+	.form-half > :global(.auth-card) {
+		margin-top: auto;
+		margin-bottom: auto;
 	}
 
 	/* === Mobile — image on top, form below === */

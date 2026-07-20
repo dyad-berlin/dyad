@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import type { PageData } from './$types';
-	import type { FeedbackFormState, RevealedFeedback } from '$lib/domain/types';
+	import type { FeedbackFormState, RevealedFeedback, ReputationSignal } from '$lib/domain/types';
 	import { capture } from '$lib/analytics';
 	import { copy } from '$lib/copy';
+	import FeatureFeedbackToggle from '$lib/components/FeatureFeedbackToggle.svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -22,6 +23,8 @@
 	// Revealed feedback — from server (locked on load) or from PATCH response
 	// svelte-ignore state_referenced_locally — intentional: server value captured, then updated via PATCH response
 	let revealedFeedback = $state<RevealedFeedback[]>(data.revealedFeedback ?? []);
+	// svelte-ignore state_referenced_locally — same pattern as revealedFeedback above
+	let reputationSignal = $state<ReputationSignal | null>(data.reputationSignal ?? null);
 
 	// ── Form state ──────────────────────────────────────────────────────
 	let didMeet = $state(true);
@@ -78,6 +81,7 @@
 					// Both submitted — show reveal immediately
 					// data.form.state is stale (still 'due') until next navigation, so set step explicitly
 					revealedFeedback = result.revealed;
+					reputationSignal = result.reputationSignal ?? null;
 					userStep = 'reveal';
 				} else {
 					// Only we submitted — show waiting
@@ -125,6 +129,9 @@
 									<li class="reveal-tag">{tag}</li>
 								{/each}
 							</ul>
+						{/if}
+						{#if reputationSignal && (fb.share_with_person || fb.rating_tags.length > 0)}
+							<FeatureFeedbackToggle signalId={reputationSignal.id} initialVisible={reputationSignal.visible} />
 						{/if}
 					</div>
 				{/each}

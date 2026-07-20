@@ -438,6 +438,26 @@ INSERT INTO feedback_forms (id, meeting_id, reviewer_id, reviewee_id, state, did
    'I appreciated how you really took time to think before answering. Rare quality.',
    NOW() - interval '3 days' + interval '6 hours', NOW() - interval '3 days' + interval '6 hours');
 
+-- The reputation_signals snapshot normally happens inside submit_feedback at
+-- lock time (and the migration backfill covers forms locked before it shipped)
+-- — but seed data is inserted AFTER migrations run, so seeded locked forms
+-- get no signals and /profile/feedback looks broken locally. Mirror the
+-- lock-time snapshot here (visible = FALSE, owner opts in via the UI).
+INSERT INTO reputation_signals (profile_id, signal_type, source_meeting_id, visible, content)
+SELECT
+  f.reviewee_id,
+  'feedback_received',
+  f.meeting_id,
+  FALSE,
+  jsonb_build_object(
+    'feedback_form_id', f.id,
+    'quote', f.share_with_person,
+    'tags', to_jsonb(f.rating_tags)
+  )
+FROM feedback_forms f
+WHERE f.state = 'locked'
+ON CONFLICT (profile_id, source_meeting_id, signal_type) DO NOTHING;
+
 -- ============================================
 -- ADJECTIVE VOCABULARY
 -- ============================================

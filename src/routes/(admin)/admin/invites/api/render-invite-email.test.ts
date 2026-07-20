@@ -2,53 +2,86 @@ import { describe, it, expect } from 'vitest';
 import { renderInviteEmail } from './render-invite-email.js';
 
 const INVITE_URL = 'https://dyad.berlin/join?token=test-token';
-const EXPIRY = 14;
 
 describe('renderInviteEmail — signed footer', () => {
-	it('includes the dyad signature names', () => {
-		const html = renderInviteEmail({ inviteUrl: INVITE_URL, expiryDays: EXPIRY });
+	it('includes the dyad signature names, no brand line (dropped from the footer)', () => {
+		const html = renderInviteEmail({ inviteUrl: INVITE_URL });
 		expect(html).toContain('With care and joy,');
 		expect(html).toContain('Luna and Fiore');
-		expect(html).toContain('dyad · berlin');
+		expect(html).not.toContain('dyad · berlin');
 	});
 
-	it('embeds SangBleu Sunrise via @font-face with a Georgia fallback', () => {
-		const html = renderInviteEmail({ inviteUrl: INVITE_URL, expiryDays: EXPIRY });
+	it('embeds SangBleu Sunrise Bold + Regular via @font-face, Georgia fallback (no Light weight)', () => {
+		const html = renderInviteEmail({ inviteUrl: INVITE_URL });
 		expect(html).toContain('@font-face');
-		expect(html).toContain(
-			"url('https://dyad.berlin/fonts/SangBleuSunrise-Light-WebXL.woff2')"
-		);
-		expect(html).toContain(
-			"url('https://dyad.berlin/fonts/SangBleuSunrise-Regular-WebXL.woff2')"
-		);
-		expect(html).toMatch(/font-family: 'SangBleu Sunrise', Georgia, serif/);
+		expect(html).toContain("url('https://dyad.berlin/fonts/SangBleuSunrise-Regular-WebXL.woff2')");
+		expect(html).toContain("url('https://dyad.berlin/fonts/SangBleuSunrise-Bold-WebXL.woff2')");
+		expect(html).not.toContain('SangBleuSunrise-Light');
+		expect(html).toMatch(/font-family: 'SangBleu Sunrise', Georgia, 'Times New Roman', serif/);
 	});
 
-	it('retains the dyad logo as a link to dyad.berlin', () => {
-		const html = renderInviteEmail({ inviteUrl: INVITE_URL, expiryDays: EXPIRY });
-		expect(html).toContain('https://dyad.berlin/images/logo-dark.png');
+	it('renders a text DYAD wordmark linking to dyad.berlin (not the old logo image)', () => {
+		const html = renderInviteEmail({ inviteUrl: INVITE_URL });
+		expect(html).not.toContain('logo-dark.png');
+		expect(html).not.toContain('<img');
 		expect(html).toContain('<a href="https://dyad.berlin"');
+		expect(html).toContain('>DYAD<');
 	});
 
 	it('renders the invite link', () => {
-		const html = renderInviteEmail({ inviteUrl: INVITE_URL, expiryDays: EXPIRY });
+		const html = renderInviteEmail({ inviteUrl: INVITE_URL });
 		expect(html).toContain(`href="${INVITE_URL}"`);
-		expect(html).toContain('Join dyad');
+		expect(html).toContain('Welcome to Dyad');
 	});
 
-	it('renders the expiry days the caller passes in', () => {
-		expect(renderInviteEmail({ inviteUrl: INVITE_URL, expiryDays: 14 })).toContain(
-			'expires in 14 days'
-		);
-		expect(renderInviteEmail({ inviteUrl: INVITE_URL, expiryDays: 30 })).toContain(
-			'expires in 30 days'
-		);
+	it('always carries a short useful body, even with no opener or message', () => {
+		const html = renderInviteEmail({ inviteUrl: INVITE_URL });
+		expect(html).toContain('We are writing to welcome you to Dyad.');
+		expect(html).toContain('Hey there,');
+		expect(html).toContain('6 weeks to reach 500 members');
+		expect(html).toContain('steward ownership');
+		expect(html).toContain('https://dyad.berlin/docs#standards');
+		expect(html).toContain('https://dyad.berlin/docs');
+		expect(html).toContain('support@dyad.berlin');
+	});
+
+	it('opens the email with the recipient name when recipientName is supplied', () => {
+		const html = renderInviteEmail({ inviteUrl: INVITE_URL, recipientName: 'Alex' });
+		expect(html).toContain('<p>Hey there, Alex</p>');
+		// Greeting opens the email, before the intro copy and the card.
+		expect(html.indexOf('Hey there, Alex')).toBeLessThan(html.indexOf('We are writing to welcome you to Dyad.'));
+		expect(html.indexOf('Hey there, Alex')).toBeLessThan(html.indexOf('Talking about involvement'));
+	});
+
+	it('falls back to an unaddressed greeting when recipientName is omitted', () => {
+		const html = renderInviteEmail({ inviteUrl: INVITE_URL });
+		expect(html).toContain('<p>Hey there,</p>');
+	});
+
+	it('labels the Support Dyad card with a static, non-italic "Talking about involvement" line', () => {
+		const html = renderInviteEmail({ inviteUrl: INVITE_URL, recipientName: 'Alex' });
+		expect(html).toContain('Talking about involvement');
+		expect(html).not.toMatch(/font-style: italic;[^"]*">Talking about involvement/);
+	});
+
+	it('escapes script tags in recipientName', () => {
+		const html = renderInviteEmail({
+			inviteUrl: INVITE_URL,
+			recipientName: '<script>alert(1)</script>'
+		});
+		expect(html).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
+		expect(html).not.toContain('<script>alert(1)</script>');
+	});
+
+	it('does not render an invitation-expiry line', () => {
+		const html = renderInviteEmail({ inviteUrl: INVITE_URL });
+		expect(html).not.toContain('expires in');
 	});
 });
 
 describe('renderInviteEmail — opener and message', () => {
 	it('omits the opener paragraph when none is supplied', () => {
-		const html = renderInviteEmail({ inviteUrl: INVITE_URL, expiryDays: EXPIRY });
+		const html = renderInviteEmail({ inviteUrl: INVITE_URL });
 		// Footer still present
 		expect(html).toContain('Luna and Fiore');
 		// No stray empty opener tag
@@ -56,7 +89,7 @@ describe('renderInviteEmail — opener and message', () => {
 	});
 
 	it('omits the message blockquote when none is supplied', () => {
-		const html = renderInviteEmail({ inviteUrl: INVITE_URL, expiryDays: EXPIRY });
+		const html = renderInviteEmail({ inviteUrl: INVITE_URL });
 		expect(html).not.toContain('<blockquote');
 	});
 
@@ -64,8 +97,7 @@ describe('renderInviteEmail — opener and message', () => {
 		const html = renderInviteEmail({
 			opener: 'Hi friend,',
 			inviteUrl: INVITE_URL,
-			message: 'Looking forward to meeting you.',
-			expiryDays: EXPIRY
+			message: 'Looking forward to meeting you.'
 		});
 		expect(html).toContain('<p>Hi friend,</p>');
 		expect(html).toContain('<blockquote');
@@ -77,8 +109,7 @@ describe('renderInviteEmail — opener and message', () => {
 	it('escapes script tags in the message body', () => {
 		const html = renderInviteEmail({
 			inviteUrl: INVITE_URL,
-			message: '<script>alert(1)</script>',
-			expiryDays: EXPIRY
+			message: '<script>alert(1)</script>'
 		});
 		expect(html).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
 		expect(html).not.toContain('<script>alert(1)</script>');
@@ -87,8 +118,7 @@ describe('renderInviteEmail — opener and message', () => {
 	it('escapes script tags in the opener', () => {
 		const html = renderInviteEmail({
 			inviteUrl: INVITE_URL,
-			opener: '<script>alert(1)</script>',
-			expiryDays: EXPIRY
+			opener: '<script>alert(1)</script>'
 		});
 		expect(html).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
 		expect(html).not.toContain('<script>alert(1)</script>');
@@ -97,15 +127,14 @@ describe('renderInviteEmail — opener and message', () => {
 	it('preserves message line breaks as <br> tags', () => {
 		const html = renderInviteEmail({
 			inviteUrl: INVITE_URL,
-			message: 'line one\nline two',
-			expiryDays: EXPIRY
+			message: 'line one\nline two'
 		});
 		expect(html).toContain('line one<br>line two');
 	});
 
 	it('renders the invite URL without double-escaping', () => {
 		const url = 'https://dyad.berlin/join?token=abc&ref=xyz';
-		const html = renderInviteEmail({ inviteUrl: url, expiryDays: EXPIRY });
+		const html = renderInviteEmail({ inviteUrl: url });
 		expect(html).toContain(`href="${url}"`);
 	});
 });
@@ -114,7 +143,6 @@ describe('renderInviteEmail — signature overrides', () => {
 	it('uses the override closing when provided', () => {
 		const html = renderInviteEmail({
 			inviteUrl: INVITE_URL,
-			expiryDays: EXPIRY,
 			signatureClosing: 'Yours,'
 		});
 		expect(html).toContain('Yours,');
@@ -126,7 +154,6 @@ describe('renderInviteEmail — signature overrides', () => {
 	it('uses the override names when provided', () => {
 		const html = renderInviteEmail({
 			inviteUrl: INVITE_URL,
-			expiryDays: EXPIRY,
 			signatureNames: 'Theodore'
 		});
 		expect(html).toContain('Theodore');
@@ -138,7 +165,6 @@ describe('renderInviteEmail — signature overrides', () => {
 	it('uses both overrides when both provided', () => {
 		const html = renderInviteEmail({
 			inviteUrl: INVITE_URL,
-			expiryDays: EXPIRY,
 			signatureClosing: 'Until soon,',
 			signatureNames: 'Fiore'
 		});
@@ -151,7 +177,6 @@ describe('renderInviteEmail — signature overrides', () => {
 	it('falls back to defaults when overrides are empty strings', () => {
 		const html = renderInviteEmail({
 			inviteUrl: INVITE_URL,
-			expiryDays: EXPIRY,
 			signatureClosing: '',
 			signatureNames: '   '
 		});
@@ -162,7 +187,6 @@ describe('renderInviteEmail — signature overrides', () => {
 	it('escapes script tags in signature overrides', () => {
 		const html = renderInviteEmail({
 			inviteUrl: INVITE_URL,
-			expiryDays: EXPIRY,
 			signatureClosing: '<script>alert(1)</script>',
 			signatureNames: '<img src=x onerror=alert(2)>'
 		});
@@ -170,16 +194,5 @@ describe('renderInviteEmail — signature overrides', () => {
 		expect(html).toContain('&lt;img src=x onerror=alert(2)&gt;');
 		expect(html).not.toContain('<script>alert(1)</script>');
 		expect(html).not.toContain('<img src=x onerror=alert(2)>');
-	});
-
-	it('never lets the brand line be overridden', () => {
-		// brand is not part of the params; confirm it always renders the canonical value
-		const html = renderInviteEmail({
-			inviteUrl: INVITE_URL,
-			expiryDays: EXPIRY,
-			signatureClosing: 'Anything,',
-			signatureNames: 'Anyone'
-		});
-		expect(html).toContain('dyad · berlin');
 	});
 });

@@ -9,7 +9,7 @@ import { test, expect } from '@playwright/test';
 // self-contained master-detail surface with its own chrome (no zine header
 // wordmark), so it's excluded from this wordmark+footer smoke.
 
-const ZINE_PAGES = ['/community', '/governance', '/community-care', '/voices'];
+const ZINE_PAGES = ['/community', '/community-care', '/voices'];
 
 test.describe('Zine pages — smoke', () => {
 	for (const path of ZINE_PAGES) {
@@ -18,8 +18,8 @@ test.describe('Zine pages — smoke', () => {
 			expect(response?.status()).toBe(200);
 			// Wordmark in the zine header.
 			await expect(page.locator('.zine-wordmark')).toBeVisible();
-			// ZineFooter colophon (centralized copy) anchors the bottom of the page.
-			await expect(page.locator('.footer-colophon')).toBeVisible();
+			// ZineFooter renders its column headers at the bottom of the page.
+			await expect(page.locator('.footer-col-head').first()).toBeVisible();
 		});
 	}
 });
@@ -42,7 +42,9 @@ test.describe('Landing — pin → card → Join funnel (best effort)', () => {
 		await marker.click();
 		await expect(page.locator('.map-card')).toBeVisible();
 
+		// The CTA is now a plain link to /waitlist (the modal was archived).
 		await page.locator('.map-card-cta').click();
-		await expect(page.getByRole('button', { name: /join waitlist/i })).toBeVisible();
+		await page.waitForURL(/\/waitlist/);
+		await expect(page.getByRole('button', { name: /request to join/i })).toBeVisible();
 	});
 });

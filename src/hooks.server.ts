@@ -1,3 +1,38 @@
+// The Workers runtime may not expose WeakRef/FinalizationRegistry (they are
+// compatibility-flag-gated). undici — pulled in through the atproto identity
+// module on every request — constructs a WeakRef at module init, which made
+// the FIRST request on each fresh isolate 500 (intermittent production
+// errors, one per cold start). Strong-reference fallbacks are safe here:
+// undici only uses them for GC bookkeeping, and an isolate's lifetime is
+// short. Must run before any dynamic import that reaches undici.
+if (typeof globalThis.WeakRef === 'undefined') {
+	// @ts-expect-error runtime polyfill for a possibly-absent global
+	globalThis.WeakRef = class WeakRefPolyfill<T extends object> {
+		#value: T;
+		constructor(value: T) {
+			this.#value = value;
+		}
+		deref(): T {
+			return this.#value;
+		}
+	};
+}
+if (typeof globalThis.FinalizationRegistry === 'undefined') {
+	// @ts-expect-error runtime polyfill for a possibly-absent global
+	globalThis.FinalizationRegistry = class FinalizationRegistryPolyfill {
+		register() {}
+		unregister() {
+			return false;
+		}
+	};
+}
+if (typeof globalThis.MessagePort === 'undefined') {
+	// undici's webidl layer only references MessagePort to build an
+	// instanceof type assertion — a bare class satisfies it.
+	// @ts-expect-error runtime polyfill for a possibly-absent global
+	globalThis.MessagePort = class MessagePortPolyfill {};
+}
+
 import { createServerClient } from '@supabase/ssr';
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
 import { dev } from '$app/environment';
@@ -10,18 +45,31 @@ import { firstAccessContextRow } from '$lib/server/access-context';
 
 const ADMIN_HOSTNAME = 'admin.dyad.berlin';
 const APEX_HOSTNAME = 'dyad.berlin';
-const PAGES_PREVIEW_HOSTNAME = 'dyad-berlin.pages.dev';
+// The production Pages project's subdomain (previews deploy as
+// <branch>.dyad-25o.pages.dev). The old dyad-berlin.pages.dev project no
+// longer exists — with the stale value here the app rejected its own
+// preview deploys.
+const PAGES_PREVIEW_HOSTNAME = 'dyad-25o.pages.dev';
 // Conference host: dyad.amsterdam serves the app itself (attach the domain
 // — and www — to the Pages project). Sessions are host-scoped cookies, so
 // guests who join there live their whole corner experience under this
 // hostname. Joining still requires a generated group link — the QR encodes
 // the full join URL (https://dyad.amsterdam/join?glink=<token>); an
 // anonymous visitor on the bare domain is redirected to the Berlin apex,
-// so possession of the link is the gate. The www variant canonicalizes
-// onto the bare host.
+// so possession of the link is the gate.
 const AMSTERDAM_HOSTNAME = 'dyad.amsterdam';
-const SECONDARY_APEX_HOSTNAMES = [AMSTERDAM_HOSTNAME];
-const ALIAS_HOSTNAMES = ['www.dyad.amsterdam'];
+// dyad.social serves the app itself (future primary — the URL stays
+// dyad.social while you browse). Sessions are host-scoped cookies, so a
+// member signs in per host; unlike dyad.amsterdam there is no
+// anonymous-visitor redirect — the full public surface serves here too.
+const SOCIAL_HOSTNAME = 'dyad.social';
+const SECONDARY_APEX_HOSTNAMES = [AMSTERDAM_HOSTNAME, SOCIAL_HOSTNAME];
+// Alias hosts 302 onto their canonical host, path preserved.
+const ALIAS_TARGETS: Record<string, string> = {
+	'www.dyad.social': SOCIAL_HOSTNAME,
+	'www.dyad.berlin': APEX_HOSTNAME
+};
+const ALIAS_HOSTNAMES = Object.keys(ALIAS_TARGETS);
 
 // Region a hostname puts a signed-in member into. A multi-region member
 // (grants in several corners across cities) browsing dyad.amsterdam should
@@ -50,13 +98,14 @@ export const handle: Handle = async ({ event, resolve }) => {
 		return new Response(null, { status: 404 });
 	}
 
-	// www.dyad.amsterdam canonicalizes onto the bare conference host,
-	// path preserved. 302 (not 301) — the host setup may still evolve.
+	// Alias hosts canonicalize onto their target host, path preserved.
+	// 302 (not 301) — the host setup may still evolve.
 	if (kind === 'alias-redirect') {
+		const target = ALIAS_TARGETS[event.url.hostname.replace(/\.$/, '')] ?? APEX_HOSTNAME;
 		return new Response(null, {
 			status: 302,
 			headers: {
-				Location: `https://${AMSTERDAM_HOSTNAME}${event.url.pathname}${event.url.search}`
+				Location: `https://${target}${event.url.pathname}${event.url.search}`
 			}
 		});
 	}
@@ -79,6 +128,22 @@ export const handle: Handle = async ({ event, resolve }) => {
 			);
 		}
 		return resolve(event);
+	}
+
+	// Referral capture: any user-plane URL can carry ?ref=<username> (a member's
+	// share link — profile or conversation). Persisted as the dyad_ref cookie
+	// that the waitlist form, /signup, and /join already read, so the referral
+	// survives navigation and login redirects. Client-readable by design (the
+	// waitlist form reads document.cookie); disclosed in /datenschutz.
+	const refParam = event.url.searchParams.get('ref');
+	if (refParam && /^[a-z0-9_-]{2,32}$/i.test(refParam)) {
+		event.cookies.set('dyad_ref', refParam.toLowerCase(), {
+			path: '/',
+			maxAge: 60 * 60 * 24 * 30,
+			httpOnly: false,
+			sameSite: 'lax',
+			secure: !dev
+		});
 	}
 
 	event.locals.supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
@@ -235,7 +300,11 @@ export const handle: Handle = async ({ event, resolve }) => {
 			pathname.startsWith('/favicon') ||
 			pathname.startsWith('/impressum') ||
 			pathname.startsWith('/datenschutz') ||
-			pathname.startsWith('/agb');
+			pathname.startsWith('/agb') ||
+			// The consolidated legal page — every footer links here now, so an
+			// expired guest must be able to reach it just like the three legacy
+			// legal routes above.
+			pathname.startsWith('/legal');
 
 		if (!isExempt) {
 			// Load the access context once per request: active scope memberships

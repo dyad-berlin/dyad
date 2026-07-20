@@ -9,6 +9,9 @@
 	let freewrite = $state('');
 	let referralSource = $state('');
 	let referralOther = $state('');
+	// Acknowledgement gate — both must be checked before the request sends.
+	let agreedStandards = $state(false);
+	let agreedAgreements = $state(false);
 	// The newsletter opt-in happens on Substack (they are the controller); we
 	// only show the link after signup, and only when the URL is configured.
 	const newsletterUrl = (env.PUBLIC_NEWSLETTER_URL ?? '').trim();
@@ -31,6 +34,12 @@
 			(referralSource === 'other' && !referralOther.trim())
 		) {
 			errorMsg = copy.waitlist.allRequired;
+			status = 'error';
+			return;
+		}
+
+		if (!agreedStandards || !agreedAgreements) {
+			errorMsg = copy.waitlist.consentRequired;
 			status = 'error';
 			return;
 		}
@@ -76,7 +85,13 @@
 
 <div class="auth-card">
 	<h1>{copy.waitlist.heading}</h1>
-	<p class="subtitle">{copy.waitlist.subtitle}</p>
+	<p class="already-member">
+		{copy.auth.alreadyHaveAccount} <a href="/login">{copy.auth.logIn}</a>
+	</p>
+	<p class="subtitle">
+		{copy.waitlist.introPre}<a href={copy.waitlist.introDocsHref} target="_blank" rel="noopener">{copy.waitlist.introDocsLink}</a>{copy.waitlist.introPost}
+	</p>
+	<p class="subtitle">{copy.waitlist.introJoin}</p>
 
 	{#if status === 'sent'}
 		<div class="success-message">{copy.waitlist.successMessage}</div>
@@ -89,7 +104,24 @@
 		{/if}
 	{:else}
 		<form onsubmit={handleSubmit}>
-			<p class="intent-note">{copy.waitlist.intentNote}</p>
+			<label class="consent-card" class:checked={agreedStandards}>
+				<input type="checkbox" bind:checked={agreedStandards} disabled={status === 'sending'} />
+				<span class="consent-body">
+					<span class="consent-title">{copy.waitlist.consentStandardsTitle}</span>
+					<span class="consent-desc">{copy.waitlist.consentStandardsDesc}</span>
+					<a href={copy.waitlist.consentStandardsHref} target="_blank" rel="noopener" class="consent-link">{copy.waitlist.consentStandardsLinkLabel}</a>
+				</span>
+			</label>
+
+			<label class="consent-card" class:checked={agreedAgreements}>
+				<input type="checkbox" bind:checked={agreedAgreements} disabled={status === 'sending'} />
+				<span class="consent-body">
+					<span class="consent-title">{copy.waitlist.consentAgreementsTitle}</span>
+					<span class="consent-desc">{copy.waitlist.consentAgreementsDesc}</span>
+					<a href={copy.waitlist.consentAgreementsHref} target="_blank" rel="noopener" class="consent-link">{copy.waitlist.consentAgreementsLinkLabel}</a>
+				</span>
+			</label>
+
 			<div class="form-group">
 				<label for="freewrite" class="freewrite-label">{copy.waitlist.freewriteLabel}</label>
 				<textarea
@@ -98,7 +130,7 @@
 					bind:value={freewrite}
 					disabled={status === 'sending'}
 					maxlength={2000}
-					rows={4}
+					rows={3}
 				></textarea>
 			</div>
 			<div class="form-group">
@@ -158,27 +190,92 @@
 	.auth-card {
 		width: 100%;
 		max-width: 400px;
+		/* Auto cross-axis margins: centered when the form fits the viewport,
+		   collapsing to 0 when it's taller — so the layout's overflow-y: auto
+		   can reach the top of the form instead of clipping it. */
+		margin: auto 0;
+		padding: var(--space-8) 0;
 	}
 
 	h1 {
-		margin: 0 0 var(--space-2) 0;
-		font-size: var(--text-3xl);
+		margin: 0 0 var(--space-1) 0;
+		font-size: var(--text-2xl);
 		font-weight: 300;
 		color: var(--text-primary);
 	}
 
-	.subtitle {
-		margin: 0 0 var(--space-6) 0;
+	.already-member {
+		margin: 0 0 var(--space-4) 0;
 		color: var(--text-muted);
-		font-size: var(--text-md);
+		font-size: var(--text-sm);
+	}
+	.already-member a {
+		color: var(--text-primary);
+		text-decoration: underline;
 	}
 
-	.intent-note {
-		margin: 0 0 var(--space-5) 0;
+	.subtitle {
+		margin: 0 0 var(--space-3) 0;
 		color: var(--text-muted);
 		font-size: var(--text-sm);
 		line-height: var(--leading-relaxed);
-		font-style: italic;
+	}
+	.subtitle:last-of-type {
+		margin-bottom: var(--space-4);
+	}
+	.subtitle a {
+		color: inherit;
+		text-decoration: underline;
+	}
+	.subtitle a:hover {
+		color: var(--text-primary);
+	}
+
+	/* Acknowledgement cards — same treatment as the membership consent step. */
+	.consent-card {
+		display: flex;
+		align-items: flex-start;
+		gap: var(--space-3);
+		padding: var(--space-3);
+		border: 1px solid var(--border-link);
+		border-radius: var(--radius-card);
+		margin-bottom: var(--space-3);
+		cursor: pointer;
+		transition: border-color 0.15s, background 0.15s;
+	}
+	.consent-card.checked {
+		border-color: var(--text-primary);
+		background: color-mix(in srgb, var(--text-primary) 5%, transparent);
+	}
+	.consent-card input[type='checkbox'] {
+		margin-top: 3px;
+		width: 18px;
+		height: 18px;
+		accent-color: var(--text-primary);
+		flex-shrink: 0;
+	}
+	.consent-body {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+	}
+	.consent-title {
+		font-size: var(--text-base);
+		font-weight: 500;
+		color: var(--text-primary);
+	}
+	.consent-desc {
+		font-size: var(--text-xs);
+		color: var(--text-muted);
+		line-height: var(--leading-normal, 1.5);
+	}
+	.consent-link {
+		font-size: var(--text-xs);
+		color: var(--text-link);
+		margin-top: 2px;
+	}
+	.consent-link:hover {
+		color: var(--text-link-hover);
 	}
 
 	.success-message {
@@ -201,14 +298,14 @@
 	}
 
 	.form-group {
-		margin-bottom: var(--space-5);
+		margin-bottom: var(--space-3);
 	}
 
 	.freewrite-label {
 		display: block;
 		font-size: var(--text-md);
 		color: var(--text-muted);
-		margin-bottom: var(--space-4);
+		margin-bottom: var(--space-2);
 	}
 
 	textarea {
@@ -241,10 +338,10 @@
 
 	input {
 		width: 100%;
-		padding: var(--space-3);
+		padding: var(--space-2) var(--space-3);
 		border: 1px solid var(--border-link);
 		border-radius: var(--radius-input);
-		font-size: var(--text-lg);
+		font-size: var(--text-base);
 		font-family: inherit;
 		background: var(--bg-canvas);
 		color: var(--text-primary);
@@ -261,13 +358,35 @@
 		cursor: not-allowed;
 	}
 
+	select {
+		width: 100%;
+		padding: var(--space-3);
+		border: 1px solid var(--border-link);
+		border-radius: var(--radius-input);
+		font-size: var(--text-base);
+		font-family: inherit;
+		background: var(--bg-canvas);
+		color: var(--text-primary);
+		transition: border-color 0.2s;
+	}
+
+	select:focus {
+		outline: none;
+		border-color: var(--text-muted);
+	}
+
+	select:disabled {
+		opacity: var(--opacity-disabled);
+		cursor: not-allowed;
+	}
+
 	/* "Where did you spot us?" — optional, quiet; the note carries the
 	   no-tracking promise. */
 	.referral-field {
 		display: flex;
 		flex-direction: column;
 		gap: var(--space-2);
-		margin-bottom: var(--space-5);
+		margin-bottom: var(--space-4);
 	}
 	.referral-field label {
 		font-size: var(--text-sm);

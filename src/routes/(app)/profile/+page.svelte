@@ -12,6 +12,22 @@
 
 	let { data }: { data: PageData } = $props();
 
+	// Referral share link: lands a friend on the waitlist with ?ref=<username>,
+	// which the server persists as the dyad_ref cookie — the admin board shows
+	// who referred them and fast-tracks the review.
+	let inviteCopied = $state(false);
+	async function copyInviteLink() {
+		const url = `${location.origin}/waitlist?ref=${data.username}`;
+		try {
+			await navigator.clipboard.writeText(url);
+			inviteCopied = true;
+			setTimeout(() => (inviteCopied = false), 2000);
+		} catch {
+			// Clipboard unavailable (e.g. insecure context) — show the URL itself.
+			prompt(copy.profile.inviteFriendFallback, url);
+		}
+	}
+
 	// Unseen-response tracking is intentionally kept in the data model (via
 	// localStorage) even though we don't surface it as a visible dot — dots
 	// were too anxiety-inducing. The signal is available if we later want to
@@ -279,6 +295,10 @@
 		<div class="profile-actions">
 			<a href="/profile/preferences" class="profile-action-link">{copy.profile.preferencesLink}</a>
 			<a href="/profile/membership" class="profile-action-link">{copy.profile.membershipLink}</a>
+			<a href="/profile/feedback" class="profile-action-link">{copy.profile.feedbackLink}</a>
+			<button type="button" class="profile-action-link invite-link-btn" onclick={copyInviteLink}>
+				{inviteCopied ? copy.profile.inviteFriendCopied : copy.profile.inviteFriendLink}
+			</button>
 			<form method="POST" action="/logout" class="sign-out-form">
 				<button type="submit" class="sign-out-link">{copy.nav.signOut}</button>
 			</form>
@@ -457,6 +477,13 @@
 		{/if}
 	{/if}
 
+	<footer class="site-links">
+		<a href="/docs" class="site-links-link">{copy.profile.footerDocs}</a>
+		<a href="/community" class="site-links-link">{copy.profile.footerCommunity}</a>
+		<a href="/newsletter" class="site-links-link">{copy.profile.footerNewsletter}</a>
+		<a href="/legal" class="site-links-link">{copy.profile.footerLegal}</a>
+	</footer>
+
 </div>
 
 <FloatingNav variant="profile" attentionCount={data.attentionCount} />
@@ -466,6 +493,26 @@
 		width: 100%;
 		max-width: var(--content-standard);
 		padding-bottom: var(--nav-clearance);
+	}
+
+	.site-links {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-5);
+		margin-top: var(--space-10);
+		padding-top: var(--space-4);
+		border-top: 1px solid var(--border-subtle);
+	}
+
+	.site-links-link {
+		font-family: var(--font-mono);
+		font-size: var(--text-xs);
+		letter-spacing: 0.04em;
+		color: var(--text-muted);
+	}
+
+	.site-links-link:hover {
+		color: var(--text-primary);
 	}
 
 	/* Profile card — clean identity */
@@ -499,6 +546,14 @@
 	}
 	.profile-action-link:hover {
 		color: var(--text-primary);
+	}
+	.invite-link-btn {
+		background: none;
+		border: none;
+		padding: 0;
+		cursor: pointer;
+		font-family: inherit;
+		text-align: left;
 	}
 	.sign-out-form {
 		margin: 0;

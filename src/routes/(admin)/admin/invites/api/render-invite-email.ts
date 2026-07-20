@@ -2,20 +2,14 @@ import { escapeHtml } from '$lib/utils/escape-html.js';
 import { copy } from '$lib/copy';
 import { tokens } from '$lib/design-tokens.js';
 
-const { color, textSize, space, leading, letterSpacing } = tokens;
-const SERIF = "'SangBleu Sunrise', Georgia, serif";
-
-// Font URLs are absolute because email clients have no relative-URL context.
-// Files self-hosted on dyad.berlin/fonts/* (mirror of static/fonts/).
+const { color, textSize, space, leading } = tokens;
+// SangBleu Sunrise, Bold + Regular only: the Light/300 weight is what
+// actually read as "nearly unreadable" at small sizes; Bold and Regular
+// hold up fine. Georgia is the fallback for clients that strip @font-face
+// (Gmail included), same weights, so the fallback isn't a downgrade.
+const SERIF = "'SangBleu Sunrise', Georgia, 'Times New Roman', serif";
 const SIGNATURE_FONT_FACE = `
 			<style>
-				@font-face {
-					font-family: 'SangBleu Sunrise';
-					src: url('https://dyad.berlin/fonts/SangBleuSunrise-Light-WebXL.woff2') format('woff2');
-					font-weight: 300;
-					font-style: normal;
-					font-display: swap;
-				}
 				@font-face {
 					font-family: 'SangBleu Sunrise';
 					src: url('https://dyad.berlin/fonts/SangBleuSunrise-Regular-WebXL.woff2') format('woff2');
@@ -23,20 +17,30 @@ const SIGNATURE_FONT_FACE = `
 					font-style: normal;
 					font-display: swap;
 				}
+				@font-face {
+					font-family: 'SangBleu Sunrise';
+					src: url('https://dyad.berlin/fonts/SangBleuSunrise-Bold-WebXL.woff2') format('woff2');
+					font-weight: 700;
+					font-style: normal;
+					font-display: swap;
+				}
 			</style>`;
 
 // Table layout because Outlook does not reliably render flex/grid.
 // border-collapse + mso-* are Outlook hygiene; without them Outlook injects stray whitespace and borders.
+//
+// The wordmark is text, not the old logo-dark.png image: that image rendered
+// as a broken/mangled "dy/ad" line-wrap in several clients. Text can't break
+// like an image can.
 function renderSignedFooter(closing: string, names: string): string {
 	return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin: 0; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
 					<tr>
 						<td style="vertical-align: middle; padding: 0 ${space[5]} 0 0;">
-							<a href="https://dyad.berlin" style="display: inline-block; text-decoration: none;"><img src="https://dyad.berlin/images/logo-dark.png" alt="dyad" style="height: 48px; width: auto; display: block; border: 0;" /></a>
+							<a href="https://dyad.berlin" style="display: inline-block; text-decoration: none; font-family: ${SERIF}; font-weight: 700; font-size: 22px; letter-spacing: 0.06em; color: ${color.textPrimary}; white-space: nowrap;">DYAD</a>
 						</td>
 						<td style="vertical-align: middle; padding: 0 0 0 ${space[5]}; border-left: 1px solid ${color.borderSubtle};">
-							<p style="font-family: ${SERIF}; font-weight: 300; font-size: ${textSize.base}; line-height: ${leading.tight}; color: ${color.textSecondary}; margin: 0 0 2px;">${closing}</p>
-							<p style="font-family: ${SERIF}; font-weight: 400; font-size: ${textSize.lg}; line-height: ${leading.tight}; color: ${color.textPrimary}; margin: 0 0 ${space[2]};">${names}</p>
-							<p style="font-family: ${SERIF}; font-weight: 300; font-size: ${textSize.xs}; line-height: ${leading.tight}; color: ${color.textMuted}; letter-spacing: ${letterSpacing.label}; margin: 0;">${copy.email.signature.brand}</p>
+							<p style="font-family: ${SERIF}; font-weight: 400; font-size: ${textSize.base}; line-height: ${leading.tight}; color: ${color.textSecondary}; margin: 0 0 2px;">${closing}</p>
+							<p style="font-family: ${SERIF}; font-weight: 400; font-size: ${textSize.lg}; line-height: ${leading.tight}; color: ${color.textPrimary}; margin: 0;">${names}</p>
 						</td>
 					</tr>
 				</table>`;
@@ -54,17 +58,27 @@ function renderSignedFooter(closing: string, names: string): string {
  * lines in the footer. Both default to copy.email.signature.* when omitted.
  * The brand line ("dyad · berlin") is not overridable.
  *
- * All four optional text fields are HTML-escaped inside this function;
+ * `recipientName` (when supplied) opens the email with "Hey there, {name}" —
+ * sourced from the waitlist request-to-join form, same as the "Hi {name},"
+ * greeting in the waitlist welcome email. Falls back to an unaddressed
+ * "Hey there," when omitted (e.g. a manually-composed batch invite with no
+ * associated waitlist contact).
+ *
+ * All optional text fields are HTML-escaped inside this function;
  * callers pass raw text. Line breaks in the message are preserved as <br> tags.
  */
 export function renderInviteEmail(params: {
 	opener?: string;
 	inviteUrl: string;
 	message?: string;
-	expiryDays: number;
+	recipientName?: string;
 	signatureClosing?: string;
 	signatureNames?: string;
 }): string {
+	const greeting = params.recipientName?.trim()
+		? `Hey there, ${escapeHtml(params.recipientName.trim())}`
+		: 'Hey there,';
+	const greetingBlock = `\n\t\t\t\t<p>${greeting}</p>`;
 	const openerBlock = params.opener
 		? `\n\t\t\t\t<p>${escapeHtml(params.opener)}</p>`
 		: '';
@@ -78,10 +92,34 @@ export function renderInviteEmail(params: {
 	const closing = escapeHtml(params.signatureClosing?.trim() || copy.email.signature.closing);
 	const names = escapeHtml(params.signatureNames?.trim() || copy.email.signature.names);
 
+	const link = (href: string, label: string) =>
+		`<a href="${href}" style="color: ${color.textPrimary}; text-decoration: underline;">${label}</a>`;
+
 	return `${SIGNATURE_FONT_FACE}
-			<div style="font-family: Helvetica, Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 40px 20px; color: ${color.textPrimary}; line-height: ${leading.relaxed};">${openerBlock}${personalBlock}
-				<p><a href="${params.inviteUrl}" style="color: ${color.textPrimary}; font-weight: bold; text-decoration: underline;">Join dyad</a></p>
-				<p style="font-size: ${textSize.base}; color: ${color.textMuted};">This link expires in ${params.expiryDays} days.</p>
+			<div style="font-family: ${SERIF}; max-width: 520px; margin: 0 auto; padding: 40px 20px; color: ${color.textPrimary}; line-height: ${leading.relaxed};">${greetingBlock}${openerBlock}${personalBlock}
+				<p>We are writing to welcome you to Dyad.</p>
+				<p>A few things to help you get started:</p>
+				<p>We expect everyone to read and respect our ${link('https://dyad.berlin/docs#standards', 'Community Standards')}. They live in our documentation, alongside resources that make our thinking behind all decisions at Dyad legible.</p>
+				<p>Once you log in, you'll get to start conversations, pick if you'd like to meet someone one on one or create one for a group, and discover others in your city this week.</p>
+				<p>Dyad is, and will always be, a work in progress. We welcome your involvement in shaping it.</p>
+				<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin: 0 0 ${space[6]}; border-collapse: collapse;">
+					<tr>
+						<td align="center" style="padding: ${space[8]} ${space[6]}; background: #f7f4ee; border: 1px solid #e6dfd2; border-radius: 10px;">
+							<p style="margin: 0 0 ${space[2]}; font-family: ${SERIF}; font-size: 15px; color: ${color.textSecondary};">Talking about involvement</p>
+							<p style="margin: 0 0 ${space[5]}; font-family: ${SERIF}; font-weight: 700; font-size: 21px; line-height: 1.3; color: ${color.textPrimary};">6 weeks to reach 500 members</p>
+							<p style="margin: 0 0 ${space[3]}; font-family: ${SERIF}; font-size: 15px; line-height: ${leading.relaxed}; color: ${color.textSecondary}; text-align: left;">From the start, our aim has been to build social technology as civic infrastructure, that is, transparent and accountable, and collectively owned and governed. Now, with the product ready for your use, we want to transition into a member funded model to keep Dyad independent of short term financial pressure or extractive business models.</p>
+							<p style="margin: 0 0 ${space[6]}; font-family: ${SERIF}; font-size: 15px; line-height: ${leading.relaxed}; color: ${color.textSecondary}; text-align: left;">Over the next six weeks, we aim to reach 500 supporting members. Your contributions will allow us to sustain our operations, keep developing Dyad with and for community, and begin our transition toward steward ownership.</p>
+							<table role="presentation" cellpadding="0" cellspacing="0" border="0">
+								<tr>
+									<td style="border-radius: 6px; background: #1a1a1a;">
+										<a href="${params.inviteUrl}" style="display: inline-block; padding: ${space[3]} ${space[6]}; font-family: ${SERIF}; font-size: 15px; font-weight: 700; color: #ffffff; text-decoration: none; border-radius: 6px;">Welcome to Dyad</a>
+									</td>
+								</tr>
+							</table>
+						</td>
+					</tr>
+				</table>
+				<p>Should anything feel unclear, reach us via the feedback button in the web app or at <a href="mailto:support@dyad.berlin" style="color: ${color.textPrimary}; text-decoration: underline;">support@dyad.berlin</a>.</p>
 				<hr style="border: none; border-top: 1px solid ${color.borderSubtle}; margin: ${space[8]} 0 ${space[4]};" />
 				${renderSignedFooter(closing, names)}
 			</div>

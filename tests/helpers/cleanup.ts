@@ -28,6 +28,11 @@ export async function cleanTestData(admin?: SupabaseClient): Promise<void> {
 			for (const m of meetings ?? []) {
 				await client.from('feedback_forms').delete().eq('meeting_id', m.id);
 				await client.from('cancellation_records').delete().eq('meeting_id', m.id);
+				// reputation_signals.source_meeting_id is a plain (NO ACTION) FK —
+				// submit_feedback snapshots a signal on lock, and it must go before
+				// the meeting or the meeting delete (and then the prompt delete)
+				// fails, contaminating every later test file.
+				await client.from('reputation_signals').delete().eq('source_meeting_id', m.id);
 			}
 			// group_feedback FK on prompt_id is ON DELETE RESTRICT, so it must be
 			// cleared before the prompt (and before time_slots, which it also
