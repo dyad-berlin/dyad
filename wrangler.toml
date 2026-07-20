@@ -7,6 +7,7 @@
 # without it the build logs "wrangler.toml … does not appear to be valid …
 # Skipping" and the nodejs_compat flag never reaches the Functions bundler,
 # which then fails on `Could not resolve "string_decoder"`.
+name = "dyad"
 pages_build_output_dir = ".svelte-kit/cloudflare"
 compatibility_flags = ["nodejs_compat"]
 compatibility_date = "2024-09-23"
