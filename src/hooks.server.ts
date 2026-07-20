@@ -10,7 +10,11 @@ import { firstAccessContextRow } from '$lib/server/access-context';
 
 const ADMIN_HOSTNAME = 'admin.dyad.berlin';
 const APEX_HOSTNAME = 'dyad.berlin';
-const PAGES_PREVIEW_HOSTNAME = 'dyad-berlin.pages.dev';
+// The production Pages project's subdomain (previews deploy as
+// <branch>.dyad-25o.pages.dev). The old dyad-berlin.pages.dev project no
+// longer exists — with the stale value here the app rejected its own
+// preview deploys.
+const PAGES_PREVIEW_HOSTNAME = 'dyad-25o.pages.dev';
 // Conference host: dyad.amsterdam serves the app itself (attach the domain
 // — and www — to the Pages project). Sessions are host-scoped cookies, so
 // guests who join there live their whole corner experience under this
@@ -26,7 +30,8 @@ const SECONDARY_APEX_HOSTNAMES = [AMSTERDAM_HOSTNAME];
 // no alias for now.
 const ALIAS_TARGETS: Record<string, string> = {
 	'dyad.social': APEX_HOSTNAME,
-	'www.dyad.social': APEX_HOSTNAME
+	'www.dyad.social': APEX_HOSTNAME,
+	'www.dyad.berlin': APEX_HOSTNAME
 };
 const ALIAS_HOSTNAMES = Object.keys(ALIAS_TARGETS);
 
