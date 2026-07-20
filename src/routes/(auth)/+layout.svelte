@@ -1,15 +1,20 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import { page } from '$app/stores';
 	import type { LayoutData } from './$types';
 
 	let { data, children }: { data: LayoutData; children: Snippet } = $props();
+
+	// Waitlist keeps the moss-dark theme (login/join are light/paper like the
+	// rest of the app) — a deliberate exception, not the section default.
+	const isWaitlist = $derived($page.url.pathname.startsWith('/waitlist'));
 </script>
 
 <nav class="auth-nav">
 	<a href="/" class="wordmark" aria-label="DYAD">DYAD</a>
 </nav>
 
-<div class="split-layout">
+<div class="split-layout" data-theme={isWaitlist ? 'dark' : undefined}>
 	<div class="image-half">
 		<img src={data.authImage} alt="" />
 		{#if data.authImageCredit}
