@@ -23,14 +23,15 @@ const PAGES_PREVIEW_HOSTNAME = 'dyad-25o.pages.dev';
 // anonymous visitor on the bare domain is redirected to the Berlin apex,
 // so possession of the link is the gate.
 const AMSTERDAM_HOSTNAME = 'dyad.amsterdam';
-const SECONDARY_APEX_HOSTNAMES = [AMSTERDAM_HOSTNAME];
-// Alias hosts 302 onto their canonical host, path preserved. dyad.social is
-// the future primary (phase 1: redirect to the Berlin apex; phase 2 flips
-// primacy so dyad.berlin redirects the other way). dyad.amsterdam carries
-// no alias for now.
+// dyad.social serves the app itself (future primary — the URL stays
+// dyad.social while you browse). Sessions are host-scoped cookies, so a
+// member signs in per host; unlike dyad.amsterdam there is no
+// anonymous-visitor redirect — the full public surface serves here too.
+const SOCIAL_HOSTNAME = 'dyad.social';
+const SECONDARY_APEX_HOSTNAMES = [AMSTERDAM_HOSTNAME, SOCIAL_HOSTNAME];
+// Alias hosts 302 onto their canonical host, path preserved.
 const ALIAS_TARGETS: Record<string, string> = {
-	'dyad.social': APEX_HOSTNAME,
-	'www.dyad.social': APEX_HOSTNAME,
+	'www.dyad.social': SOCIAL_HOSTNAME,
 	'www.dyad.berlin': APEX_HOSTNAME
 };
 const ALIAS_HOSTNAMES = Object.keys(ALIAS_TARGETS);
