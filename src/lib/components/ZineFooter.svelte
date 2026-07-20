@@ -4,9 +4,10 @@
 
 	// Social/blog links render only when configured, following the repo's
 	// env-gating pattern (cf. zine payment links). Set in the Pages env:
-	// PUBLIC_BLOG_URL, PUBLIC_INSTAGRAM_URL, PUBLIC_YOUTUBE_URL.
+	// PUBLIC_BLOG_URL, PUBLIC_INSTAGRAM_URL, PUBLIC_BLUESKY_URL, PUBLIC_YOUTUBE_URL.
 	const blogUrl = (env.PUBLIC_BLOG_URL ?? '').trim();
 	const instagramUrl = (env.PUBLIC_INSTAGRAM_URL ?? '').trim();
+	const blueskyUrl = (env.PUBLIC_BLUESKY_URL ?? '').trim();
 	const youtubeUrl = (env.PUBLIC_YOUTUBE_URL ?? '').trim();
 </script>
 
@@ -16,25 +17,26 @@
 			<div class="footer-col">
 				<p class="footer-col-head">Community</p>
 				<a href="/waitlist" class="footer-link">Become a member</a>
-				<a href="/unfolding" class="footer-link">Unfolding</a>
+				<a href="/unfolding" class="footer-link">Newsletter</a>
 				<span class="footer-link footer-soon">Forum (in the making)</span>
 				{#if blogUrl}<a href={blogUrl} class="footer-link" target="_blank" rel="noopener">Blog</a>{/if}
 				{#if instagramUrl}<a href={instagramUrl} class="footer-link" target="_blank" rel="noopener">Instagram</a>{/if}
+				{#if blueskyUrl}<a href={blueskyUrl} class="footer-link" target="_blank" rel="noopener">Bluesky</a>{/if}
 				{#if youtubeUrl}<a href={youtubeUrl} class="footer-link" target="_blank" rel="noopener">YouTube</a>{/if}
 			</div>
 			<div class="footer-col">
-				<p class="footer-col-head">Participatory Governance</p>
-				<a href="/governance#documents" class="footer-link">Bylaws, agreements &amp; standards</a>
-				<a href="/governance#practice" class="footer-link">How we practice</a>
-				<a href="/governance#flow" class="footer-link">How a decision is made</a>
-				<a href="/governance#who-decides" class="footer-link">Who decides what</a>
+				<p class="footer-col-head">Resources</p>
+				<a href="/docs" class="footer-link">Documentation</a>
 			</div>
 			<div class="footer-col">
-				<p class="footer-col-head">Dyad</p>
+				<p class="footer-col-head">About us</p>
 				<a href="/why" class="footer-link">About</a>
-				<a href="/join" class="footer-link">Join</a>
-				<a href="/impressum" class="footer-link">Impressum</a>
-				<a href="/datenschutz" class="footer-link">Privacy</a>
+			</div>
+			<div class="footer-col">
+				<p class="footer-col-head">Legal</p>
+				<a href="/legal#impressum" class="footer-link">Impressum</a>
+				<a href="/legal#agb" class="footer-link">AGB</a>
+				<a href="/legal#datenschutz" class="footer-link">Privacy</a>
 			</div>
 		</div>
 	</div>
@@ -42,7 +44,7 @@
 
 <style>
 	.zine-footer {
-		border-top: 1px solid rgba(240, 236, 230, 0.06);
+		border-top: 1px solid rgba(27, 28, 30, 0.06);
 		padding: 64px 0 48px;
 	}
 
@@ -56,9 +58,14 @@
 		padding: 0 48px;
 	}
 
+	/* Four compact, left-hugging columns — Community, Resources, About us,
+	   Legal — rather than stretched across the full 1080px measure.
+	   Community carries the most content (membership + social); the other
+	   three are intentionally short. */
 	.footer-grid {
 		display: grid;
-		grid-template-columns: repeat(3, 1fr);
+		grid-template-columns: repeat(4, minmax(0, 180px));
+		justify-content: start;
 		gap: 40px;
 		margin-bottom: 56px;
 	}
@@ -69,7 +76,7 @@
 		font-weight: 500;
 		letter-spacing: 0.1em;
 		text-transform: uppercase;
-		color: rgba(240, 236, 230, 0.5);
+		color: rgba(27, 28, 30, 0.5);
 		margin: 0 0 16px;
 	}
 
@@ -78,7 +85,7 @@
 		font-family: var(--font-serif);
 		font-size: 0.85rem;
 		font-weight: 300;
-		color: rgba(240, 236, 230, 0.4);
+		color: rgba(27, 28, 30, 0.4);
 		text-decoration: none;
 		margin-bottom: 10px;
 		line-height: 1.4;
@@ -86,16 +93,16 @@
 	}
 
 	.footer-link:hover {
-		color: rgba(240, 236, 230, 0.85);
+		color: rgba(27, 28, 30, 0.85);
 	}
 
 	/* Not yet a destination — quieter than the live links, not interactive. */
 	.footer-soon {
-		color: rgba(240, 236, 230, 0.25);
+		color: rgba(27, 28, 30, 0.25);
 		cursor: default;
 	}
 	.footer-soon:hover {
-		color: rgba(240, 236, 230, 0.25);
+		color: rgba(27, 28, 30, 0.25);
 	}
 
 	@media (max-width: 640px) {
