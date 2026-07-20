@@ -28,15 +28,15 @@
 </script>
 
 <svelte:head>
-	<title>Community · dyad.</title>
-	<meta name="description" content="The Wiggling Series." />
+	<title>Wiggling · dyad.</title>
+	<meta name="description" content="Wiggling is our conversation series with members of the Dyad community." />
 </svelte:head>
 
 <div class="page">
 	<div class="page-intro">
-		<p class="section-label">Community</p>
-		<h1 class="page-title">The Wiggling Series</h1>
-		<p class="page-attr">One voice, one video. If you're looking for who dyad is for, how to join, or how membership works, that's now in <a href="/docs#process-joining">the documentation</a>.</p>
+		<p class="section-label">Conversations</p>
+		<h1 class="page-title">Wiggling</h1>
+		<p class="page-description">Life rarely moves in straight lines, and neither do good conversations. Inspired by Alan Watts, Wiggling is our conversation series with members of the Dyad community, making room for thoughts still forming, lives in motion, and what emerges between us.</p>
 	</div>
 
 	<div class="voices-grid">
@@ -51,7 +51,19 @@
 </div>
 
 <style>
-	/* Shared zine page chrome lives in the (zine) +layout.svelte. */
+	/* Shared zine page chrome lives in the (zine) +layout.svelte. Section
+	   label + description mirror /unfolding's archive-head treatment
+	   (sans-serif uppercase label, italic serif standfirst, wide column). */
+	.section-label {
+		font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+		font-size: 0.7rem;
+		font-weight: 600;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: var(--zine-ink-muted, rgba(27, 28, 30, 0.35));
+		margin: 0 0 22px;
+	}
+
 	.page-title {
 		font-family: var(--font-serif);
 		font-size: clamp(1.5rem, 3vw, 2.4rem);
@@ -63,9 +75,16 @@
 		font-style: italic;
 	}
 
-	.page-attr a {
+	.page-description {
+		font-family: var(--font-serif);
+		font-size: 0.95rem;
+		font-weight: 400;
+		font-style: italic;
+		line-height: 1.5;
 		color: var(--zine-ink, rgba(27, 28, 30, 0.8));
-		text-decoration: underline;
+		margin: 0;
+		max-width: 80ch;
+		letter-spacing: -0.005em;
 	}
 
 	/* Card row: grid like every other zine card group — the grid defines
