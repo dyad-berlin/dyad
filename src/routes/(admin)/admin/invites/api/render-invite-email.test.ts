@@ -36,7 +36,7 @@ describe('renderInviteEmail — signed footer', () => {
 
 	it('always carries a short useful body, even with no opener or message', () => {
 		const html = renderInviteEmail({ inviteUrl: INVITE_URL });
-		expect(html).toContain('We are writing to welcome you in Dyad.');
+		expect(html).toContain('We are writing to welcome you to Dyad.');
 		expect(html).toContain('Hey there,');
 		expect(html).toContain('6 weeks to reach 500 members');
 		expect(html).toContain('steward ownership');
@@ -49,7 +49,7 @@ describe('renderInviteEmail — signed footer', () => {
 		const html = renderInviteEmail({ inviteUrl: INVITE_URL, recipientName: 'Alex' });
 		expect(html).toContain('<p>Hey there, Alex</p>');
 		// Greeting opens the email, before the intro copy and the card.
-		expect(html.indexOf('Hey there, Alex')).toBeLessThan(html.indexOf('We are writing to welcome you in Dyad.'));
+		expect(html.indexOf('Hey there, Alex')).toBeLessThan(html.indexOf('We are writing to welcome you to Dyad.'));
 		expect(html.indexOf('Hey there, Alex')).toBeLessThan(html.indexOf('Talking about involvement'));
 	});
 

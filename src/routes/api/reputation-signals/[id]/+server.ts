@@ -20,6 +20,12 @@ export const PATCH: RequestHandler = async ({ params, request, locals }) => {
 		return json({ error: 'visible is required' }, { status: 400 });
 	}
 
+	// The RPC parameter is typed uuid — a malformed id would surface as a
+	// Postgres cast error (500); treat it as the not-found it is.
+	if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(params.id)) {
+		return json({ error: 'Signal not found' }, { status: 404 });
+	}
+
 	const service = new SupabaseFeedbackService(locals.supabase);
 	try {
 		const updated = await service.setReputationSignalVisibility(params.id, body.visible);

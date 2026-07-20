@@ -23,7 +23,8 @@
 	let saving = $state(false);
 	let error = $state('');
 
-	async function toggle() {
+	async function toggle(e: Event) {
+		const input = e.currentTarget as HTMLInputElement;
 		if (saving) return;
 		const next = !visible;
 		saving = true;
@@ -43,6 +44,9 @@
 			error = copy.feedback.featureError;
 		} finally {
 			saving = false;
+			// On failure `visible` never changed, so Svelte has no diff to patch —
+			// snap the DOM checkbox back to the confirmed server state ourselves.
+			input.checked = visible;
 		}
 	}
 </script>
@@ -56,7 +60,7 @@
 			<span>{visible ? copy.feedback.featuredBadge : copy.feedback.featureToggleLabel}</span>
 		{/if}
 	</label>
-	{#if error}<p class="feature-row-error">{error}</p>{/if}
+	{#if error}<p class="feature-row-error" role="alert">{error}</p>{/if}
 {:else}
 	<div class="feature-toggle">
 		<label class="feature-toggle-row">
@@ -64,7 +68,7 @@
 			<span>{visible ? copy.feedback.featuredBadge : copy.feedback.featureToggleLabel}</span>
 		</label>
 		<p class="feature-toggle-hint">{copy.feedback.featureToggleHint}</p>
-		{#if error}<p class="feature-toggle-error">{error}</p>{/if}
+		{#if error}<p class="feature-toggle-error" role="alert">{error}</p>{/if}
 	</div>
 {/if}
 

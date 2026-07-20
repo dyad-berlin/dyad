@@ -677,7 +677,7 @@ export const copy = {
 		introDocsLink: 'documentation section',
 		introDocsHref: '/docs',
 		introPost: '.',
-		introJoin: 'To join, please read and acknowledge the Community Standards and Membership Agreement, and tell us why you would like to join.',
+		introJoin: 'To join, please read and acknowledge the Community Standards and Member Agreements, and tell us why you would like to join.',
 		// Acknowledgement cards — same consent treatment as the membership
 		// flow's common-ground step. Both must be checked before the request
 		// sends; each card links its full document in /docs.

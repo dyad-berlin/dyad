@@ -97,7 +97,7 @@ export function renderInviteEmail(params: {
 
 	return `${SIGNATURE_FONT_FACE}
 			<div style="font-family: ${SERIF}; max-width: 520px; margin: 0 auto; padding: 40px 20px; color: ${color.textPrimary}; line-height: ${leading.relaxed};">${greetingBlock}${openerBlock}${personalBlock}
-				<p>We are writing to welcome you in Dyad.</p>
+				<p>We are writing to welcome you to Dyad.</p>
 				<p>A few things to help you get started:</p>
 				<p>We expect everyone to read and respect our ${link('https://dyad.berlin/docs#standards', 'Community Standards')}. They live in our documentation, alongside resources that make our thinking behind all decisions at Dyad legible.</p>
 				<p>Once you log in, you'll get to start conversations, pick if you'd like to meet someone one on one or create one for a group, and discover others in your city this week.</p>
