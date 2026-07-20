@@ -63,4 +63,7 @@
 		<dt>Petition</dt><dd>The members' lever on strategic topics. When the signature threshold is reached, the team must respond in writing within 14 days.</dd>
 		<dt>Review panel</dt><dd>Members drawn by lot, joined by one steward, who decide suspensions, removals, and appeals. No individual removes a member alone, and that includes the founders.</dd>
 	</dl>
+
+	<h3>Attribution and licence</h3>
+	<p>These documents adapt, with gratitude, from the published governance work of <a href="https://www.subvert.fm/">Subvert Cooperative</a>, <a href="https://inclusiveorg.net/">Inclusive Organizing</a>, <a href="https://blackskyweb.xyz/">Blacksky</a>, Glitch, and the <a href="https://democratictech.fund/">Democratic Tech Fund</a>'s Code of Co-operation. In the same spirit, dyad's governing documents are shared under <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>: adapt them for your own community, with attribution.</p>
 </section>

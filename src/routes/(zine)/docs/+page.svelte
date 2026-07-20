@@ -6,17 +6,19 @@
 	// The hash carries the selection so every topic stays deep-linkable. The
 	// topics themselves are declared once in ./docs-nav.
 	const topItems = docSections.filter((s) => s.group === 'top');
+	const about = docSections.filter((s) => s.group === 'about');
 	const community = docSections.filter((s) => s.group === 'community');
 	const governance = docSections.filter((s) => s.group === 'governance');
 
-	let active = $state('start');
+	const DEFAULT_ID = 'support-us';
+	let active = $state(DEFAULT_ID);
 	let pane = $state<HTMLElement | undefined>();
 
 	const current = $derived(docSections.find((s) => s.id === active) ?? docSections[0]);
 
 	function fromHash() {
 		const h = (location.hash || '').replace('#', '');
-		active = sectionIds.has(h) ? h : 'start';
+		active = sectionIds.has(h) ? h : DEFAULT_ID;
 	}
 
 	function select(id: string) {
@@ -45,6 +47,11 @@
 		<nav aria-label="Documentation">
 			{#each topItems as item (item.id)}
 				<button class="side-link side-top" class:active={active === item.id} onclick={() => select(item.id)}>{item.title}</button>
+			{/each}
+
+			<p class="side-head">About Us</p>
+			{#each about as item (item.id)}
+				<button class="side-link" class:active={active === item.id} onclick={() => select(item.id)}>{item.title}</button>
 			{/each}
 
 			<p class="side-head">Community</p>

@@ -1,5 +1,5 @@
 <section>
-	<p class="doc-kicker">Community</p>
+	<p class="doc-kicker">About Us</p>
 	<h2>Our origin story</h2>
 	<p>Over the past two years now, we have been meticulously at work. Working first to understand how we arrived at a digital environment that feels so intrusive, hostile, exhausting, and then, working on something precious, full of life by virtue of serving the life within. Dyad is the product of such care and intention.</p>
 	<p>We did not like how being social online felt. The platforms we meet on left little room for our humanity. We are stripped down to a certain version of ourselves, and not the version we wanted to come forth. There was no room for the complexity of our experiences, the intricacy of making sense of them, and with that, discovering and nurturing the meaning of our lives. Where do you go online to expand, deepen, texture?</p>

@@ -1,6 +1,5 @@
 import type { Component } from 'svelte';
 
-import Start from './sections/Start.svelte';
 import SupportUs from './sections/SupportUs.svelte';
 import OriginStory from './sections/OriginStory.svelte';
 import CommunityCare from './sections/CommunityCare.svelte';
@@ -15,6 +14,7 @@ import DecisionProcess from './sections/DecisionProcess.svelte';
 import WhenWrong from './sections/WhenWrong.svelte';
 import ProposalGuide from './sections/ProposalGuide.svelte';
 import ObjectionGuide from './sections/ObjectionGuide.svelte';
+import Team from './sections/Team.svelte';
 
 // Master–detail registry. Each topic is declared once here: the sidebar, the
 // hash-validation set, and the detail pane all derive from this list, so adding
@@ -26,7 +26,7 @@ import ObjectionGuide from './sections/ObjectionGuide.svelte';
 //
 // Section components optionally receive a `select` callback so inline links can
 // switch topics without leaving the page.
-export type DocGroup = 'top' | 'community' | 'governance';
+export type DocGroup = 'top' | 'about' | 'community' | 'governance';
 
 export interface DocSection {
 	id: string;
@@ -42,10 +42,11 @@ export interface DocSection {
 }
 
 export const docSections: DocSection[] = [
-	{ id: 'start', title: 'Documentation', group: 'top', component: Start },
 	{ id: 'support-us', title: 'Become a member', group: 'top', component: SupportUs },
 
-	{ id: 'about-why', title: 'Our origin story', group: 'community', component: OriginStory },
+	{ id: 'about-why', title: 'Our origin story', group: 'about', component: OriginStory },
+	{ id: 'team', title: 'Team', group: 'about', component: Team },
+
 	{ id: 'about-care', title: 'Community care', group: 'community', component: CommunityCare },
 	{ id: 'privacy', title: 'Privacy commitments', group: 'community', component: Privacy },
 	{ id: 'process-joining', title: 'Becoming a member', group: 'community', component: Joining },
