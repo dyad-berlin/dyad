@@ -90,6 +90,28 @@ describe('routeKind — secondary apex + alias hosts (conference domain)', () =>
 	});
 });
 
+describe('routeKind — dyad.social alias (future primary, phase 1: redirect)', () => {
+	const SOCIAL_OPTS = {
+		...PROD_OPTS,
+		aliasHostnames: ['dyad.social', 'www.dyad.social']
+	} as const;
+
+	it('dyad.social and www → alias-redirect on every path', () => {
+		expect(routeKind(new URL('https://dyad.social/'), SOCIAL_OPTS)).toBe('alias-redirect');
+		expect(routeKind(new URL('https://dyad.social/discover'), SOCIAL_OPTS)).toBe('alias-redirect');
+		expect(routeKind(new URL('https://www.dyad.social/join?token=x'), SOCIAL_OPTS)).toBe(
+			'alias-redirect'
+		);
+		expect(routeKind(new URL('https://dyad.social/admin/members'), SOCIAL_OPTS)).toBe(
+			'alias-redirect'
+		);
+	});
+
+	it('without the options, dyad.social stays rejected (back-compat)', () => {
+		expect(routeKind(new URL('https://dyad.social/'), PROD_OPTS)).toBe('reject');
+	});
+});
+
 describe('routeKind — non-canonical hostnames are rejected', () => {
 	it('attacker-controlled hostname + non-admin path → reject', () => {
 		expect(routeKind(new URL('https://attacker.example.com/discover'), PROD_OPTS)).toBe('reject');

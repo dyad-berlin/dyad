@@ -17,11 +17,18 @@ const PAGES_PREVIEW_HOSTNAME = 'dyad-berlin.pages.dev';
 // hostname. Joining still requires a generated group link — the QR encodes
 // the full join URL (https://dyad.amsterdam/join?glink=<token>); an
 // anonymous visitor on the bare domain is redirected to the Berlin apex,
-// so possession of the link is the gate. The www variant canonicalizes
-// onto the bare host.
+// so possession of the link is the gate.
 const AMSTERDAM_HOSTNAME = 'dyad.amsterdam';
 const SECONDARY_APEX_HOSTNAMES = [AMSTERDAM_HOSTNAME];
-const ALIAS_HOSTNAMES = ['www.dyad.amsterdam'];
+// Alias hosts 302 onto their canonical host, path preserved. dyad.social is
+// the future primary (phase 1: redirect to the Berlin apex; phase 2 flips
+// primacy so dyad.berlin redirects the other way). dyad.amsterdam carries
+// no alias for now.
+const ALIAS_TARGETS: Record<string, string> = {
+	'dyad.social': APEX_HOSTNAME,
+	'www.dyad.social': APEX_HOSTNAME
+};
+const ALIAS_HOSTNAMES = Object.keys(ALIAS_TARGETS);
 
 // Region a hostname puts a signed-in member into. A multi-region member
 // (grants in several corners across cities) browsing dyad.amsterdam should
@@ -50,13 +57,14 @@ export const handle: Handle = async ({ event, resolve }) => {
 		return new Response(null, { status: 404 });
 	}
 
-	// www.dyad.amsterdam canonicalizes onto the bare conference host,
-	// path preserved. 302 (not 301) — the host setup may still evolve.
+	// Alias hosts canonicalize onto their target host, path preserved.
+	// 302 (not 301) — the host setup may still evolve.
 	if (kind === 'alias-redirect') {
+		const target = ALIAS_TARGETS[event.url.hostname.replace(/\.$/, '')] ?? APEX_HOSTNAME;
 		return new Response(null, {
 			status: 302,
 			headers: {
-				Location: `https://${AMSTERDAM_HOSTNAME}${event.url.pathname}${event.url.search}`
+				Location: `https://${target}${event.url.pathname}${event.url.search}`
 			}
 		});
 	}
