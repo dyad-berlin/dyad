@@ -1,3 +1,38 @@
+// The Workers runtime may not expose WeakRef/FinalizationRegistry (they are
+// compatibility-flag-gated). undici — pulled in through the atproto identity
+// module on every request — constructs a WeakRef at module init, which made
+// the FIRST request on each fresh isolate 500 (intermittent production
+// errors, one per cold start). Strong-reference fallbacks are safe here:
+// undici only uses them for GC bookkeeping, and an isolate's lifetime is
+// short. Must run before any dynamic import that reaches undici.
+if (typeof globalThis.WeakRef === 'undefined') {
+	// @ts-expect-error runtime polyfill for a possibly-absent global
+	globalThis.WeakRef = class WeakRefPolyfill<T extends object> {
+		#value: T;
+		constructor(value: T) {
+			this.#value = value;
+		}
+		deref(): T {
+			return this.#value;
+		}
+	};
+}
+if (typeof globalThis.FinalizationRegistry === 'undefined') {
+	// @ts-expect-error runtime polyfill for a possibly-absent global
+	globalThis.FinalizationRegistry = class FinalizationRegistryPolyfill {
+		register() {}
+		unregister() {
+			return false;
+		}
+	};
+}
+if (typeof globalThis.MessagePort === 'undefined') {
+	// undici's webidl layer only references MessagePort to build an
+	// instanceof type assertion — a bare class satisfies it.
+	// @ts-expect-error runtime polyfill for a possibly-absent global
+	globalThis.MessagePort = class MessagePortPolyfill {};
+}
+
 import { createServerClient } from '@supabase/ssr';
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
 import { dev } from '$app/environment';
