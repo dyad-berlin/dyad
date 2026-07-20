@@ -2,7 +2,10 @@ import type { LayoutLoad } from './$types';
 import { storageUrl } from '$lib/utils/storage-url';
 
 const imageMap: Record<string, { src: string; credit?: string }> = {
-	'/login': { src: '/images/log-in.jpeg' },
+	'/login': {
+		src: storageUrl('uploads', 'sign in.webp'),
+		credit: "A pitcher plant in “silent caress, tender flesh” by Jack Davison for The Plant Magazine"
+	},
 	'/join': { src: '/images/log-in.jpeg' },
 	'/waitlist': {
 		src: storageUrl('uploads', 'mycelium for waitlist.webp'),

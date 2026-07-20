@@ -5,16 +5,18 @@
 
 	let { data, children }: { data: LayoutData; children: Snippet } = $props();
 
-	// Waitlist keeps the moss-dark theme (login/join are light/paper like the
-	// rest of the app) — a deliberate exception, not the section default.
-	const isWaitlist = $derived($page.url.pathname.startsWith('/waitlist'));
+	// Waitlist and login keep the moss-dark theme (join is light/paper like
+	// the rest of the app) — a deliberate exception, not the section default.
+	const isDarkAuth = $derived(
+		$page.url.pathname.startsWith('/waitlist') || $page.url.pathname.startsWith('/login')
+	);
 </script>
 
 <nav class="auth-nav">
 	<a href="/" class="wordmark" aria-label="DYAD">DYAD</a>
 </nav>
 
-<div class="split-layout" data-theme={isWaitlist ? 'dark' : undefined}>
+<div class="split-layout" data-theme={isDarkAuth ? 'dark' : undefined}>
 	<div class="image-half">
 		<img src={data.authImage} alt="" />
 		{#if data.authImageCredit}
