@@ -45,7 +45,7 @@
 
 				<p>Communal living has always come with shared understandings, boundaries, agreements, and forms of accountability. The digital realm will not be an exception. Consideration of safeguarding cannot be secondary.</p>
 
-				<p>The current status quo exists in large part because a handful of platforms moved fast and broke things before public awareness and the institutions traditionally responsible for the public interest could catch up. Taking stock of the first twenty years of interactive life online, we need accountable practices, serious follow-through, and structures that do not leave care dependent on goodwill alone.</p>
+				<p>The current status quo exists in large part because a handful of platforms moved fast and broke things before public awareness and the institutions historically responsible for the public interest could catch up. Taking stock of the first twenty years of interactive life online, we need accountable practices, serious follow-through, and structures that do not leave care dependent on goodwill alone.</p>
 
 				<p>And, we are catching up. We see regulatory pushback against incumbents, a growing field of communities doing things differently, and charities, nonprofits, researchers, and practitioners working to inform technology builders and civil society on what is possible and what should be in place.</p>
 

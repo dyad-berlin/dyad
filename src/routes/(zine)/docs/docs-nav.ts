@@ -10,10 +10,6 @@ import Bylaws from './sections/Bylaws.svelte';
 import Agreements from './sections/Agreements.svelte';
 import Standards from './sections/Standards.svelte';
 import HowWePractice from './sections/HowWePractice.svelte';
-import DecisionProcess from './sections/DecisionProcess.svelte';
-import WhenWrong from './sections/WhenWrong.svelte';
-import ProposalGuide from './sections/ProposalGuide.svelte';
-import ObjectionGuide from './sections/ObjectionGuide.svelte';
 import Team from './sections/Team.svelte';
 
 // Master–detail registry. Each topic is declared once here: the sidebar, the
@@ -55,11 +51,7 @@ export const docSections: DocSection[] = [
 	{ id: 'bylaws', title: 'Bylaws', group: 'governance', component: Bylaws },
 	{ id: 'agreements', title: 'Member Agreements', group: 'governance', component: Agreements },
 	{ id: 'standards', title: 'Community Standards', group: 'governance', component: Standards },
-	{ id: 'about-governance', title: 'How we practice', group: 'governance', component: HowWePractice },
-	{ id: 'process-decision', title: 'How a decision is made', group: 'governance', sub: true, component: DecisionProcess },
-	{ id: 'process-wrong', title: 'When something goes wrong', group: 'governance', sub: true, component: WhenWrong },
-	{ id: 'guide-proposal', title: 'How to submit a proposal', group: 'governance', sub: true, component: ProposalGuide },
-	{ id: 'guide-objection', title: 'How to object well', group: 'governance', sub: true, component: ObjectionGuide }
+	{ id: 'about-governance', title: 'How we practice', group: 'governance', component: HowWePractice }
 ];
 
 export const sectionIds = new Set(docSections.map((s) => s.id));

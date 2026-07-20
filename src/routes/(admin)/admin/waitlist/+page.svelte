@@ -23,14 +23,19 @@
 
 	const MESSAGE_MAX = 2000;
 
-	async function send(email: string, name: string | null, message: string) {
+	async function send(email: string, name: string | null, message: string, recipientName: string | null) {
 		invitingEmail = email;
 		inviteResult = null;
 		try {
 			const res = await fetch('/admin/invites/api', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ email, name, message: message.trim() || undefined })
+				body: JSON.stringify({
+					email,
+					name,
+					message: message.trim() || undefined,
+					recipientName: recipientName?.trim() || undefined
+				})
 			});
 			const body = await res.json();
 			if (res.ok) {
@@ -51,14 +56,14 @@
 		}
 	}
 
-	async function inviteWaitlisted(email: string) {
+	async function inviteWaitlisted(contact: { email: string; name: string | null }) {
 		// Personalized path: the admin wrote the opener/message by hand.
-		const opener = openerByEmail[email] ?? '';
-		const msg = messageByEmail[email] ?? '';
-		await send(email, opener.trim() || null, msg);
+		const opener = openerByEmail[contact.email] ?? '';
+		const msg = messageByEmail[contact.email] ?? '';
+		await send(contact.email, opener.trim() || null, msg, contact.name);
 		if (inviteResult && !inviteResult.message.startsWith('Failed') && !inviteResult.message.startsWith('Network')) {
-			const { [email]: _o, ...restOpeners } = openerByEmail;
-			const { [email]: _m, ...restMessages } = messageByEmail;
+			const { [contact.email]: _o, ...restOpeners } = openerByEmail;
+			const { [contact.email]: _m, ...restMessages } = messageByEmail;
 			openerByEmail = restOpeners;
 			messageByEmail = restMessages;
 			expandedEmail = null;
@@ -69,8 +74,7 @@
 	 *  greeting built from the name the person gave on the waitlist form.
 	 *  Nothing to type — the template (copy.email.invite*) carries the words. */
 	async function acceptWithTemplate(contact: { email: string; name: string | null }) {
-		const opener = contact.name?.trim() ? `Hi ${contact.name.trim()},` : null;
-		await send(contact.email, opener, '');
+		await send(contact.email, null, '', contact.name);
 	}
 
 	function formatDate(iso: string): string {
@@ -216,7 +220,7 @@
 					{#if expandedEmail === contact.email}
 						<button
 							class="btn-primary"
-							onclick={() => inviteWaitlisted(contact.email)}
+							onclick={() => inviteWaitlisted(contact)}
 							disabled={invitingEmail === contact.email}
 						>
 							{invitingEmail === contact.email

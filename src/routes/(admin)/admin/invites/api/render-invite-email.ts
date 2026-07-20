@@ -3,10 +3,10 @@ import { copy } from '$lib/copy';
 import { tokens } from '$lib/design-tokens.js';
 
 const { color, textSize, space, leading } = tokens;
-// SangBleu Sunrise, Bold + Regular only — the Light/300 weight is what
+// SangBleu Sunrise, Bold + Regular only: the Light/300 weight is what
 // actually read as "nearly unreadable" at small sizes; Bold and Regular
 // hold up fine. Georgia is the fallback for clients that strip @font-face
-// (Gmail included) — same weights, so the fallback isn't a downgrade.
+// (Gmail included), same weights, so the fallback isn't a downgrade.
 const SERIF = "'SangBleu Sunrise', Georgia, 'Times New Roman', serif";
 const SIGNATURE_FONT_FACE = `
 			<style>
@@ -58,17 +58,27 @@ function renderSignedFooter(closing: string, names: string): string {
  * lines in the footer. Both default to copy.email.signature.* when omitted.
  * The brand line ("dyad · berlin") is not overridable.
  *
- * All four optional text fields are HTML-escaped inside this function;
+ * `recipientName` (when supplied) opens the email with "Hey there, {name}" —
+ * sourced from the waitlist request-to-join form, same as the "Hi {name},"
+ * greeting in the waitlist welcome email. Falls back to an unaddressed
+ * "Hey there," when omitted (e.g. a manually-composed batch invite with no
+ * associated waitlist contact).
+ *
+ * All optional text fields are HTML-escaped inside this function;
  * callers pass raw text. Line breaks in the message are preserved as <br> tags.
  */
 export function renderInviteEmail(params: {
 	opener?: string;
 	inviteUrl: string;
 	message?: string;
-	expiryDays: number;
+	recipientName?: string;
 	signatureClosing?: string;
 	signatureNames?: string;
 }): string {
+	const greeting = params.recipientName?.trim()
+		? `Hey there, ${escapeHtml(params.recipientName.trim())}`
+		: 'Hey there,';
+	const greetingBlock = `\n\t\t\t\t<p>${greeting}</p>`;
 	const openerBlock = params.opener
 		? `\n\t\t\t\t<p>${escapeHtml(params.opener)}</p>`
 		: '';
@@ -86,7 +96,7 @@ export function renderInviteEmail(params: {
 		`<a href="${href}" style="color: ${color.textPrimary}; text-decoration: underline;">${label}</a>`;
 
 	return `${SIGNATURE_FONT_FACE}
-			<div style="font-family: Helvetica, Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 40px 20px; color: ${color.textPrimary}; line-height: ${leading.relaxed};">${openerBlock}${personalBlock}
+			<div style="font-family: ${SERIF}; max-width: 520px; margin: 0 auto; padding: 40px 20px; color: ${color.textPrimary}; line-height: ${leading.relaxed};">${greetingBlock}${openerBlock}${personalBlock}
 				<p>We are writing to welcome you in Dyad.</p>
 				<p>A few things to help you get started:</p>
 				<p>We expect everyone to read and respect our ${link('https://dyad.berlin/docs#standards', 'Community Standards')}. They live in our documentation, alongside resources that make our thinking behind all decisions at Dyad legible.</p>
@@ -95,23 +105,21 @@ export function renderInviteEmail(params: {
 				<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin: 0 0 ${space[6]}; border-collapse: collapse;">
 					<tr>
 						<td align="center" style="padding: ${space[8]} ${space[6]}; background: #f7f4ee; border: 1px solid #e6dfd2; border-radius: 10px;">
-							<p style="margin: 0 0 ${space[2]}; font-family: Helvetica, Arial, sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: #4a5d3f;">Support Dyad</p>
-							<p style="margin: 0 0 ${space[5]}; font-family: ${SERIF}; font-weight: 700; font-size: 21px; line-height: 1.3; color: ${color.textPrimary};">Six weeks to be joined by 500 supporting members</p>
-							<p style="margin: 0 0 ${space[3]}; font-family: ${SERIF}; font-size: 15px; line-height: ${leading.relaxed}; color: ${color.textSecondary}; text-align: left;">From the start, our aim has been to build social technology that gives people shared ground to meet on terms they shape together, while keeping Dyad independent of advertising, extraction, and outside control.</p>
-							<p style="margin: 0 0 ${space[3]}; font-family: ${SERIF}; font-size: 15px; line-height: ${leading.relaxed}; color: ${color.textSecondary}; text-align: left;">That independence has also been our greatest challenge. After a year of bootstrapping the work, we are moving toward a member-funded model with our beta launch.</p>
-							<p style="margin: 0 0 ${space[6]}; font-family: ${SERIF}; font-size: 15px; line-height: ${leading.relaxed}; color: ${color.textSecondary}; text-align: left;">Over the next six weeks, we aim to reach 500 supporting members. Their contributions will allow us to sustain our operations, keep developing Dyad with the community, and begin our transition toward steward ownership.</p>
+							<p style="margin: 0 0 ${space[2]}; font-family: ${SERIF}; font-size: 15px; color: ${color.textSecondary};">Talking about involvement</p>
+							<p style="margin: 0 0 ${space[5]}; font-family: ${SERIF}; font-weight: 700; font-size: 21px; line-height: 1.3; color: ${color.textPrimary};">6 weeks to reach 500 members</p>
+							<p style="margin: 0 0 ${space[3]}; font-family: ${SERIF}; font-size: 15px; line-height: ${leading.relaxed}; color: ${color.textSecondary}; text-align: left;">From the start, our aim has been to build social technology as civic infrastructure, that is, transparent and accountable, and collectively owned and governed. Now, with the product ready for your use, we want to transition into a member funded model to keep Dyad independent of short term financial pressure or extractive business models.</p>
+							<p style="margin: 0 0 ${space[6]}; font-family: ${SERIF}; font-size: 15px; line-height: ${leading.relaxed}; color: ${color.textSecondary}; text-align: left;">Over the next six weeks, we aim to reach 500 supporting members. Your contributions will allow us to sustain our operations, keep developing Dyad with and for community, and begin our transition toward steward ownership.</p>
 							<table role="presentation" cellpadding="0" cellspacing="0" border="0">
 								<tr>
 									<td style="border-radius: 6px; background: #1a1a1a;">
-										<a href="${params.inviteUrl}" style="display: inline-block; padding: ${space[3]} ${space[6]}; font-family: Helvetica, Arial, sans-serif; font-size: 15px; font-weight: 700; color: #ffffff; text-decoration: none; border-radius: 6px;">Welcome to Dyad</a>
+										<a href="${params.inviteUrl}" style="display: inline-block; padding: ${space[3]} ${space[6]}; font-family: ${SERIF}; font-size: 15px; font-weight: 700; color: #ffffff; text-decoration: none; border-radius: 6px;">Welcome to Dyad</a>
 									</td>
 								</tr>
 							</table>
 						</td>
 					</tr>
 				</table>
-				<p style="font-size: ${textSize.base}; color: ${color.textMuted};">Your personal invitation link expires in ${params.expiryDays} days.</p>
-				<p>Should anything feel unclear, shoot this email to <a href="mailto:luna@dyad.berlin" style="color: ${color.textPrimary}; text-decoration: underline;">luna@dyad.berlin</a>.</p>
+				<p>Should anything feel unclear, reach us via the feedback button in the web app or at <a href="mailto:support@dyad.berlin" style="color: ${color.textPrimary}; text-decoration: underline;">support@dyad.berlin</a>.</p>
 				<hr style="border: none; border-top: 1px solid ${color.borderSubtle}; margin: ${space[8]} 0 ${space[4]};" />
 				${renderSignedFooter(closing, names)}
 			</div>
