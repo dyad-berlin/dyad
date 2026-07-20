@@ -29,14 +29,14 @@
 
 <svelte:head>
 	<title>Wiggling · dyad.</title>
-	<meta name="description" content="Wiggling is our conversation series with members of the Dyad community." />
+	<meta name="description" content="Wiggling is our conversation series with members of our community." />
 </svelte:head>
 
 <div class="page">
 	<div class="page-intro">
 		<p class="section-label">Conversations</p>
 		<h1 class="page-title">Wiggling</h1>
-		<p class="page-description">Life rarely moves in straight lines, and neither do good conversations. Inspired by Alan Watts, Wiggling is our conversation series with members of the Dyad community, making room for thoughts still forming, lives in motion, and what emerges between us.</p>
+		<p class="page-description">Life rarely moves in straight lines, and neither do good conversations. Inspired by Alan Watts, Wiggling is our conversation series with members of our community, making room for thoughts still forming, lives in motion, and what emerges between us.</p>
 	</div>
 
 	<div class="voices-grid">
