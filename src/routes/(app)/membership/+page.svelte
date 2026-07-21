@@ -3,6 +3,7 @@
 	import { page } from '$app/stores';
 	import { invalidate, goto } from '$app/navigation';
 	import { copy } from '$lib/copy';
+	import { ct } from '$lib/copy-runtime.svelte';
 	import MembershipOffer from '$lib/components/MembershipOffer.svelte';
 
 	let { data } = $props();
@@ -116,7 +117,7 @@
 			<!-- The standalone page (reached fresh after onboarding) has no
 			     built-in exit, unlike the paywall modal's "not now" dismiss —
 			     browsing without a membership is still allowed. -->
-			<a href={returnTo ?? '/discover'} class="guest-link">{c.continueAsGuestCta}</a>
+			<a href={returnTo ?? '/discover'} class="guest-link">{ct('membership.continueAsGuestCta')}</a>
 		{/if}
 	{/if}
 </main>

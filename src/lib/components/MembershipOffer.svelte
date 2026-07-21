@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { copy } from '$lib/copy';
+	import { ct } from '$lib/copy-runtime.svelte';
 	import type { GateReason } from '$lib/utils/membership-error.js';
 
 	// The join/renew offer body — cadence first, then (for monthly) a tier.
@@ -13,11 +14,22 @@
 
 	const c = copy.membership;
 
+	// Guest-state strings resolve through the copy runtime (admin-editable —
+	// pilot surface for /admin/copy); other modes keep static defaults until
+	// their keys are adopted.
 	const heading = $derived(
-		mode === 'ended' ? c.grantEndedHeading : mode === 'renew' ? c.lapsedHeading : c.guestHeading
+		mode === 'ended'
+			? c.grantEndedHeading
+			: mode === 'renew'
+				? c.lapsedHeading
+				: ct('membership.guestHeading')
 	);
 	const intro = $derived(
-		mode === 'ended' ? c.grantEndedIntro : mode === 'renew' ? c.lapsedIntro : c.guestIntro
+		mode === 'ended'
+			? c.grantEndedIntro
+			: mode === 'renew'
+				? c.lapsedIntro
+				: ct('membership.guestIntro')
 	);
 	// Only a genuinely-lapsed paid member "renews"; a never-member and an
 	// ended grant both "become a member".
