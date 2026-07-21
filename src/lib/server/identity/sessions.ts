@@ -13,7 +13,7 @@ export async function loadScopeSessions(
 	nowSeconds: number
 ): Promise<{ scopes: string[]; sessions: ScopeSession[] }> {
 	const sessions: ScopeSession[] = [];
-	for (const provider of getProviders()) {
+	for (const provider of await getProviders()) {
 		const session = await provider.resolveSession(cookies, nowSeconds);
 		if (session) sessions.push(session);
 	}
