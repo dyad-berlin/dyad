@@ -27,7 +27,6 @@
 
 import type { Cookies } from '@sveltejs/kit';
 import { dev } from '$app/environment';
-import { env } from '$env/dynamic/private';
 import {
 	createAtprotoAdapter,
 	buildClientMetadata,
@@ -39,6 +38,7 @@ import {
 } from '@prefig/upact-atproto';
 import type { OAuthClientMetadataInput } from '@atproto/oauth-client-node';
 import type { EstablishResult, IdentityProvider, ScopeSession } from '../types.js';
+import { readConfig, type AtprotoEnvConfig } from './atproto-config.js';
 import { signSessionToken, verifySessionToken } from './session-token.js';
 import { hasScopeGrant } from '../identities.js';
 import { makeAdminClient } from '$lib/server/supabase-admin.js';
@@ -57,31 +57,10 @@ const PENDING_TTL_S = 15 * 60;
 // is one redirect, so nothing argues for longer.
 const SESSION_CAP_S = 7 * 24 * 60 * 60;
 
-interface AtprotoEnvConfig {
-	scope: string;
-	baseUrl: string;
-	sessionSecret: string;
-}
-
-/**
- * Reads the deployment's ATProto configuration, or null when the provider is
- * not configured (which unpublishes every atproto surface: the login page,
- * the authorize/callback routes, and the client metadata document).
- *
- *   ATPROTO_SCOPE_SLUG      dyad scope slug a session grants
- *   ATPROTO_BASE_URL        public base URL of this deployment. An
- *                           http://127.0.0.1:<port> value selects the OAuth
- *                           loopback client (dev only — the spec requires a
- *                           loopback IP literal, not `localhost`)
- *   ATPROTO_SESSION_SECRET  HS256 secret for dyad's own session cookie
- */
-function readConfig(): AtprotoEnvConfig | null {
-	const scope = env.ATPROTO_SCOPE_SLUG;
-	const baseUrl = env.ATPROTO_BASE_URL;
-	const sessionSecret = env.ATPROTO_SESSION_SECRET;
-	if (!scope || !baseUrl || !sessionSecret) return null;
-	return { scope, baseUrl: baseUrl.replace(/\/$/, ''), sessionSecret };
-}
+// readConfig / AtprotoEnvConfig live in ./atproto-config.ts so the registry
+// can check "is atproto configured?" without loading this module's import
+// graph (see the comment there — that separation is what keeps undici out of
+// unconfigured deployments).
 
 /**
  * The adapter config derived from the deployment env. dyad's client metadata is

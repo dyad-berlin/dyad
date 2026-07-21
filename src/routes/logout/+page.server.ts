@@ -21,7 +21,7 @@ export const actions: Actions = {
 		// visitor's cookie would survive "sign out".
 		try {
 			const { getProviders } = await import('$lib/server/identity/index.js');
-			for (const provider of getProviders()) provider.clear(cookies);
+			for (const provider of await getProviders()) provider.clear(cookies);
 		} catch {
 			// no providers configured / import failure — nothing to clear
 		}

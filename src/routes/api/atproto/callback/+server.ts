@@ -9,7 +9,7 @@ import { getProvider } from '$lib/server/identity/index.js';
  * follows so hooks re-run with the new cookie.
  */
 export const GET: RequestHandler = async ({ url, cookies }) => {
-	const provider = getProvider('atproto');
+	const provider = await getProvider('atproto');
 	if (!provider) return json({ error: 'not found' }, { status: 404 });
 
 	const result = await provider.establish(cookies, Object.fromEntries(url.searchParams));

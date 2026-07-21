@@ -16,14 +16,14 @@ import { getProvider } from '$lib/server/identity/index.js';
 const unknownProvider = () => json({ error: 'unknown identity provider' }, { status: 404 });
 
 export const GET: RequestHandler = async ({ params, cookies }) => {
-	const provider = getProvider(params.provider);
+	const provider = await getProvider(params.provider);
 	if (!provider) return unknownProvider();
 	const payload = await provider.challenge(cookies);
 	return json({ provider: provider.id, scope: provider.scope, ...payload });
 };
 
 export const POST: RequestHandler = async ({ params, request, cookies }) => {
-	const provider = getProvider(params.provider);
+	const provider = await getProvider(params.provider);
 	if (!provider) return unknownProvider();
 
 	let evidence: unknown;
@@ -41,7 +41,7 @@ export const POST: RequestHandler = async ({ params, request, cookies }) => {
 };
 
 export const DELETE: RequestHandler = async ({ params, cookies }) => {
-	const provider = getProvider(params.provider);
+	const provider = await getProvider(params.provider);
 	if (!provider) return unknownProvider();
 	provider.clear(cookies);
 	return json({ ok: true });

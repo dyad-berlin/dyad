@@ -4,6 +4,6 @@ import { getProvider } from '$lib/server/identity/index.js';
 
 /** Published only when the deployment has configured the atproto provider. */
 export const load: PageServerLoad = async ({ url }) => {
-	if (!getProvider('atproto')) error(404, 'Not found');
+	if (!(await getProvider('atproto'))) error(404, 'Not found');
 	return { errorCode: url.searchParams.get('error') };
 };
