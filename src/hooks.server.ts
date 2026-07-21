@@ -37,7 +37,7 @@ import { createServerClient } from '@supabase/ssr';
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
 import { dev } from '$app/environment';
 import { env } from '$env/dynamic/private';
-import type { Handle } from '@sveltejs/kit';
+import type { Handle, HandleServerError } from '@sveltejs/kit';
 import { createSupabaseAdapter } from '@prefig/upact-supabase';
 import { getAuthorizedAdminOperator } from '$lib/server/admin-auth';
 import { routeKind } from '$lib/server/route-kind';
@@ -419,4 +419,23 @@ export const handle: Handle = async ({ event, resolve }) => {
 	}
 
 	return resolve(event);
+};
+
+/**
+ * Cloudflare Pages retains no function logs, so without this hook an
+ * unexpected server error leaves no trace anywhere — the intermittent
+ * isolate-500 incident (undici's `node:assert` require, see
+ * $lib/server/identity/registry.ts) took a live `wrangler pages deployment
+ * tail` to even see. Log method + path + error so a tail or future log sink
+ * can attribute failures; return only the generic message so nothing internal
+ * reaches the client.
+ */
+export const handleError: HandleServerError = ({ error, event, status, message }) => {
+	if (status !== 404) {
+		console.error(
+			`[handleError] ${status} ${event.request.method} ${event.url.pathname}:`,
+			error
+		);
+	}
+	return { message };
 };
