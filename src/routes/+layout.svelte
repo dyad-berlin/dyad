@@ -5,8 +5,16 @@
 	import { page } from '$app/state';
 	import { env } from '$env/dynamic/public';
 	import { themeStore } from '$lib/stores/theme.svelte';
+	import { setCopyOverrides } from '$lib/copy-runtime.svelte';
 
-	let { children } = $props();
+	let { children, data } = $props();
+
+	// Hydrate the copy-override map (SSR: during render; client: kept in
+	// sync across navigations). See $lib/copy-runtime for semantics.
+	setCopyOverrides(data.copyOverrides);
+	$effect(() => {
+		setCopyOverrides(data.copyOverrides);
+	});
 
 	// Plausible analytics: load on the public + authenticated app, NOT the
 	// admin plane. Production admin lives at admin.dyad.berlin; local dev

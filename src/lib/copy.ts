@@ -813,6 +813,7 @@ export const copy = {
 		feedback: 'Feedback',
 		conversations: 'Conversations',
 		settings: 'Settings',
+		copyEditor: 'Copy',
 		hide: 'Hide',
 		unhide: 'Unhide',
 		hidden: 'Hidden',

@@ -80,6 +80,7 @@ Navigation is via `FloatingNav` on every page that needs it; there is no shared 
 /admin/scopes          — Corner CRUD: create, list, retire scopes; grant/revoke memberships
 /admin/scopes/[scope]  — Scope detail: members + last-active + grant/revoke
 /admin/feedback        — Feedback review
+/admin/copy            — Copy editor: override user-facing copy.ts strings without a deploy (copy_overrides table)
 /admin/settings        — Global runtime settings (currently: transactional email notifications kill switch)
 ```
 
@@ -122,6 +123,7 @@ Schema defined in `supabase/migrations/` (source of truth). Key tables:
 - `meetings` — Scheduled meetings between two members
 - `feedback_forms` — Post-meeting feedback with simultaneous reveal
 - `adjective_vocabulary` — Rating tags for feedback
+- `copy_overrides` — Admin-edited overrides of `src/lib/copy.ts` string leaves (dot-path key). Service-role-only. Read via a cached, fail-to-default fetch in the root layout (`src/lib/server/copy-overrides.ts`, `$lib/copy-runtime`); written by `/admin/copy`. Emails and legal pages are out of scope by design.
 - `app_settings` — Global runtime config (key/JSONB value). Service-role-only. Read/written by the admin plane (`/admin/settings`) and the notification dispatch gate. Default seed: `email_notifications_enabled = false`.
 - `notification_settings` — Per-member notification address (strictly opt-in; dispatch never falls back to the auth email) + per-event flags. Owner-only RLS on every verb — the address is PII and must not ride the permissive profiles SELECT policy.
 
