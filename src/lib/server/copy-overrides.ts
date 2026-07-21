@@ -78,6 +78,58 @@ export async function getCopyOverrideRowsUncached(): Promise<CopyOverrideRow[]> 
 	return (data ?? []) as CopyOverrideRow[];
 }
 
+/**
+ * Upsert one override (admin plane only). Optimistic concurrency: when
+ * `expectedUpdatedAt` is provided and an existing row's updated_at differs,
+ * returns { conflict: true } so the editor can tell the operator the value
+ * changed since they opened it. Throws on DB failure.
+ */
+export async function upsertCopyOverride(params: {
+	key: string;
+	value: string;
+	defaultAtSave: string;
+	updatedBy: string | null;
+	expectedUpdatedAt?: string | null;
+}): Promise<{ conflict: boolean }> {
+	const admin = makeAdminClient();
+	if (params.expectedUpdatedAt !== undefined && params.expectedUpdatedAt !== null) {
+		const { data: existing, error: readError } = await admin
+			.from('copy_overrides')
+			.select('updated_at')
+			.eq('key', params.key)
+			.maybeSingle();
+		if (readError) throw readError;
+		if (existing && existing.updated_at !== params.expectedUpdatedAt) {
+			return { conflict: true };
+		}
+	}
+	const { error } = await admin.from('copy_overrides').upsert(
+		{
+			key: params.key,
+			value: params.value,
+			default_at_save: params.defaultAtSave,
+			updated_by: params.updatedBy,
+			updated_at: new Date().toISOString()
+		},
+		{ onConflict: 'key' }
+	);
+	if (error) throw error;
+	return { conflict: false };
+}
+
+/** Delete one override — reverts the key to its typed default. Returns
+ *  whether a row was actually removed. Throws on DB failure. */
+export async function deleteCopyOverride(key: string): Promise<{ existed: boolean }> {
+	const admin = makeAdminClient();
+	const { data, error } = await admin
+		.from('copy_overrides')
+		.delete()
+		.eq('key', key)
+		.select('key');
+	if (error) throw error;
+	return { existed: (data ?? []).length > 0 };
+}
+
 /** Test hook: reset module cache state between test cases. */
 export function _resetCopyOverridesCache(): void {
 	cached = null;
