@@ -846,11 +846,10 @@ export const copy = {
 		dialogLabel: 'Membership',
 
 		// Everyone who reaches this copy (the /membership page, or the paywall
-		// modal on a gated action) is already signed in, and under the
-		// consent-based join flow, that means they are already a member.
-		// This is never a "come join us" pitch;
-		// it is an invitation to add a financial contribution, which some
-		// product actions are unlocked by.
+		// modal on a gated action) is already signed in. "Member" here means
+		// the paid tier: the copy invites a financial contribution that
+		// unlocks some product actions, and browsing as a guest stays allowed
+		// either way (the page offers a continue-as-guest exit).
 		guestHeading: 'Become a member',
 		guestIntro:
 			'Dyad is entirely member funded. Consider joining us with a contribution for unlimited access to in-person conversations, our weekly newsletter, and collective governance process.',
