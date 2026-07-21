@@ -112,6 +112,12 @@
 		<!-- The shared offer body: same cadence→tier picker, benefits, CTA, and
 		     checkout POST as the paywall modal, so the two never diverge. -->
 		<MembershipOffer mode={offerMode} {returnTo} />
+		{#if offerMode === 'join'}
+			<!-- The standalone page (reached fresh after onboarding) has no
+			     built-in exit, unlike the paywall modal's "not now" dismiss —
+			     browsing without a membership is still allowed. -->
+			<a href={returnTo ?? '/discover'} class="guest-link">{c.continueAsGuestCta}</a>
+		{/if}
 	{/if}
 </main>
 
@@ -167,5 +173,15 @@
 	.spinner {
 		font-size: var(--text-xl);
 		color: var(--text-muted);
+	}
+	.guest-link {
+		display: block;
+		text-align: center;
+		margin-top: var(--space-4);
+		font-size: var(--text-sm);
+		color: var(--text-muted);
+	}
+	.guest-link:hover {
+		color: var(--text-primary);
 	}
 </style>

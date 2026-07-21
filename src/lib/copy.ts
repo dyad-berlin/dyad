@@ -846,14 +846,14 @@ export const copy = {
 		dialogLabel: 'Membership',
 
 		// Everyone who reaches this copy (the /membership page, or the paywall
-		// modal on a gated action) is already signed in, and under the
-		// consent-based join flow, that means they are already a member.
-		// This is never a "come join us" pitch;
-		// it is an invitation to add a financial contribution, which some
-		// product actions are unlocked by.
-		guestHeading: 'Support dyad',
+		// modal on a gated action) is already signed in. "Member" here means
+		// the paid tier: the copy invites a financial contribution that
+		// unlocks some product actions, and browsing as a guest stays allowed
+		// either way (the page offers a continue-as-guest exit).
+		guestHeading: 'Become a member',
 		guestIntro:
-			'You are already a member. Starting and joining conversations is unlocked by a financial contribution, because that is what keeps dyad independent: no ads, no data sales, nobody to answer to but the people in the room. Paying is a choice, and you are welcome here either way.',
+			'Dyad is entirely member funded. Consider joining us with a contribution for unlimited access to in-person conversations, our weekly newsletter, and collective governance process.',
+		continueAsGuestCta: 'continue as a guest',
 		lapsedHeading: 'Renew Your Membership',
 		lapsedIntro:
 			'Your membership has lapsed, so the member-only actions are paused for now. Renewing turns them back on. Everything you have already made stays exactly as it is, and you can stop anytime.',
