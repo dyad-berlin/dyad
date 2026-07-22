@@ -10,7 +10,7 @@ const { joinOrigin, APP_ORIGIN } = await import('./app-origin.js');
 
 describe('joinOrigin (production)', () => {
 	it('derives the default app origin from a production Supabase URL', () => {
-		expect(APP_ORIGIN).toBe('https://dyad.berlin');
+		expect(APP_ORIGIN).toBe('https://dyad.social');
 	});
 
 	it('routes an amsterdam corner to its own host', () => {
@@ -18,9 +18,9 @@ describe('joinOrigin (production)', () => {
 	});
 
 	it('falls back to the default origin for berlin / null / unknown regions', () => {
-		expect(joinOrigin('berlin')).toBe('https://dyad.berlin');
-		expect(joinOrigin(null)).toBe('https://dyad.berlin');
-		expect(joinOrigin(undefined)).toBe('https://dyad.berlin');
-		expect(joinOrigin('atlantis')).toBe('https://dyad.berlin');
+		expect(joinOrigin('berlin')).toBe('https://dyad.social');
+		expect(joinOrigin(null)).toBe('https://dyad.social');
+		expect(joinOrigin(undefined)).toBe('https://dyad.social');
+		expect(joinOrigin('atlantis')).toBe('https://dyad.social');
 	});
 });

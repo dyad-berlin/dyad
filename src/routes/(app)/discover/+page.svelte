@@ -246,7 +246,7 @@
 </script>
 
 <svelte:head>
-	<title>Discover · dyad.berlin</title>
+	<title>Discover · dyad.social</title>
 </svelte:head>
 
 {#snippet mapBlock()}

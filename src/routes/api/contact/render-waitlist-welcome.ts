@@ -11,14 +11,14 @@ const SIGNATURE_FONT_FACE = `
 			<style>
 				@font-face {
 					font-family: 'SangBleu Sunrise';
-					src: url('https://dyad.berlin/fonts/SangBleuSunrise-Regular-WebXL.woff2') format('woff2');
+					src: url('https://dyad.social/fonts/SangBleuSunrise-Regular-WebXL.woff2') format('woff2');
 					font-weight: 400;
 					font-style: normal;
 					font-display: swap;
 				}
 				@font-face {
 					font-family: 'SangBleu Sunrise';
-					src: url('https://dyad.berlin/fonts/SangBleuSunrise-Bold-WebXL.woff2') format('woff2');
+					src: url('https://dyad.social/fonts/SangBleuSunrise-Bold-WebXL.woff2') format('woff2');
 					font-weight: 700;
 					font-style: normal;
 					font-display: swap;
@@ -34,7 +34,7 @@ const SIGNATURE_FONT_FACE = `
 const EMAIL_SIGNED_FOOTER = `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin: 0; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
 					<tr>
 						<td style="vertical-align: middle; padding: 0 ${space[5]} 0 0;">
-							<a href="https://dyad.berlin" style="display: inline-block; text-decoration: none; font-family: ${SERIF}; font-weight: 700; font-size: 22px; letter-spacing: 0.06em; color: ${color.textPrimary}; white-space: nowrap;">DYAD</a>
+							<a href="https://dyad.social" style="display: inline-block; text-decoration: none; font-family: ${SERIF}; font-weight: 700; font-size: 22px; letter-spacing: 0.06em; color: ${color.textPrimary}; white-space: nowrap;">DYAD</a>
 						</td>
 						<td style="vertical-align: middle; padding: 0 0 0 ${space[5]}; border-left: 1px solid ${color.borderSubtle};">
 							<p style="font-family: ${SERIF}; font-weight: 400; font-size: ${textSize.base}; line-height: ${leading.tight}; color: ${color.textSecondary}; margin: 0 0 2px;">${copy.email.signature.closing}</p>

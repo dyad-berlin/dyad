@@ -191,7 +191,7 @@
 </script>
 
 <svelte:head>
-	<title>Meeting with @{data.otherUsername} · dyad.berlin</title>
+	<title>Meeting with @{data.otherUsername} · dyad.social</title>
 </svelte:head>
 
 <div class="content">

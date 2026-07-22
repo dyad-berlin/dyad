@@ -45,7 +45,7 @@
 </script>
 
 <svelte:head>
-	<title>Feedback · dyad.berlin</title>
+	<title>Feedback · dyad.social</title>
 </svelte:head>
 
 <div class="content">

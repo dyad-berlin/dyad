@@ -12,17 +12,17 @@ describe('renderWaitlistWelcomeEmail — signed footer', () => {
 	it('embeds SangBleu Sunrise Bold + Regular via @font-face, Georgia fallback (no Light weight)', () => {
 		const html = renderWaitlistWelcomeEmail({ displayName: 'Alex' });
 		expect(html).toContain('@font-face');
-		expect(html).toContain("url('https://dyad.berlin/fonts/SangBleuSunrise-Regular-WebXL.woff2')");
-		expect(html).toContain("url('https://dyad.berlin/fonts/SangBleuSunrise-Bold-WebXL.woff2')");
+		expect(html).toContain("url('https://dyad.social/fonts/SangBleuSunrise-Regular-WebXL.woff2')");
+		expect(html).toContain("url('https://dyad.social/fonts/SangBleuSunrise-Bold-WebXL.woff2')");
 		expect(html).not.toContain('SangBleuSunrise-Light');
 		expect(html).toMatch(/font-family: 'SangBleu Sunrise', Georgia, 'Times New Roman', serif/);
 	});
 
-	it('renders a text DYAD wordmark linking to dyad.berlin (not the old logo image)', () => {
+	it('renders a text DYAD wordmark linking to dyad.social (not the old logo image)', () => {
 		const html = renderWaitlistWelcomeEmail({ displayName: 'Alex' });
 		expect(html).not.toContain('logo-dark.png');
 		expect(html).not.toContain('<img');
-		expect(html).toContain('<a href="https://dyad.berlin"');
+		expect(html).toContain('<a href="https://dyad.social"');
 		expect(html).toContain('>DYAD<');
 	});
 

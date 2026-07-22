@@ -467,7 +467,7 @@
 </script>
 
 <svelte:head>
-	<title>{data.prompt.title ?? 'Conversation'} · dyad.berlin</title>
+	<title>{data.prompt.title ?? 'Conversation'} · dyad.social</title>
 </svelte:head>
 
 <!-- Back navigation + kebab actions live on the FloatingNav (variant="detail"),

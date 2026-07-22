@@ -26,9 +26,10 @@ afterEach(() => {
 
 const PROD_OPTS = {
 	devMode: false,
-	apexHostname: 'dyad.berlin',
+	apexHostname: 'dyad.social',
 	adminHostname: 'admin.dyad.berlin',
-	previewHostname: 'dyad-berlin.pages.dev'
+	previewHostname: 'dyad-berlin.pages.dev',
+	aliasHostnames: ['dyad.berlin', 'www.dyad.berlin', 'www.dyad.social']
 } as const;
 
 function makeRequest(url: string, headers: Record<string, string> = {}): Request {
@@ -96,10 +97,15 @@ describe('PoC #1 — canonical-path control cases', () => {
 	});
 
 	it('canonical apex hostname + /admin/* classifies as apex-redirect', () => {
-		expect(routeKind(new URL('https://dyad.berlin/admin/members'), PROD_OPTS)).toBe('apex-redirect');
+		expect(routeKind(new URL('https://dyad.social/admin/members'), PROD_OPTS)).toBe('apex-redirect');
 	});
 
 	it('canonical apex hostname + non-admin path classifies as user', () => {
-		expect(routeKind(new URL('https://dyad.berlin/discover'), PROD_OPTS)).toBe('user');
+		expect(routeKind(new URL('https://dyad.social/discover'), PROD_OPTS)).toBe('user');
+	});
+
+	it('former apex (dyad.berlin) classifies as alias-redirect on every path — never admin', () => {
+		expect(routeKind(new URL('https://dyad.berlin/admin/members'), PROD_OPTS)).toBe('alias-redirect');
+		expect(routeKind(new URL('https://dyad.berlin/discover'), PROD_OPTS)).toBe('alias-redirect');
 	});
 });
