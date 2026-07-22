@@ -144,6 +144,10 @@
 		padding: 0;
 		max-width: 420px;
 		width: 90vw;
+		/* Explicit surface tokens — a bare <dialog> rides UA defaults, which
+		   don't track data-theme and can leave near-white text on white. */
+		background: var(--bg-canvas);
+		color: var(--text-primary);
 		box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
 	}
 	dialog::backdrop {
@@ -185,8 +189,11 @@
 		transition: all 0.15s;
 	}
 	.type-btn.active {
+		/* Inverted fill (same treatment as .feedback-trigger) so the chosen
+		   type is unmistakable against the dialog surface in both themes. */
+		background: var(--text-primary);
 		border-color: var(--text-primary);
-		color: var(--text-primary);
+		color: var(--bg-canvas);
 		font-weight: 500;
 	}
 
