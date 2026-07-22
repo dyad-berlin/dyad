@@ -27,7 +27,7 @@
 		cancelledByUsername?: string | null;
 		cancellationReason?: string | null;
 		/** Invitation sent, not yet accepted: dashed border + optional note +
-		 *  withdraw (a free action — no confirm). */
+		 *  withdraw (the parent confirms before acting). */
 		invitedPending?: boolean;
 		pendingNote?: string | null;
 		onWithdraw?: () => void;

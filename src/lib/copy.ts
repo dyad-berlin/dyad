@@ -216,6 +216,7 @@ export const copy = {
 		youResponded: (date: string) => `${date === 'just now' ? 'just now' : `on ${date}`}, you responded`,
 		invitationPending: (authorUsername: string) => `You have invited @${authorUsername}, waiting for them to confirm.`,
 		withdrawInvitation: 'Withdraw invitation',
+		withdrawConfirm: 'Take back your invitation? You can invite again while the time is still offered.',
 		withdrawing: 'Withdrawing…',
 		withdrawFailed: 'Couldn’t withdraw. Please try again.',
 		decline: 'Decline',

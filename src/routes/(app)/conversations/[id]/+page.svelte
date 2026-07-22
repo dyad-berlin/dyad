@@ -242,12 +242,19 @@
 		}
 	}
 
-	// Withdrawing a pending invitation is a free action per design principles —
-	// no confirmation dialog, no reason required, no consequences. Uses the
+	// Withdrawing a pending invitation is a light action — no reason required,
+	// no consequences — but it is guarded by a ConfirmDialog (same pattern as
+	// unpublish/delete) so a stray tap doesn't silently retract it. Uses the
 	// local invitationBySlotId which covers both server-loaded and just-sent
 	// invitations (kept in sync by sendInvite).
 	let withdrawingSlotId = $state<string | null>(null);
 	let withdrawError = $state('');
+	let withdrawDialog = $state<ConfirmDialog | undefined>();
+	let pendingWithdrawSlotId = $state<string | null>(null);
+	function requestWithdraw(slotId: string) {
+		pendingWithdrawSlotId = slotId;
+		withdrawDialog?.open();
+	}
 	async function withdrawInvitation(slotId: string) {
 		const invitationId = invitationBySlotId[slotId];
 		if (!invitationId) return;
@@ -699,11 +706,18 @@
 							area={slot.general_area}
 							invitedPending
 							pendingNote={copy.conversation.invitationPending(data.prompt.author_username)}
-							onWithdraw={invitationBySlotId[slot.id] ? () => withdrawInvitation(slot.id) : undefined}
+							onWithdraw={invitationBySlotId[slot.id] ? () => requestWithdraw(slot.id) : undefined}
 							withdrawing={withdrawingSlotId === slot.id}
 						/>
 					{/each}
 					{#if withdrawError}<p class="field-error" role="alert">{withdrawError}</p>{/if}
+					<ConfirmDialog
+						bind:this={withdrawDialog}
+						title={copy.conversation.withdrawInvitation}
+						message={copy.conversation.withdrawConfirm}
+						confirmLabel={copy.conversation.withdrawInvitation}
+						onConfirm={() => { if (pendingWithdrawSlotId) withdrawInvitation(pendingWithdrawSlotId); }}
+					/>
 					<!-- The inviter's notification moment: invitation sent, awaiting a
 					     reply. Offer to be notified of the answer. -->
 					{#if !data.hasNotificationEmail}
