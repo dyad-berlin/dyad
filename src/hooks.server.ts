@@ -71,6 +71,13 @@ const ALIAS_TARGETS: Record<string, string> = {
 };
 const ALIAS_HOSTNAMES = Object.keys(ALIAS_TARGETS);
 
+// Retired public routes and where they now live. Add a line here instead of
+// letting a removed route 404 — see the redirect in handle() below.
+const RETIRED_PATHS: Record<string, string> = {
+	// The About page; its content folded into /community (e8109a81, deleted b3d93d9e).
+	'/why': '/community'
+};
+
 // Region a hostname puts a signed-in member into. A multi-region member
 // (grants in several corners across cities) browsing dyad.amsterdam should
 // see the Amsterdam region — its commons plus the Amsterdam corners they
@@ -251,6 +258,15 @@ export const handle: Handle = async ({ event, resolve }) => {
 	if (event.url.pathname.startsWith('/prompts/')) {
 		const newPath = event.url.pathname.replace('/prompts/', '/conversations/') + event.url.search;
 		return new Response(null, { status: 302, headers: { Location: newPath } });
+	}
+
+	// Retired public routes 302 to their successor — a public route is never
+	// deleted outright, because external links (search results, printed
+	// material, old footers) outlive it. /why still drew real traffic days
+	// after its deletion in b3d93d9e. One line here per retirement.
+	const retired = RETIRED_PATHS[event.url.pathname];
+	if (retired) {
+		return new Response(null, { status: 302, headers: { Location: retired + event.url.search } });
 	}
 
 	// An anonymous visitor on the conference host's bare domain has nothing
@@ -436,6 +452,30 @@ export const handleError: HandleServerError = ({ error, event, status, message }
 			`[handleError] ${status} ${event.request.method} ${event.url.pathname}:`,
 			error
 		);
+	} else {
+		// 404s are logged ONLY when the visitor came from one of our own pages —
+		// that is the "we published a broken link" signal. Unreferred 404s are
+		// overwhelmingly bot probes (wp-login.php etc.) and stay unlogged.
+		const referer = event.request.headers.get('referer');
+		if (referer) {
+			try {
+				const refHost = new URL(referer).hostname.replace(/\.$/, '');
+				const ours =
+					refHost === APEX_HOSTNAME ||
+					refHost === ADMIN_HOSTNAME ||
+					SECONDARY_APEX_HOSTNAMES.includes(refHost) ||
+					ALIAS_HOSTNAMES.includes(refHost) ||
+					refHost === PAGES_PREVIEW_HOSTNAME ||
+					refHost.endsWith('.' + PAGES_PREVIEW_HOSTNAME);
+				if (ours) {
+					console.error(
+						`[handleError] broken internal link: 404 ${event.url.pathname} referred from ${referer}`
+					);
+				}
+			} catch {
+				// unparseable referer — ignore
+			}
+		}
 	}
 	return { message };
 };
