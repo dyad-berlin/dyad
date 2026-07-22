@@ -18,6 +18,14 @@ vi.mock('$lib/services/prompt-command.js', () => ({
 	}
 }));
 
+// Membership gate — resolves null (allowed) by default; individual tests make
+// it return the gated 403 to assert it is evaluated FIRST (before the cover
+// check and every other validation).
+const requireMembershipMock = vi.fn();
+vi.mock('$lib/server/require-membership.js', () => ({
+	requireMembershipForAction: requireMembershipMock
+}));
+
 vi.mock('$lib/services/identity.js', () => ({
 	requireIdentity: () => ({ id: 'guest-1' })
 }));
@@ -39,8 +47,12 @@ const SLOT = {
 	location: { place_id: 'p1', name: 'Venue', address: 'Somewhere 1', lat: 52.37, lng: 4.9 }
 };
 
-function makeEvent(body: Record<string, unknown>, homeScope: string | null) {
-	const supabaseFromMock = vi.fn(() => chain({ cover_image_url: 'https://x/storage/img.jpg' }));
+function makeEvent(
+	body: Record<string, unknown>,
+	homeScope: string | null,
+	cover: string | null = 'https://x/storage/img.jpg'
+) {
+	const supabaseFromMock = vi.fn(() => chain(cover ? { cover_image_url: cover } : null));
 	return {
 		params: { id: 'prompt-1' },
 		request: new Request('http://localhost/api/prompts/prompt-1/publish', {
@@ -56,7 +68,9 @@ describe('POST /api/prompts/[id]/publish — guest home-corner guard', () => {
 	beforeEach(() => {
 		listMyScopesMock.mockReset();
 		publishMock.mockReset();
+		requireMembershipMock.mockReset();
 		publishMock.mockResolvedValue(undefined);
+		requireMembershipMock.mockResolvedValue(null);
 		listMyScopesMock.mockResolvedValue([{ scope: 'conf-corner', name: 'Conference corner' }]);
 	});
 
@@ -90,5 +104,59 @@ describe('POST /api/prompts/[id]/publish — guest home-corner guard', () => {
 		const res = await POST(event as unknown as Parameters<typeof POST>[0]);
 		expect(res.status).toBe(200);
 		expect(publishMock).toHaveBeenCalledWith('prompt-1', 'guest-1', [SLOT], null, null);
+	});
+});
+
+describe('POST /api/prompts/[id]/publish — membership gate ordering', () => {
+	const GATE_403 = () =>
+		new Response(
+			JSON.stringify({
+				error: 'membership_required',
+				action: 'create_conversation',
+				had_membership: false,
+				reason: 'join'
+			}),
+			{ status: 403, headers: { 'content-type': 'application/json' } }
+		);
+
+	beforeEach(() => {
+		listMyScopesMock.mockReset();
+		publishMock.mockReset();
+		requireMembershipMock.mockReset();
+		publishMock.mockResolvedValue(undefined);
+		requireMembershipMock.mockResolvedValue(null);
+		listMyScopesMock.mockResolvedValue([]);
+	});
+
+	it('returns the gate 403 BEFORE the cover-image check (no cover, gated)', async () => {
+		requireMembershipMock.mockResolvedValue(GATE_403());
+		const event = makeEvent({ slots: [SLOT] }, null, null);
+		const res = await POST(event as unknown as Parameters<typeof POST>[0]);
+		expect(res.status).toBe(403);
+		const body = await res.json();
+		// The shape gateModeFrom / the editor paywall rely on — not the cover message.
+		expect(body.error).toBe('membership_required');
+		expect(body.reason).toBe('join');
+		expect(publishMock).not.toHaveBeenCalled();
+	});
+
+	it('returns the gate 403 even before slot validation', async () => {
+		requireMembershipMock.mockResolvedValue(GATE_403());
+		const event = makeEvent({ slots: [] }, null);
+		const res = await POST(event as unknown as Parameters<typeof POST>[0]);
+		expect(res.status).toBe(403);
+		const body = await res.json();
+		expect(body.error).toBe('membership_required');
+	});
+
+	it('still returns the cover error when the gate allows and the cover is missing', async () => {
+		const event = makeEvent({ slots: [SLOT] }, null, null);
+		const res = await POST(event as unknown as Parameters<typeof POST>[0]);
+		expect(res.status).toBe(400);
+		const body = await res.json();
+		expect(body.error).toBe('Cover image is required to publish');
+		expect(requireMembershipMock).toHaveBeenCalledWith('create_conversation', event.locals, {
+			excludePromptId: 'prompt-1'
+		});
 	});
 });

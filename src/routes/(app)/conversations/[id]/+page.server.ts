@@ -82,15 +82,26 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			.order('created_at', { ascending: false });
 
 		if (enriched) {
+			// Drop PENDING invitations whose slot start time has passed — they are
+			// no longer actionable (accept_invitation rejects expired slots) and
+			// must not display as such. Accepted invitations stay regardless: they
+			// back the meeting/attendance views.
+			const invNow = new Date();
+			const actionable = enriched.filter(
+				(inv: any) =>
+					inv.state !== 'pending' ||
+					!inv.slot?.start_time ||
+					new Date(inv.slot.start_time) > invNow
+			);
 			// Separate lookup for inviter usernames (no FK from inviter_id to profiles)
-			const inviterIds = [...new Set(enriched.map((inv: any) => inv.inviter_id))];
+			const inviterIds = [...new Set(actionable.map((inv: any) => inv.inviter_id))];
 			const { data: inviterProfiles } = await locals.supabase
 				.from('profiles')
 				.select('id, username')
 				.in('id', inviterIds);
 			const inviterMap = new Map((inviterProfiles ?? []).map((p: any) => [p.id, p.username]));
 
-			receivedInvitations = enriched.map((inv: any) => ({
+			receivedInvitations = actionable.map((inv: any) => ({
 				id: inv.id,
 				inviter_id: inv.inviter_id,
 				slot_id: inv.slot_id,

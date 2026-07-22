@@ -20,7 +20,7 @@ const { loadLayoutData } = await import('./load-layout-data.js');
 // notification-expiry-guard.test.ts.
 function chain(result: unknown) {
 	const builder: Record<string, unknown> = {};
-	for (const m of ['select', 'eq', 'is', 'single', 'maybeSingle']) builder[m] = () => builder;
+	for (const m of ['select', 'eq', 'is', 'gt', 'single', 'maybeSingle']) builder[m] = () => builder;
 	builder.then = (resolve: (v: unknown) => unknown) => resolve(result);
 	return builder;
 }

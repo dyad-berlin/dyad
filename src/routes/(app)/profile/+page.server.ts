@@ -30,8 +30,15 @@ export const load: PageServerLoad = async ({ locals }) => {
 			.eq('invitee_id', userId)
 			.eq('state', 'pending')
 			.order('created_at', { ascending: true })
-			.then(async ({ data }) => {
-				if (!data || data.length === 0) return [];
+			.then(async ({ data: rawInvitations }) => {
+				// Drop invitations whose slot start time has passed — no longer
+				// actionable (accept_invitation rejects expired slots), so they
+				// must not display as pending.
+				const invNow = new Date();
+				const data = (rawInvitations ?? []).filter(
+					(inv: any) => !inv.slot?.start_time || new Date(inv.slot.start_time) > invNow
+				);
+				if (data.length === 0) return [];
 				const inviterIds = data.map((inv: { inviter_id: string }) => inv.inviter_id);
 				const usernameMap = await buildUsernameMap(locals.supabase, inviterIds);
 				return data.map((inv: any) => ({

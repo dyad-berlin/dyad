@@ -22,6 +22,11 @@
 	// misleading "cover image required" message (AE1). Open the same modal here.
 	let paywallOpen = $state(false);
 	let paywallMode = $state<GateReason>('join');
+	// Background auto-save must not nag: once the gated lazy-create has opened
+	// the paywall, later auto-save ticks (every ~1.5s of editing) keep hitting
+	// the same 403 — without this latch the modal re-opened over and over while
+	// a guest edited. Explicit actions (publish) still open it unconditionally.
+	let paywallShownByAutoSave = false;
 
 	// Tracks the prompt id locally so lazy-create can flip it from 'new' to a
 	// real UUID without fighting Svelte 5's readonly $props.
@@ -86,9 +91,14 @@
 						// bare 'error' dot. That error later mistranslated into the
 						// misleading "cover image required" message on publish. The
 						// draft stays in local state, so a "Not now" dismiss loses nothing.
+						// Open at most once from auto-save; a dismissed paywall stays
+						// dismissed while the guest keeps editing.
 						saveStatus = 'idle';
 						paywallMode = gateModeFrom(err);
-						paywallOpen = true;
+						if (!paywallShownByAutoSave) {
+							paywallShownByAutoSave = true;
+							paywallOpen = true;
+						}
 					} else {
 						saveStatus = 'error';
 					}
@@ -329,7 +339,16 @@
 				goto(`/conversations/${promptId}`);
 			} else {
 				const err = await res.json().catch(() => ({}));
-				publishError = (err as any).error ?? 'Failed to publish';
+				if (isMembershipGate(err)) {
+					// Publishing is gated. Open the paywall (explicit user action —
+					// always opens) instead of leaking the raw API token into the
+					// publish error line.
+					showPublishSheet = false;
+					paywallMode = gateModeFrom(err);
+					paywallOpen = true;
+				} else {
+					publishError = (err as any).error ?? 'Failed to publish';
+				}
 			}
 		} catch {
 			publishError = 'Network error. Please try again.';
