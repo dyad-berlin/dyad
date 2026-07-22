@@ -3,6 +3,12 @@
 	import type { PromptSummary, TimeSlot } from '$lib/domain/types';
 	import AuthDialog from '$lib/components/AuthDialog.svelte';
 	import { copy } from '$lib/copy';
+	import { env } from '$env/dynamic/public';
+
+	// Social links, env-gated exactly like ZineFooter — a link renders only
+	// when its URL is configured in the Pages env.
+	const instagramUrl = (env.PUBLIC_INSTAGRAM_URL ?? '').trim();
+	const blueskyUrl = (env.PUBLIC_BLUESKY_URL ?? '').trim();
 
 	const og = copy.landing;
 	const ogImage = `${og.ogUrl}/images/og-card.png`;
@@ -87,6 +93,8 @@
 				<a href="/community" class="footer-link">{og.footerCommunity}</a>
 				<a href="/newsletter" class="footer-link">{og.footerNewsletter}</a>
 				<a href="/legal" class="footer-link">{og.footerLegal}</a>
+				{#if instagramUrl}<a href={instagramUrl} class="footer-link" target="_blank" rel="noopener">Instagram</a>{/if}
+				{#if blueskyUrl}<a href={blueskyUrl} class="footer-link" target="_blank" rel="noopener">Bluesky &amp; Blacksky</a>{/if}
 			</footer>
 	</section>
 
