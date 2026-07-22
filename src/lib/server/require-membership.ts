@@ -34,7 +34,16 @@ import type { ProtectedAction } from '$lib/domain/gating.js';
  */
 export async function requireMembershipForAction(
 	action: ProtectedAction,
-	locals: App.Locals
+	locals: App.Locals,
+	opts?: {
+		/** A prompt to leave OUT of the free-quota count: when the gate runs at
+		 *  publish time the draft row already exists and counts itself, which
+		 *  would gate the very action that consumed the quota slot (used == N
+		 *  instead of the documented used < N boundary, migration
+		 *  20260701120000). Completing an already-counted artifact must not
+		 *  cost a second slot. */
+		excludePromptId?: string;
+	}
 ): Promise<Response | null> {
 	const actor = requireIdentity(locals); // throws 401 if unauthenticated
 
@@ -75,7 +84,7 @@ export async function requireMembershipForAction(
 	try {
 		const [quota, used] = await Promise.all([
 			getFreeInteractionQuota(),
-			countGatedActionsUsed(actor.id)
+			countGatedActionsUsed(actor.id, opts?.excludePromptId)
 		]);
 		if (used < quota) return null;
 	} catch (err) {
@@ -117,18 +126,27 @@ function gateReason(row: MembershipRow | null | undefined): 'join' | 'renew' | '
  *  Actor columns (confirmed against the migrations): prompts.author_id,
  *  prompt_comments.author_id, prompt_invitations.inviter_id — all reference
  *  identities(id), which equals the actor id. */
-async function countGatedActionsUsed(identityId: string): Promise<number> {
+async function countGatedActionsUsed(
+	identityId: string,
+	excludePromptId?: string
+): Promise<number> {
 	const admin = makeAdminClient();
-	const countFor = async (table: string, column: string): Promise<number> => {
-		const { count, error } = await admin
+	const countFor = async (
+		table: string,
+		column: string,
+		excludeId?: string
+	): Promise<number> => {
+		let query = admin
 			.from(table)
 			.select('*', { count: 'exact', head: true })
 			.eq(column, identityId);
+		if (excludeId) query = query.neq('id', excludeId);
+		const { count, error } = await query;
 		if (error) throw new Error(`count ${table} failed: ${error.message}`);
 		return count ?? 0;
 	};
 	const [prompts, comments, invitations] = await Promise.all([
-		countFor('prompts', 'author_id'),
+		countFor('prompts', 'author_id', excludePromptId),
 		countFor('prompt_comments', 'author_id'),
 		countFor('prompt_invitations', 'inviter_id')
 	]);

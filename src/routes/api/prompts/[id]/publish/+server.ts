@@ -23,7 +23,12 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 	// required to publish" instead of the membership message. The 403 shape
 	// ({ error: 'membership_required', reason, had_membership }) is what the
 	// editor's paywall detection (gateModeFrom) relies on — do not change it.
-	const gate = await requireMembershipForAction('create_conversation', locals);
+	// excludePromptId: the draft being published already exists and would
+	// count itself against the free quota — completing it must not cost a
+	// second slot (see the option's doc in require-membership.ts).
+	const gate = await requireMembershipForAction('create_conversation', locals, {
+		excludePromptId: params.id
+	});
 	if (gate) return gate;
 
 	const [body, errorResponse] = await parseJsonBody<{

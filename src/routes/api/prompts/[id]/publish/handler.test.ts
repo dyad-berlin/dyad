@@ -155,6 +155,8 @@ describe('POST /api/prompts/[id]/publish — membership gate ordering', () => {
 		expect(res.status).toBe(400);
 		const body = await res.json();
 		expect(body.error).toBe('Cover image is required to publish');
-		expect(requireMembershipMock).toHaveBeenCalledWith('create_conversation', event.locals);
+		expect(requireMembershipMock).toHaveBeenCalledWith('create_conversation', event.locals, {
+			excludePromptId: 'prompt-1'
+		});
 	});
 });

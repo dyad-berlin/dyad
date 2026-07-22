@@ -24,11 +24,15 @@ export async function loadLayoutData(locals: App.Locals, url?: URL) {
 			.select('username, onboarded')
 			.eq('id', locals.user.id)
 			.single(),
+		// Inner-join on the slot so past-slot pending invitations don't count:
+		// the profile and conversation loaders hide them (no longer actionable),
+		// and a badge that counts what the lists hide would never clear.
 		locals.supabase
 			.from('prompt_invitations')
-			.select('*', { count: 'exact', head: true })
+			.select('slot:slot_id!inner(start_time)', { count: 'exact', head: true })
 			.eq('invitee_id', locals.user.id)
-			.eq('state', 'pending'),
+			.eq('state', 'pending')
+			.gt('slot.start_time', new Date().toISOString()),
 		locals.supabase
 			.from('feedback_forms')
 			.select('*', { count: 'exact', head: true })
