@@ -1,6 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { requireIdentity } from '$lib/services/identity.js';
+import { requireMembershipForAction } from '$lib/server/require-membership.js';
 import { parseJsonBody } from '$lib/server/parse-body.js';
 import { SupabasePromptCommandService } from '$lib/services/prompt-command.js';
 import { SupabaseScopeService } from '$lib/services/scope.js';
@@ -15,6 +16,15 @@ import { handleServiceError } from '$lib/server/handle-service-error.js';
  */
 export const POST: RequestHandler = async ({ params, request, locals }) => {
 	const upactor = requireIdentity(locals);
+
+	// Membership gate first: publishing completes the gated create_conversation
+	// action, so the gate outcome must surface BEFORE any field validation.
+	// Otherwise a gated non-member without a cover image sees "Cover image is
+	// required to publish" instead of the membership message. The 403 shape
+	// ({ error: 'membership_required', reason, had_membership }) is what the
+	// editor's paywall detection (gateModeFrom) relies on — do not change it.
+	const gate = await requireMembershipForAction('create_conversation', locals);
+	if (gate) return gate;
 
 	const [body, errorResponse] = await parseJsonBody<{
 		slots: TimeSlotInput[];
