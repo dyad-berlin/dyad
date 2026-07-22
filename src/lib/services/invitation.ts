@@ -36,6 +36,20 @@ export class SupabaseInvitationService implements InvitationService {
 		commentId?: string;
 		message?: string;
 	}): Promise<MeetingInvitation> {
+		// Guard: no new invitations for a slot whose start time has passed.
+		// accept_invitation already rejects expired slots server-side; without
+		// this check a responder could still mint a pending invitation the
+		// author can never accept. Read via time_slots_public (RLS-safe for
+		// non-authors); a missing slot falls through to the FK on insert.
+		const { data: slot } = await this.supabase
+			.from('time_slots_public')
+			.select('start_time')
+			.eq('id', params.slotId)
+			.maybeSingle();
+		if (slot && new Date(slot.start_time) <= new Date()) {
+			throw new DomainError('This time has passed.', 409);
+		}
+
 		const { data, error } = await this.supabase
 			.from('prompt_invitations')
 			.insert({
@@ -137,15 +151,24 @@ export class SupabaseInvitationService implements InvitationService {
 	}
 
 	async getPendingForPrompt(promptId: string, userId: string): Promise<MeetingInvitation[]> {
-		// RLS handles visibility: inviter sees own, invitee sees all on their prompts
+		// RLS handles visibility: inviter sees own, invitee sees all on their prompts.
+		// The slot join exists only to drop invitations whose time has already
+		// passed — a pending invitation on a past slot is no longer actionable
+		// (accept_invitation rejects expired slots), so it must not display as such.
 		const { data, error } = await this.supabase
 			.from('prompt_invitations')
-			.select('*')
+			.select('*, slot:slot_id(start_time)')
 			.eq('prompt_id', promptId)
 			.eq('state', 'pending')
 			.order('created_at', { ascending: true });
 
 		if (error) throw new Error(`Failed to load invitations: ${error.message}`);
-		return (data ?? []) as MeetingInvitation[];
+		const now = new Date();
+		return (data ?? [])
+			.filter(
+				(inv: { slot: { start_time: string } | null }) =>
+					!inv.slot || new Date(inv.slot.start_time) > now
+			)
+			.map(({ slot: _slot, ...inv }) => inv) as MeetingInvitation[];
 	}
 }
