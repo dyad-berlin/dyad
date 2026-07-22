@@ -3,29 +3,29 @@ import { routeKind } from './route-kind.js';
 
 const PROD_OPTS = {
 	devMode: false,
-	apexHostname: 'dyad.berlin',
+	apexHostname: 'dyad.social',
 	adminHostname: 'admin.dyad.berlin',
 	previewHostname: 'dyad-berlin.pages.dev'
 } as const;
 
 const DEV_OPTS = {
 	devMode: true,
-	apexHostname: 'dyad.berlin',
+	apexHostname: 'dyad.social',
 	adminHostname: 'admin.dyad.berlin',
 	previewHostname: 'dyad-berlin.pages.dev'
 } as const;
 
 describe('routeKind — canonical hostnames', () => {
 	it('apex hostname + non-admin path → user', () => {
-		expect(routeKind(new URL('https://dyad.berlin/discover'), PROD_OPTS)).toBe('user');
+		expect(routeKind(new URL('https://dyad.social/discover'), PROD_OPTS)).toBe('user');
 	});
 
 	it('apex hostname + /admin/* path → apex-redirect', () => {
-		expect(routeKind(new URL('https://dyad.berlin/admin/members'), PROD_OPTS)).toBe('apex-redirect');
+		expect(routeKind(new URL('https://dyad.social/admin/members'), PROD_OPTS)).toBe('apex-redirect');
 	});
 
 	it('apex hostname + root → user', () => {
-		expect(routeKind(new URL('https://dyad.berlin/'), PROD_OPTS)).toBe('user');
+		expect(routeKind(new URL('https://dyad.social/'), PROD_OPTS)).toBe('user');
 	});
 
 	it('admin hostname + any path → admin (admin host only serves admin)', () => {
@@ -90,31 +90,31 @@ describe('routeKind — secondary apex + alias hosts (conference domain)', () =>
 	});
 });
 
-describe('routeKind — dyad.social serves the app (future primary)', () => {
-	const SOCIAL_OPTS = {
+describe('routeKind — dyad.berlin is an alias of the dyad.social apex', () => {
+	const FLIP_OPTS = {
 		...PROD_OPTS,
-		secondaryApexHostnames: ['dyad.social'],
-		aliasHostnames: ['www.dyad.social']
+		secondaryApexHostnames: ['dyad.amsterdam'],
+		aliasHostnames: ['dyad.berlin', 'www.dyad.berlin', 'www.dyad.social']
 	} as const;
 
-	it('dyad.social → user on app paths (the URL stays dyad.social)', () => {
-		expect(routeKind(new URL('https://dyad.social/'), SOCIAL_OPTS)).toBe('user');
-		expect(routeKind(new URL('https://dyad.social/discover'), SOCIAL_OPTS)).toBe('user');
-		expect(routeKind(new URL('https://dyad.social/join?token=x'), SOCIAL_OPTS)).toBe('user');
-	});
-
-	it('dyad.social /admin/* → apex-redirect (admin never served off-canonical)', () => {
-		expect(routeKind(new URL('https://dyad.social/admin/members'), SOCIAL_OPTS)).toBe(
-			'apex-redirect'
+	it('dyad.berlin → alias-redirect on every path, including /admin', () => {
+		expect(routeKind(new URL('https://dyad.berlin/'), FLIP_OPTS)).toBe('alias-redirect');
+		expect(routeKind(new URL('https://dyad.berlin/discover'), FLIP_OPTS)).toBe('alias-redirect');
+		expect(routeKind(new URL('https://dyad.berlin/join?token=x'), FLIP_OPTS)).toBe(
+			'alias-redirect'
+		);
+		expect(routeKind(new URL('https://dyad.berlin/admin/members'), FLIP_OPTS)).toBe(
+			'alias-redirect'
 		);
 	});
 
-	it('www.dyad.social → alias-redirect', () => {
-		expect(routeKind(new URL('https://www.dyad.social/'), SOCIAL_OPTS)).toBe('alias-redirect');
+	it('www hosts → alias-redirect', () => {
+		expect(routeKind(new URL('https://www.dyad.berlin/'), FLIP_OPTS)).toBe('alias-redirect');
+		expect(routeKind(new URL('https://www.dyad.social/'), FLIP_OPTS)).toBe('alias-redirect');
 	});
 
-	it('without the options, dyad.social stays rejected (back-compat)', () => {
-		expect(routeKind(new URL('https://dyad.social/'), PROD_OPTS)).toBe('reject');
+	it('without the options, dyad.berlin stays rejected (back-compat)', () => {
+		expect(routeKind(new URL('https://dyad.berlin/'), PROD_OPTS)).toBe('reject');
 	});
 });
 
@@ -169,8 +169,8 @@ describe('routeKind — hostname normalization and boundary safety', () => {
 	});
 
 	it('trailing FQDN dot on canonical apex hostname normalises and admits', () => {
-		expect(routeKind(new URL('https://dyad.berlin./discover'), PROD_OPTS)).toBe('user');
-		expect(routeKind(new URL('https://dyad.berlin./admin/members'), PROD_OPTS)).toBe('apex-redirect');
+		expect(routeKind(new URL('https://dyad.social./discover'), PROD_OPTS)).toBe('user');
+		expect(routeKind(new URL('https://dyad.social./admin/members'), PROD_OPTS)).toBe('apex-redirect');
 	});
 
 	it('trailing FQDN dot on preview hostname normalises and admits non-admin', () => {

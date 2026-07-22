@@ -7,7 +7,7 @@
 </script>
 
 <svelte:head>
-	<title>{copy.feedbackArea.title} · dyad.berlin</title>
+	<title>{copy.feedbackArea.title} · dyad.social</title>
 </svelte:head>
 
 <div class="content">

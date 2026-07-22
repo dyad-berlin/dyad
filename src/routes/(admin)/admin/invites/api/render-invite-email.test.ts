@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { renderInviteEmail } from './render-invite-email.js';
 
-const INVITE_URL = 'https://dyad.berlin/join?token=test-token';
+const INVITE_URL = 'https://dyad.social/join?token=test-token';
 
 describe('renderInviteEmail — signed footer', () => {
 	it('includes the dyad signature names, no brand line (dropped from the footer)', () => {
@@ -14,17 +14,17 @@ describe('renderInviteEmail — signed footer', () => {
 	it('embeds SangBleu Sunrise Bold + Regular via @font-face, Georgia fallback (no Light weight)', () => {
 		const html = renderInviteEmail({ inviteUrl: INVITE_URL });
 		expect(html).toContain('@font-face');
-		expect(html).toContain("url('https://dyad.berlin/fonts/SangBleuSunrise-Regular-WebXL.woff2')");
-		expect(html).toContain("url('https://dyad.berlin/fonts/SangBleuSunrise-Bold-WebXL.woff2')");
+		expect(html).toContain("url('https://dyad.social/fonts/SangBleuSunrise-Regular-WebXL.woff2')");
+		expect(html).toContain("url('https://dyad.social/fonts/SangBleuSunrise-Bold-WebXL.woff2')");
 		expect(html).not.toContain('SangBleuSunrise-Light');
 		expect(html).toMatch(/font-family: 'SangBleu Sunrise', Georgia, 'Times New Roman', serif/);
 	});
 
-	it('renders a text DYAD wordmark linking to dyad.berlin (not the old logo image)', () => {
+	it('renders a text DYAD wordmark linking to dyad.social (not the old logo image)', () => {
 		const html = renderInviteEmail({ inviteUrl: INVITE_URL });
 		expect(html).not.toContain('logo-dark.png');
 		expect(html).not.toContain('<img');
-		expect(html).toContain('<a href="https://dyad.berlin"');
+		expect(html).toContain('<a href="https://dyad.social"');
 		expect(html).toContain('>DYAD<');
 	});
 
@@ -40,8 +40,8 @@ describe('renderInviteEmail — signed footer', () => {
 		expect(html).toContain('Hey there,');
 		expect(html).toContain('6 weeks to reach 500 members');
 		expect(html).toContain('steward ownership');
-		expect(html).toContain('https://dyad.berlin/docs#standards');
-		expect(html).toContain('https://dyad.berlin/docs');
+		expect(html).toContain('https://dyad.social/docs#standards');
+		expect(html).toContain('https://dyad.social/docs');
 		expect(html).toContain('support@dyad.berlin');
 	});
 
@@ -133,7 +133,7 @@ describe('renderInviteEmail — opener and message', () => {
 	});
 
 	it('renders the invite URL without double-escaping', () => {
-		const url = 'https://dyad.berlin/join?token=abc&ref=xyz';
+		const url = 'https://dyad.social/join?token=abc&ref=xyz';
 		const html = renderInviteEmail({ inviteUrl: url });
 		expect(html).toContain(`href="${url}"`);
 	});

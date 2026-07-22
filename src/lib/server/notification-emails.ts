@@ -14,14 +14,14 @@ const SIGNATURE_FONT_FACE = `
 			<style>
 				@font-face {
 					font-family: 'SangBleu Sunrise';
-					src: url('https://dyad.berlin/fonts/SangBleuSunrise-Light-WebXL.woff2') format('woff2');
+					src: url('https://dyad.social/fonts/SangBleuSunrise-Light-WebXL.woff2') format('woff2');
 					font-weight: 300;
 					font-style: normal;
 					font-display: swap;
 				}
 				@font-face {
 					font-family: 'SangBleu Sunrise';
-					src: url('https://dyad.berlin/fonts/SangBleuSunrise-Regular-WebXL.woff2') format('woff2');
+					src: url('https://dyad.social/fonts/SangBleuSunrise-Regular-WebXL.woff2') format('woff2');
 					font-weight: 400;
 					font-style: normal;
 					font-display: swap;
@@ -35,7 +35,7 @@ function renderSignedFooter(): string {
 	return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin: 0; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
 					<tr>
 						<td style="vertical-align: middle; padding: 0 ${space[5]} 0 0;">
-							<a href="https://dyad.berlin" style="display: inline-block; text-decoration: none;"><img src="https://dyad.berlin/images/logo-dark.png" alt="dyad" style="height: 48px; width: auto; display: block; border: 0;" /></a>
+							<a href="https://dyad.social" style="display: inline-block; text-decoration: none;"><img src="https://dyad.social/images/logo-dark.png" alt="dyad" style="height: 48px; width: auto; display: block; border: 0;" /></a>
 						</td>
 						<td style="vertical-align: middle; padding: 0 0 0 ${space[5]}; border-left: 1px solid ${color.borderSubtle};">
 							<p style="font-family: ${SERIF}; font-weight: 300; font-size: ${textSize.base}; line-height: ${leading.tight}; color: ${color.textSecondary}; margin: 0 0 2px;">${closing}</p>
@@ -167,7 +167,7 @@ async function dispatch(params: DispatchParams): Promise<void> {
 	}
 }
 
-const APP_URL = 'https://dyad.berlin';
+const APP_URL = 'https://dyad.social';
 
 function conversationLink(promptId: string): string {
 	return `${APP_URL}/conversations/${promptId}`;

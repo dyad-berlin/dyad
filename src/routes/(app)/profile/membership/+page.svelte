@@ -44,7 +44,7 @@
 </script>
 
 <svelte:head>
-	<title>{copy.membershipArea.title} · dyad.berlin</title>
+	<title>{copy.membershipArea.title} · dyad.social</title>
 </svelte:head>
 
 <div class="content">

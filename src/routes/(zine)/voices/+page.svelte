@@ -30,7 +30,7 @@
 </script>
 
 <svelte:head>
-	<title>{copy.voices.sectionLabel} · dyad.berlin</title>
+	<title>{copy.voices.sectionLabel} · dyad.social</title>
 	<meta name="description" content={copy.voices.metaDescription} />
 </svelte:head>
 

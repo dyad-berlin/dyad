@@ -394,7 +394,7 @@
 </script>
 
 <svelte:head>
-	<title>{title || 'Edit'} · dyad.berlin</title>
+	<title>{title || 'Edit'} · dyad.social</title>
 </svelte:head>
 
 <!-- Profile-style nav on editor page -->

@@ -12,14 +12,14 @@ const SIGNATURE_FONT_FACE = `
 			<style>
 				@font-face {
 					font-family: 'SangBleu Sunrise';
-					src: url('https://dyad.berlin/fonts/SangBleuSunrise-Regular-WebXL.woff2') format('woff2');
+					src: url('https://dyad.social/fonts/SangBleuSunrise-Regular-WebXL.woff2') format('woff2');
 					font-weight: 400;
 					font-style: normal;
 					font-display: swap;
 				}
 				@font-face {
 					font-family: 'SangBleu Sunrise';
-					src: url('https://dyad.berlin/fonts/SangBleuSunrise-Bold-WebXL.woff2') format('woff2');
+					src: url('https://dyad.social/fonts/SangBleuSunrise-Bold-WebXL.woff2') format('woff2');
 					font-weight: 700;
 					font-style: normal;
 					font-display: swap;
@@ -36,7 +36,7 @@ function renderSignedFooter(closing: string, names: string): string {
 	return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin: 0; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
 					<tr>
 						<td style="vertical-align: middle; padding: 0 ${space[5]} 0 0;">
-							<a href="https://dyad.berlin" style="display: inline-block; text-decoration: none; font-family: ${SERIF}; font-weight: 700; font-size: 22px; letter-spacing: 0.06em; color: ${color.textPrimary}; white-space: nowrap;">DYAD</a>
+							<a href="https://dyad.social" style="display: inline-block; text-decoration: none; font-family: ${SERIF}; font-weight: 700; font-size: 22px; letter-spacing: 0.06em; color: ${color.textPrimary}; white-space: nowrap;">DYAD</a>
 						</td>
 						<td style="vertical-align: middle; padding: 0 0 0 ${space[5]}; border-left: 1px solid ${color.borderSubtle};">
 							<p style="font-family: ${SERIF}; font-weight: 400; font-size: ${textSize.base}; line-height: ${leading.tight}; color: ${color.textSecondary}; margin: 0 0 2px;">${closing}</p>
@@ -99,7 +99,7 @@ export function renderInviteEmail(params: {
 			<div style="font-family: ${SERIF}; max-width: 520px; margin: 0 auto; padding: 40px 20px; color: ${color.textPrimary}; line-height: ${leading.relaxed};">${greetingBlock}${openerBlock}${personalBlock}
 				<p>We are writing to welcome you to Dyad.</p>
 				<p>A few things to help you get started:</p>
-				<p>We expect everyone to read and respect our ${link('https://dyad.berlin/docs#standards', 'Community Standards')}. They live in our documentation, alongside resources that make our thinking behind all decisions at Dyad legible.</p>
+				<p>We expect everyone to read and respect our ${link('https://dyad.social/docs#standards', 'Community Standards')}. They live in our documentation, alongside resources that make our thinking behind all decisions at Dyad legible.</p>
 				<p>Once you log in, you'll get to start conversations, pick if you'd like to meet someone one on one or create one for a group, and discover others in your city this week.</p>
 				<p>Dyad is, and will always be, a work in progress. We welcome your involvement in shaping it.</p>
 				<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin: 0 0 ${space[6]}; border-collapse: collapse;">

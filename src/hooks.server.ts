@@ -44,7 +44,9 @@ import { routeKind } from '$lib/server/route-kind';
 import { firstAccessContextRow } from '$lib/server/access-context';
 
 const ADMIN_HOSTNAME = 'admin.dyad.berlin';
-const APEX_HOSTNAME = 'dyad.berlin';
+// dyad.social is the primary host — the canonical URL of the app. The old
+// Berlin apex is now an alias (see ALIAS_TARGETS below).
+const APEX_HOSTNAME = 'dyad.social';
 // The production Pages project's subdomain (previews deploy as
 // <branch>.dyad-25o.pages.dev). The old dyad-berlin.pages.dev project no
 // longer exists — with the stale value here the app rejected its own
@@ -55,19 +57,17 @@ const PAGES_PREVIEW_HOSTNAME = 'dyad-25o.pages.dev';
 // guests who join there live their whole corner experience under this
 // hostname. Joining still requires a generated group link — the QR encodes
 // the full join URL (https://dyad.amsterdam/join?glink=<token>); an
-// anonymous visitor on the bare domain is redirected to the Berlin apex,
+// anonymous visitor on the bare domain is redirected to the primary apex,
 // so possession of the link is the gate.
 const AMSTERDAM_HOSTNAME = 'dyad.amsterdam';
-// dyad.social serves the app itself (future primary — the URL stays
-// dyad.social while you browse). Sessions are host-scoped cookies, so a
-// member signs in per host; unlike dyad.amsterdam there is no
-// anonymous-visitor redirect — the full public surface serves here too.
-const SOCIAL_HOSTNAME = 'dyad.social';
-const SECONDARY_APEX_HOSTNAMES = [AMSTERDAM_HOSTNAME, SOCIAL_HOSTNAME];
-// Alias hosts 302 onto their canonical host, path preserved.
+const SECONDARY_APEX_HOSTNAMES = [AMSTERDAM_HOSTNAME];
+// Alias hosts 302 onto their canonical host, path preserved. dyad.berlin
+// (the former apex) now canonicalizes onto dyad.social alongside both www
+// hosts — links to old URLs keep working, path and query intact.
 const ALIAS_TARGETS: Record<string, string> = {
-	'www.dyad.social': SOCIAL_HOSTNAME,
-	'www.dyad.berlin': APEX_HOSTNAME
+	'dyad.berlin': APEX_HOSTNAME,
+	'www.dyad.berlin': APEX_HOSTNAME,
+	'www.dyad.social': APEX_HOSTNAME
 };
 const ALIAS_HOSTNAMES = Object.keys(ALIAS_TARGETS);
 
@@ -255,7 +255,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	// An anonymous visitor on the conference host's bare domain has nothing
 	// to do there — without a join link, dyad.amsterdam redirects to the
-	// Berlin apex. Signed-in guests (!resolved guard) and the QR's
+	// primary apex. Signed-in guests (!resolved guard) and the QR's
 	// /join?glink=... path are unaffected.
 	if (
 		!resolved &&

@@ -8,13 +8,13 @@ const IS_LOCAL =
  * production. Used wherever the admin plane builds links into the user app
  * (invite emails, group join links).
  */
-export const APP_ORIGIN = IS_LOCAL ? 'http://localhost:5173' : 'https://dyad.berlin';
+export const APP_ORIGIN = IS_LOCAL ? 'http://localhost:5173' : 'https://dyad.social';
 
 /**
  * Production host for each region that serves the app on its own domain.
  * A conference corner's group link must point at the host its guests will
  * live under (sessions are host-scoped cookies — see hooks.server.ts), or
- * the QR deposits them on dyad.berlin and the corner experience never
+ * the QR deposits them on dyad.social and the corner experience never
  * starts. Regions absent here fall back to APP_ORIGIN.
  */
 const REGION_ORIGINS: Record<string, string> = {
