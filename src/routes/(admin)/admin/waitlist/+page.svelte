@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { invalidateAll } from '$app/navigation';
 	import type { PageData } from './$types';
 	import { copy } from '$lib/copy';
 
@@ -23,7 +24,7 @@
 
 	const MESSAGE_MAX = 2000;
 
-	async function send(email: string, name: string | null, message: string, recipientName: string | null) {
+	async function send(email: string, name: string | null, message: string, recipientName: string | null): Promise<{ ok: boolean }> {
 		invitingEmail = email;
 		inviteResult = null;
 		try {
@@ -39,13 +40,31 @@
 			});
 			const body = await res.json();
 			if (res.ok) {
-				inviteResult = {
-					email,
-					message: body.alreadyInvited ? 'Already accepted — email re-sent.' : 'Accepted.',
-					url: body.inviteUrl
-				};
+				// The API distinguishes "invitation created" from "email delivered"
+				// (sendEmail returns false instead of throwing). Surface the split:
+				// a failed delivery still leaves a working link the admin can share.
+				if (body.delivered === false) {
+					inviteResult = {
+						email,
+						message:
+							'Accepted, but the invite EMAIL FAILED to send — share the link below manually and check the email provider logs.',
+						url: body.inviteUrl
+					};
+				} else {
+					inviteResult = {
+						email,
+						message: body.alreadyInvited ? 'Already accepted — email re-sent.' : 'Accepted.',
+						url: body.inviteUrl
+					};
+				}
+				// Refresh the load data so the row's badge flips to INVITED and the
+				// Accept button disappears — without this the row looks untouched
+				// and admins click again, sending duplicate emails.
+				await invalidateAll();
+				return { ok: true };
 			} else if (res.status === 409) {
 				inviteResult = { email, message: 'Already signed up.' };
+				await invalidateAll();
 			} else {
 				inviteResult = { email, message: body.error ?? 'Failed to accept.' };
 			}
@@ -54,14 +73,15 @@
 		} finally {
 			invitingEmail = null;
 		}
+		return { ok: false };
 	}
 
 	async function inviteWaitlisted(contact: { email: string; name: string | null }) {
 		// Personalized path: the admin wrote the opener/message by hand.
 		const opener = openerByEmail[contact.email] ?? '';
 		const msg = messageByEmail[contact.email] ?? '';
-		await send(contact.email, opener.trim() || null, msg, contact.name);
-		if (inviteResult && !inviteResult.message.startsWith('Failed') && !inviteResult.message.startsWith('Network')) {
+		const { ok } = await send(contact.email, opener.trim() || null, msg, contact.name);
+		if (ok) {
 			const { [contact.email]: _o, ...restOpeners } = openerByEmail;
 			const { [contact.email]: _m, ...restMessages } = messageByEmail;
 			openerByEmail = restOpeners;
