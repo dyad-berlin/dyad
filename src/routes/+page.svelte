@@ -90,7 +90,7 @@
 			<!-- ── Footer (in the left scroll flow) ── -->
 			<footer class="site-footer">
 				<a href="/docs" class="footer-link">{og.footerDocs}</a>
-				<a href="/community" class="footer-link">{og.footerCommunity}</a>
+				<a href="/wiggling" class="footer-link">{og.footerCommunity}</a>
 				<a href="/newsletter" class="footer-link">{og.footerNewsletter}</a>
 				<a href="/legal" class="footer-link">{og.footerLegal}</a>
 				{#if instagramUrl}<a href={instagramUrl} class="footer-link" target="_blank" rel="noopener">Instagram</a>{/if}

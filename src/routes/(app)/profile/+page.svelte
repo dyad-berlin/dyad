@@ -479,7 +479,7 @@
 
 	<footer class="site-links">
 		<a href="/docs" class="site-links-link">{copy.profile.footerDocs}</a>
-		<a href="/community" class="site-links-link">{copy.profile.footerCommunity}</a>
+		<a href="/wiggling" class="site-links-link">{copy.profile.footerCommunity}</a>
 		<a href="/newsletter" class="site-links-link">{copy.profile.footerNewsletter}</a>
 		<a href="/legal" class="site-links-link">{copy.profile.footerLegal}</a>
 	</footer>

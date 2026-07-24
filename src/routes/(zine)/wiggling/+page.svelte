@@ -2,9 +2,9 @@
 	import { env } from '$env/dynamic/public';
 
 	// Reel sources: prefer PUBLIC_VIDEO_BASE_URL (sovereign host), else the public
-	// videos bucket. Mirrors /voices — storageUrl() derives from PUBLIC_SUPABASE_URL,
-	// which in local dev is the LOCAL stack (no videos bucket), so the reels wouldn't
-	// play outside prod. This base defaults to the public bucket in every env.
+	// videos bucket. In local dev the default Supabase URL is the LOCAL stack (no
+	// videos bucket), so the reels wouldn't play; this base defaults to the public
+	// bucket in every env. Files still live under the videos/voices/ prefix.
 	const videoBase =
 		env.PUBLIC_VIDEO_BASE_URL ??
 		'https://iwdjpuyuznzukhowxjhk.supabase.co/storage/v1/object/public/videos';
@@ -43,7 +43,9 @@
 		{#each voices as v}
 			<figure class="voice-card">
 				<!-- svelte-ignore a11y_media_has_caption -->
-				<video src={v.src} preload="metadata" playsinline onclick={toggle}></video>
+				<!-- #t=0.1 makes the browser render a real frame as the poster; without
+				     it, preload="metadata" leaves the element black until playback. -->
+				<video src={`${v.src}#t=0.1`} preload="metadata" playsinline onclick={toggle}></video>
 				<figcaption>{v.name}</figcaption>
 			</figure>
 		{/each}

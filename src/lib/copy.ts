@@ -162,16 +162,6 @@ export const copy = {
 		mapCardCta: 'Join to read & meet',
 	},
 
-	// ── Voices ─────────────────────────────────────────────────────────
-	voices: {
-		_routes: ['/voices'],
-		sectionLabel: 'Voices',
-		title: 'People, talking.',
-		sub: 'Members on why they show up.',
-		metaDescription:
-			'Members of Dyad on why they show up: short films about conversation, belonging, and meeting face to face.',
-	},
-
 	// ── Discover ───────────────────────────────────────────────────────
 	discover: {
 		_routes: ['/discover'],

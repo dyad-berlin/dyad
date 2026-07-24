@@ -78,12 +78,12 @@
 
 			<nav class="zine-menu-primary" aria-label="Sections">
 				<a href="/docs" onclick={closeMenu}>Documentation</a>
-				<a href="/community" onclick={closeMenu}>Wiggling</a>
+				<a href="/wiggling" onclick={closeMenu}>Wiggling</a>
 				<a href="/newsletter" onclick={closeMenu}>Newsletter</a>
 			</nav>
 
 			<!-- Governance isn't listed here — it's a subsection reachable from
-			     Documentation/Community and the footer, not a peer destination
+			     Documentation and the footer, not a peer destination
 			     at the same level as the menu's sections or these actions. -->
 			<nav class="zine-menu-secondary" aria-label="Membership">
 				<a href="/waitlist" onclick={closeMenu}>Become a member</a>
