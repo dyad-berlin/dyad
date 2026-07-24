@@ -116,8 +116,12 @@
 		{#if offerMode === 'join'}
 			<!-- The standalone page (reached fresh after onboarding) has no
 			     built-in exit, unlike the paywall modal's "not now" dismiss —
-			     browsing without a membership is still allowed. -->
-			<a href={returnTo ?? '/discover'} class="guest-link">{ct('membership.continueAsGuestCta')}</a>
+			     browsing without a membership is still allowed. Always exit to
+			     /discover, NOT returnTo: returnTo is the post-JOIN resume target
+			     and is only ever a gated route (/conversations/new), so sending a
+			     guest there re-triggers the gate and bounces straight back to this
+			     paywall — which reads as "continue as a guest does nothing". -->
+			<a href="/discover" class="guest-link">{ct('membership.continueAsGuestCta')}</a>
 		{/if}
 	{/if}
 </main>
