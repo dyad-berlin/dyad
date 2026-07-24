@@ -74,8 +74,12 @@ const ALIAS_HOSTNAMES = Object.keys(ALIAS_TARGETS);
 // Retired public routes and where they now live. Add a line here instead of
 // letting a removed route 404 — see the redirect in handle() below.
 const RETIRED_PATHS: Record<string, string> = {
-	// The About page; its content folded into /community (e8109a81, deleted b3d93d9e).
-	'/why': '/community'
+	// The About page; its content folded into the reel page (e8109a81, deleted b3d93d9e).
+	'/why': '/wiggling',
+	// /community and /voices were the two earlier homes of the Wiggling reels;
+	// consolidated onto /wiggling. Keep both redirecting so old links survive.
+	'/community': '/wiggling',
+	'/voices': '/wiggling'
 };
 
 // Region a hostname puts a signed-in member into. A multi-region member

@@ -1,15 +1,15 @@
 import { test, expect } from '@playwright/test';
 
-// The zine (community / governance / community-care / docs / voices) and the
+// The zine (wiggling / governance / community-care / docs) and the
 // landing pin→card→Join funnel are all anonymous surfaces, so no auth storage
 // state is needed. The funnel test depends on seeded geo-located prompts in the
 // local Supabase stack; it skips gracefully when no pins are present.
 // Steward-ownership was removed (archived to src/lib/archive/) — dyad is not yet
-// steward-owned; /community + /docs replaced it in the restructure. /docs is a
+// steward-owned; /wiggling + /docs replaced it in the restructure. /docs is a
 // self-contained master-detail surface with its own chrome (no zine header
 // wordmark), so it's excluded from this wordmark+footer smoke.
 
-const ZINE_PAGES = ['/community', '/community-care', '/voices'];
+const ZINE_PAGES = ['/wiggling', '/community-care'];
 
 test.describe('Zine pages — smoke', () => {
 	for (const path of ZINE_PAGES) {
