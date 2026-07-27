@@ -137,6 +137,24 @@ describe('POST /api/membership/checkout', () => {
 		expect(sessionCreate).not.toHaveBeenCalled();
 	});
 
+	it('blocks a second subscription checkout for an already-active member → 409 already_member', async () => {
+		// The 2026-07-27 double-charge guard: an active member must not be able to
+		// mint a second paid subscription (and a second charge) from checkout.
+		adminState.existing = { stripe_subscription_id: 'sub_1', active: true };
+		const res = await call({ cadence: 'monthly', tier: 'standard' });
+		expect(res.status).toBe(409);
+		expect(await res.json()).toMatchObject({ error: 'already_member' });
+		expect(sessionCreate).not.toHaveBeenCalled();
+	});
+
+	it('blocks a checkout for an already-active lifetime member (no subscription) → 409 already_member', async () => {
+		adminState.existing = { stripe_subscription_id: null, active: true };
+		const res = await call({ cadence: 'annual' });
+		expect(res.status).toBe(409);
+		expect(await res.json()).toMatchObject({ error: 'already_member' });
+		expect(sessionCreate).not.toHaveBeenCalled();
+	});
+
 	it('rejects an invalid cadence with 400', async () => {
 		const res = await call({ cadence: 'weekly' });
 		expect(res.status).toBe(400);
