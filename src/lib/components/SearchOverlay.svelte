@@ -25,7 +25,13 @@
 	}
 
 	function handleKey(e: KeyboardEvent) {
-		if (e.key === 'Escape') onClose();
+		if (e.key === 'Escape') {
+			// Consume the key: this element handler runs before any document-
+			// level listener (the map preview card's, for one), and a single
+			// Escape must close only the topmost surface.
+			e.stopPropagation();
+			onClose();
+		}
 	}
 
 	// Lock body scroll

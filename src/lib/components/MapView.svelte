@@ -31,9 +31,13 @@
 		/** Pixels on the map's left edge covered by an overlay (the preview
 		 *  card). The ensure-visible pan keeps the active pin right of this. */
 		panSafeLeft?: number;
+		/** Gates the ensure-visible pan. The discover page passes its desktop
+		 *  flag: on mobile the preview card is hidden and a pin tap must ring
+		 *  without panning (the BottomSheet flow never panned). */
+		panToActive?: boolean;
 	}
 
-	let { prompts, onSelectPin, onMapClick, initialCenter, initialZoom, onMoveEnd, scrollWheelZoom = true, zoomControl = false, zoomControlPosition = 'topleft', slotFilter, fitKey = null, activeSlotId = null, panSafeLeft = 0 }: Props = $props();
+	let { prompts, onSelectPin, onMapClick, initialCenter, initialZoom, onMoveEnd, scrollWheelZoom = true, zoomControl = false, zoomControlPosition = 'topleft', slotFilter, fitKey = null, activeSlotId = null, panSafeLeft = 0, panToActive = true }: Props = $props();
 
 	let mapContainer: HTMLElement | undefined = $state();
 	let map: LeafletMap | undefined;
@@ -142,6 +146,14 @@
 
 		markerLayer = L.layerGroup().addTo(map);
 		rebuildMarkers(L);
+		// Seed the change trackers with the mount-time props: otherwise the
+		// first $effect run treats every prop as "changed" and — with a
+		// district filter active on remount — refits the map, clobbering the
+		// pan/zoom just restored from the page snapshot.
+		prevPrompts = prompts;
+		prevSlotFilter = slotFilter;
+		prevFitKey = fitKey;
+		prevActiveSlotId = activeSlotId;
 	});
 
 	/** Pan just far enough that the active pin sits clear of the left overlay
@@ -182,7 +194,7 @@
 			prevSlotFilter = currentFilter;
 			const fitRequested = currentFitKey !== prevFitKey && currentFitKey !== null;
 			prevFitKey = currentFitKey;
-			const panRequested = currentActive !== prevActiveSlotId && currentActive !== null;
+			const panRequested = currentActive !== prevActiveSlotId && currentActive !== null && panToActive;
 			prevActiveSlotId = currentActive;
 			const pins = rebuildMarkers(leafletModule);
 			if (fitRequested && map && pins.length > 0) {

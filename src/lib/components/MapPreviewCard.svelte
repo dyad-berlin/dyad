@@ -1,3 +1,11 @@
+<script lang="ts" module>
+	/** Horizontal inset the map's ensure-visible pan must respect while the
+	 *  card is open: the card's width (20rem = 320px) plus its left offset and
+	 *  breathing room. Lives here, next to the geometry it derives from, and
+	 *  is imported by the discover page's MapView wiring. */
+	export const PREVIEW_CARD_PAN_INSET = 360;
+</script>
+
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
 	import type { PromptSummary, TimeSlot } from '$lib/domain/types';
@@ -30,9 +38,13 @@
 		onSwitchConvo: (promptId: string) => void;
 		onHopSlot: (slot: TimeSlot) => void;
 		onClose: () => void;
+		/** Whether a slot has a pin on the current map (has coordinates and
+		 *  passes the active filters). Slots without one render as plain rows —
+		 *  a time-hop door must never point at a pin that doesn't exist. */
+		isPinnable?: (slot: TimeSlot) => boolean;
 	}
 
-	let { items, activePromptId, activeSlotIds, onSwitchConvo, onHopSlot, onClose }: Props = $props();
+	let { items, activePromptId, activeSlotIds, onSwitchConvo, onHopSlot, onClose, isPinnable }: Props = $props();
 
 	const active = $derived(items.find((i) => i.prompt.id === activePromptId) ?? items[0]);
 	const slots = $derived(active?.prompt.available_slots ?? []);
@@ -116,13 +128,20 @@
 							<span>{formatShortDate(slot.start_time)} · {formatSlotTimeRange(slot.start_time, slot.duration_minutes)}</span>
 							<span class="slot-area">{areaOf(slot)}</span>
 						</div>
-					{:else if timesExpanded}
+					{:else if timesExpanded && (isPinnable?.(slot) ?? true)}
 						<!-- A door to ITS pin: selects the slot, rings and pans to
 						     its pin — same logic as clicking that pin. -->
 						<button type="button" class="slot-row slot-jump" onclick={() => onHopSlot(slot)}>
 							<span>{formatShortDate(slot.start_time)} · {formatSlotTimeRange(slot.start_time, slot.duration_minutes)}</span>
 							<span class="slot-area">{areaOf(slot)}</span>
 						</button>
+					{:else if timesExpanded}
+						<!-- No pin for this time on the current map (filtered out or
+						     no coordinates) — informational row, not a door. -->
+						<div class="slot-row">
+							<span>{formatShortDate(slot.start_time)} · {formatSlotTimeRange(slot.start_time, slot.duration_minutes)}</span>
+							<span class="slot-area">{areaOf(slot)}</span>
+						</div>
 					{/if}
 				{/each}
 				{#if !timesExpanded && foldedCount > 0}
@@ -166,7 +185,9 @@
 	.preview-body {
 		flex: 1;
 		overflow-y: auto;
-		padding: var(--space-1) var(--space-4) var(--space-4);
+		/* Bottom clearance for the FloatingNav pill, which floats over the map
+		   pane — same pattern as the page's .list-scroll. */
+		padding: var(--space-1) var(--space-4) var(--nav-clearance);
 	}
 	.preview-close {
 		position: absolute;

@@ -29,7 +29,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 			// soonest conversations could answer a far-date filter with "no
 			// matches" while matching conversations exist beyond the page.
 			// Server-side date filtering is the scale path when volume makes
-			// this too heavy (review 20260729-110546 finding #8).
+			// this too heavy.
 			limit: DISCOVER_FEED_LIMIT
 		}),
 		service.getSearchCorpus(region, locals.scopes, locals.homeScope)

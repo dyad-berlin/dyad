@@ -6,7 +6,7 @@
 	import { onMount } from 'svelte';
 	import MapView from '$lib/components/MapView.svelte';
 	import BottomSheet from '$lib/components/BottomSheet.svelte';
-	import MapPreviewCard from '$lib/components/MapPreviewCard.svelte';
+	import MapPreviewCard, { PREVIEW_CARD_PAN_INSET } from '$lib/components/MapPreviewCard.svelte';
 	import FloatingNav from '$lib/components/FloatingNav.svelte';
 	import SearchOverlay from '$lib/components/SearchOverlay.svelte';
 	import ConversationCard from '$lib/components/ConversationCard.svelte';
@@ -124,9 +124,12 @@
 	// dodge a phantom overlay.
 	let isDesktop = $state(false);
 	onMount(() => {
-		const mq = window.matchMedia('(min-width: 769px)');
-		isDesktop = mq.matches;
-		const onChange = (e: MediaQueryListEvent) => (isDesktop = e.matches);
+		// Same query the stylesheet uses (max-width: 768px), negated — a
+		// min-width: 769px twin leaves a fractional-pixel dead zone where the
+		// script and CSS disagree about which surface is visible.
+		const mq = window.matchMedia('(max-width: 768px)');
+		isDesktop = !mq.matches;
+		const onChange = (e: MediaQueryListEvent) => (isDesktop = !e.matches);
 		mq.addEventListener('change', onChange);
 		return () => mq.removeEventListener('change', onChange);
 	});
@@ -138,13 +141,32 @@
 		previewSlotIds = (first?.slots?.length ? first.slots : first?.prompt.available_slots.slice(0, 1) ?? []).map((s) => s.id);
 	}
 
+	// Whether a slot has a pin on the current map: it carries coordinates and
+	// passes the active slot filters (buildPins skips anything else). Both the
+	// sidebar door and the card's time-hop rows use this, so a door can never
+	// point at a pin that doesn't exist.
+	function slotIsPinnable(slot: TimeSlot): boolean {
+		if (slot.general_area_lat == null || slot.general_area_lng == null) return false;
+		if (!slot.general_area) return false;
+		return mapSlotFilter ? mapSlotFilter(slot) : true;
+	}
+
 	// The sidebar door: same preview, opened from a list card in the split
-	// view. Highlights the soonest time; the map pans to its pin.
+	// view. Highlights the soonest PINNABLE time so the map has something to
+	// ring and pan to; falls back to the soonest slot when none are pinnable.
 	function openPreviewFromList(prompt: PromptSummary) {
-		const soonest = prompt.available_slots[0];
+		const soonest = prompt.available_slots.find(slotIsPinnable) ?? prompt.available_slots[0];
 		selectedPinItems = [{ prompt, slots: soonest ? [soonest] : [] }];
 		previewPromptId = prompt.id;
 		previewSlotIds = soonest ? [soonest.id] : [];
+	}
+
+	// Split-view card click: intercept only the plain primary click for the
+	// preview; modified clicks (cmd/ctrl/shift/middle) keep real link behavior.
+	function interceptCardClick(e: MouseEvent, prompt: PromptSummary) {
+		if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+		e.preventDefault();
+		openPreviewFromList(prompt);
 	}
 
 	function switchPreviewConvo(promptId: string) {
@@ -282,7 +304,11 @@
 	// (toggleDate/clearFilters create new Set instances each time).
 	$effect(() => {
 		if (selectedDates && selectedTypes && selectedScopes && selectedArea !== undefined) {
-			selectedPinItems = [];
+			// Clear ALL preview state, not just the sheet items — leaving
+			// previewSlotIds set would strand the active-pin ring after a
+			// filter change removes the previewed conversation. closeSheet
+			// reads none of the filter state, so no reactive cycle.
+			closeSheet();
 		}
 	});
 
@@ -308,7 +334,8 @@
 		slotFilter={mapSlotFilter}
 		fitKey={selectedArea}
 		activeSlotId={previewSlotIds[0] ?? null}
-		panSafeLeft={isDesktop && selectedPinItems.length > 0 ? 360 : 0}
+		panSafeLeft={isDesktop && selectedPinItems.length > 0 ? PREVIEW_CARD_PAN_INSET : 0}
+		panToActive={isDesktop}
 		onSelectPin={handlePinSelect}
 		onMapClick={closeSheet}
 		initialCenter={mapCenter ?? data.mapCenter}
@@ -332,32 +359,22 @@
 	{:else}
 		<div class="prompt-list">
 			{#each filteredPrompts as prompt}
-				<!-- In the split view a card is the second door to the preview
-				     (the map pans to the pin); in the list view — where there is
-				     no map to preview over — it navigates directly, as before. -->
-				{#if viewMode === 'split'}
-					<ConversationCard
-						title={prompt.title ?? 'Untitled'}
-						coverUrl={prompt.cover_image_url}
-						snippet={prompt.body_snippet}
-						metaLeft={slotDates(prompt.available_slots)}
-						metaRight={uniqueAreas(prompt.available_slots)}
-						conversationType={prompt.capacity === 1 ? '1on1' : 'group'}
-						onclick={() => openPreviewFromList(prompt)}
-						audienceScopeName={prompt.audience_scope_name}
-					/>
-				{:else}
-					<ConversationCard
-						title={prompt.title ?? 'Untitled'}
-						coverUrl={prompt.cover_image_url}
-						snippet={prompt.body_snippet}
-						metaLeft={slotDates(prompt.available_slots)}
-						metaRight={uniqueAreas(prompt.available_slots)}
-						conversationType={prompt.capacity === 1 ? '1on1' : 'group'}
-						href={`/conversations/${prompt.id}`}
-						audienceScopeName={prompt.audience_scope_name}
-					/>
-				{/if}
+				<!-- Always a real link (cmd/middle-click and open-in-new-tab keep
+				     working). In the split view the plain primary click is
+				     intercepted to open the preview instead — the second door;
+				     in the list view, where there is no map to preview over, it
+				     navigates as before. -->
+				<ConversationCard
+					title={prompt.title ?? copy.common.untitled}
+					coverUrl={prompt.cover_image_url}
+					snippet={prompt.body_snippet}
+					metaLeft={slotDates(prompt.available_slots)}
+					metaRight={uniqueAreas(prompt.available_slots)}
+					conversationType={prompt.capacity === 1 ? '1on1' : 'group'}
+					href={`/conversations/${prompt.id}`}
+					onclick={viewMode === 'split' ? (e: MouseEvent) => interceptCardClick(e, prompt) : undefined}
+					audienceScopeName={prompt.audience_scope_name}
+				/>
 			{/each}
 		</div>
 	{/if}
@@ -387,6 +404,7 @@
 						onSwitchConvo={switchPreviewConvo}
 						onHopSlot={hopPreviewSlot}
 						onClose={closeSheet}
+						isPinnable={slotIsPinnable}
 					/>
 				</div>
 			{/if}
@@ -445,13 +463,9 @@
 
 <style>
 	.floating-nav-wrapper { display: block; }
-	.map-pane {
-		position: fixed;
-		top: 0;
-		right: 0;
-		bottom: 0;
-		left: 0;
-	}
+	/* .map-pane's old standalone fixed-position rule died with the map-only
+	   view mode; the class now only ever appears as .map-pane.map-pane--split,
+	   which owns its own positioning. */
 
 	.content {
 		width: 100%;
