@@ -1,7 +1,20 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { getUpcomingDates, getWeekDates, SCHEDULING_HORIZON_DAYS } from './dates';
 
+// Pin the clock: these helpers read `new Date()` internally, so unpinned
+// assertions can flake across local midnight, and the month-boundary case is
+// only meaningful when the horizon provably crosses a month. 20 Jan 2026 puts
+// the 28-day horizon across the Jan→Feb boundary.
+const FIXED_NOW = new Date('2026-01-20T10:00:00');
+
 describe('getUpcomingDates', () => {
+	beforeEach(() => {
+		vi.useFakeTimers({ now: FIXED_NOW });
+	});
+	afterEach(() => {
+		vi.useRealTimers();
+	});
+
 	it('returns the requested count of consecutive days', () => {
 		const days = getUpcomingDates(21, 7);
 		expect(days).toHaveLength(21);
@@ -24,10 +37,21 @@ describe('getUpcomingDates', () => {
 		expect(getWeekDates()).toEqual(getUpcomingDates(7));
 	});
 
-	it('carries a month label for grid cells on the 1st of a month', () => {
-		// Within any 28-day horizon at least one month boundary can occur; assert
-		// the field is always present and plausible rather than date-dependent.
-		for (const day of getUpcomingDates(SCHEDULING_HORIZON_DAYS)) {
+	it('starts today and ends horizon-1 days out', () => {
+		const days = getUpcomingDates(SCHEDULING_HORIZON_DAYS);
+		expect(days[0].date).toBe('2026-01-20');
+		expect(days[days.length - 1].date).toBe('2026-02-16');
+	});
+
+	it('carries the correct month label across a month boundary', () => {
+		const days = getUpcomingDates(SCHEDULING_HORIZON_DAYS);
+		const firstOfMonth = days.find((d) => d.dayNum === 1);
+		expect(firstOfMonth?.date).toBe('2026-02-01');
+		expect(firstOfMonth?.monthShort).toBe('Feb');
+		const lastOfJanuary = days.find((d) => d.date === '2026-01-31');
+		expect(lastOfJanuary?.monthShort).toBe('Jan');
+		// Format holds for every entry, not just the boundary pair.
+		for (const day of days) {
 			expect(day.monthShort).toMatch(/^[A-Z][a-z]{2}$/);
 		}
 	});

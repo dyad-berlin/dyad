@@ -15,9 +15,18 @@
 		selected: Set<string>;
 		onToggle: (date: string) => void;
 		onClose: () => void;
+		/** Marks a day unpickable (e.g. today once no submittable time remains).
+		 *  The publish sheet passes its rail's own rule so the two surfaces
+		 *  can't disagree; the discover filter leaves every day selectable. */
+		isDisabled?: (date: string) => boolean;
+		/** At the selection ceiling: unselected days disable (selected ones stay
+		 *  togglable-off) and the hint explains why. */
+		atCapacity?: boolean;
+		/** Shown when atCapacity — e.g. the publish sheet's slot-ceiling hint. */
+		capacityHint?: string;
 	}
 
-	let { selected, onToggle, onClose }: Props = $props();
+	let { selected, onToggle, onClose, isDisabled, atCapacity = false, capacityHint }: Props = $props();
 
 	const days = getUpcomingDates(SCHEDULING_HORIZON_DAYS);
 	const todayKey = days[0].date;
@@ -55,21 +64,47 @@
 	const WEEKDAY_HEADER = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
 	let closeButton: HTMLButtonElement | undefined = $state();
+	let modalEl: HTMLDivElement | undefined = $state();
 	let reducedMotion = $state(false);
 
 	// Esc must close only this modal, not the sheet that may sit under it
 	// (PublishSheet listens for Esc on document in the bubble phase). A
 	// capture-phase listener runs first; stopPropagation keeps the event from
-	// reaching the sheet's handler.
+	// reaching the sheet's handler. Tab is contained inside the dialog so
+	// aria-modal is true in behavior, not just markup (the pattern
+	// MembershipPaywallModal established).
 	function handleKeydown(e: KeyboardEvent) {
 		if (e.key === 'Escape') {
 			e.preventDefault();
 			e.stopPropagation();
 			onClose();
+			return;
+		}
+		if (e.key === 'Tab' && modalEl) {
+			const focusables = modalEl.querySelectorAll<HTMLElement>('button:not(:disabled)');
+			if (focusables.length === 0) return;
+			const first = focusables[0];
+			const last = focusables[focusables.length - 1];
+			if (e.shiftKey && document.activeElement === first) {
+				e.preventDefault();
+				last.focus();
+			} else if (!e.shiftKey && document.activeElement === last) {
+				e.preventDefault();
+				first.focus();
+			}
 		}
 	}
 
+	// Body scroll lock (save/restore, so nesting inside the already-locked
+	// publish sheet restores 'hidden') and focus restoration to the element
+	// that opened the modal — both mirroring the codebase's other overlays.
+	let prevOverflow = '';
+	let openerEl: HTMLElement | null = null;
+
 	onMount(async () => {
+		openerEl = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+		prevOverflow = document.body.style.overflow;
+		document.body.style.overflow = 'hidden';
 		document.addEventListener('keydown', handleKeydown, true);
 		reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 		await tick();
@@ -78,6 +113,8 @@
 
 	onDestroy(() => {
 		document.removeEventListener('keydown', handleKeydown, true);
+		document.body.style.overflow = prevOverflow;
+		openerEl?.focus();
 	});
 </script>
 
@@ -89,6 +126,7 @@
 	transition:fade={{ duration: reducedMotion ? 1 : 150 }}
 >
 	<div
+		bind:this={modalEl}
 		class="cal-modal"
 		role="dialog"
 		aria-modal="true"
@@ -116,12 +154,15 @@
 						<span class="cal-blank"></span>
 					{/each}
 					{#each month.days as day (day.date)}
+						{@const unpickable =
+							(isDisabled?.(day.date) ?? false) || (atCapacity && !selected.has(day.date))}
 						<button
 							type="button"
 							class="cal-day"
 							class:selected={selected.has(day.date)}
 							class:today={day.date === todayKey}
 							aria-pressed={selected.has(day.date)}
+							disabled={unpickable}
 							onclick={() => onToggle(day.date)}
 						>
 							{day.dayNum}
@@ -132,6 +173,9 @@
 		{/each}
 
 		<div class="cal-foot">
+			{#if atCapacity && capacityHint}
+				<p class="cal-hint">{capacityHint}</p>
+			{/if}
 			<button type="button" class="cal-done" onclick={onClose}>{copy.common.done}</button>
 		</div>
 	</div>
@@ -227,13 +271,27 @@
 	.cal-day.selected { background: var(--text-primary); color: var(--bg-canvas); }
 	.cal-day.today { box-shadow: inset 0 0 0 1px var(--border-link); }
 	.cal-day:focus-visible { outline: 2px solid var(--border-link-hover); outline-offset: 1px; }
+	.cal-day:disabled {
+		color: var(--text-muted);
+		opacity: 0.35;
+		cursor: default;
+	}
+	.cal-day:disabled:hover { background: none; }
 
 	.cal-foot {
 		display: flex;
-		justify-content: flex-end;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--space-3);
 		border-top: 1px solid var(--border-subtle);
 		padding-top: var(--space-3);
 	}
+	.cal-hint {
+		font-size: var(--text-xs);
+		color: var(--text-muted);
+		margin: 0;
+	}
+	.cal-done:only-child { margin-left: auto; }
 	.cal-done {
 		font-size: var(--text-sm);
 		padding: var(--space-2) var(--space-4);

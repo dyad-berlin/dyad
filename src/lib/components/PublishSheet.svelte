@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { fly, fade } from 'svelte/transition';
 	import { onMount, onDestroy, tick } from 'svelte';
-	import { getWeekDates } from '$lib/utils/dates';
+	import { getWeekDates, type WeekDate } from '$lib/utils/dates';
 	import MonthCalendarModal from '$lib/components/MonthCalendarModal.svelte';
 	import LocationSearch from '$lib/components/LocationSearch.svelte';
 	import SizePicker from '$lib/components/SizePicker.svelte';
@@ -183,6 +183,11 @@
 			nextSlots.delete(date);
 			daySlots = nextSlots;
 		} else {
+			// A day with no submittable time (today, late in the evening) must
+			// not become selected — the rail disables its chip and the modal
+			// disables its cell, but guard here too so no caller can slip a
+			// slot in that publish would reject (the ≥1h-future rule).
+			if (timeOptionsForDate(date).length === 0) return;
 			// Selecting a new day implies adding one slot. Block when at the
 			// 3-slot conversation ceiling.
 			if (totalSlotCount >= 3) return;
@@ -400,7 +405,7 @@
 		<h2 id="publish-sheet-title" class="sheet-title">{copy.editor.publishHeadline}</h2>
 		<p class="sheet-subtitle">{copy.editor.dayPickerHint}</p>
 		<p class="sheet-note">{copy.editor.privacyNote}</p>
-		{#snippet dayCell(day: { date: string; dayShort: string; dayNum: number; monthShort: string })}
+		{#snippet dayCell(day: WeekDate)}
 			{@const noValidTimes = timeOptionsForDate(day.date).length === 0}
 			<button
 				type="button"
@@ -442,6 +447,9 @@
 				selected={selectedDays}
 				onToggle={toggleDay}
 				onClose={() => (calendarOpen = false)}
+				isDisabled={(d) => timeOptionsForDate(d).length === 0}
+				atCapacity={totalSlotCount >= 3}
+				capacityHint={copy.editor.dayPickerHint}
 			/>
 		{/if}
 
