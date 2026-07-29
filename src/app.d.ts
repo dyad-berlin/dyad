@@ -61,7 +61,15 @@ declare global {
 			upactor: import('@prefig/upact').Upactor | null;
 		}
 		// interface PageData {}
-		// interface PageState {}
+		interface PageState {
+			/**
+			 * Slot ID of the open discover preview card. Shallow-routing twin of
+			 * the ?preview URL param: the param survives hard loads and shared
+			 * links, the state survives back/forward (where SvelteKit restores
+			 * page.state but not necessarily a shallow entry's URL params).
+			 */
+			previewSlot?: string;
+		}
 		interface Platform {
 			env?: {
 				PUBLIC_SUPABASE_URL: string;

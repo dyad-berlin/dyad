@@ -1,12 +1,13 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import type { PromptSummary, TimeSlot } from '$lib/domain/types';
-	import { goto } from '$app/navigation';
+	import { goto, pushState, replaceState } from '$app/navigation';
+	import { page } from '$app/state';
 	import { browser } from '$app/environment';
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import MapView from '$lib/components/MapView.svelte';
 	import BottomSheet from '$lib/components/BottomSheet.svelte';
-	import MapPreviewCard, { PREVIEW_CARD_PAN_INSET } from '$lib/components/MapPreviewCard.svelte';
+	import MapPreviewCard from '$lib/components/MapPreviewCard.svelte';
 	import FloatingNav from '$lib/components/FloatingNav.svelte';
 	import SearchOverlay from '$lib/components/SearchOverlay.svelte';
 	import ConversationCard from '$lib/components/ConversationCard.svelte';
@@ -119,6 +120,126 @@
 	// the pin ring; the BottomSheet keeps its own flow there.
 	let previewPromptId = $state<string | null>(null);
 	let previewSlotIds = $state<string[]>([]);
+	// The active pin's container point, streamed by MapView through map
+	// moves — the preview card anchors beside it and rides along.
+	let previewAnchor = $state<{ x: number; y: number } | null>(null);
+	// Pan behavior for the next active-slot change: pin clicks nudge ('ensure'
+	// — the pin is already under the cursor), sidebar opens and cross-location
+	// hops center the pin+card composition.
+	let previewPanMode = $state<'ensure' | 'center'>('ensure');
+
+	// ── Preview ↔ URL sync ───────────────────────────────────────────────────
+	// The open preview lives in ?preview=<slotId> so browser back restores it:
+	// back from a conversation detail returns to the same card, and back while
+	// a card is open closes it. Shallow routing — no load rerun.
+	let previewPushed = false;
+
+	// The address bar, live. page.url is NOT updated by shallow
+	// pushState/replaceState, so reading it here would see the pre-open URL
+	// forever — every hop would push a fresh history entry and closes would
+	// misfire (verified against SvelteKit's behavior in review).
+	function liveUrl(): URL {
+		return new URL(location.href);
+	}
+
+	function writePreviewParam(slotId: string) {
+		const url = liveUrl();
+		const fresh = !url.searchParams.has('preview');
+		url.searchParams.set('preview', slotId);
+		// The slot id rides in both the URL param (survives hard loads and
+		// shared links) and the shallow page.state (survives back/forward,
+		// where SvelteKit restores state but not necessarily the shallow
+		// entry's URL params). First open pushes a history entry (back =
+		// close); subsequent hops and switches replace it, so back never
+		// steps through every hop.
+		if (fresh) {
+			pushState(url, { previewSlot: slotId });
+			previewPushed = true;
+		} else {
+			replaceState(url, { previewSlot: slotId });
+		}
+	}
+
+	function stripPreviewParam() {
+		const url = liveUrl();
+		if (!url.searchParams.has('preview')) return;
+		url.searchParams.delete('preview');
+		replaceState(url, {});
+	}
+
+	function clearPreviewParam() {
+		if (!liveUrl().searchParams.has('preview')) return;
+		if (previewPushed) {
+			// We own the history entry — pop it, so back after closing doesn't
+			// reopen the card.
+			previewPushed = false;
+			history.back();
+		} else {
+			// Restored from a URL we didn't push (back-navigation or direct
+			// link): strip the param in place.
+			stripPreviewParam();
+		}
+	}
+
+	/** Open the preview from a slot ID alone (URL restore). The cluster and
+	 *  pan-to-pin follow from MapView's active-pin reporting. */
+	function openPreviewBySlotId(slotId: string) {
+		const prompt = data.prompts.find((p) => p.available_slots.some((s) => s.id === slotId));
+		if (!prompt) {
+			// Stale param (slot expired or filtered out of the feed). Strip on
+			// a macrotask: on a hard load this effect runs during hydration,
+			// before SvelteKit's router initializes, and an immediate
+			// replaceState throws — killing the page's reactivity with it.
+			setTimeout(() => {
+				try {
+					stripPreviewParam();
+				} catch {
+					// Router still not ready — the stale param is harmless and
+					// gone on the next navigation.
+				}
+			}, 0);
+			return;
+		}
+		const slot = prompt.available_slots.find((s) => s.id === slotId)!;
+		// Anchor the card to a pinnable slot: a restored slot without map
+		// coordinates would strand the card with no pin to sit beside.
+		const anchorSlot = slotIsPinnable(slot)
+			? slot
+			: (prompt.available_slots.find(slotIsPinnable) ?? slot);
+		previewPanMode = 'center';
+		selectedPinItems = [{ prompt, slots: [anchorSlot] }];
+		previewPromptId = prompt.id;
+		previewSlotIds = [anchorSlot.id];
+	}
+
+	// When a restored slot has no pin, the preview anchors to a sibling slot
+	// and previewSlotIds diverges from the URL param — remember the handled
+	// param so the divergence doesn't read as "URL changed, reopen".
+	let lastRestoredParam: string | null = null;
+
+	// URL → state, for changes we didn't make ourselves (popstate, initial
+	// load with ?preview). Tracks page.url and page.state for reruns, but
+	// the URL *value* comes from location.href (see liveUrl); preview state
+	// is read untracked so our own handlers (which write both in the same
+	// tick) don't retrigger it.
+	$effect(() => {
+		const stateSlot = page.state.previewSlot;
+		void page.url; // tracked: popstate and full navigations rerun this
+		untrack(() => {
+			const param = stateSlot ?? liveUrl().searchParams.get('preview');
+			if (param && param !== (previewSlotIds[0] ?? null) && param !== lastRestoredParam) {
+				lastRestoredParam = param;
+				openPreviewBySlotId(param);
+			} else if (!param && (previewSlotIds.length > 0 || selectedPinItems.length > 0)) {
+				// Back past the open-entry: close without touching history.
+				previewPushed = false;
+				lastRestoredParam = null;
+				selectedPinItems = [];
+				previewPromptId = null;
+				previewSlotIds = [];
+			}
+		});
+	});
 	// The pan inset only applies where the preview card actually covers the
 	// map (desktop); on mobile the card is display:none and the map must not
 	// dodge a phantom overlay.
@@ -135,11 +256,35 @@
 	});
 
 	function handlePinSelect(items: Array<{ prompt: PromptSummary; slots: TimeSlot[] }>, _area: string) {
+		previewPanMode = 'ensure';
 		selectedPinItems = items;
 		const first = items[0];
 		previewPromptId = first?.prompt.id ?? null;
 		previewSlotIds = (first?.slots?.length ? first.slots : first?.prompt.available_slots.slice(0, 1) ?? []).map((s) => s.id);
+		if (previewSlotIds[0]) writePreviewParam(previewSlotIds[0]);
 	}
+
+	/** MapView reports the active pin's cluster whenever the active slot or
+	 *  pin set changes. Adopting it keeps the stacked-pin switcher truthful
+	 *  to the pin the card is anchored to — after a cross-location time hop
+	 *  the old pin's neighbors would otherwise linger — and fills in the
+	 *  cluster on URL-restored opens. */
+	function adoptActivePinItems(items: Array<{ prompt: PromptSummary; slots: TimeSlot[] }> | null) {
+		if (!items || items.length === 0) return;
+		// A chip switch stays on the same stacked cluster: adopting the
+		// report re-centres itemsAround on the switched convo's own pin,
+		// which can reorder or drop chips under the cursor. Skip that one
+		// report; hops and restores still adopt.
+		if (skipNextItemsReport) {
+			skipNextItemsReport = false;
+			return;
+		}
+		selectedPinItems = items;
+		if (previewPromptId && !items.some((i) => i.prompt.id === previewPromptId)) {
+			previewPromptId = items[0].prompt.id;
+		}
+	}
+	let skipNextItemsReport = false;
 
 	// Whether a slot has a pin on the current map: it carries coordinates and
 	// passes the active slot filters (buildPins skips anything else). Both the
@@ -147,7 +292,9 @@
 	// point at a pin that doesn't exist.
 	function slotIsPinnable(slot: TimeSlot): boolean {
 		if (slot.general_area_lat == null || slot.general_area_lng == null) return false;
-		if (!slot.general_area) return false;
+		// Trim to match buildPins exactly — a whitespace-only area label must
+		// not count as pinnable here while producing no pin there.
+		if (!slot.general_area?.trim()) return false;
 		return mapSlotFilter ? mapSlotFilter(slot) : true;
 	}
 
@@ -156,9 +303,11 @@
 	// ring and pan to; falls back to the soonest slot when none are pinnable.
 	function openPreviewFromList(prompt: PromptSummary) {
 		const soonest = prompt.available_slots.find(slotIsPinnable) ?? prompt.available_slots[0];
+		previewPanMode = 'center';
 		selectedPinItems = [{ prompt, slots: soonest ? [soonest] : [] }];
 		previewPromptId = prompt.id;
 		previewSlotIds = soonest ? [soonest.id] : [];
+		if (soonest) writePreviewParam(soonest.id);
 	}
 
 	// Split-view card click: intercept only the plain primary click for the
@@ -170,24 +319,38 @@
 	}
 
 	function switchPreviewConvo(promptId: string) {
+		previewPanMode = 'ensure';
+		skipNextItemsReport = true;
 		previewPromptId = promptId;
 		const item = selectedPinItems.find((i) => i.prompt.id === promptId);
 		previewSlotIds = (item?.slots?.length ? item.slots : item?.prompt.available_slots.slice(0, 1) ?? []).map((s) => s.id);
+		if (previewSlotIds[0]) writePreviewParam(previewSlotIds[0]);
 	}
 
 	function hopPreviewSlot(slot: TimeSlot) {
+		// A hop can land at another location entirely — center it like a
+		// sidebar open rather than nudging.
+		previewPanMode = 'center';
 		previewSlotIds = [slot.id];
+		writePreviewParam(slot.id);
 	}
 
 	function closeSheet() {
+		const wasOpen = selectedPinItems.length > 0 || previewSlotIds.length > 0;
+		lastRestoredParam = null;
 		selectedPinItems = [];
 		previewPromptId = null;
 		previewSlotIds = [];
+		// Only touch history when something was actually open — this also runs
+		// from the filter-change effect on mount, before a URL restore.
+		if (wasOpen) clearPreviewParam();
 	}
 
 	const weekDates = getWeekDates();
 
-	// Collect unique neighbourhoods from all prompts' slots
+	// Collect unique neighbourhoods from all prompts' slots. The instance's
+	// own city is excluded: a "Berlin" option on the Berlin instance means
+	// "Anywhere", which the filter already offers.
 	const availableAreas = $derived.by(() => {
 		const areas = new Set<string>();
 		for (const p of data.prompts) {
@@ -195,7 +358,8 @@
 				if (s.general_area) areas.add(s.general_area);
 			}
 		}
-		return [...areas].sort();
+		const city = (data.regionCity ?? '').toLowerCase();
+		return [...areas].filter((a) => a.toLowerCase() !== city).sort();
 	});
 
 	// Filter state
@@ -302,8 +466,16 @@
 	// map. Per-slot pins make this gap more visible because clicks pull more items
 	// into the sheet. Reading the Sets directly tracks identity reassignment
 	// (toggleDate/clearFilters create new Set instances each time).
+	let filterEffectSeeded = false;
 	$effect(() => {
 		if (selectedDates && selectedTypes && selectedScopes && selectedArea !== undefined) {
+			// Skip the mount run — it fires before/around the ?preview URL
+			// restore and would close the just-restored card. Only actual
+			// filter changes should close the preview.
+			if (!filterEffectSeeded) {
+				filterEffectSeeded = true;
+				return;
+			}
 			// Clear ALL preview state, not just the sheet items — leaving
 			// previewSlotIds set would strand the active-pin ring after a
 			// filter change removes the previewed conversation. closeSheet
@@ -334,8 +506,10 @@
 		slotFilter={mapSlotFilter}
 		fitKey={selectedArea}
 		activeSlotId={previewSlotIds[0] ?? null}
-		panSafeLeft={isDesktop && selectedPinItems.length > 0 ? PREVIEW_CARD_PAN_INSET : 0}
 		panToActive={isDesktop}
+		activePanMode={previewPanMode}
+		onActivePinPoint={(p) => (previewAnchor = p)}
+		onActivePinItems={adoptActivePinItems}
 		onSelectPin={handlePinSelect}
 		onMapClick={closeSheet}
 		initialCenter={mapCenter ?? data.mapCenter}
@@ -405,6 +579,7 @@
 						onHopSlot={hopPreviewSlot}
 						onClose={closeSheet}
 						isPinnable={slotIsPinnable}
+						anchor={previewAnchor}
 					/>
 				</div>
 			{/if}

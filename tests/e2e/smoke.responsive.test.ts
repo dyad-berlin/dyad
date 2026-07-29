@@ -60,6 +60,10 @@ test.describe('Smoke tests', () => {
 		await expect(toggleBtn).toBeVisible({ timeout: 5000 });
 		await expect(page.locator('.map-pane--split')).toBeVisible();
 		await expect(page.locator('.list-pane')).toBeHidden();
+		// Hydration gate: the toggle's click handler attaches only once the
+		// page's JS is live, and the Leaflet container mounts from onMount —
+		// clicking earlier is a silent no-op (see discover-preview.test.ts).
+		await page.locator('.leaflet-container').waitFor({ timeout: 15000 });
 		await toggleBtn.click();
 		// List view: full-width list, no map.
 		await expect(page.locator('.list-full')).toBeVisible();

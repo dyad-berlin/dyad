@@ -1,9 +1,14 @@
 <script lang="ts" module>
-	/** Horizontal inset the map's ensure-visible pan must respect while the
-	 *  card is open: the card's width (20rem = 320px) plus its left offset and
-	 *  breathing room. Lives here, next to the geometry it derives from, and
-	 *  is imported by the discover page's MapView wiring. */
-	export const PREVIEW_CARD_PAN_INSET = 360;
+	/** Horizontal gap between the pin center and the card's left edge:
+	 *  pin radius (22) + breathing room. */
+	export const CARD_PIN_CLEARANCE = 40;
+	/** The card's fixed width in px — must match the `width: 20rem` in the
+	 *  styles below. */
+	export const CARD_WIDTH_PX = 320;
+	/** Half the pin+card composition's span. MapView's centerOn uses this to
+	 *  place the pin left of the pane midpoint so the composition, not the
+	 *  pin, is what ends up centered. */
+	export const CARD_HALF_SPAN = (CARD_PIN_CLEARANCE + CARD_WIDTH_PX) / 2;
 </script>
 
 <script lang="ts">
@@ -42,9 +47,40 @@
 		 *  passes the active filters). Slots without one render as plain rows —
 		 *  a time-hop door must never point at a pin that doesn't exist. */
 		isPinnable?: (slot: TimeSlot) => boolean;
+		/** The active pin's container point within the map pane. The card
+		 *  anchors beside it — right of the pin, flipping left at the edge —
+		 *  and rides along as the map pans. Null falls back to the top-left. */
+		anchor?: { x: number; y: number } | null;
 	}
 
-	let { items, activePromptId, activeSlotIds, onSwitchConvo, onHopSlot, onClose, isPinnable }: Props = $props();
+	let { items, activePromptId, activeSlotIds, onSwitchConvo, onHopSlot, onClose, isPinnable, anchor = null }: Props = $props();
+
+	// ── Anchored positioning ────────────────────────────────────────────
+	// Content-proportioned card next to its pin. Measured sizes (own + the
+	// map pane's) feed a clamped placement: prefer the pin's right, flip to
+	// the left when the right edge can't fit it, keep clear of the pane's
+	// margins and the FloatingNav zone at the bottom.
+	const PIN_CLEARANCE = CARD_PIN_CLEARANCE;
+	const EDGE = 12;
+	const NAV_ZONE = 104; // --nav-clearance (92px) + breathing room
+	let cardEl: HTMLDivElement | undefined = $state();
+	let cardW = $state(0);
+	let cardH = $state(0);
+	const position = $derived.by(() => {
+		// offsetParent, not parentElement: the card mounts behind a
+		// display:contents host, whose client box is 0×0 — the positioned
+		// ancestor (the map pane) is the box the math needs.
+		const pane = cardEl?.offsetParent as HTMLElement | null | undefined;
+		if (!anchor || !pane) return { left: EDGE, top: EDGE };
+		const paneW = pane.clientWidth;
+		const paneH = pane.clientHeight;
+		let left = anchor.x + PIN_CLEARANCE;
+		if (left + cardW + EDGE > paneW) left = anchor.x - PIN_CLEARANCE - cardW;
+		left = Math.max(EDGE, Math.min(left, paneW - cardW - EDGE));
+		let top = anchor.y - Math.min(cardH / 3, 96);
+		top = Math.max(EDGE, Math.min(top, paneH - NAV_ZONE - cardH));
+		return { left, top: Math.max(EDGE, top) };
+	});
 
 	const active = $derived(items.find((i) => i.prompt.id === activePromptId) ?? items[0]);
 	const slots = $derived(active?.prompt.available_slots ?? []);
@@ -83,26 +119,32 @@
 </script>
 
 {#if active}
-	<div class="preview-card" role="dialog" aria-label={active.prompt.title ?? copy.common.untitled}>
-		<div class="preview-head">
-			{#if items.length > 1}
-				<!-- Co-located conversations on one pin: a compact switcher,
-				     never a second list. -->
-				<div class="cluster" role="tablist">
-					{#each items as item (item.prompt.id)}
-						<button
-							type="button"
-							class="cluster-chip"
-							class:active={item.prompt.id === active.prompt.id}
-							role="tab"
-							aria-selected={item.prompt.id === active.prompt.id}
-							onclick={() => onSwitchConvo(item.prompt.id)}
-						>{item.prompt.title ?? copy.common.untitled}</button>
-					{/each}
-				</div>
-			{/if}
-			<button type="button" class="preview-close" onclick={onClose} aria-label={copy.common.close}>&times;</button>
-		</div>
+	<div
+		bind:this={cardEl}
+		bind:clientWidth={cardW}
+		bind:clientHeight={cardH}
+		class="preview-card"
+		style="left: {position.left}px; top: {position.top}px;"
+		role="dialog"
+		aria-label={active.prompt.title ?? copy.common.untitled}
+	>
+		<button type="button" class="preview-close" onclick={onClose} aria-label={copy.common.close}>&times;</button>
+		{#if items.length > 1}
+			<!-- Co-located conversations on one pin: a compact switcher,
+			     never a second list. -->
+			<div class="cluster" role="tablist">
+				{#each items as item (item.prompt.id)}
+					<button
+						type="button"
+						class="cluster-chip"
+						class:active={item.prompt.id === active.prompt.id}
+						role="tab"
+						aria-selected={item.prompt.id === active.prompt.id}
+						onclick={() => onSwitchConvo(item.prompt.id)}
+					>{item.prompt.title ?? copy.common.untitled}</button>
+				{/each}
+			</div>
+		{/if}
 
 		<div class="preview-body">
 			{#if active.prompt.cover_image_url}
@@ -159,11 +201,11 @@
 <style>
 	.preview-card {
 		position: absolute;
-		top: var(--space-4);
-		left: var(--space-4);
 		width: 20rem;
-		/* Constant frame: content swaps inside; the container never reflows. */
-		height: calc(100% - 2 * var(--space-4));
+		/* Content-proportioned, anchored beside its pin (left/top from the
+		   placement math). Capped so it never runs under the FloatingNav
+		   zone; the body scrolls when content exceeds the cap. */
+		max-height: calc(100% - var(--nav-clearance) - var(--space-4));
 		display: flex;
 		flex-direction: column;
 		background: var(--bg-canvas);
@@ -171,28 +213,17 @@
 		border-radius: var(--radius-card);
 		box-shadow: 0 8px 32px rgba(0, 0, 0, 0.22);
 		z-index: 500; /* over the map panes; under the nav (800) and sheets (900) */
-	}
-	.preview-head {
-		position: relative;
-		flex: 0 0 auto;
-		/* Fixed-height strip: the cluster switcher appearing or vanishing never
-		   shifts the body. */
-		height: 2.5rem;
-		display: flex;
-		align-items: center;
-		padding: 0 var(--space-4);
+		padding-top: var(--space-3);
 	}
 	.preview-body {
 		flex: 1;
+		min-height: 0;
 		overflow-y: auto;
-		/* Bottom clearance for the FloatingNav pill, which floats over the map
-		   pane — same pattern as the page's .list-scroll. */
-		padding: var(--space-1) var(--space-4) var(--nav-clearance);
+		padding: 0 var(--space-4) var(--space-4);
 	}
 	.preview-close {
 		position: absolute;
-		top: 50%;
-		transform: translateY(-50%);
+		top: var(--space-2);
 		right: var(--space-2);
 		font-size: var(--text-xl);
 		background: none;
@@ -201,10 +232,16 @@
 		cursor: pointer;
 		line-height: 1;
 		padding: var(--space-1);
+		z-index: 1;
 	}
 	.preview-close:hover { color: var(--text-primary); }
 
-	.cluster { display: flex; gap: var(--space-1); flex: 1; min-width: 0; padding-right: var(--space-6); }
+	.cluster {
+		display: flex;
+		gap: var(--space-1);
+		min-width: 0;
+		padding: 0 var(--space-6) var(--space-2) var(--space-4);
+	}
 	.cluster-chip {
 		flex: 1;
 		min-width: 0;
