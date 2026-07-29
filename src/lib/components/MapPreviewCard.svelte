@@ -100,21 +100,6 @@
 
 	const foldedCount = $derived(slots.filter((s) => !activeIds.has(s.id)).length);
 
-	// Day labels of the card's slot(s), deduped like the BottomSheet's
-	// formatSlotDates — two times on one Tuesday read as one label.
-	const activeDatesLabel = $derived.by(() => {
-		const seen = new Set<string>();
-		const labels: string[] = [];
-		for (const s of slots) {
-			if (!activeIds.has(s.id)) continue;
-			const label = formatShortDate(s.start_time);
-			if (seen.has(label)) continue;
-			seen.add(label);
-			labels.push(label);
-		}
-		return labels.join(' · ');
-	});
-
 	function areaOf(slot: TimeSlot): string {
 		return slot.general_area ?? '';
 	}
@@ -178,10 +163,10 @@
 					<div class="preview-cover preview-cover--placeholder">{(active.prompt.title ?? '?')[0]}</div>
 				{/if}
 				<h3 class="preview-title">{active.prompt.title ?? copy.common.untitled}</h3>
-				<!-- Same meta line as the BottomSheet's compact card: date ·
-				     type tag · author, mono and muted. -->
+				<!-- Same treatment as the BottomSheet card's meta line: type tag ·
+				     author, mono and muted. No date here — the slot rows below
+				     already carry date and time. -->
 				<div class="preview-meta">
-					{#if activeDatesLabel}<span class="meta-left">{activeDatesLabel}</span>{/if}
 					<ConversationTypeTag type={active.prompt.capacity === 1 ? '1on1' : 'group'} />
 					{#if active.prompt.author_username}
 						<span class="meta-author">@{active.prompt.author_username}</span>
@@ -326,14 +311,6 @@
 		align-items: center;
 		gap: var(--space-1) var(--space-2);
 		margin-top: var(--space-1);
-	}
-	.meta-left {
-		font-family: var(--font-mono);
-		font-size: var(--text-xs);
-		text-transform: uppercase;
-		letter-spacing: 0.04em;
-		color: var(--text-muted);
-		white-space: nowrap;
 	}
 	.meta-author {
 		font-family: var(--font-mono);
