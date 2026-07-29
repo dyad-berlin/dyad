@@ -63,7 +63,9 @@ test.describe('Discover — desktop preview card', () => {
 		await expect(page).toHaveURL(/\/discover\?preview=/);
 		await expect(page.locator('.preview-card')).toBeVisible();
 		await expect(page.locator('.marker-pin--active')).toHaveCount(1);
-		await expect(page.locator('.preview-cta')).toHaveAttribute('href', /^\/conversations\//);
+		// The card's content block is the link into the conversation (the
+		// separate CTA button is gone).
+		await expect(page.locator('.preview-open')).toHaveAttribute('href', /^\/conversations\//);
 	});
 
 	test('back restores the preview after visiting a conversation; back again closes it', async ({ page }) => {
@@ -79,8 +81,9 @@ test.describe('Discover — desktop preview card', () => {
 		await expect(page.locator('.preview-card')).toBeVisible();
 		await expect(page).toHaveURL(/\?preview=/);
 
-		// Through the CTA to the conversation, then back: same card, same URL.
-		await page.locator('.preview-cta').click();
+		// Through the card's content link to the conversation, then back:
+		// same card, same URL.
+		await page.locator('.preview-open').click();
 		await expect(page).toHaveURL(/\/conversations\//);
 		await page.goBack();
 		await expect(page).toHaveURL(/\?preview=/);

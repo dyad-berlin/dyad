@@ -16,6 +16,7 @@
 	import type { PromptSummary, TimeSlot } from '$lib/domain/types';
 	import { formatShortDate, formatSlotTimeRange } from '$lib/utils/dates';
 	import { copy } from '$lib/copy';
+	import ConversationTypeTag from './ConversationTypeTag.svelte';
 
 	// Desktop preview card — "one preview, two doors, one place" (design note
 	// rev 3.2). Floats in a constant frame over the map pane; opened by a pin
@@ -147,21 +148,34 @@
 		{/if}
 
 		<div class="preview-body">
-			{#if active.prompt.cover_image_url}
-				<img class="preview-cover" src={active.prompt.cover_image_url} alt="" />
-			{:else}
-				<div class="preview-cover preview-cover--placeholder">{(active.prompt.title ?? '?')[0]}</div>
-			{/if}
-			<h3 class="preview-title">{active.prompt.title ?? copy.common.untitled}</h3>
-			{#if active.prompt.author_username}
-				<p class="preview-byline">@{active.prompt.author_username}</p>
-			{/if}
-			<div class="preview-tags">
-				<span class="tag">{active.prompt.capacity === 1 ? copy.discover.filterOneOnOne : copy.discover.filterGroup}</span>
-			</div>
-			{#if active.prompt.body_snippet}
-				<p class="preview-snippet">{active.prompt.body_snippet}</p>
-			{/if}
+			<!-- The content block IS the link into the conversation (mirrors the
+			     BottomSheet's whole-card link). The interactive rows below —
+			     slot doors, the fold, cluster chips, close — stay separate
+			     controls, so no button ever nests inside the anchor. -->
+			<a
+				class="preview-open"
+				href={`/conversations/${active.prompt.id}`}
+				aria-label={copy.discover.previewOpenLabel(active.prompt.title ?? copy.common.untitled)}
+			>
+				{#if active.prompt.cover_image_url}
+					<img class="preview-cover" src={active.prompt.cover_image_url} alt="" />
+				{:else}
+					<div class="preview-cover preview-cover--placeholder">{(active.prompt.title ?? '?')[0]}</div>
+				{/if}
+				<h3 class="preview-title">{active.prompt.title ?? copy.common.untitled}</h3>
+				<!-- Same treatment as the BottomSheet card's meta line: type tag ·
+				     author, mono and muted. No date here — the slot rows below
+				     already carry date and time. -->
+				<div class="preview-meta">
+					<ConversationTypeTag type={active.prompt.capacity === 1 ? '1on1' : 'group'} />
+					{#if active.prompt.author_username}
+						<span class="meta-author">@{active.prompt.author_username}</span>
+					{/if}
+				</div>
+				{#if active.prompt.body_snippet}
+					<p class="preview-snippet">{active.prompt.body_snippet}</p>
+				{/if}
+			</a>
 
 			<div class="preview-times">
 				{#each slots as slot (slot.id)}
@@ -193,7 +207,6 @@
 				{/if}
 			</div>
 
-			<a class="preview-cta" href={`/conversations/${active.prompt.id}`}>{copy.discover.previewOpenCta}</a>
 		</div>
 	</div>
 {/if}
@@ -259,9 +272,17 @@
 	}
 	.cluster-chip.active { border-color: var(--text-primary); color: var(--text-primary); }
 
+	/* The head block is the door into the conversation. */
+	.preview-open {
+		display: block;
+		color: inherit;
+		text-decoration: none;
+	}
+
 	.preview-cover {
 		width: 100%;
-		height: 108px;
+		/* Near-square: the card's content column is 288px wide. */
+		height: 180px;
 		border-radius: var(--radius-input);
 		object-fit: cover;
 		display: block;
@@ -280,13 +301,17 @@
 		margin: var(--space-3) 0 0;
 		line-height: var(--leading-tight);
 	}
-	.preview-byline { font-size: var(--text-sm); color: var(--text-muted); margin: 2px 0 0; }
-	.preview-tags { display: flex; gap: var(--space-2); margin-top: var(--space-2); }
-	.tag {
+	/* Same shape as ConversationCard's compact-meta row. */
+	.preview-meta {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--space-1) var(--space-2);
+		margin-top: var(--space-2);
+	}
+	.meta-author {
+		font-family: var(--font-mono);
 		font-size: var(--text-xs);
-		padding: 2px var(--space-2);
-		border-radius: 999px;
-		background: var(--bg-control);
 		color: var(--text-muted);
 	}
 	.preview-snippet {
@@ -332,17 +357,4 @@
 		padding: var(--space-1) var(--space-3);
 	}
 	.more-times:hover { color: var(--text-primary); }
-
-	.preview-cta {
-		display: block;
-		margin-top: var(--space-4);
-		padding: var(--space-3);
-		border: 1px solid var(--text-primary);
-		border-radius: var(--radius-input);
-		background: var(--text-primary);
-		color: var(--bg-canvas);
-		font-size: var(--text-sm);
-		text-align: center;
-		text-decoration: none;
-	}
 </style>
