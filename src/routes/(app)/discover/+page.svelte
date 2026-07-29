@@ -279,10 +279,16 @@
 			skipNextItemsReport = false;
 			return;
 		}
-		selectedPinItems = items;
-		if (previewPromptId && !items.some((i) => i.prompt.id === previewPromptId)) {
-			previewPromptId = items[0].prompt.id;
-		}
+		// untrack: this runs inside MapView's marker-rebuild $effect. Reading
+		// previewPromptId tracked would subscribe that effect to page state it
+		// has no business rerunning for (see closeSheet for the crash this
+		// class of leak causes).
+		untrack(() => {
+			selectedPinItems = items;
+			if (previewPromptId && !items.some((i) => i.prompt.id === previewPromptId)) {
+				previewPromptId = items[0].prompt.id;
+			}
+		});
 	}
 	let skipNextItemsReport = false;
 
@@ -336,7 +342,12 @@
 	}
 
 	function closeSheet() {
-		const wasOpen = selectedPinItems.length > 0 || previewSlotIds.length > 0;
+		// untrack: closeSheet runs inside the filter-change $effect. A tracked
+		// read here would make that effect depend on the very state it clears
+		// below — and since clearing assigns fresh arrays, every run would
+		// re-invalidate it: an infinite effect loop that crashes the page
+		// (effect_update_depth_exceeded) on any filter change.
+		const wasOpen = untrack(() => selectedPinItems.length > 0 || previewSlotIds.length > 0);
 		lastRestoredParam = null;
 		selectedPinItems = [];
 		previewPromptId = null;

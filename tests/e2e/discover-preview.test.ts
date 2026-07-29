@@ -170,6 +170,13 @@ test.describe('Discover — desktop preview card', () => {
 	});
 
 	test('changing a filter closes the card and clears the ring', async ({ page }) => {
+		// Filter changes run closeSheet inside an $effect — a tracked read in
+		// that path once caused an infinite effect loop that crashed the page
+		// (effect_update_depth_exceeded) on ANY filter change, while the DOM
+		// assertions below still passed. Page errors are part of the contract.
+		const errors: string[] = [];
+		page.on('pageerror', (e) => errors.push(String(e)));
+
 		await page.goto('/discover');
 		const pin = page.locator('.marker-pin').first();
 		try {
@@ -187,5 +194,13 @@ test.describe('Discover — desktop preview card', () => {
 		await page.locator('.day-row .day-cell').first().click();
 		await expect(page.locator('.preview-card')).toHaveCount(0);
 		await expect(page.locator('.marker-pin--active')).toHaveCount(0);
+
+		// Toggle again (off) and once more with no preview open — the crash
+		// fired on every filter change, preview or not.
+		await page.locator('.day-row .day-cell').first().click();
+		await page.locator('.day-row .day-cell').nth(1).click();
+		// The map must still be alive after filter churn.
+		await expect(page.locator('.leaflet-container')).toBeVisible();
+		expect(errors).toEqual([]);
 	});
 });
