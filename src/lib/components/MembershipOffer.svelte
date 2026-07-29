@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { copy } from '$lib/copy';
 	import { ct } from '$lib/copy-runtime.svelte';
+	import { capture } from '$lib/analytics';
 	import type { GateReason } from '$lib/utils/membership-error.js';
 
 	// The join/renew offer body — cadence first, then (for monthly) a tier.
@@ -73,6 +74,9 @@
 			});
 			const body = await res.json().catch(() => ({}));
 			if (res.ok && body.url) {
+				// Fire before the redirect unloads the page; the layout's queue shim
+				// holds events fired before the tracker script finishes loading.
+				capture('membership_checkout_started', { cadence });
 				window.location.href = body.url; // full-page redirect to Stripe
 				return;
 			}

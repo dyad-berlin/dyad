@@ -23,6 +23,9 @@
  * truth for the Plausible Goals dashboard.
  */
 export type EventName =
+	| 'waitlist_request'
+	| 'membership_checkout_started'
+	| 'membership_activated'
 	| 'conversation_published'
 	| 'conversation_unpublished'
 	| 'conversation_deleted'

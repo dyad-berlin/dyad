@@ -4,6 +4,7 @@
 	import { invalidate, goto } from '$app/navigation';
 	import { copy } from '$lib/copy';
 	import { ct } from '$lib/copy-runtime.svelte';
+	import { capture } from '$lib/analytics';
 	import MembershipOffer from '$lib/components/MembershipOffer.svelte';
 
 	let { data } = $props();
@@ -56,6 +57,7 @@
 		if (status !== 'success') return;
 		// Fast webhook: already active on return — go straight back to context.
 		if (isActive) {
+			capture('membership_activated');
 			if (returnTo) goto(returnTo);
 			return;
 		}
@@ -72,6 +74,7 @@
 			}
 			if (data.membership?.active) {
 				clearInterval(iv);
+				capture('membership_activated');
 				if (returnTo) goto(returnTo);
 			} else if (elapsed >= 30000) {
 				clearInterval(iv);
