@@ -36,21 +36,11 @@
 	// reactive state.
 	let destroyed = false;
 
-	// Manual option appears as the last item in the dropdown when the query is
-	// non-empty. Lets the member explicitly say "use this text as the place name
-	// even though Nominatim doesn't know it." Replaces the silent on-blur commit
-	// that previously fired with lat/lng = 0,0 and broke the public map.
-	const manualOption = $derived.by(() => {
-		const trimmed = query.trim();
-		if (!trimmed) return null;
-		// Don't offer a manual option that duplicates a returned result.
-		if (results.some((r) => r.name.toLowerCase() === trimmed.toLowerCase())) return null;
-		return trimmed;
-	});
-
-	// Total navigable rows (results + optional manual + optional empty hint).
-	// Used to bound highlightedIndex.
-	const navigableCount = $derived(results.length + (manualOption ? 1 : 0));
+	// No free-text commit: a location must be picked from the results. Manual
+	// entries carried lat/lng = 0,0, which broke the neighbourhood derivation
+	// and left the conversation permanently pinless on the discover map — the
+	// server now rejects them too (see validateRegion).
+	const navigableCount = $derived(results.length);
 
 	function optionId(index: number): string {
 		return `loc-opt-${index}`;
@@ -120,16 +110,6 @@
 		closeDropdown();
 	}
 
-	function selectManual(text: string) {
-		// Explicit user choice: commit the typed text as a manual location with
-		// no coordinates. The map view should treat lat/lng = 0,0 as "no map
-		// pin" rather than rendering a pin in the Atlantic — that handling
-		// belongs in the map consumer, not here.
-		onChange({ place_id: 'manual', name: text, address: text, lat: 0, lng: 0 });
-		query = text;
-		closeDropdown();
-	}
-
 	function clearValue() {
 		query = '';
 		results = [];
@@ -169,18 +149,14 @@
 			if (!dropdownOpen) return;
 			e.preventDefault();
 			if (highlightedIndex < 0) {
-				// No selection: prefer the first real result, then manual option.
+				// No selection: commit the first real result, if any.
 				if (results.length > 0) {
 					selectResult(results[0]);
-				} else if (manualOption) {
-					selectManual(manualOption);
 				}
 				return;
 			}
 			if (highlightedIndex < results.length) {
 				selectResult(results[highlightedIndex]);
-			} else if (manualOption) {
-				selectManual(manualOption);
 			}
 			return;
 		}
@@ -198,7 +174,7 @@
 	}
 
 	function handleFocus() {
-		if (results.length > 0 || loading || manualOption) {
+		if (results.length > 0 || loading) {
 			dropdownOpen = true;
 		}
 	}
@@ -234,14 +210,14 @@
 	});
 
 	// Empty-state and any-content predicates. Folded together — the empty-state
-	// row is one of the four content sources (loading, results, manual, empty),
-	// so the any-content predicate enumerates all four directly.
+	// row is one of the three content sources (loading, results, empty), so
+	// the any-content predicate enumerates all three directly.
 	const showEmptyState = $derived(
-		dropdownOpen && !loading && query.trim().length >= 2 && results.length === 0 && !manualOption
+		dropdownOpen && !loading && query.trim().length >= 2 && results.length === 0
 	);
 
 	const showAnyDropdownContent = $derived(
-		dropdownOpen && (loading || results.length > 0 || !!manualOption || showEmptyState)
+		dropdownOpen && (loading || results.length > 0 || showEmptyState)
 	);
 
 	// Auto-scroll the highlighted option into view when keyboard navigation
@@ -317,30 +293,9 @@
 				</button>
 			{/each}
 
-			{#if manualOption}
-				{@const manualIdx = results.length}
-				<button
-					type="button"
-					tabindex="-1"
-					id={optionId(manualIdx)}
-					class="location-option location-option--manual"
-					class:highlighted={highlightedIndex === manualIdx}
-					role="option"
-					aria-selected={highlightedIndex === manualIdx}
-					onmousedown={(e) => {
-						e.preventDefault();
-						selectManual(manualOption);
-					}}
-					onmouseenter={() => (highlightedIndex = manualIdx)}
-				>
-					<span class="loc-name">Use "{manualOption}" as place name</span>
-					<span class="loc-addr">No map pin will be shown</span>
-				</button>
-			{/if}
-
 			{#if showEmptyState}
 				<div class="dropdown-state" aria-live="polite">
-					No matches for "{query.trim()}"
+					No matches for "{query.trim()}" — try a nearby street or landmark
 				</div>
 			{/if}
 		</div>
@@ -414,11 +369,6 @@
 	}
 
 	.location-option:focus { outline: none; background: var(--bg-control); }
-
-	.location-option--manual .loc-name {
-		color: var(--text-muted);
-		font-style: italic;
-	}
 
 	.loc-name { color: var(--text-primary); display: block; }
 	.loc-addr { color: var(--text-muted); font-size: var(--text-xs); display: block; margin-top: var(--space-1); }

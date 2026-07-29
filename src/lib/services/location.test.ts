@@ -264,9 +264,10 @@ describe('validateRegion', () => {
 		).toBe(false);
 	});
 
-	it('accepts a manual (free-text) location regardless of coords', () => {
-		// Manual locations carry placeholder lat:0, lng:0 because the user
-		// typed them without picking a Nominatim suggestion. Trust the input.
+	it('rejects a manual (free-text) location — the path is retired', () => {
+		// Manual locations carried placeholder lat:0, lng:0 and broke the
+		// neighbourhood derivation (pinless conversations). The UI no longer
+		// offers them; the server rejects stale clients that still send one.
 		expect(
 			validateRegion({
 				place_id: 'manual',
@@ -275,7 +276,7 @@ describe('validateRegion', () => {
 				lat: 0,
 				lng: 0
 			})
-		).toBe(true);
+		).toBe(false);
 	});
 
 	it('rejects a non-manual location with placeholder lat:0,lng:0', () => {
@@ -306,7 +307,7 @@ describe('validateRegion', () => {
 		expect(logged?.place_id).toBe('99999');
 	});
 
-	it('does not log when the location is a manual entry', () => {
+	it('rejects a manual entry without logging (expected client drift, not corruption)', () => {
 		const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 		validateRegion({
 			place_id: 'manual',
