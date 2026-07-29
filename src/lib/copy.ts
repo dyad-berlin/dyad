@@ -147,22 +147,26 @@ export const copy = {
 		footerCommunity: 'Wiggling',
 		footerNewsletter: 'Newsletter',
 		footerLegal: 'Legal',
-		// Hero headline + supporting line (display copy; sentence case is the
-		// intentional brand styling — see CLAUDE.md § UI conventions).
-		// "Collectively owned" removed 2026-07-20 — same reason "Steward-owned"
-		// was removed 2026-07-14: dyad is not yet collectively owned. The
-		// subcopy states it as a "to be" — a stated direction, not a present
-		// claim. The archived ownership page lives at
-		// src/lib/archive/StewardOwnershipPage.svelte.
+		// Hero: a three-line headline and three subcopy paragraphs (display
+		// copy; sentence case is the intentional brand styling — see CLAUDE.md
+		// § UI conventions). The middle paragraph is split into
+		// subcopyHighlightPre + subcopyHighlight only so the audience phrase
+		// can render bold (mirroring the waitlist introPre/introPost pattern);
+		// subcopyClosing is its own paragraph.
+		// Ownership language: "Collectively owned" was removed as a PRESENT
+		// claim 2026-07-20 (same reason "Steward-owned" went 2026-07-14 — dyad
+		// is not yet collectively owned). subcopyHighlightPre carries it as a
+		// stated direction ("will be"), which is the settled framing. The
+		// archived ownership page lives at src/lib/archive/StewardOwnershipPage.svelte.
 		headlineLine1: 'Meet people',
 		headlineLine2: "you wouldn't otherwise.",
 		headlineLine3: 'On your own terms.',
 		subcopy: 'We are a collective working in service to community and collective sensemaking.',
-		subcopyBodyPre:
-			'We do that by building open-source online software, Dyad, that will be collectively owned and governed, ',
-		subcopyBodyHighlight:
+		subcopyHighlightPre:
+			'We do that by building open-source online software, dyad, that will be collectively owned and governed,',
+		subcopyHighlight:
 			'for people seeking encounters beyond their existing circles through in-person conversation.',
-		subcopyBodyPost:
+		subcopyClosing:
 			'Alongside the platform, we publish editorial work and will produce seasonal public event series that offer alternatives to the infrastructures of Big Tech and corporate media, creating different conditions for how we meet, think, and live together.',
 		// CTA on the map card that floats over a selected conversation.
 		mapCardCta: 'Join to read & meet',

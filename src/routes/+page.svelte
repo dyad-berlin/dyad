@@ -80,12 +80,8 @@
 			<header class="left-head">
 				<h1 class="left-title">{og.headlineLine1}<br />{og.headlineLine2}<br />{og.headlineLine3}</h1>
 				<p class="left-sub">{og.subcopy}</p>
-				<p class="left-sub"
-					>{og.subcopyBodyPre}<strong class="left-sub-highlight"
-						>{og.subcopyBodyHighlight}</strong
-					></p
-				>
-				<p class="left-sub">{og.subcopyBodyPost}</p>
+				<p class="left-sub">{og.subcopyHighlightPre} <strong class="left-sub-highlight">{og.subcopyHighlight}</strong></p>
+				<p class="left-sub">{og.subcopyClosing}</p>
 				<div class="left-links">
 					<a href="/waitlist" class="btn-join" data-testid="join-cta">{og.joinWaitlist}</a>
 					<!-- href fallback so this action degrades without JS -->
