@@ -3,6 +3,7 @@
 	import type { PromptSummary, TimeSlot } from '$lib/domain/types';
 	import type { Map as LeafletMap, LayerGroup } from 'leaflet';
 	import { buildPins, berlinDistance, FUZZ_MAX_METERS, type SlotFilter } from './MapView.pins';
+	import { CARD_HALF_SPAN } from './MapPreviewCard.svelte';
 
 	interface Props {
 		prompts: PromptSummary[];
@@ -128,6 +129,10 @@
 		if (!mapContainer) return;
 
 		const L = await import('leaflet');
+		// The component can unmount during the chunk load (fast map/list
+		// toggle). Constructing the map then would register listeners and
+		// fire pans against a dead container that onDestroy already ran for.
+		if (destroyed) return;
 		leafletModule = L;
 
 		(L.Icon.Default as any).prototype.options.imagePath = '/leaflet/';
@@ -211,16 +216,19 @@
 	}
 
 	/** Pan so the pin lands left of the pane's midpoint — approximately
-	 *  centering the pin-plus-card composition (the card hangs ~360px off the
-	 *  pin's right side). Used for sidebar opens and cross-location hops,
-	 *  where the pin starts far away or off-screen. */
+	 *  centering the pin-plus-card composition (the card hangs off the pin's
+	 *  right side; see CARD_HALF_SPAN). Used for sidebar opens and
+	 *  cross-location hops, where the pin starts far away or off-screen.
+	 *  Animation mirrors Leaflet's own pan-too-far guard: short hops glide,
+	 *  cross-city jumps cut instead of scrolling the whole map past. */
 	function centerOn(position: [number, number]) {
-		if (!map) return;
+		if (!map || !leafletModule) return;
 		const point = map.latLngToContainerPoint(position);
 		const size = map.getSize();
-		const targetX = Math.max(size.x / 2 - 180, 60);
+		const targetX = Math.max(size.x / 2 - CARD_HALF_SPAN, 60);
 		const targetY = size.y / 2;
-		map.panBy([point.x - targetX, point.y - targetY], { animate: true });
+		const offset = leafletModule.point(point.x - targetX, point.y - targetY);
+		map.panBy(offset, { animate: size.contains(offset) });
 	}
 
 	/** Last built pin set, kept so move/zoom events can re-report the active
@@ -291,7 +299,9 @@
 		}
 	});
 
+	let destroyed = false;
 	onDestroy(() => {
+		destroyed = true;
 		map?.off('move zoom moveend zoomend', reportActivePoint);
 		map?.remove();
 		map = undefined;

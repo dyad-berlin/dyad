@@ -134,8 +134,16 @@
 	// a card is open closes it. Shallow routing — no load rerun.
 	let previewPushed = false;
 
+	// The address bar, live. page.url is NOT updated by shallow
+	// pushState/replaceState, so reading it here would see the pre-open URL
+	// forever — every hop would push a fresh history entry and closes would
+	// misfire (verified against SvelteKit's behavior in review).
+	function liveUrl(): URL {
+		return new URL(location.href);
+	}
+
 	function writePreviewParam(slotId: string) {
-		const url = new URL(page.url);
+		const url = liveUrl();
 		const fresh = !url.searchParams.has('preview');
 		url.searchParams.set('preview', slotId);
 		// The slot id rides in both the URL param (survives hard loads and
@@ -152,8 +160,15 @@
 		}
 	}
 
+	function stripPreviewParam() {
+		const url = liveUrl();
+		if (!url.searchParams.has('preview')) return;
+		url.searchParams.delete('preview');
+		replaceState(url, {});
+	}
+
 	function clearPreviewParam() {
-		if (!page.url.searchParams.has('preview')) return;
+		if (!liveUrl().searchParams.has('preview')) return;
 		if (previewPushed) {
 			// We own the history entry — pop it, so back after closing doesn't
 			// reopen the card.
@@ -162,9 +177,7 @@
 		} else {
 			// Restored from a URL we didn't push (back-navigation or direct
 			// link): strip the param in place.
-			const url = new URL(page.url);
-			url.searchParams.delete('preview');
-			replaceState(url, {});
+			stripPreviewParam();
 		}
 	}
 
@@ -173,31 +186,54 @@
 	function openPreviewBySlotId(slotId: string) {
 		const prompt = data.prompts.find((p) => p.available_slots.some((s) => s.id === slotId));
 		if (!prompt) {
-			// Stale param (slot expired or filtered out of the feed).
-			const url = new URL(page.url);
-			url.searchParams.delete('preview');
-			replaceState(url, {});
+			// Stale param (slot expired or filtered out of the feed). Strip on
+			// a macrotask: on a hard load this effect runs during hydration,
+			// before SvelteKit's router initializes, and an immediate
+			// replaceState throws — killing the page's reactivity with it.
+			setTimeout(() => {
+				try {
+					stripPreviewParam();
+				} catch {
+					// Router still not ready — the stale param is harmless and
+					// gone on the next navigation.
+				}
+			}, 0);
 			return;
 		}
 		const slot = prompt.available_slots.find((s) => s.id === slotId)!;
+		// Anchor the card to a pinnable slot: a restored slot without map
+		// coordinates would strand the card with no pin to sit beside.
+		const anchorSlot = slotIsPinnable(slot)
+			? slot
+			: (prompt.available_slots.find(slotIsPinnable) ?? slot);
 		previewPanMode = 'center';
-		selectedPinItems = [{ prompt, slots: [slot] }];
+		selectedPinItems = [{ prompt, slots: [anchorSlot] }];
 		previewPromptId = prompt.id;
-		previewSlotIds = [slotId];
+		previewSlotIds = [anchorSlot.id];
 	}
 
+	// When a restored slot has no pin, the preview anchors to a sibling slot
+	// and previewSlotIds diverges from the URL param — remember the handled
+	// param so the divergence doesn't read as "URL changed, reopen".
+	let lastRestoredParam: string | null = null;
+
 	// URL → state, for changes we didn't make ourselves (popstate, initial
-	// load with ?preview). Tracks only the URL; preview state is read
-	// untracked so our own handlers (which write both in the same tick)
-	// don't retrigger it.
+	// load with ?preview). Tracks page.url and page.state for reruns, but
+	// the URL *value* comes from location.href (see liveUrl); preview state
+	// is read untracked so our own handlers (which write both in the same
+	// tick) don't retrigger it.
 	$effect(() => {
-		const param = page.state.previewSlot ?? page.url.searchParams.get('preview');
+		const stateSlot = page.state.previewSlot;
+		void page.url; // tracked: popstate and full navigations rerun this
 		untrack(() => {
-			if (param && param !== (previewSlotIds[0] ?? null)) {
+			const param = stateSlot ?? liveUrl().searchParams.get('preview');
+			if (param && param !== (previewSlotIds[0] ?? null) && param !== lastRestoredParam) {
+				lastRestoredParam = param;
 				openPreviewBySlotId(param);
 			} else if (!param && (previewSlotIds.length > 0 || selectedPinItems.length > 0)) {
 				// Back past the open-entry: close without touching history.
 				previewPushed = false;
+				lastRestoredParam = null;
 				selectedPinItems = [];
 				previewPromptId = null;
 				previewSlotIds = [];
@@ -235,11 +271,20 @@
 	 *  cluster on URL-restored opens. */
 	function adoptActivePinItems(items: Array<{ prompt: PromptSummary; slots: TimeSlot[] }> | null) {
 		if (!items || items.length === 0) return;
+		// A chip switch stays on the same stacked cluster: adopting the
+		// report re-centres itemsAround on the switched convo's own pin,
+		// which can reorder or drop chips under the cursor. Skip that one
+		// report; hops and restores still adopt.
+		if (skipNextItemsReport) {
+			skipNextItemsReport = false;
+			return;
+		}
 		selectedPinItems = items;
 		if (previewPromptId && !items.some((i) => i.prompt.id === previewPromptId)) {
 			previewPromptId = items[0].prompt.id;
 		}
 	}
+	let skipNextItemsReport = false;
 
 	// Whether a slot has a pin on the current map: it carries coordinates and
 	// passes the active slot filters (buildPins skips anything else). Both the
@@ -247,7 +292,9 @@
 	// point at a pin that doesn't exist.
 	function slotIsPinnable(slot: TimeSlot): boolean {
 		if (slot.general_area_lat == null || slot.general_area_lng == null) return false;
-		if (!slot.general_area) return false;
+		// Trim to match buildPins exactly — a whitespace-only area label must
+		// not count as pinnable here while producing no pin there.
+		if (!slot.general_area?.trim()) return false;
 		return mapSlotFilter ? mapSlotFilter(slot) : true;
 	}
 
@@ -273,6 +320,7 @@
 
 	function switchPreviewConvo(promptId: string) {
 		previewPanMode = 'ensure';
+		skipNextItemsReport = true;
 		previewPromptId = promptId;
 		const item = selectedPinItems.find((i) => i.prompt.id === promptId);
 		previewSlotIds = (item?.slots?.length ? item.slots : item?.prompt.available_slots.slice(0, 1) ?? []).map((s) => s.id);
@@ -289,6 +337,7 @@
 
 	function closeSheet() {
 		const wasOpen = selectedPinItems.length > 0 || previewSlotIds.length > 0;
+		lastRestoredParam = null;
 		selectedPinItems = [];
 		previewPromptId = null;
 		previewSlotIds = [];

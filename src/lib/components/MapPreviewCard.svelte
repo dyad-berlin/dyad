@@ -1,3 +1,16 @@
+<script lang="ts" module>
+	/** Horizontal gap between the pin center and the card's left edge:
+	 *  pin radius (22) + breathing room. */
+	export const CARD_PIN_CLEARANCE = 40;
+	/** The card's fixed width in px — must match the `width: 20rem` in the
+	 *  styles below. */
+	export const CARD_WIDTH_PX = 320;
+	/** Half the pin+card composition's span. MapView's centerOn uses this to
+	 *  place the pin left of the pane midpoint so the composition, not the
+	 *  pin, is what ends up centered. */
+	export const CARD_HALF_SPAN = (CARD_PIN_CLEARANCE + CARD_WIDTH_PX) / 2;
+</script>
+
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
 	import type { PromptSummary, TimeSlot } from '$lib/domain/types';
@@ -47,7 +60,7 @@
 	// map pane's) feed a clamped placement: prefer the pin's right, flip to
 	// the left when the right edge can't fit it, keep clear of the pane's
 	// margins and the FloatingNav zone at the bottom.
-	const PIN_CLEARANCE = 40; // pin radius (22) + breathing room
+	const PIN_CLEARANCE = CARD_PIN_CLEARANCE;
 	const EDGE = 12;
 	const NAV_ZONE = 104; // --nav-clearance (92px) + breathing room
 	let cardEl: HTMLDivElement | undefined = $state();
