@@ -310,7 +310,9 @@
 		flex-wrap: wrap;
 		align-items: center;
 		gap: var(--space-1) var(--space-2);
-		margin-top: var(--space-1);
+		/* A step of air below the title — at space-1 the mono line reads as
+		   glued to the heading while the snippet floats at space-3. */
+		margin-top: var(--space-2);
 	}
 	.meta-author {
 		font-family: var(--font-mono);
