@@ -45,15 +45,25 @@ test.describe('Smoke tests', () => {
 	});
 
 	test('Map view toggles', async ({ browser }) => {
-		const context = await browser.newContext({ storageState: TEST_USERS.sophie.storagePath });
+		// newContext ignores the project's device config, so pin a phone
+		// viewport explicitly — these assertions are about the mobile panes.
+		const context = await browser.newContext({
+			storageState: TEST_USERS.sophie.storagePath,
+			viewport: { width: 390, height: 844 }
+		});
 		const page = await context.newPage();
 
 		await page.goto('/discover');
-		// Discover now shows map by default — toggle to list, then back to map
+		// Mobile split view IS the map (the list pane hides): assert the panes,
+		// not just the toggle's presence, to lock in the map-first default.
 		const toggleBtn = page.getByRole('button', { name: /Map view|List view/i });
 		await expect(toggleBtn).toBeVisible({ timeout: 5000 });
+		await expect(page.locator('.map-pane--split')).toBeVisible();
+		await expect(page.locator('.list-pane')).toBeHidden();
 		await toggleBtn.click();
-		// Should still have the toggle visible after clicking
+		// List view: full-width list, no map.
+		await expect(page.locator('.list-full')).toBeVisible();
+		await expect(page.locator('.map-pane--split')).toHaveCount(0);
 		await expect(page.getByRole('button', { name: /Map view|List view/i })).toBeVisible();
 		await context.close();
 	});

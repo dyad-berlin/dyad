@@ -2,6 +2,9 @@ import type { PageServerLoad } from './$types';
 import { SupabasePromptQueryService } from '$lib/services/prompt-query.js';
 import { regionMapCenter, resolveViewRegion } from '$lib/services/location.js';
 
+// Feed page size — see the comment at the call site.
+const DISCOVER_FEED_LIMIT = 60;
+
 export const load: PageServerLoad = async ({ locals }) => {
 	// Auth guard handled by (app)/+layout.server.ts
 	const service = new SupabasePromptQueryService(locals.supabase);
@@ -20,7 +23,14 @@ export const load: PageServerLoad = async ({ locals }) => {
 			region,
 			userId: locals.user!.id,
 			scopes: locals.scopes,
-			homeScope: locals.homeScope
+			homeScope: locals.homeScope,
+			// Sized to the scheduling horizon, not the old default of 20: the
+			// When filter reaches 28 days ahead, and a page holding only the 20
+			// soonest conversations could answer a far-date filter with "no
+			// matches" while matching conversations exist beyond the page.
+			// Server-side date filtering is the scale path when volume makes
+			// this too heavy.
+			limit: DISCOVER_FEED_LIMIT
 		}),
 		service.getSearchCorpus(region, locals.scopes, locals.homeScope)
 	]);

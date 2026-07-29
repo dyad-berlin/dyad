@@ -18,7 +18,7 @@
 		title: string;
 		coverUrl?: string | null;
 		href?: string;
-		onclick?: () => void;
+		onclick?: (e: MouseEvent) => void;
 		snippet?: string | null;
 		/** Meta row (above title in full, replaces title underline in profile). */
 		metaLeft?: string | null;
@@ -158,7 +158,10 @@
      points. -->
 <div class="card-shell" class:profile={variant === 'profile'}>
 	{#if href}
-		<a {href} class="card" class:dimmed>
+		<!-- onclick may accompany href: the caller can intercept the plain
+		     primary click (e.g. to open a preview) while modified clicks
+		     (cmd/ctrl/shift/middle) fall through to real link behavior. -->
+		<a {href} class="card" class:dimmed {onclick}>
 			{@render inner()}
 		</a>
 	{:else if onclick}

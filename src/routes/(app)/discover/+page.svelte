@@ -6,6 +6,7 @@
 	import { onMount } from 'svelte';
 	import MapView from '$lib/components/MapView.svelte';
 	import BottomSheet from '$lib/components/BottomSheet.svelte';
+	import MapPreviewCard, { PREVIEW_CARD_PAN_INSET } from '$lib/components/MapPreviewCard.svelte';
 	import FloatingNav from '$lib/components/FloatingNav.svelte';
 	import SearchOverlay from '$lib/components/SearchOverlay.svelte';
 	import ConversationCard from '$lib/components/ConversationCard.svelte';
@@ -89,25 +90,99 @@
 			void goto('/membership');
 		}
 	}
-	let viewMode = $state<'list' | 'map' | 'split'>('split');
+	// Two views, not three: 'split' pairs the map with the list (desktop) or
+	// shows the map full-bleed (mobile, where the list pane hides); 'list' is
+	// the full-width list on both. The old map-only mode collapsed into
+	// 'split' — on desktop it was near-identical to split, and on mobile
+	// split previously hid the map, which made the third mode load-bearing
+	// for the wrong reason.
+	let viewMode = $state<'list' | 'split'>('split');
 	let mapCenter = $state<[number, number] | null>(null);
 	let mapZoom = $state<number | null>(null);
 
 	// Persist the list/map choice alongside map position so returning from a
 	// conversation restores the view the member was using, not the map default.
+	// Old snapshots may still carry 'map' — restore it as 'split'.
 	export const snapshot: Snapshot<{ center: [number, number] | null; zoom: number | null; view?: 'list' | 'map' | 'split' }> = {
 		capture: () => ({ center: mapCenter, zoom: mapZoom, view: viewMode }),
-		restore: (value) => { mapCenter = value.center; mapZoom = value.zoom; if (value.view) viewMode = value.view; }
+		restore: (value) => {
+			mapCenter = value.center;
+			mapZoom = value.zoom;
+			if (value.view) viewMode = value.view === 'map' ? 'split' : value.view;
+		}
 	};
 	let searchOpen = $state(false);
 	let selectedPinItems = $state<Array<{ prompt: PromptSummary; slots: TimeSlot[] }>>([]);
+	// Desktop preview state ("one preview, two doors"): which conversation the
+	// card shows, and which slot(s) it corresponds to — the door pin's slots,
+	// or the single hopped slot after a time hop. Mobile ignores these beyond
+	// the pin ring; the BottomSheet keeps its own flow there.
+	let previewPromptId = $state<string | null>(null);
+	let previewSlotIds = $state<string[]>([]);
+	// The pan inset only applies where the preview card actually covers the
+	// map (desktop); on mobile the card is display:none and the map must not
+	// dodge a phantom overlay.
+	let isDesktop = $state(false);
+	onMount(() => {
+		// Same query the stylesheet uses (max-width: 768px), negated — a
+		// min-width: 769px twin leaves a fractional-pixel dead zone where the
+		// script and CSS disagree about which surface is visible.
+		const mq = window.matchMedia('(max-width: 768px)');
+		isDesktop = !mq.matches;
+		const onChange = (e: MediaQueryListEvent) => (isDesktop = !e.matches);
+		mq.addEventListener('change', onChange);
+		return () => mq.removeEventListener('change', onChange);
+	});
 
 	function handlePinSelect(items: Array<{ prompt: PromptSummary; slots: TimeSlot[] }>, _area: string) {
 		selectedPinItems = items;
+		const first = items[0];
+		previewPromptId = first?.prompt.id ?? null;
+		previewSlotIds = (first?.slots?.length ? first.slots : first?.prompt.available_slots.slice(0, 1) ?? []).map((s) => s.id);
+	}
+
+	// Whether a slot has a pin on the current map: it carries coordinates and
+	// passes the active slot filters (buildPins skips anything else). Both the
+	// sidebar door and the card's time-hop rows use this, so a door can never
+	// point at a pin that doesn't exist.
+	function slotIsPinnable(slot: TimeSlot): boolean {
+		if (slot.general_area_lat == null || slot.general_area_lng == null) return false;
+		if (!slot.general_area) return false;
+		return mapSlotFilter ? mapSlotFilter(slot) : true;
+	}
+
+	// The sidebar door: same preview, opened from a list card in the split
+	// view. Highlights the soonest PINNABLE time so the map has something to
+	// ring and pan to; falls back to the soonest slot when none are pinnable.
+	function openPreviewFromList(prompt: PromptSummary) {
+		const soonest = prompt.available_slots.find(slotIsPinnable) ?? prompt.available_slots[0];
+		selectedPinItems = [{ prompt, slots: soonest ? [soonest] : [] }];
+		previewPromptId = prompt.id;
+		previewSlotIds = soonest ? [soonest.id] : [];
+	}
+
+	// Split-view card click: intercept only the plain primary click for the
+	// preview; modified clicks (cmd/ctrl/shift/middle) keep real link behavior.
+	function interceptCardClick(e: MouseEvent, prompt: PromptSummary) {
+		if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+		e.preventDefault();
+		openPreviewFromList(prompt);
+	}
+
+	function switchPreviewConvo(promptId: string) {
+		previewPromptId = promptId;
+		const item = selectedPinItems.find((i) => i.prompt.id === promptId);
+		previewSlotIds = (item?.slots?.length ? item.slots : item?.prompt.available_slots.slice(0, 1) ?? []).map((s) => s.id);
+	}
+
+	function hopPreviewSlot(slot: TimeSlot) {
+		previewSlotIds = [slot.id];
 	}
 
 	function closeSheet() {
 		selectedPinItems = [];
+		previewPromptId = null;
+		previewSlotIds = [];
 	}
 
 	const weekDates = getWeekDates();
@@ -229,7 +304,11 @@
 	// (toggleDate/clearFilters create new Set instances each time).
 	$effect(() => {
 		if (selectedDates && selectedTypes && selectedScopes && selectedArea !== undefined) {
-			selectedPinItems = [];
+			// Clear ALL preview state, not just the sheet items — leaving
+			// previewSlotIds set would strand the active-pin ring after a
+			// filter change removes the previewed conversation. closeSheet
+			// reads none of the filter state, so no reactive cycle.
+			closeSheet();
 		}
 	});
 
@@ -253,6 +332,10 @@
 	<MapView
 		prompts={filteredPrompts}
 		slotFilter={mapSlotFilter}
+		fitKey={selectedArea}
+		activeSlotId={previewSlotIds[0] ?? null}
+		panSafeLeft={isDesktop && selectedPinItems.length > 0 ? PREVIEW_CARD_PAN_INSET : 0}
+		panToActive={isDesktop}
 		onSelectPin={handlePinSelect}
 		onMapClick={closeSheet}
 		initialCenter={mapCenter ?? data.mapCenter}
@@ -276,14 +359,20 @@
 	{:else}
 		<div class="prompt-list">
 			{#each filteredPrompts as prompt}
+				<!-- Always a real link (cmd/middle-click and open-in-new-tab keep
+				     working). In the split view the plain primary click is
+				     intercepted to open the preview instead — the second door;
+				     in the list view, where there is no map to preview over, it
+				     navigates as before. -->
 				<ConversationCard
-					title={prompt.title ?? 'Untitled'}
+					title={prompt.title ?? copy.common.untitled}
 					coverUrl={prompt.cover_image_url}
 					snippet={prompt.body_snippet}
 					metaLeft={slotDates(prompt.available_slots)}
 					metaRight={uniqueAreas(prompt.available_slots)}
 					conversationType={prompt.capacity === 1 ? '1on1' : 'group'}
 					href={`/conversations/${prompt.id}`}
+					onclick={viewMode === 'split' ? (e: MouseEvent) => interceptCardClick(e, prompt) : undefined}
 					audienceScopeName={prompt.audience_scope_name}
 				/>
 			{/each}
@@ -296,7 +385,6 @@
 		<aside class="list-pane">
 			<div class="list-head">
 				<span class="list-title">Conversations</span>
-				<button class="expand-btn" onclick={() => (viewMode = 'list')} aria-label="Expand to full list">expand ⤢</button>
 			</div>
 			<div class="list-scroll">
 				{@render listBlock()}
@@ -304,23 +392,33 @@
 		</aside>
 		<div class="map-pane map-pane--split">
 			{@render mapBlock()}
+			{#if selectedPinItems.length > 0 && previewPromptId}
+				<!-- Desktop: the preview card in its constant frame over the map.
+				     Hidden on mobile (media query below), where the BottomSheet
+				     keeps this role. -->
+				<div class="preview-host">
+					<MapPreviewCard
+						items={selectedPinItems}
+						activePromptId={previewPromptId}
+						activeSlotIds={previewSlotIds}
+						onSwitchConvo={switchPreviewConvo}
+						onHopSlot={hopPreviewSlot}
+						onClose={closeSheet}
+						isPinnable={slotIsPinnable}
+					/>
+				</div>
+			{/if}
 		</div>
 	</div>
 	{#if selectedPinItems.length > 0}
-		<BottomSheet items={selectedPinItems} />
-	{/if}
-{:else if viewMode === 'map'}
-	<div class="map-pane">
-		{@render mapBlock()}
-	</div>
-	{#if selectedPinItems.length > 0}
-		<BottomSheet items={selectedPinItems} />
+		<div class="sheet-host">
+			<BottomSheet items={selectedPinItems} />
+		</div>
 	{/if}
 {:else}
+	<!-- No in-page view switch: the nav pill's map/list toggle is the single
+	     control for split ↔ list, so nothing here duplicates it. -->
 	<div class="content list-full">
-		<div class="list-head">
-			<button class="expand-btn" onclick={() => (viewMode = 'split')} aria-label="Back to map and list">‹ map + list</button>
-		</div>
 		{@render listBlock()}
 	</div>
 {/if}
@@ -328,9 +426,9 @@
 <div class="floating-nav-wrapper">
 	<FloatingNav
 		variant="discover"
-		active={viewMode === 'map' ? 'map' : ''}
+		active={viewMode === 'split' ? 'map' : ''}
 		attentionCount={data.attentionCount ?? 0}
-		onMapClick={() => viewMode = viewMode === 'map' ? 'split' : 'map'}
+		onMapClick={() => viewMode = viewMode === 'split' ? 'list' : 'split'}
 		{weekDates}
 		monthAhead={true}
 		selectedDays={selectedDates}
@@ -365,13 +463,9 @@
 
 <style>
 	.floating-nav-wrapper { display: block; }
-	.map-pane {
-		position: fixed;
-		top: 0;
-		right: 0;
-		bottom: 0;
-		left: 0;
-	}
+	/* .map-pane's old standalone fixed-position rule died with the map-only
+	   view mode; the class now only ever appears as .map-pane.map-pane--split,
+	   which owns its own positioning. */
 
 	.content {
 		width: 100%;
@@ -443,16 +537,6 @@
 		font-weight: 500;
 		color: var(--text-primary);
 	}
-	.expand-btn {
-		background: none;
-		border: 1px solid var(--border-link);
-		border-radius: var(--radius-card);
-		padding: var(--space-1) var(--space-3);
-		font-size: var(--text-sm);
-		color: var(--text-primary);
-		cursor: pointer;
-	}
-	.expand-btn:hover { border-color: var(--text-primary); }
 	.list-scroll {
 		flex: 1;
 		overflow-y: auto;
@@ -466,10 +550,17 @@
 	}
 	.list-full { margin: 0 auto; }
 
-	/* Stack on narrow screens: full-width list, map hidden (toggle to map via nav). */
+	/* Preview card (desktop) vs BottomSheet (mobile): both render behind these
+	   hosts; the breakpoint decides which one shows. */
+	.preview-host { display: contents; }
+	.sheet-host { display: none; }
+
+	/* Narrow screens: the split view IS the map — the list pane (and its
+	   expand button) hides, and the nav toggle switches map ↔ list. This
+	   replaces the old third view mode (map-only) rather than hiding the map. */
 	@media (max-width: 768px) {
-		.split { position: static; flex-direction: column; }
-		.list-pane { width: 100%; max-width: none; border-right: none; }
-		.map-pane--split { display: none; }
+		.list-pane { display: none; }
+		.preview-host { display: none; }
+		.sheet-host { display: contents; }
 	}
 </style>
