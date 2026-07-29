@@ -89,15 +89,26 @@
 			void goto('/membership');
 		}
 	}
-	let viewMode = $state<'list' | 'map' | 'split'>('split');
+	// Two views, not three: 'split' pairs the map with the list (desktop) or
+	// shows the map full-bleed (mobile, where the list pane hides); 'list' is
+	// the full-width list on both. The old map-only mode collapsed into
+	// 'split' — on desktop it was near-identical to split, and on mobile
+	// split previously hid the map, which made the third mode load-bearing
+	// for the wrong reason.
+	let viewMode = $state<'list' | 'split'>('split');
 	let mapCenter = $state<[number, number] | null>(null);
 	let mapZoom = $state<number | null>(null);
 
 	// Persist the list/map choice alongside map position so returning from a
 	// conversation restores the view the member was using, not the map default.
+	// Old snapshots may still carry 'map' — restore it as 'split'.
 	export const snapshot: Snapshot<{ center: [number, number] | null; zoom: number | null; view?: 'list' | 'map' | 'split' }> = {
 		capture: () => ({ center: mapCenter, zoom: mapZoom, view: viewMode }),
-		restore: (value) => { mapCenter = value.center; mapZoom = value.zoom; if (value.view) viewMode = value.view; }
+		restore: (value) => {
+			mapCenter = value.center;
+			mapZoom = value.zoom;
+			if (value.view) viewMode = value.view === 'map' ? 'split' : value.view;
+		}
 	};
 	let searchOpen = $state(false);
 	let selectedPinItems = $state<Array<{ prompt: PromptSummary; slots: TimeSlot[] }>>([]);
@@ -309,17 +320,15 @@
 	{#if selectedPinItems.length > 0}
 		<BottomSheet items={selectedPinItems} />
 	{/if}
-{:else if viewMode === 'map'}
-	<div class="map-pane">
-		{@render mapBlock()}
-	</div>
-	{#if selectedPinItems.length > 0}
-		<BottomSheet items={selectedPinItems} />
-	{/if}
 {:else}
 	<div class="content list-full">
 		<div class="list-head">
-			<button class="expand-btn" onclick={() => (viewMode = 'split')} aria-label="Back to map and list">‹ map + list</button>
+			<!-- Honest per-breakpoint label: on desktop this restores map + list;
+			     on mobile the split view IS the map, so it reads "map". -->
+			<button class="expand-btn" onclick={() => (viewMode = 'split')} aria-label={copy.discover.backToMapAria}>
+				<span class="label-desktop">{copy.discover.backToMapDesktop}</span>
+				<span class="label-mobile">{copy.discover.backToMapMobile}</span>
+			</button>
 		</div>
 		{@render listBlock()}
 	</div>
@@ -328,9 +337,9 @@
 <div class="floating-nav-wrapper">
 	<FloatingNav
 		variant="discover"
-		active={viewMode === 'map' ? 'map' : ''}
+		active={viewMode === 'split' ? 'map' : ''}
 		attentionCount={data.attentionCount ?? 0}
-		onMapClick={() => viewMode = viewMode === 'map' ? 'split' : 'map'}
+		onMapClick={() => viewMode = viewMode === 'split' ? 'list' : 'split'}
 		{weekDates}
 		monthAhead={true}
 		selectedDays={selectedDates}
@@ -466,10 +475,17 @@
 	}
 	.list-full { margin: 0 auto; }
 
-	/* Stack on narrow screens: full-width list, map hidden (toggle to map via nav). */
+	/* Responsive back-button label: the split view is map+list on desktop but
+	   full-bleed map on mobile, so the list view's return button names what it
+	   actually returns to. */
+	.label-mobile { display: none; }
+
+	/* Narrow screens: the split view IS the map — the list pane (and its
+	   expand button) hides, and the nav toggle switches map ↔ list. This
+	   replaces the old third view mode (map-only) rather than hiding the map. */
 	@media (max-width: 768px) {
-		.split { position: static; flex-direction: column; }
-		.list-pane { width: 100%; max-width: none; border-right: none; }
-		.map-pane--split { display: none; }
+		.list-pane { display: none; }
+		.label-desktop { display: none; }
+		.label-mobile { display: inline; }
 	}
 </style>
