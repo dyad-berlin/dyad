@@ -190,7 +190,9 @@ export const copy = {
 		noResults: 'No conversations found.',
 		searchSuggestions: ['strangers & connection', 'philosophy of everyday life', 'belonging in Berlin', 'silence & listening', 'living in Berlin'],
 		// Desktop preview card over the map (pin or list-card click).
-		previewOpenCta: 'open the conversation',
+		// The card's content block is the link into the conversation; this
+		// labels it for assistive tech.
+		previewOpenLabel: (title: string) => `Open "${title}"`,
 		previewMoreTimes: (n: number) => `${n} more time${n === 1 ? '' : 's'}`,
 		filterWhenLabel: 'When',
 		filterWhereLabel: 'Where',

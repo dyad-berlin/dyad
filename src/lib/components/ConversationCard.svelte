@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import { copy } from '$lib/copy';
+	import ConversationTypeTag from './ConversationTypeTag.svelte';
 
 	/**
 	 * Unified card for a conversation preview. One component used across:
@@ -87,22 +88,7 @@
 
 {#snippet typeTag()}
 	{#if conversationType}
-		<span class="type-tag" title={conversationType === 'group' ? copy.discover.filterGroup : copy.discover.filterOneOnOne}>
-			{#if conversationType === 'group'}
-				<svg width="13" height="13" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-					<circle cx="7" cy="7.5" r="2.4" stroke="currentColor" stroke-width="1.6"/>
-					<circle cx="13.5" cy="8.5" r="1.9" stroke="currentColor" stroke-width="1.6"/>
-					<path d="M2.5 15.5c0-2.2 2-3.6 4.5-3.6s4.5 1.4 4.5 3.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-					<path d="M13 12c2.1 0 3.9 1.2 3.9 3.3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-				</svg>
-			{:else}
-				<svg width="13" height="13" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-					<circle cx="10" cy="7" r="2.7" stroke="currentColor" stroke-width="1.6"/>
-					<path d="M4 16c0-2.6 2.7-4.3 6-4.3s6 1.7 6 4.3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-				</svg>
-			{/if}
-			<span>{conversationType === 'group' ? copy.discover.filterGroup : copy.discover.filterOneOnOne}</span>
-		</span>
+		<ConversationTypeTag type={conversationType} />
 	{/if}
 {/snippet}
 
@@ -280,19 +266,6 @@
 	.meta-right {
 		margin-left: auto;
 	}
-
-	/* 1-on-1 / group indicator — quiet mono tag with a matching person(s) glyph. */
-	.type-tag {
-		display: inline-flex;
-		align-items: center;
-		gap: 3px;
-		font-family: var(--font-mono);
-		font-size: var(--text-xs);
-		text-transform: uppercase;
-		letter-spacing: 0.04em;
-		color: var(--text-muted);
-	}
-	.type-tag svg { flex-shrink: 0; }
 
 	.title {
 		font-size: var(--text-lg);
