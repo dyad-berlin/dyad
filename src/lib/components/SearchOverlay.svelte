@@ -71,10 +71,10 @@
 		<p class="no-results" transition:fade={{ duration: 120 }}>{copy.discover.noResults}</p>
 	{:else}
 		<div class="results" transition:fly={{ y: 10, duration: 180 }}>
-			{#each results as prompt}
+			{#each results as prompt (prompt.id)}
 				<button class="result-row" onclick={() => onSelect(prompt.id)}>
 					{#if prompt.cover_image_url}
-						<img src={prompt.cover_image_url} alt="" class="card-thumb" loading="lazy" />
+						<img src={prompt.cover_image_url} alt="" class="card-thumb" loading="lazy" decoding="async" />
 					{:else}
 						<div class="card-thumb thumb-placeholder"></div>
 					{/if}

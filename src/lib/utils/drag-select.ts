@@ -33,9 +33,15 @@ export function createDragSelect(opts: {
 	let snapshot: Set<string> | null = null;
 	let selecting = true;
 	let sessionHadPointer = false;
+	// Last cell the sweep applied. pointermove fires per frame; without this
+	// guard every frame rebuilds the selection Set and re-renders everything
+	// downstream (on discover: a full map-marker rebuild per frame).
+	let lastApplied: string | null = null;
 
 	function apply(current: string) {
 		if (origin === null || snapshot === null) return;
+		if (current === lastApplied) return;
+		lastApplied = current;
 		const next = new Set(snapshot);
 		for (const date of enumerateDates(origin, current)) {
 			if (selecting) next.add(date);
@@ -53,6 +59,7 @@ export function createDragSelect(opts: {
 	function end() {
 		origin = null;
 		snapshot = null;
+		lastApplied = null;
 		window.removeEventListener('pointermove', onMove);
 		window.removeEventListener('pointerup', end);
 		window.removeEventListener('pointercancel', end);
