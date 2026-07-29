@@ -23,9 +23,17 @@
 		 *  page passes the selected district, so choosing one centers the map on
 		 *  it and zooms to cover its pins. Clearing (null) leaves the view put. */
 		fitKey?: string | null;
+		/** The slot the desktop preview card corresponds to. Its pin gets the
+		 *  active ring, and when it would sit under an overlay (see
+		 *  panSafeLeft) or off-screen, the map pans it into view — smoothly,
+		 *  and only as far as needed. */
+		activeSlotId?: string | null;
+		/** Pixels on the map's left edge covered by an overlay (the preview
+		 *  card). The ensure-visible pan keeps the active pin right of this. */
+		panSafeLeft?: number;
 	}
 
-	let { prompts, onSelectPin, onMapClick, initialCenter, initialZoom, onMoveEnd, scrollWheelZoom = true, zoomControl = false, zoomControlPosition = 'topleft', slotFilter, fitKey = null }: Props = $props();
+	let { prompts, onSelectPin, onMapClick, initialCenter, initialZoom, onMoveEnd, scrollWheelZoom = true, zoomControl = false, zoomControlPosition = 'topleft', slotFilter, fitKey = null, activeSlotId = null, panSafeLeft = 0 }: Props = $props();
 
 	let mapContainer: HTMLElement | undefined = $state();
 	let map: LeafletMap | undefined;
@@ -55,9 +63,10 @@
 				? `<img src="${esc(imgSrc)}" alt="" class="marker-img" loading="lazy" />`
 				: `<div class="marker-placeholder">${esc((pin.prompt.title ?? '?')[0])}</div>`;
 
+			const isActive = activeSlotId !== null && pin.slots.some((s) => s.id === activeSlotId);
 			const icon = L.divIcon({
 				html,
-				className: 'marker-pin',
+				className: isActive ? 'marker-pin marker-pin--active' : 'marker-pin',
 				iconSize: [44, 44],
 				iconAnchor: [22, 22]
 			});
@@ -135,28 +144,53 @@
 		rebuildMarkers(L);
 	});
 
+	/** Pan just far enough that the active pin sits clear of the left overlay
+	 *  and inside comfortable viewport margins. No-op when already visible. */
+	function ensureVisible(position: [number, number]) {
+		if (!map) return;
+		const point = map.latLngToContainerPoint(position);
+		const size = map.getSize();
+		const MARGIN = 60;
+		const minX = panSafeLeft + MARGIN;
+		let dx = 0;
+		let dy = 0;
+		if (point.x < minX) dx = point.x - minX;
+		else if (point.x > size.x - MARGIN) dx = point.x - (size.x - MARGIN);
+		if (point.y < MARGIN) dy = point.y - MARGIN;
+		else if (point.y > size.y - MARGIN) dy = point.y - (size.y - MARGIN);
+		if (dx !== 0 || dy !== 0) map.panBy([dx, dy], { animate: true });
+	}
+
 	let prevPrompts: PromptSummary[] | undefined;
 	let prevSlotFilter: SlotFilter | undefined;
 	let prevFitKey: string | null = null;
+	let prevActiveSlotId: string | null = null;
 	$effect(() => {
 		const currentPrompts = prompts;
 		const currentFilter = slotFilter;
 		const currentFitKey = fitKey;
+		const currentActive = activeSlotId;
 		if (
 			leafletModule &&
 			markerLayer &&
 			(currentPrompts !== prevPrompts ||
 				currentFilter !== prevSlotFilter ||
-				currentFitKey !== prevFitKey)
+				currentFitKey !== prevFitKey ||
+				currentActive !== prevActiveSlotId)
 		) {
 			prevPrompts = currentPrompts;
 			prevSlotFilter = currentFilter;
 			const fitRequested = currentFitKey !== prevFitKey && currentFitKey !== null;
 			prevFitKey = currentFitKey;
+			const panRequested = currentActive !== prevActiveSlotId && currentActive !== null;
+			prevActiveSlotId = currentActive;
 			const pins = rebuildMarkers(leafletModule);
 			if (fitRequested && map && pins.length > 0) {
 				const bounds = leafletModule.latLngBounds(pins.map((p) => p.position));
 				map.fitBounds(bounds, { padding: FIT_PADDING, maxZoom: FIT_MAX_ZOOM });
+			} else if (panRequested) {
+				const activePin = pins.find((p) => p.slots.some((s) => s.id === currentActive));
+				if (activePin) ensureVisible(activePin.position);
 			}
 		}
 	});
@@ -195,6 +229,12 @@
 		box-sizing: border-box;
 		display: block;
 		aspect-ratio: 1;
+	}
+
+	/* The pin the desktop preview card corresponds to. */
+	:global(.marker-pin--active .marker-img),
+	:global(.marker-pin--active .marker-placeholder) {
+		box-shadow: 0 0 0 2px var(--text-primary), 0 2px 8px rgba(0, 0, 0, 0.2);
 	}
 
 	:global(.leaflet-control-attribution) {

@@ -179,6 +179,9 @@ export const copy = {
 		searchPlaceholder: 'Search',
 		noResults: 'No conversations found.',
 		searchSuggestions: ['strangers & connection', 'philosophy of everyday life', 'belonging in Berlin', 'silence & listening', 'living in Berlin'],
+		// Desktop preview card over the map (pin or list-card click).
+		previewOpenCta: 'open the conversation',
+		previewMoreTimes: (n: number) => `${n} more time${n === 1 ? '' : 's'}`,
 		filterWhenLabel: 'When',
 		filterWhereLabel: 'Where',
 		filterAnywhere: 'Anywhere',

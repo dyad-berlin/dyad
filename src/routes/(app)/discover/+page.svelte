@@ -6,6 +6,7 @@
 	import { onMount } from 'svelte';
 	import MapView from '$lib/components/MapView.svelte';
 	import BottomSheet from '$lib/components/BottomSheet.svelte';
+	import MapPreviewCard from '$lib/components/MapPreviewCard.svelte';
 	import FloatingNav from '$lib/components/FloatingNav.svelte';
 	import SearchOverlay from '$lib/components/SearchOverlay.svelte';
 	import ConversationCard from '$lib/components/ConversationCard.svelte';
@@ -112,13 +113,54 @@
 	};
 	let searchOpen = $state(false);
 	let selectedPinItems = $state<Array<{ prompt: PromptSummary; slots: TimeSlot[] }>>([]);
+	// Desktop preview state ("one preview, two doors"): which conversation the
+	// card shows, and which slot(s) it corresponds to — the door pin's slots,
+	// or the single hopped slot after a time hop. Mobile ignores these beyond
+	// the pin ring; the BottomSheet keeps its own flow there.
+	let previewPromptId = $state<string | null>(null);
+	let previewSlotIds = $state<string[]>([]);
+	// The pan inset only applies where the preview card actually covers the
+	// map (desktop); on mobile the card is display:none and the map must not
+	// dodge a phantom overlay.
+	let isDesktop = $state(false);
+	onMount(() => {
+		const mq = window.matchMedia('(min-width: 769px)');
+		isDesktop = mq.matches;
+		const onChange = (e: MediaQueryListEvent) => (isDesktop = e.matches);
+		mq.addEventListener('change', onChange);
+		return () => mq.removeEventListener('change', onChange);
+	});
 
 	function handlePinSelect(items: Array<{ prompt: PromptSummary; slots: TimeSlot[] }>, _area: string) {
 		selectedPinItems = items;
+		const first = items[0];
+		previewPromptId = first?.prompt.id ?? null;
+		previewSlotIds = (first?.slots?.length ? first.slots : first?.prompt.available_slots.slice(0, 1) ?? []).map((s) => s.id);
+	}
+
+	// The sidebar door: same preview, opened from a list card in the split
+	// view. Highlights the soonest time; the map pans to its pin.
+	function openPreviewFromList(prompt: PromptSummary) {
+		const soonest = prompt.available_slots[0];
+		selectedPinItems = [{ prompt, slots: soonest ? [soonest] : [] }];
+		previewPromptId = prompt.id;
+		previewSlotIds = soonest ? [soonest.id] : [];
+	}
+
+	function switchPreviewConvo(promptId: string) {
+		previewPromptId = promptId;
+		const item = selectedPinItems.find((i) => i.prompt.id === promptId);
+		previewSlotIds = (item?.slots?.length ? item.slots : item?.prompt.available_slots.slice(0, 1) ?? []).map((s) => s.id);
+	}
+
+	function hopPreviewSlot(slot: TimeSlot) {
+		previewSlotIds = [slot.id];
 	}
 
 	function closeSheet() {
 		selectedPinItems = [];
+		previewPromptId = null;
+		previewSlotIds = [];
 	}
 
 	const weekDates = getWeekDates();
@@ -265,6 +307,8 @@
 		prompts={filteredPrompts}
 		slotFilter={mapSlotFilter}
 		fitKey={selectedArea}
+		activeSlotId={previewSlotIds[0] ?? null}
+		panSafeLeft={isDesktop && selectedPinItems.length > 0 ? 360 : 0}
 		onSelectPin={handlePinSelect}
 		onMapClick={closeSheet}
 		initialCenter={mapCenter ?? data.mapCenter}
@@ -288,16 +332,32 @@
 	{:else}
 		<div class="prompt-list">
 			{#each filteredPrompts as prompt}
-				<ConversationCard
-					title={prompt.title ?? 'Untitled'}
-					coverUrl={prompt.cover_image_url}
-					snippet={prompt.body_snippet}
-					metaLeft={slotDates(prompt.available_slots)}
-					metaRight={uniqueAreas(prompt.available_slots)}
-					conversationType={prompt.capacity === 1 ? '1on1' : 'group'}
-					href={`/conversations/${prompt.id}`}
-					audienceScopeName={prompt.audience_scope_name}
-				/>
+				<!-- In the split view a card is the second door to the preview
+				     (the map pans to the pin); in the list view — where there is
+				     no map to preview over — it navigates directly, as before. -->
+				{#if viewMode === 'split'}
+					<ConversationCard
+						title={prompt.title ?? 'Untitled'}
+						coverUrl={prompt.cover_image_url}
+						snippet={prompt.body_snippet}
+						metaLeft={slotDates(prompt.available_slots)}
+						metaRight={uniqueAreas(prompt.available_slots)}
+						conversationType={prompt.capacity === 1 ? '1on1' : 'group'}
+						onclick={() => openPreviewFromList(prompt)}
+						audienceScopeName={prompt.audience_scope_name}
+					/>
+				{:else}
+					<ConversationCard
+						title={prompt.title ?? 'Untitled'}
+						coverUrl={prompt.cover_image_url}
+						snippet={prompt.body_snippet}
+						metaLeft={slotDates(prompt.available_slots)}
+						metaRight={uniqueAreas(prompt.available_slots)}
+						conversationType={prompt.capacity === 1 ? '1on1' : 'group'}
+						href={`/conversations/${prompt.id}`}
+						audienceScopeName={prompt.audience_scope_name}
+					/>
+				{/if}
 			{/each}
 		</div>
 	{/if}
@@ -315,10 +375,27 @@
 		</aside>
 		<div class="map-pane map-pane--split">
 			{@render mapBlock()}
+			{#if selectedPinItems.length > 0 && previewPromptId}
+				<!-- Desktop: the preview card in its constant frame over the map.
+				     Hidden on mobile (media query below), where the BottomSheet
+				     keeps this role. -->
+				<div class="preview-host">
+					<MapPreviewCard
+						items={selectedPinItems}
+						activePromptId={previewPromptId}
+						activeSlotIds={previewSlotIds}
+						onSwitchConvo={switchPreviewConvo}
+						onHopSlot={hopPreviewSlot}
+						onClose={closeSheet}
+					/>
+				</div>
+			{/if}
 		</div>
 	</div>
 	{#if selectedPinItems.length > 0}
-		<BottomSheet items={selectedPinItems} />
+		<div class="sheet-host">
+			<BottomSheet items={selectedPinItems} />
+		</div>
 	{/if}
 {:else}
 	<!-- No in-page view switch: the nav pill's map/list toggle is the single
@@ -459,10 +536,17 @@
 	}
 	.list-full { margin: 0 auto; }
 
+	/* Preview card (desktop) vs BottomSheet (mobile): both render behind these
+	   hosts; the breakpoint decides which one shows. */
+	.preview-host { display: contents; }
+	.sheet-host { display: none; }
+
 	/* Narrow screens: the split view IS the map — the list pane (and its
 	   expand button) hides, and the nav toggle switches map ↔ list. This
 	   replaces the old third view mode (map-only) rather than hiding the map. */
 	@media (max-width: 768px) {
 		.list-pane { display: none; }
+		.preview-host { display: none; }
+		.sheet-host { display: contents; }
 	}
 </style>
