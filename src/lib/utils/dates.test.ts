@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { getUpcomingDates, getWeekDates, SCHEDULING_HORIZON_DAYS } from './dates';
+import { getUpcomingDates, getWeekDates, enumerateDates, SCHEDULING_HORIZON_DAYS } from './dates';
 
 // Pin the clock: these helpers read `new Date()` internally, so unpinned
 // assertions can flake across local midnight, and the month-boundary case is
@@ -41,6 +41,19 @@ describe('getUpcomingDates', () => {
 		const days = getUpcomingDates(SCHEDULING_HORIZON_DAYS);
 		expect(days[0].date).toBe('2026-01-20');
 		expect(days[days.length - 1].date).toBe('2026-02-16');
+	});
+
+	it('enumerateDates spans endpoints inclusively, either way round, across months', () => {
+		expect(enumerateDates('2026-01-30', '2026-02-02')).toEqual([
+			'2026-01-30',
+			'2026-01-31',
+			'2026-02-01',
+			'2026-02-02'
+		]);
+		expect(enumerateDates('2026-02-02', '2026-01-30')).toEqual(
+			enumerateDates('2026-01-30', '2026-02-02')
+		);
+		expect(enumerateDates('2026-01-20', '2026-01-20')).toEqual(['2026-01-20']);
 	});
 
 	it('carries the correct month label across a month boundary', () => {

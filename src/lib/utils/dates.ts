@@ -32,6 +32,20 @@ export function getWeekDates(): WeekDate[] {
 	return getUpcomingDates(7);
 }
 
+/** Every date key from `a` to `b` inclusive, in chronological order, whichever
+ *  way round the endpoints arrive. Used by drag-select sweeps. */
+export function enumerateDates(a: string, b: string): string[] {
+	const [from, to] = a <= b ? [a, b] : [b, a];
+	const out: string[] = [];
+	const cursor = new Date(from + 'T12:00:00');
+	const end = new Date(to + 'T12:00:00');
+	while (cursor <= end) {
+		out.push(cursor.toLocaleDateString('sv-SE'));
+		cursor.setDate(cursor.getDate() + 1);
+	}
+	return out;
+}
+
 /**
  * Hybrid timestamp: Today / Tomorrow / Day name / "29 Mar"
  */

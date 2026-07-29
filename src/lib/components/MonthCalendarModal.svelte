@@ -2,6 +2,7 @@
 	import { onMount, onDestroy, tick } from 'svelte';
 	import { fade } from 'svelte/transition';
 	import { getUpcomingDates, SCHEDULING_HORIZON_DAYS, type WeekDate } from '$lib/utils/dates';
+	import { createDragSelect } from '$lib/utils/drag-select';
 	import { copy } from '$lib/copy';
 
 	// Calendar picker modal for days beyond the visible week — opened by the
@@ -24,9 +25,34 @@
 		atCapacity?: boolean;
 		/** Shown when atCapacity — e.g. the publish sheet's slot-ceiling hint. */
 		capacityHint?: string;
+		/** Enables spreadsheet-style drag-select: the whole next selection is
+		 *  pushed on every sweep step. The discover filter passes this; the
+		 *  publish sheet omits it (3-slot ceiling makes sweeps moot). */
+		onReplaceSelection?: (next: Set<string>) => void;
 	}
 
-	let { selected, onToggle, onClose, isDisabled, atCapacity = false, capacityHint }: Props = $props();
+	let {
+		selected,
+		onToggle,
+		onClose,
+		isDisabled,
+		atCapacity = false,
+		capacityHint,
+		onReplaceSelection
+	}: Props = $props();
+
+	// Drag-select controller — only when the caller opted in.
+	const drag = onReplaceSelection
+		? createDragSelect({ getSelected: () => selected, replace: onReplaceSelection })
+		: null;
+
+	function handleCellClick(date: string) {
+		// A pointer session already applied this activation; the synthetic
+		// click must not re-toggle. Keyboard activation (no pointer session)
+		// falls through to the plain toggle.
+		if (drag?.consumeClick()) return;
+		onToggle(date);
+	}
 
 	const days = getUpcomingDates(SCHEDULING_HORIZON_DAYS);
 	const todayKey = days[0].date;
@@ -159,11 +185,14 @@
 						<button
 							type="button"
 							class="cal-day"
+							class:draggable={drag !== null}
 							class:selected={selected.has(day.date)}
 							class:today={day.date === todayKey}
 							aria-pressed={selected.has(day.date)}
 							disabled={unpickable}
-							onclick={() => onToggle(day.date)}
+							data-date={unpickable ? undefined : day.date}
+							onpointerdown={drag ? (e) => drag.start(e, day.date) : undefined}
+							onclick={() => handleCellClick(day.date)}
 						>
 							{day.dayNum}
 						</button>
@@ -276,6 +305,10 @@
 		opacity: 0.35;
 		cursor: default;
 	}
+	/* Drag-enabled cells own their touch gestures: a touch that starts on a
+	   cell sweeps instead of scrolling the modal (headers, padding, and the
+	   footer still scroll it on touch). */
+	.cal-day.draggable { touch-action: none; }
 	.cal-day:disabled:hover { background: none; }
 
 	.cal-foot {

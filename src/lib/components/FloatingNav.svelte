@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { copy } from '$lib/copy';
 	import type { WeekDate } from '$lib/utils/dates';
+	import { createDragSelect } from '$lib/utils/drag-select';
 	import MonthCalendarModal from '$lib/components/MonthCalendarModal.svelte';
 
 	export interface FloatingNavAction {
@@ -38,6 +39,7 @@
 		monthAhead = false,
 		selectedDays = new Set<string>(),
 		onToggleDay,
+		onReplaceDays,
 		availableAreas = [],
 		selectedArea = null,
 		onSetArea,
@@ -66,6 +68,9 @@
 		monthAhead?: boolean;
 		selectedDays?: Set<string>;
 		onToggleDay?: (date: string) => void;
+		/** Enables drag-select on the When rail and inside the calendar modal:
+		 *  the whole next selection is pushed on every sweep step. */
+		onReplaceDays?: (next: Set<string>) => void;
 		availableAreas?: string[];
 		selectedArea?: string | null;
 		onSetArea?: (area: string | null) => void;
@@ -89,6 +94,16 @@
 	// a closed modal never hides an active date filter without a trace.
 	const railKeys = $derived(new Set(weekDates.map((d) => d.date)));
 	const farSelectedCount = $derived([...selectedDays].filter((k) => !railKeys.has(k)).length);
+	// Drag-select over the When rail — only when the caller opted in.
+	const dayDrag = onReplaceDays
+		? createDragSelect({ getSelected: () => selectedDays, replace: onReplaceDays })
+		: null;
+	function handleDayClick(date: string) {
+		// A pointer session already applied this activation (see drag-select.ts);
+		// keyboard activation falls through to the plain toggle.
+		if (dayDrag?.consumeClick()) return;
+		onToggleDay?.(date);
+	}
 	let actionsDropdownOpen = $state(false);
 	let actionsDropdownRef: HTMLElement | undefined = $state();
 
@@ -276,9 +291,12 @@
 			{#snippet dayCell(day: WeekDate)}
 				<button
 					class="day-cell"
+					class:draggable={dayDrag !== null}
 					class:selected={selectedDays.has(day.date)}
 					aria-pressed={selectedDays.has(day.date)}
-					onclick={() => onToggleDay?.(day.date)}
+					data-date={day.date}
+					onpointerdown={dayDrag ? (e) => dayDrag.start(e, day.date) : undefined}
+					onclick={() => handleDayClick(day.date)}
 				>
 					<!-- The 1st of a month shows its month label instead of a weekday,
 					     so the grid reads across a month boundary without a header row. -->
@@ -367,6 +385,7 @@
 		selected={selectedDays}
 		onToggle={(date) => onToggleDay?.(date)}
 		onClose={() => (calendarOpen = false)}
+		onReplaceSelection={onReplaceDays}
 	/>
 {/if}
 
@@ -549,6 +568,9 @@
 		transition: background 0.15s, color 0.15s;
 	}
 	.day-cell.selected { background: var(--text-primary); color: var(--bg-canvas); }
+	/* Drag-enabled chips own their touch gestures: a touch starting on a chip
+	   sweeps the range instead of scrolling the sheet. */
+	.day-cell.draggable { touch-action: none; }
 	.day-name { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.04em; opacity: 0.7; }
 	.day-num { font-size: var(--text-base); font-weight: 600; line-height: 1; }
 

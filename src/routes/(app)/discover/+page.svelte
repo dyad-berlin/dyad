@@ -335,6 +335,7 @@
 		monthAhead={true}
 		selectedDays={selectedDates}
 		onToggleDay={toggleDate}
+		onReplaceDays={(next) => (selectedDates = next)}
 		{availableAreas}
 		{selectedArea}
 		onSetArea={setArea}
