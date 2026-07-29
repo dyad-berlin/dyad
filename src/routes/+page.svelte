@@ -78,8 +78,14 @@
 	<!-- LEFT: intro + footer -->
 	<section class="left">
 			<header class="left-head">
-				<h1 class="left-title">{og.headlineLine1}<br />{og.headlineLine2}</h1>
+				<h1 class="left-title">{og.headlineLine1}<br />{og.headlineLine2}<br />{og.headlineLine3}</h1>
 				<p class="left-sub">{og.subcopy}</p>
+				<p class="left-sub"
+					>{og.subcopyBodyPre}<strong class="left-sub-highlight"
+						>{og.subcopyBodyHighlight}</strong
+					></p
+				>
+				<p class="left-sub">{og.subcopyBodyPost}</p>
 				<div class="left-links">
 					<a href="/waitlist" class="btn-join" data-testid="join-cta">{og.joinWaitlist}</a>
 					<!-- href fallback so this action degrades without JS -->
@@ -256,9 +262,14 @@
 		font-size: 0.82rem;
 		line-height: 1.6;
 		color: rgba(255, 255, 255, 0.55);
-		max-width: 30rem;
+		max-width: 42rem;
 		margin: 0 0 var(--space-5);
 		letter-spacing: -0.005em;
+	}
+
+	.left-sub-highlight {
+		color: var(--text-primary);
+		font-weight: 700;
 	}
 
 	.left-links { display: flex; gap: var(--space-4); align-items: center; }

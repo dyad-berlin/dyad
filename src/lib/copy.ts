@@ -154,10 +154,16 @@ export const copy = {
 		// subcopy states it as a "to be" — a stated direction, not a present
 		// claim. The archived ownership page lives at
 		// src/lib/archive/StewardOwnershipPage.svelte.
-		headlineLine1: 'An offline',
-		headlineLine2: 'social network',
-		subcopy:
-			'A place to find conversations, people, and communities where you live. Open source. To be collectively owned and governed.',
+		headlineLine1: 'Meet people',
+		headlineLine2: "you wouldn't otherwise.",
+		headlineLine3: 'On your own terms.',
+		subcopy: 'We are a collective working in service to community and collective sensemaking.',
+		subcopyBodyPre:
+			'We do that by building open-source online software, Dyad, that will be collectively owned and governed, ',
+		subcopyBodyHighlight:
+			'for people seeking encounters beyond their existing circles through in-person conversation.',
+		subcopyBodyPost:
+			'Alongside the platform, we publish editorial work and will produce seasonal public event series that offer alternatives to the infrastructures of Big Tech and corporate media, creating different conditions for how we meet, think, and live together.',
 		// CTA on the map card that floats over a selected conversation.
 		mapCardCta: 'Join to read & meet',
 	},
