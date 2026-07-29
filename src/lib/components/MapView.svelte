@@ -66,9 +66,25 @@
 	const FIT_MAX_ZOOM = 15;
 	const FIT_PADDING: [number, number] = [40, 40];
 
+	/** Markers of the last rebuild, paired with their pins so the active
+	 *  treatment can be re-applied in place. A pin-click or time-hop changes
+	 *  only activeSlotId — tearing down and recreating every marker for that
+	 *  (the old behavior) re-created all the cover-image DOM and read as the
+	 *  whole map reloading. */
+	let pinMarkers: Array<{ pin: ReturnType<typeof buildPins>[number]; marker: import('leaflet').Marker }> = [];
+
+	function applyActiveStyling(activeId: string | null) {
+		for (const { pin, marker } of pinMarkers) {
+			const isActive = activeId !== null && pin.slots.some((s) => s.id === activeId);
+			marker.getElement()?.classList.toggle('marker-pin--active', isActive);
+			marker.setZIndexOffset(isActive ? 1000 : 0);
+		}
+	}
+
 	function rebuildMarkers(L: typeof import('leaflet')) {
 		if (!markerLayer) return [] as ReturnType<typeof buildPins>;
 		markerLayer.clearLayers();
+		pinMarkers = [];
 
 		const pins = buildPins(prompts, slotFilter);
 
@@ -98,6 +114,7 @@
 				onSelectPin(items, `${items.length} nearby`);
 			});
 			marker.addTo(markerLayer);
+			pinMarkers.push({ pin, marker });
 		}
 		return pins;
 	}
@@ -268,22 +285,26 @@
 		const currentFilter = slotFilter;
 		const currentFitKey = fitKey;
 		const currentActive = activeSlotId;
-		if (
-			leafletModule &&
-			markerLayer &&
-			(currentPrompts !== prevPrompts ||
-				currentFilter !== prevSlotFilter ||
-				currentFitKey !== prevFitKey ||
-				currentActive !== prevActiveSlotId)
-		) {
+		const pinSetChanged = currentPrompts !== prevPrompts || currentFilter !== prevSlotFilter;
+		const fitKeyChanged = currentFitKey !== prevFitKey;
+		const activeChanged = currentActive !== prevActiveSlotId;
+		if (leafletModule && markerLayer && (pinSetChanged || fitKeyChanged || activeChanged)) {
 			prevPrompts = currentPrompts;
 			prevSlotFilter = currentFilter;
-			const fitRequested = currentFitKey !== prevFitKey && currentFitKey !== null;
+			const fitRequested = fitKeyChanged && currentFitKey !== null;
 			prevFitKey = currentFitKey;
-			const panRequested = currentActive !== prevActiveSlotId && currentActive !== null && panToActive;
+			const panRequested = activeChanged && currentActive !== null && panToActive;
 			prevActiveSlotId = currentActive;
-			const pins = rebuildMarkers(leafletModule);
-			lastPins = pins;
+			if (pinSetChanged || fitKeyChanged) {
+				lastPins = rebuildMarkers(leafletModule);
+			} else {
+				// Only the active slot changed (pin click, sidebar open, time
+				// hop): restyle the existing markers instead of recreating
+				// them — a full rebuild replaces every cover-image element and
+				// reads as the whole map reloading.
+				applyActiveStyling(currentActive);
+			}
+			const pins = lastPins;
 			if (fitRequested && map && pins.length > 0) {
 				const bounds = leafletModule.latLngBounds(pins.map((p) => p.position));
 				map.fitBounds(bounds, { padding: FIT_PADDING, maxZoom: FIT_MAX_ZOOM });
@@ -306,6 +327,7 @@
 		map?.remove();
 		map = undefined;
 		markerLayer = undefined;
+		pinMarkers = [];
 	});
 </script>
 
