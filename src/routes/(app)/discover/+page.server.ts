@@ -1,6 +1,6 @@
 import type { PageServerLoad } from './$types';
 import { SupabasePromptQueryService } from '$lib/services/prompt-query.js';
-import { regionMapCenter, resolveViewRegion } from '$lib/services/location.js';
+import { regionMapCenter, regionLabel, resolveViewRegion } from '$lib/services/location.js';
 
 // Feed page size — see the comment at the call site.
 const DISCOVER_FEED_LIMIT = 60;
@@ -47,6 +47,9 @@ export const load: PageServerLoad = async ({ locals }) => {
 		prompts,
 		searchCorpus,
 		mapCenter: regionMapCenter(region),
+		// The instance's own city — the Where filter hides an area equal to
+		// it (a "Berlin" option on the Berlin instance is just "Anywhere").
+		regionCity: regionLabel(region),
 		isGuest: locals.homeScope !== null
 	};
 };

@@ -51,6 +51,11 @@ test.describe('Discover — desktop preview card', () => {
 		}
 		// The card stays a real link (cmd/middle-click keeps working)…
 		await expect(card).toHaveAttribute('href', /\/conversations\//);
+		// Wait for hydration before the plain click — pre-hydration the
+		// intercept isn't attached yet and the raw SSR link would navigate.
+		// The Leaflet container only mounts from onMount, so its presence
+		// means the page's JS is live.
+		await page.locator('.leaflet-container').waitFor({ timeout: 15000 });
 		// …but a plain click previews instead of navigating.
 		await card.click();
 		await expect(page).toHaveURL(/\/discover/);
