@@ -63,6 +63,11 @@
 	async function startCheckout() {
 		busy = true;
 		error = '';
+		// Counts checkout intent. Fired before the network round-trip — not just
+		// before the redirect — so the event has that window to leave the page.
+		// The layout's in-memory queue shim does NOT survive the full-page
+		// unload to Stripe, so firing any later risks losing the event.
+		capture('membership_checkout_started', { cadence });
 		try {
 			const payload: Record<string, unknown> =
 				cadence === 'monthly' ? { cadence, tier } : { cadence };
@@ -74,9 +79,6 @@
 			});
 			const body = await res.json().catch(() => ({}));
 			if (res.ok && body.url) {
-				// Fire before the redirect unloads the page; the layout's queue shim
-				// holds events fired before the tracker script finishes loading.
-				capture('membership_checkout_started', { cadence });
 				window.location.href = body.url; // full-page redirect to Stripe
 				return;
 			}

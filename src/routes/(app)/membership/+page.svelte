@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
-	import { invalidate, goto } from '$app/navigation';
+	import { invalidate, goto, replaceState } from '$app/navigation';
 	import { copy } from '$lib/copy';
 	import { ct } from '$lib/copy-runtime.svelte';
 	import { capture } from '$lib/analytics';
@@ -52,12 +52,24 @@
 		}
 	}
 
+	// One-shot activation mark: fire the conversion, then consume the URL's
+	// status flag so a reload, tab-restore, or Back to this URL can't count
+	// the same activation again. The path prop (a two-value enum — carries no
+	// identity) distinguishes instant webhooks from polled ones, mirroring
+	// the conversation_deleted origin convention.
+	function markActivated(path: 'immediate' | 'polled') {
+		capture('membership_activated', { path });
+		const url = new URL($page.url);
+		url.searchParams.delete('status');
+		replaceState(url, {});
+	}
+
 	// Poll for the webhook to flip `active` after a successful checkout return.
 	onMount(() => {
 		if (status !== 'success') return;
 		// Fast webhook: already active on return — go straight back to context.
 		if (isActive) {
-			capture('membership_activated');
+			markActivated('immediate');
 			if (returnTo) goto(returnTo);
 			return;
 		}
@@ -74,7 +86,7 @@
 			}
 			if (data.membership?.active) {
 				clearInterval(iv);
-				capture('membership_activated');
+				markActivated('polled');
 				if (returnTo) goto(returnTo);
 			} else if (elapsed >= 30000) {
 				clearInterval(iv);

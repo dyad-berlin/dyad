@@ -73,7 +73,7 @@
 			}
 
 			status = 'sent';
-			capture('waitlist_request');
+			capture('waitlist_requested');
 		} catch (err) {
 			errorMsg = err instanceof Error ? err.message : copy.waitlist.genericError;
 			status = 'error';

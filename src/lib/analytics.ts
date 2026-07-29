@@ -23,7 +23,7 @@
  * truth for the Plausible Goals dashboard.
  */
 export type EventName =
-	| 'waitlist_request'
+	| 'waitlist_requested'
 	| 'membership_checkout_started'
 	| 'membership_activated'
 	| 'conversation_published'

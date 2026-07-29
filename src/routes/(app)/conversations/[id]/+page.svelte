@@ -304,10 +304,19 @@
 			const res = await fetch(`/api/invitations/${invitationId}/accept`, { method: 'POST' });
 			if (res.ok) {
 				const { meetingId } = await res.json();
-				// Carry the slot identity so realized group size per slot is derivable
-				// (a gathering is the set of accepted meetings sharing one slot).
-				// See docs/group-conversations-metrics.md.
-				capture('invitation_accepted', { slot_id: slotId });
+				// Carry the realized group size as a bucket, not the slot id: a raw
+				// time_slots UUID is a stable join key that would let a Plausible
+				// export be re-linked to dyad's DB (violating the module's
+				// no-third-party-identifiers contract). The bucket answers the
+				// group-size question from docs/group-conversations-metrics.md as
+				// an aggregate; exact per-slot analysis belongs inside dyad, from
+				// the meetings/time_slots tables. Occupancy here is the page's
+				// loaded count plus this acceptance — approximate under
+				// concurrency, which is fine for a bucketed aggregate.
+				const realized = occupiedOn(slotId) + 1;
+				capture('invitation_accepted', {
+					group_size: realized <= 1 ? '1' : realized <= 3 ? '2-3' : '4+'
+				});
 				goto(`/meetings/${meetingId}`);
 			} else {
 				const err = await res.json().catch(() => ({}));
