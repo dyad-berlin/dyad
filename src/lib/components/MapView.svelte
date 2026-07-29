@@ -338,18 +338,15 @@
 		aspect-ratio: 1;
 	}
 
-	/* The pin the preview corresponds to: unmissable — scaled up, thick ring,
-	   soft halo. Transform goes on the inner element (Leaflet owns the marker
-	   root's transform); zIndexOffset in rebuildMarkers lifts it above
-	   overlapping neighbors. */
+	/* The pin the preview corresponds to: an ink ring, lifted above
+	   overlapping neighbors by zIndexOffset in rebuildMarkers. */
 	:global(.marker-pin--active .marker-img),
 	:global(.marker-pin--active .marker-placeholder) {
-		transform: scale(1.18);
 		border: 2px solid var(--bg-canvas);
 		box-shadow:
 			0 0 0 3px var(--text-primary),
-			0 6px 18px rgba(0, 0, 0, 0.35);
-		transition: transform 0.15s ease, box-shadow 0.15s ease;
+			0 2px 8px rgba(0, 0, 0, 0.2);
+		transition: box-shadow 0.15s ease;
 	}
 
 	:global(.leaflet-control-attribution) {

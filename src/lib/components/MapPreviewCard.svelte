@@ -272,15 +272,12 @@
 	}
 	.cluster-chip.active { border-color: var(--text-primary); color: var(--text-primary); }
 
-	/* The head block is the door into the conversation — plain link styling,
-	   hover fades like the list cards do. */
+	/* The head block is the door into the conversation. */
 	.preview-open {
 		display: block;
 		color: inherit;
 		text-decoration: none;
-		transition: opacity 0.15s;
 	}
-	.preview-open:hover { opacity: var(--opacity-hover-card); }
 
 	.preview-cover {
 		width: 100%;
@@ -310,8 +307,6 @@
 		flex-wrap: wrap;
 		align-items: center;
 		gap: var(--space-1) var(--space-2);
-		/* A step of air below the title — at space-1 the mono line reads as
-		   glued to the heading while the snippet floats at space-3. */
 		margin-top: var(--space-2);
 	}
 	.meta-author {
