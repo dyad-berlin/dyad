@@ -179,28 +179,40 @@ export async function deriveGeneralArea(
 
 	// Use the reverse-geocoded result's coordinates as the centroid
 	// (this is the neighbourhood center, not the exact input location).
+	const centroidLat = parseFloat(data.lat);
+	const centroidLng = parseFloat(data.lon);
+	if (!Number.isFinite(centroidLat) || !Number.isFinite(centroidLng)) {
+		// "Unable to geocode" and similar responses carry no lat/lon; NaN here
+		// would serialize to null in the insert and leave the slot permanently
+		// pinless on the map. Fall back to the picked location's own coords.
+		return {
+			generalArea: area,
+			centroidLat: location.lat,
+			centroidLng: location.lng
+		};
+	}
 	return {
 		generalArea: area,
-		centroidLat: parseFloat(data.lat),
-		centroidLng: parseFloat(data.lon)
+		centroidLat,
+		centroidLng
 	};
 }
 
-/** Marker used by LocationSearch when the user typed a free-text address that
- *  the geocoder didn't surface as a structured result. These have no real
- *  coords (lat: 0, lng: 0) so they can't be validated against a bbox -- treat
- *  the user's intent as authoritative and accept them. */
+/** Marker LocationSearch used to attach when the user committed free text the
+ *  geocoder didn't know. Retired: manual entries carried lat/lng = 0,0, which
+ *  broke the neighbourhood derivation (reverse-geocoding 0,0 fails → NaN →
+ *  null coordinates → no map pin, see 20260729180000 backfill). Locations must
+ *  now be picked from the search results; the marker is kept only to REJECT
+ *  requests from stale clients still sending it. */
 const MANUAL_PLACE_ID = 'manual';
 
 /** Check if a location falls within the expected region.
  *
- *  Free-text manual entries (place_id === 'manual') bypass the bbox check --
- *  the user typed the address explicitly, often because the geocoder returned
- *  no Berlin match (e.g. small cafés, recently-opened venues) or returned a
- *  geocoded result outside the bbox. Trust the user's intent over geocoding.
- *  Real geocoder results are still bbox-checked. */
+ *  Manual (free-text) entries are rejected outright — they carry placeholder
+ *  coordinates that can't be validated or mapped. Real geocoder results are
+ *  bbox-checked. */
 export function validateRegion(location: LocationRef, region: string = 'berlin'): boolean {
-	if (location.place_id === MANUAL_PLACE_ID) return true;
+	if (location.place_id === MANUAL_PLACE_ID) return false;
 
 	const bounds = regionBounds[region];
 	if (!bounds) return false;
