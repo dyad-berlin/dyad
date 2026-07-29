@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { copy } from '$lib/copy';
 	import { ct } from '$lib/copy-runtime.svelte';
+	import { capture } from '$lib/analytics';
 	import type { GateReason } from '$lib/utils/membership-error.js';
 
 	// The join/renew offer body — cadence first, then (for monthly) a tier.
@@ -62,6 +63,11 @@
 	async function startCheckout() {
 		busy = true;
 		error = '';
+		// Counts checkout intent. Fired before the network round-trip — not just
+		// before the redirect — so the event has that window to leave the page.
+		// The layout's in-memory queue shim does NOT survive the full-page
+		// unload to Stripe, so firing any later risks losing the event.
+		capture('membership_checkout_started', { cadence });
 		try {
 			const payload: Record<string, unknown> =
 				cadence === 'monthly' ? { cadence, tier } : { cadence };

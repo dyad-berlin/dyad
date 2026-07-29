@@ -79,8 +79,6 @@ export const POST: RequestHandler = async ({ request, locals, url }) => {
 
 	const admin = makeAdminClient();
 
-	// Cross-cadence collision: buying lifetime while a live subscription exists
-	// would orphan that subscription. Block — the member cancels in the portal first.
 	const { data: existing, error: existingError } = await admin
 		.from('memberships')
 		.select('stripe_subscription_id, active')
@@ -92,8 +90,17 @@ export const POST: RequestHandler = async ({ request, locals, url }) => {
 		console.error('[membership/checkout] membership read error:', existingError.message);
 		return json({ error: 'Could not start checkout' }, { status: 500 });
 	}
-	if (cadence === 'lifetime' && existing?.stripe_subscription_id && existing.active) {
-		return json({ error: 'cancel_subscription_first' }, { status: 409 });
+	// Already an active member → a second checkout would mint a second paid
+	// subscription and charge them again. Changes go through the billing portal,
+	// not a fresh checkout. (Part of the 2026-07-27 double-charge incident: a
+	// member whose first checkout had activated could still be re-charged.)
+	if (existing?.active) {
+		// Cross-cadence collision: buying lifetime while a live subscription
+		// exists would orphan that subscription — a distinct, actionable message.
+		if (cadence === 'lifetime' && existing.stripe_subscription_id) {
+			return json({ error: 'cancel_subscription_first' }, { status: 409 });
+		}
+		return json({ error: 'already_member' }, { status: 409 });
 	}
 
 	let paymentRef: string;
