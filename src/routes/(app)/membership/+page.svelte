@@ -28,8 +28,11 @@
 	// already mapped to null upstream, so any non-null row here really lapsed.
 	const isEndedGrant = $derived(!isActive && membership !== null && membership.source !== 'paid');
 	const isLapsedPaid = $derived(!isActive && membership !== null && membership.source === 'paid');
-	// While confirming a just-completed checkout the webhook may not have landed.
-	const confirming = $derived(status === 'success' && !isActive && !pollFallback);
+	// Returned from a completed checkout but not yet active: the webhook hasn't
+	// landed. Never show the join offer in this state — re-rendering it invites a
+	// second payment (the 2026-07-27 double-charge incident). Show the confirming
+	// spinner, then the "no need to pay again" fallback once polling gives up.
+	const awaitingActivation = $derived(status === 'success' && !isActive);
 	// The shared offer body renders the join/renew/ended offer and owns its own
 	// checkout POST — pick the mode from the same display state used for the copy.
 	const offerMode = $derived(isEndedGrant ? 'ended' : isLapsedPaid ? 'renew' : 'join');
@@ -115,14 +118,19 @@
 		{#if busy}
 			<p class="busy" aria-live="polite">{c.continuing}</p>
 		{/if}
-	{:else if confirming}
+	{:else if awaitingActivation}
+		<!-- Returned from a completed checkout, webhook not yet landed. Show the
+		     confirming spinner, then the "no need to pay again" fallback — but
+		     NEVER the offer, so an impatient member can't trigger a second charge. -->
 		<h1>{c.pageTitle}</h1>
-		<p class="lead">{c.finishingUp}</p>
-		<p class="spinner" aria-live="polite">…</p>
-	{:else}
 		{#if pollFallback}
 			<p class="lead notice">{c.finishingUpFallback}</p>
-		{:else if status === 'cancelled'}
+		{:else}
+			<p class="lead">{c.finishingUp}</p>
+			<p class="spinner" aria-live="polite">…</p>
+		{/if}
+	{:else}
+		{#if status === 'cancelled'}
 			<p class="lead notice">{c.cancelled}</p>
 		{/if}
 		<!-- The shared offer body: same cadence→tier picker, benefits, CTA, and

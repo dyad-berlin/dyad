@@ -71,6 +71,15 @@ const ALIAS_TARGETS: Record<string, string> = {
 };
 const ALIAS_HOSTNAMES = Object.keys(ALIAS_TARGETS);
 
+// Stripe delivers webhooks to the exact URL configured in its dashboard. If
+// that URL is an alias host (e.g. a stale https://dyad.berlin/... from before
+// the dyad.social migration), the alias 302-canonicalization below silently
+// breaks EVERY delivery: Stripe does not follow redirects, so it records the
+// 302 as a failure and no membership ever activates. The webhook's auth is its
+// signature (verified in the handler), not its hostname, so it MUST process on
+// any host. Exempt it from the alias redirect. (Payment incident 2026-07-27.)
+const WEBHOOK_EXEMPT_FROM_REDIRECT = '/api/stripe/webhook';
+
 // Retired public routes and where they now live. Add a line here instead of
 // letting a removed route 404 — see the redirect in handle() below.
 const RETIRED_PATHS: Record<string, string> = {
@@ -110,8 +119,10 @@ export const handle: Handle = async ({ event, resolve }) => {
 	}
 
 	// Alias hosts canonicalize onto their target host, path preserved.
-	// 302 (not 301) — the host setup may still evolve.
-	if (kind === 'alias-redirect') {
+	// 302 (not 301) — the host setup may still evolve. The Stripe webhook is
+	// exempt: it must process on whatever host Stripe posts to (see the
+	// WEBHOOK_EXEMPT_FROM_REDIRECT note), never be 302'd into a failed delivery.
+	if (kind === 'alias-redirect' && event.url.pathname !== WEBHOOK_EXEMPT_FROM_REDIRECT) {
 		const target = ALIAS_TARGETS[event.url.hostname.replace(/\.$/, '')] ?? APEX_HOSTNAME;
 		return new Response(null, {
 			status: 302,
