@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-dyad.social is a SvelteKit app for facilitating in-person conversations. Members write conversation prompts, schedule meeting slots with locations, and meet strangers in person. The platform handles the full cycle: discover → respond → invite → meet → give feedback.
+dyad.berlin is a SvelteKit app for facilitating in-person conversations in Berlin. Members write conversation prompts, schedule meeting slots with locations, and meet strangers in person. The platform handles the full cycle: discover → respond → invite → meet → give feedback.
 
 **Stack:** SvelteKit, Svelte 5 (runes), Supabase (auth + DB + storage), TipTap/ProseMirror (rich text editor), Leaflet (map), Cloudflare Pages.
 
@@ -111,9 +111,7 @@ Admin authentication is gated by Cloudflare Access at the edge — operator iden
 
 **Stripe secrets** live only in the Cloudflare Pages environment and are read via `$env/dynamic/private` (never `$env/static/private`, which inlines at build time and breaks the Cloudflare build when a key is absent). dyad sends Stripe only an opaque per-actor `payment_ref` — never the actor id or any PII. This preserves the "no internal identifier leaves dyad" posture (cf. the upact spec § *No identifiers outside the contract*); see `SECURITY.md`.
 
-**Hosts.** `dyad.social` is the canonical apex — the primary URL of the app. `dyad.berlin` (the former apex), `www.dyad.berlin`, and `www.dyad.social` are alias hosts that 302 onto it, path and query preserved, so old links keep working. The admin plane remains at `admin.dyad.berlin`. Hostname classification lives in `src/lib/server/route-kind.ts`; the concrete hostnames are configured in `src/hooks.server.ts`.
-
-**Conference host.** `dyad.amsterdam` is served as a secondary user-plane hostname when attached to the Pages project as a custom domain. Joining still requires a generated group link; the QR encodes the full join URL (`https://dyad.amsterdam/join?glink=<token>`). An anonymous visitor on the bare domain is redirected to `dyad.social`; signed-in guests get the app. `/admin` on these hosts redirects to the canonical admin host.
+**Conference host.** `dyad.amsterdam` (and `www`, which 302s to the bare host) is served as a secondary user-plane hostname when attached to the Pages project as a custom domain — see `src/lib/server/route-kind.ts`. Joining still requires a generated group link; the QR encodes the full join URL (`https://dyad.amsterdam/join?glink=<token>`). An anonymous visitor on the bare domain is redirected to `dyad.berlin`; signed-in guests get the app. `/admin` on these hosts redirects to the canonical admin host.
 
 ## Database
 
