@@ -96,7 +96,7 @@
 	<div class="row" class:profile={variant === 'profile'} class:compact={variant === 'compact'}>
 		<div class="thumb" class:profile={variant === 'profile'} class:compact={variant === 'compact'}>
 			{#if coverUrl}
-				<img src={coverUrl} alt="" class="thumb-img" loading="lazy" />
+				<img src={coverUrl} alt="" class="thumb-img" loading="lazy" decoding="async" />
 			{:else}
 				<div class="thumb-placeholder"></div>
 			{/if}

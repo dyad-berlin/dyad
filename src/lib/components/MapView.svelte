@@ -94,7 +94,7 @@
 			const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 			const imgSrc = pin.prompt.cover_image_url;
 			const html = imgSrc
-				? `<img src="${esc(imgSrc)}" alt="" class="marker-img" loading="lazy" />`
+				? `<img src="${esc(imgSrc)}" alt="" class="marker-img" loading="lazy" decoding="async" />`
 				: `<div class="marker-placeholder">${esc((pin.prompt.title ?? '?')[0])}</div>`;
 
 			const isActive = activeSlotId !== null && pin.slots.some((s) => s.id === activeSlotId);
@@ -252,19 +252,27 @@
 	 *  pin's container point without a rebuild. */
 	let lastPins: ReturnType<typeof buildPins> = [];
 
+	let lastReportedPoint: { x: number; y: number } | null = null;
 	function reportActivePoint() {
 		if (!onActivePinPoint) return;
 		if (!map || activeSlotId === null) {
-			onActivePinPoint(null);
+			if (lastReportedPoint !== null) onActivePinPoint(null);
+			lastReportedPoint = null;
 			return;
 		}
 		const pin = lastPins.find((p) => p.slots.some((s) => s.id === activeSlotId));
 		if (!pin) {
-			onActivePinPoint(null);
+			if (lastReportedPoint !== null) onActivePinPoint(null);
+			lastReportedPoint = null;
 			return;
 		}
 		const point = map.latLngToContainerPoint(pin.position);
-		onActivePinPoint({ x: point.x, y: point.y });
+		// Value-equality guard: 'move' fires per frame even for events that
+		// don't displace the pin; an identical point must not re-run the
+		// card's placement work.
+		if (lastReportedPoint && lastReportedPoint.x === point.x && lastReportedPoint.y === point.y) return;
+		lastReportedPoint = { x: point.x, y: point.y };
+		onActivePinPoint(lastReportedPoint);
 	}
 
 	/** Report the active pin's cluster to the page. Unlike the point stream,

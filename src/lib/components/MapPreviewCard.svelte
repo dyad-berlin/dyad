@@ -158,7 +158,7 @@
 				aria-label={copy.discover.previewOpenLabel(active.prompt.title ?? copy.common.untitled)}
 			>
 				{#if active.prompt.cover_image_url}
-					<img class="preview-cover" src={active.prompt.cover_image_url} alt="" />
+					<img class="preview-cover" src={active.prompt.cover_image_url} alt="" loading="lazy" decoding="async" />
 				{:else}
 					<div class="preview-cover preview-cover--placeholder">{(active.prompt.title ?? '?')[0]}</div>
 				{/if}

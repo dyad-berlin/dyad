@@ -67,7 +67,7 @@
 		</button>
 	{/if}
 	<div class="sheet-body">
-		{#each items as item}
+		{#each items as item (item.prompt.id)}
 			{@const slotsLabel = item.slots && item.slots.length > 0 ? formatSlotDates(item.slots) : null}
 			{@const fallbackLabel = item.prompt.soonest_slot ? formatDate(item.prompt.soonest_slot) : null}
 			{@const areaLabel = item.slots?.[0]?.general_area ?? null}

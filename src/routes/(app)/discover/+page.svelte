@@ -543,7 +543,7 @@
 		</div>
 	{:else}
 		<div class="prompt-list">
-			{#each filteredPrompts as prompt}
+			{#each filteredPrompts as prompt (prompt.id)}
 				<!-- Always a real link (cmd/middle-click and open-in-new-tab keep
 				     working). In the split view the plain primary click is
 				     intercepted to open the preview instead — the second door;
