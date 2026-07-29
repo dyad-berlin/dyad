@@ -26,7 +26,7 @@
 			.join(', ');
 	}
 	import OnboardingModal from '$lib/components/OnboardingModal.svelte';
-	import { getWeekDates } from '$lib/utils/dates';
+	import { getWeekDates, getUpcomingDates, SCHEDULING_HORIZON_DAYS } from '$lib/utils/dates';
 	import type { Snapshot } from './$types';
 	import { copy } from '$lib/copy';
 
@@ -111,6 +111,9 @@
 	}
 
 	const weekDates = getWeekDates();
+	// Weeks 2-4 of the When filter, folded behind the rail's calendar chip.
+	// Same horizon as the publish sheet's picker (SCHEDULING_HORIZON_DAYS).
+	const laterDates = getUpcomingDates(SCHEDULING_HORIZON_DAYS - 7, 7);
 
 	// Collect unique neighbourhoods from all prompts' slots
 	const availableAreas = $derived.by(() => {
@@ -332,6 +335,7 @@
 		attentionCount={data.attentionCount ?? 0}
 		onMapClick={() => viewMode = viewMode === 'map' ? 'split' : 'map'}
 		{weekDates}
+		{laterDates}
 		selectedDays={selectedDates}
 		onToggleDay={toggleDate}
 		{availableAreas}

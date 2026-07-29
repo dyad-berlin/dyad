@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { fly, fade } from 'svelte/transition';
 	import { onMount, onDestroy, tick } from 'svelte';
-	import { getWeekDates } from '$lib/utils/dates';
+	import { getWeekDates, getUpcomingDates, SCHEDULING_HORIZON_DAYS } from '$lib/utils/dates';
 	import LocationSearch from '$lib/components/LocationSearch.svelte';
 	import SizePicker from '$lib/components/SizePicker.svelte';
 	import { copy } from '$lib/copy';
@@ -71,7 +71,15 @@
 	const regionLabel = registryRegionLabel(region);
 
 	const weekDates = getWeekDates();
+	// Weeks 2-4: folded behind the calendar chip at the end of the day rail.
+	// The rail squashes to make room for the chip; these unfold below it.
+	const laterDates = getUpcomingDates(SCHEDULING_HORIZON_DAYS - 7, 7);
+	let monthOpen = $state(false);
 	let selectedDays = $state<Set<string>>(new Set());
+
+	// Days selected beyond the visible week — surfaced as a count on the
+	// calendar chip so a folded grid never hides a selection without a trace.
+	const farSelectedCount = $derived(laterDates.filter((d) => selectedDays.has(d.date)).length);
 
 	interface SlotDraft {
 		// Stable id for the {#each} key. Index keys cause Svelte to reuse
@@ -136,6 +144,9 @@
 		selectedDays = days;
 	}
 	hydrateFromInitial();
+	// A republish can carry slots beyond the visible week — unfold the grid so
+	// those selections are on screen from the start, not only a badge count.
+	if (laterDates.some((d) => selectedDays.has(d.date))) monthOpen = true;
 
 	// Default times ladder: morning, afternoon, evening. New slots draw from
 	// this list by index, so adding three slots on the same day gives
@@ -391,21 +402,52 @@
 		<h2 id="publish-sheet-title" class="sheet-title">{copy.editor.publishHeadline}</h2>
 		<p class="sheet-subtitle">{copy.editor.dayPickerHint}</p>
 		<p class="sheet-note">{copy.editor.privacyNote}</p>
+		{#snippet dayCell(day: { date: string; dayShort: string; dayNum: number; monthShort: string })}
+			{@const noValidTimes = timeOptionsForDate(day.date).length === 0}
+			<button
+				type="button"
+				class="day-cell"
+				class:selected={selectedDays.has(day.date)}
+				aria-pressed={selectedDays.has(day.date)}
+				disabled={noValidTimes}
+				onclick={() => toggleDay(day.date)}
+			>
+				<!-- The 1st of a month carries its month label instead of a weekday,
+				     so the grid reads across a month boundary without a header row. -->
+				<span class="day-name">{day.dayNum === 1 ? day.monthShort.toUpperCase() : day.dayShort.toUpperCase()}</span>
+				<span class="day-num">{day.dayNum}</span>
+			</button>
+		{/snippet}
+
+		<div class="picker-block">
 		<div class="day-picker">
 			{#each weekDates as day}
-				{@const noValidTimes = timeOptionsForDate(day.date).length === 0}
-				<button
-					type="button"
-					class="day-cell"
-					class:selected={selectedDays.has(day.date)}
-					aria-pressed={selectedDays.has(day.date)}
-					disabled={noValidTimes}
-					onclick={() => toggleDay(day.date)}
-				>
-					<span class="day-name">{day.dayShort.toUpperCase()}</span>
-					<span class="day-num">{day.dayNum}</span>
-				</button>
+				{@render dayCell(day)}
 			{/each}
+			<button
+				type="button"
+				class="cal-cell"
+				class:open={monthOpen}
+				class:has-far={farSelectedCount > 0}
+				aria-expanded={monthOpen}
+				aria-label={monthOpen ? copy.common.hideLaterDates : copy.common.showMonthAhead}
+				onclick={() => (monthOpen = !monthOpen)}
+			>
+				<svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+					<rect x="2.5" y="4" width="15" height="13.5" rx="2" stroke="currentColor" stroke-width="1.5"/>
+					<path d="M2.5 8h15" stroke="currentColor" stroke-width="1.5"/>
+					<path d="M6.5 2v4M13.5 2v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+				</svg>
+				{#if farSelectedCount > 0}<span class="cal-count">{farSelectedCount}</span>{/if}
+			</button>
+		</div>
+		{#if monthOpen}
+			<div class="day-grid">
+				{#each laterDates as day}
+					{@render dayCell(day)}
+				{/each}
+			</div>
+		{/if}
 		</div>
 
 		<!-- Per-day slot config -->
@@ -574,10 +616,62 @@
 		margin: 0 0 var(--space-5);
 	}
 
+	.picker-block {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-1);
+		margin-bottom: var(--space-5);
+	}
+
 	.day-picker {
 		display: flex;
 		gap: var(--space-1);
-		margin-bottom: var(--space-5);
+	}
+
+	/* Weeks 2-4, unfolded by the calendar chip. Fixed 7 columns so rows break
+	   on week boundaries; the rail above has 8 cells (7 days + the chip), so
+	   grid cells are slightly wider than rail cells by design. */
+	.day-grid {
+		display: grid;
+		grid-template-columns: repeat(7, 1fr);
+		gap: var(--space-1);
+	}
+
+	.cal-cell {
+		position: relative;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: var(--space-2) 0;
+		flex: 1;
+		min-width: 0;
+		background: none;
+		border: 1px dashed var(--border-link);
+		border-radius: var(--radius-input);
+		cursor: pointer;
+		color: var(--text-muted);
+		transition: background 0.15s, color 0.15s, border-color 0.15s;
+	}
+	.cal-cell:hover { border-color: var(--border-link-hover); color: var(--text-primary); }
+	.cal-cell.open,
+	.cal-cell.has-far {
+		border-style: solid;
+		border-color: var(--text-primary);
+		color: var(--text-primary);
+	}
+	.cal-count {
+		position: absolute;
+		top: 3px;
+		right: 3px;
+		min-width: 14px;
+		height: 14px;
+		border-radius: 7px;
+		font-size: 10px;
+		font-weight: 600;
+		line-height: 14px;
+		text-align: center;
+		background: var(--text-primary);
+		color: var(--bg-canvas);
 	}
 
 	.day-cell {

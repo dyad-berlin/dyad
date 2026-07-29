@@ -1,23 +1,35 @@
 /**
- * Rolling 7-day calendar starting from today.
+ * Rolling day calendar starting from today.
  * Used by discover page, editor page, and FloatingNav date filter.
  */
 export interface WeekDate {
-	date: string;     // 'YYYY-MM-DD' (sv-SE locale)
-	dayShort: string; // e.g. 'Mon'
-	dayNum: number;   // e.g. 28
+	date: string;       // 'YYYY-MM-DD' (sv-SE locale)
+	dayShort: string;   // e.g. 'Mon'
+	dayNum: number;     // e.g. 28
+	monthShort: string; // e.g. 'Aug' — day grids show it on the 1st of a month
 }
 
-export function getWeekDates(): WeekDate[] {
+/** How far ahead scheduling reaches: the visible week + three folded weeks.
+ *  Shared by the publish slot picker and the discover date filter so the two
+ *  horizons can't drift apart. */
+export const SCHEDULING_HORIZON_DAYS = 28;
+
+/** `count` consecutive days starting `startOffset` days from today. */
+export function getUpcomingDates(count: number, startOffset = 0): WeekDate[] {
 	const today = new Date();
-	return Array.from({ length: 7 }, (_, i) => {
-		const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i);
+	return Array.from({ length: count }, (_, i) => {
+		const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + startOffset + i);
 		return {
 			date: d.toLocaleDateString('sv-SE'),
 			dayShort: d.toLocaleDateString('en-US', { weekday: 'short' }),
-			dayNum: d.getDate()
+			dayNum: d.getDate(),
+			monthShort: d.toLocaleDateString('en-US', { month: 'short' })
 		};
 	});
+}
+
+export function getWeekDates(): WeekDate[] {
+	return getUpcomingDates(7);
 }
 
 /**
