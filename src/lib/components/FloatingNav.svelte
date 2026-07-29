@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { copy } from '$lib/copy';
 	import type { WeekDate } from '$lib/utils/dates';
+	import MonthCalendarModal from '$lib/components/MonthCalendarModal.svelte';
 
 	export interface FloatingNavAction {
 		label: string;
@@ -34,7 +35,7 @@
 		attentionCount = 0,
 		onMapClick,
 		weekDates = [],
-		laterDates = [],
+		monthAhead = false,
 		selectedDays = new Set<string>(),
 		onToggleDay,
 		availableAreas = [],
@@ -59,9 +60,10 @@
 		attentionCount?: number;
 		onMapClick?: () => void;
 		weekDates?: WeekDate[];
-		/** Weeks 2-4, folded behind the calendar chip at the end of the day row.
-		 *  Empty (the default) renders the plain 7-day row with no chip. */
-		laterDates?: WeekDate[];
+		/** Renders the round calendar button at the end of the When rail, which
+		 *  opens the month-ahead picker modal. Off (the default) keeps the
+		 *  plain 7-day row. */
+		monthAhead?: boolean;
 		selectedDays?: Set<string>;
 		onToggleDay?: (date: string) => void;
 		availableAreas?: string[];
@@ -81,11 +83,12 @@
 	} = $props();
 
 	let filterOpen = $state(false);
-	// The When rail's calendar chip unfolds weeks 2-4 inside the filter sheet.
-	let monthOpen = $state(false);
-	// Selections beyond the visible week, surfaced as a count on the chip so a
-	// folded grid never hides an active date filter without a trace.
-	const farSelectedCount = $derived(laterDates.filter((d) => selectedDays.has(d.date)).length);
+	// The When rail's round calendar button opens the month-ahead picker modal.
+	let calendarOpen = $state(false);
+	// Selections beyond the visible week, surfaced as a count on the button so
+	// a closed modal never hides an active date filter without a trace.
+	const railKeys = $derived(new Set(weekDates.map((d) => d.date)));
+	const farSelectedCount = $derived([...selectedDays].filter((k) => !railKeys.has(k)).length);
 	let actionsDropdownOpen = $state(false);
 	let actionsDropdownRef: HTMLElement | undefined = $state();
 
@@ -287,14 +290,13 @@
 				{#each weekDates as day}
 					{@render dayCell(day)}
 				{/each}
-				{#if laterDates.length > 0}
+				{#if monthAhead}
 					<button
-						class="cal-cell"
-						class:open={monthOpen}
+						class="cal-btn"
 						class:has-far={farSelectedCount > 0}
-						aria-expanded={monthOpen}
-						aria-label={monthOpen ? copy.common.hideLaterDates : copy.common.showMonthAhead}
-						onclick={() => (monthOpen = !monthOpen)}
+						aria-haspopup="dialog"
+						aria-label={copy.common.pickDaysAhead}
+						onclick={() => (calendarOpen = true)}
 					>
 						<svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
 							<rect x="2.5" y="4" width="15" height="13.5" rx="2" stroke="currentColor" stroke-width="1.5"/>
@@ -305,13 +307,6 @@
 					</button>
 				{/if}
 			</div>
-			{#if monthOpen && laterDates.length > 0}
-				<div class="day-grid">
-					{#each laterDates as day}
-						{@render dayCell(day)}
-					{/each}
-				</div>
-			{/if}
 		</section>
 
 		{#if availableAreas.length > 0}
@@ -365,6 +360,14 @@
 			onclick={() => onClearFilters?.()}
 		>{copy.discover.filterClearAll}</button>
 	</div>
+{/if}
+
+{#if calendarOpen}
+	<MonthCalendarModal
+		selected={selectedDays}
+		onToggle={(date) => onToggleDay?.(date)}
+		onClose={() => (calendarOpen = false)}
+	/>
 {/if}
 
 <style>
@@ -549,37 +552,31 @@
 	.day-name { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.04em; opacity: 0.7; }
 	.day-num { font-size: var(--text-base); font-weight: 600; line-height: 1; }
 
-	/* Weeks 2-4, unfolded by the calendar chip. Fixed 7 columns so rows break
-	   on week boundaries; the row above holds 8 cells (7 days + the chip). */
-	.day-grid {
-		display: grid;
-		grid-template-columns: repeat(7, 1fr);
-		gap: var(--space-1);
-		margin-top: var(--space-1);
-	}
-	.cal-cell {
+	/* Round calendar button — echoes the pill's functional buttons. Opens the
+	   month-ahead picker modal; inverts once it holds beyond-week selections. */
+	.cal-btn {
 		position: relative;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		min-height: 2.75rem;
-		padding: var(--space-2) 0;
-		flex: 1;
-		min-width: 0;
+		width: 2.75rem;
+		height: 2.75rem;
+		flex: 0 0 auto;
+		align-self: center;
+		padding: 0;
 		background: color-mix(in srgb, var(--text-primary) 6%, transparent);
 		border: none;
-		border-radius: var(--radius-input);
+		border-radius: 50%;
 		cursor: pointer;
 		color: var(--text-muted);
 		transition: background 0.15s, color 0.15s;
 	}
-	.cal-cell:hover { background: color-mix(in srgb, var(--text-primary) 12%, transparent); color: var(--text-primary); }
-	.cal-cell.open,
-	.cal-cell.has-far { background: var(--text-primary); color: var(--bg-canvas); }
+	.cal-btn:hover { background: color-mix(in srgb, var(--text-primary) 12%, transparent); color: var(--text-primary); }
+	.cal-btn.has-far { background: var(--text-primary); color: var(--bg-canvas); }
 	.cal-count {
 		position: absolute;
-		top: 3px;
-		right: 3px;
+		top: 0;
+		right: 0;
 		min-width: 14px;
 		height: 14px;
 		border-radius: 7px;
@@ -589,6 +586,7 @@
 		text-align: center;
 		background: var(--bg-canvas);
 		color: var(--text-primary);
+		box-shadow: 0 0 0 1px var(--border-subtle);
 	}
 
 	/* Segmented control — shared by Type and Corner so selection reads identically. */

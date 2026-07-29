@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { fly, fade } from 'svelte/transition';
 	import { onMount, onDestroy, tick } from 'svelte';
-	import { getWeekDates, getUpcomingDates, SCHEDULING_HORIZON_DAYS } from '$lib/utils/dates';
+	import { getWeekDates } from '$lib/utils/dates';
+	import MonthCalendarModal from '$lib/components/MonthCalendarModal.svelte';
 	import LocationSearch from '$lib/components/LocationSearch.svelte';
 	import SizePicker from '$lib/components/SizePicker.svelte';
 	import { copy } from '$lib/copy';
@@ -71,15 +72,15 @@
 	const regionLabel = registryRegionLabel(region);
 
 	const weekDates = getWeekDates();
-	// Weeks 2-4: folded behind the calendar chip at the end of the day rail.
-	// The rail squashes to make room for the chip; these unfold below it.
-	const laterDates = getUpcomingDates(SCHEDULING_HORIZON_DAYS - 7, 7);
-	let monthOpen = $state(false);
+	// The round calendar button at the rail's end opens the month-ahead
+	// picker modal (shared with the discover When filter).
+	let calendarOpen = $state(false);
 	let selectedDays = $state<Set<string>>(new Set());
 
 	// Days selected beyond the visible week — surfaced as a count on the
-	// calendar chip so a folded grid never hides a selection without a trace.
-	const farSelectedCount = $derived(laterDates.filter((d) => selectedDays.has(d.date)).length);
+	// calendar button so a closed modal never hides a selection without a trace.
+	const railKeys = new Set(weekDates.map((d) => d.date));
+	const farSelectedCount = $derived([...selectedDays].filter((k) => !railKeys.has(k)).length);
 
 	interface SlotDraft {
 		// Stable id for the {#each} key. Index keys cause Svelte to reuse
@@ -144,9 +145,6 @@
 		selectedDays = days;
 	}
 	hydrateFromInitial();
-	// A republish can carry slots beyond the visible week — unfold the grid so
-	// those selections are on screen from the start, not only a badge count.
-	if (laterDates.some((d) => selectedDays.has(d.date))) monthOpen = true;
 
 	// Default times ladder: morning, afternoon, evening. New slots draw from
 	// this list by index, so adding three slots on the same day gives
@@ -419,19 +417,17 @@
 			</button>
 		{/snippet}
 
-		<div class="picker-block">
 		<div class="day-picker">
 			{#each weekDates as day}
 				{@render dayCell(day)}
 			{/each}
 			<button
 				type="button"
-				class="cal-cell"
-				class:open={monthOpen}
+				class="cal-btn"
 				class:has-far={farSelectedCount > 0}
-				aria-expanded={monthOpen}
-				aria-label={monthOpen ? copy.common.hideLaterDates : copy.common.showMonthAhead}
-				onclick={() => (monthOpen = !monthOpen)}
+				aria-haspopup="dialog"
+				aria-label={copy.common.pickDaysAhead}
+				onclick={() => (calendarOpen = true)}
 			>
 				<svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
 					<rect x="2.5" y="4" width="15" height="13.5" rx="2" stroke="currentColor" stroke-width="1.5"/>
@@ -441,14 +437,13 @@
 				{#if farSelectedCount > 0}<span class="cal-count">{farSelectedCount}</span>{/if}
 			</button>
 		</div>
-		{#if monthOpen}
-			<div class="day-grid">
-				{#each laterDates as day}
-					{@render dayCell(day)}
-				{/each}
-			</div>
+		{#if calendarOpen}
+			<MonthCalendarModal
+				selected={selectedDays}
+				onToggle={toggleDay}
+				onClose={() => (calendarOpen = false)}
+			/>
 		{/if}
-		</div>
 
 		<!-- Per-day slot config -->
 		{#each [...selectedDays].sort() as date}
@@ -616,53 +611,41 @@
 		margin: 0 0 var(--space-5);
 	}
 
-	.picker-block {
+	.day-picker {
 		display: flex;
-		flex-direction: column;
 		gap: var(--space-1);
 		margin-bottom: var(--space-5);
 	}
 
-	.day-picker {
-		display: flex;
-		gap: var(--space-1);
-	}
-
-	/* Weeks 2-4, unfolded by the calendar chip. Fixed 7 columns so rows break
-	   on week boundaries; the rail above has 8 cells (7 days + the chip), so
-	   grid cells are slightly wider than rail cells by design. */
-	.day-grid {
-		display: grid;
-		grid-template-columns: repeat(7, 1fr);
-		gap: var(--space-1);
-	}
-
-	.cal-cell {
+	/* Round calendar button — echoes the functional buttons of the nav pill.
+	   Dashed while empty; solid once it holds selections beyond the week. */
+	.cal-btn {
 		position: relative;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		padding: var(--space-2) 0;
-		flex: 1;
-		min-width: 0;
+		width: 2.75rem;
+		height: 2.75rem;
+		flex: 0 0 auto;
+		align-self: center;
+		padding: 0;
 		background: none;
 		border: 1px dashed var(--border-link);
-		border-radius: var(--radius-input);
+		border-radius: 50%;
 		cursor: pointer;
 		color: var(--text-muted);
 		transition: background 0.15s, color 0.15s, border-color 0.15s;
 	}
-	.cal-cell:hover { border-color: var(--border-link-hover); color: var(--text-primary); }
-	.cal-cell.open,
-	.cal-cell.has-far {
+	.cal-btn:hover { border-color: var(--border-link-hover); color: var(--text-primary); }
+	.cal-btn.has-far {
 		border-style: solid;
 		border-color: var(--text-primary);
 		color: var(--text-primary);
 	}
 	.cal-count {
 		position: absolute;
-		top: 3px;
-		right: 3px;
+		top: 0;
+		right: 0;
 		min-width: 14px;
 		height: 14px;
 		border-radius: 7px;

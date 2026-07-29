@@ -59,10 +59,11 @@ export const copy = {
 		loading: 'Loading…',
 		clear: 'Clear',
 		someone: 'someone',
-		// Calendar chip on the day rails (publish sheet + discover When filter):
-		// screen-reader labels for unfolding/folding weeks 2-4.
-		showMonthAhead: 'show the month ahead',
-		hideLaterDates: 'hide later dates',
+		// Round calendar button on the day rails (publish sheet + discover When
+		// filter) and the calendar picker modal it opens.
+		pickDaysAhead: 'pick days further ahead',
+		monthAheadTitle: 'Further ahead',
+		done: 'done',
 		networkError: 'Network error. Please try again.',
 		genericError: 'Something went wrong. Please try again.',
 		submitFailed: 'Couldn’t submit. Please try again.',
