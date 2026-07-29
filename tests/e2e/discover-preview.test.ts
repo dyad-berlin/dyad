@@ -22,7 +22,11 @@ test.describe('Discover — desktop preview card', () => {
 			test.skip(true, 'No pins rendered — nothing to preview.');
 			return;
 		}
-		await pin.click();
+		// Fuzzed pin positions can overlap at the default zoom, leaving the
+		// first pin's center covered by a neighbor — Playwright's actionability
+		// check would wait forever. Dispatch the click on the targeted marker:
+		// the handler works from pin data, not pointer coordinates.
+		await pin.dispatchEvent('click');
 
 		await expect(page.locator('.preview-card')).toBeVisible();
 		// Desktop uses the card, never the bottom sheet.
@@ -64,7 +68,7 @@ test.describe('Discover — desktop preview card', () => {
 			test.skip(true, 'No pins rendered.');
 			return;
 		}
-		await pin.click();
+		await pin.dispatchEvent('click'); // see overlap note in the first test
 		await expect(page.locator('.preview-card')).toBeVisible();
 
 		// Open the filter sheet and toggle a day — any filter change must
