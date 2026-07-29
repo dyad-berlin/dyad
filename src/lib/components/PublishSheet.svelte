@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { fly, fade } from 'svelte/transition';
 	import { onMount, onDestroy, tick } from 'svelte';
-	import { getWeekDates } from '$lib/utils/dates';
+	import { getWeekDates, type WeekDate } from '$lib/utils/dates';
+	import MonthCalendarModal from '$lib/components/MonthCalendarModal.svelte';
 	import LocationSearch from '$lib/components/LocationSearch.svelte';
 	import SizePicker from '$lib/components/SizePicker.svelte';
 	import { copy } from '$lib/copy';
@@ -71,7 +72,15 @@
 	const regionLabel = registryRegionLabel(region);
 
 	const weekDates = getWeekDates();
+	// The round calendar button at the rail's end opens the month-ahead
+	// picker modal (shared with the discover When filter).
+	let calendarOpen = $state(false);
 	let selectedDays = $state<Set<string>>(new Set());
+
+	// Days selected beyond the visible week — surfaced as a count on the
+	// calendar button so a closed modal never hides a selection without a trace.
+	const railKeys = new Set(weekDates.map((d) => d.date));
+	const farSelectedCount = $derived([...selectedDays].filter((k) => !railKeys.has(k)).length);
 
 	interface SlotDraft {
 		// Stable id for the {#each} key. Index keys cause Svelte to reuse
@@ -174,6 +183,11 @@
 			nextSlots.delete(date);
 			daySlots = nextSlots;
 		} else {
+			// A day with no submittable time (today, late in the evening) must
+			// not become selected — the rail disables its chip and the modal
+			// disables its cell, but guard here too so no caller can slip a
+			// slot in that publish would reject (the ≥1h-future rule).
+			if (timeOptionsForDate(date).length === 0) return;
 			// Selecting a new day implies adding one slot. Block when at the
 			// 3-slot conversation ceiling.
 			if (totalSlotCount >= 3) return;
@@ -391,22 +405,53 @@
 		<h2 id="publish-sheet-title" class="sheet-title">{copy.editor.publishHeadline}</h2>
 		<p class="sheet-subtitle">{copy.editor.dayPickerHint}</p>
 		<p class="sheet-note">{copy.editor.privacyNote}</p>
+		{#snippet dayCell(day: WeekDate)}
+			{@const noValidTimes = timeOptionsForDate(day.date).length === 0}
+			<button
+				type="button"
+				class="day-cell"
+				class:selected={selectedDays.has(day.date)}
+				aria-pressed={selectedDays.has(day.date)}
+				disabled={noValidTimes}
+				onclick={() => toggleDay(day.date)}
+			>
+				<!-- The 1st of a month carries its month label instead of a weekday,
+				     so the grid reads across a month boundary without a header row. -->
+				<span class="day-name">{day.dayNum === 1 ? day.monthShort.toUpperCase() : day.dayShort.toUpperCase()}</span>
+				<span class="day-num">{day.dayNum}</span>
+			</button>
+		{/snippet}
+
 		<div class="day-picker">
 			{#each weekDates as day}
-				{@const noValidTimes = timeOptionsForDate(day.date).length === 0}
-				<button
-					type="button"
-					class="day-cell"
-					class:selected={selectedDays.has(day.date)}
-					aria-pressed={selectedDays.has(day.date)}
-					disabled={noValidTimes}
-					onclick={() => toggleDay(day.date)}
-				>
-					<span class="day-name">{day.dayShort.toUpperCase()}</span>
-					<span class="day-num">{day.dayNum}</span>
-				</button>
+				{@render dayCell(day)}
 			{/each}
+			<button
+				type="button"
+				class="cal-btn"
+				class:has-far={farSelectedCount > 0}
+				aria-haspopup="dialog"
+				aria-label={copy.common.pickDaysAhead}
+				onclick={() => (calendarOpen = true)}
+			>
+				<svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+					<rect x="2.5" y="4" width="15" height="13.5" rx="2" stroke="currentColor" stroke-width="1.5"/>
+					<path d="M2.5 8h15" stroke="currentColor" stroke-width="1.5"/>
+					<path d="M6.5 2v4M13.5 2v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+				</svg>
+				{#if farSelectedCount > 0}<span class="cal-count">{farSelectedCount}</span>{/if}
+			</button>
 		</div>
+		{#if calendarOpen}
+			<MonthCalendarModal
+				selected={selectedDays}
+				onToggle={toggleDay}
+				onClose={() => (calendarOpen = false)}
+				isDisabled={(d) => timeOptionsForDate(d).length === 0}
+				atCapacity={totalSlotCount >= 3}
+				capacityHint={copy.editor.dayPickerHint}
+			/>
+		{/if}
 
 		<!-- Per-day slot config -->
 		{#each [...selectedDays].sort() as date}
@@ -578,6 +623,46 @@
 		display: flex;
 		gap: var(--space-1);
 		margin-bottom: var(--space-5);
+	}
+
+	/* Round calendar button — echoes the functional buttons of the nav pill.
+	   Dashed while empty; solid once it holds selections beyond the week. */
+	.cal-btn {
+		position: relative;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 2.75rem;
+		height: 2.75rem;
+		flex: 0 0 auto;
+		align-self: center;
+		padding: 0;
+		background: none;
+		border: 1px dashed var(--border-link);
+		border-radius: 50%;
+		cursor: pointer;
+		color: var(--text-muted);
+		transition: background 0.15s, color 0.15s, border-color 0.15s;
+	}
+	.cal-btn:hover { border-color: var(--border-link-hover); color: var(--text-primary); }
+	.cal-btn.has-far {
+		border-style: solid;
+		border-color: var(--text-primary);
+		color: var(--text-primary);
+	}
+	.cal-count {
+		position: absolute;
+		top: 0;
+		right: 0;
+		min-width: 14px;
+		height: 14px;
+		border-radius: 7px;
+		font-size: 10px;
+		font-weight: 600;
+		line-height: 14px;
+		text-align: center;
+		background: var(--text-primary);
+		color: var(--bg-canvas);
 	}
 
 	.day-cell {

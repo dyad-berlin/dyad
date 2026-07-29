@@ -45,7 +45,7 @@ We have tried to make the app ask very little of members' attention. Notificatio
 - The exact location is private. The inviter sees only a general area (neighbourhood-level, derived from the exact location); the exact location is revealed when an invitation is accepted. *(Column-level grants + the SECURITY DEFINER `get_meeting_with_location` function.)*
 - Confirmed time slots are hidden from non-participants. *(RLS policy in `20260409_fix_time_slots_rls_safeguarding.sql`.)*
 - The inviter picks one time + place option.
-- Time slots use a rolling 7-day window in the UI. *(Currently held by UI convention; the schema accepts arbitrary future dates.)*
+- Time slots use a rolling 28-day window in the UI (`SCHEDULING_HORIZON_DAYS` in `src/lib/utils/dates.ts`): a 7-day rail plus a calendar picker for the weeks beyond. *(Currently held by UI convention; the schema accepts arbitrary future dates.)*
 - Time slots where a member already has an accepted meeting are hidden. *(Held by review and UI; not yet enforced server-side.)*
 
 ### Consent-free as a constraint

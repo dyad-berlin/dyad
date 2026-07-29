@@ -2,6 +2,8 @@
 	import { onMount } from 'svelte';
 	import { copy } from '$lib/copy';
 	import type { WeekDate } from '$lib/utils/dates';
+	import { createDragSelect } from '$lib/utils/drag-select';
+	import MonthCalendarModal from '$lib/components/MonthCalendarModal.svelte';
 
 	export interface FloatingNavAction {
 		label: string;
@@ -34,8 +36,10 @@
 		attentionCount = 0,
 		onMapClick,
 		weekDates = [],
+		monthAhead = false,
 		selectedDays = new Set<string>(),
 		onToggleDay,
+		onReplaceDays,
 		availableAreas = [],
 		selectedArea = null,
 		onSetArea,
@@ -58,8 +62,15 @@
 		attentionCount?: number;
 		onMapClick?: () => void;
 		weekDates?: WeekDate[];
+		/** Renders the round calendar button at the end of the When rail, which
+		 *  opens the month-ahead picker modal. Off (the default) keeps the
+		 *  plain 7-day row. */
+		monthAhead?: boolean;
 		selectedDays?: Set<string>;
 		onToggleDay?: (date: string) => void;
+		/** Enables drag-select on the When rail and inside the calendar modal:
+		 *  the whole next selection is pushed on every sweep step. */
+		onReplaceDays?: (next: Set<string>) => void;
 		availableAreas?: string[];
 		selectedArea?: string | null;
 		onSetArea?: (area: string | null) => void;
@@ -77,6 +88,22 @@
 	} = $props();
 
 	let filterOpen = $state(false);
+	// The When rail's round calendar button opens the month-ahead picker modal.
+	let calendarOpen = $state(false);
+	// Selections beyond the visible week, surfaced as a count on the button so
+	// a closed modal never hides an active date filter without a trace.
+	const railKeys = $derived(new Set(weekDates.map((d) => d.date)));
+	const farSelectedCount = $derived([...selectedDays].filter((k) => !railKeys.has(k)).length);
+	// Drag-select over the When rail — only when the caller opted in.
+	const dayDrag = onReplaceDays
+		? createDragSelect({ getSelected: () => selectedDays, replace: onReplaceDays })
+		: null;
+	function handleDayClick(date: string) {
+		// A pointer session already applied this activation (see drag-select.ts);
+		// keyboard activation falls through to the plain toggle.
+		if (dayDrag?.consumeClick()) return;
+		onToggleDay?.(date);
+	}
 	let actionsDropdownOpen = $state(false);
 	let actionsDropdownRef: HTMLElement | undefined = $state();
 
@@ -261,18 +288,42 @@
 	<div class="filter-sheet" class:filter-sheet-top={position === 'top'} class:filter-sheet-bottom={position === 'bottom'} role="dialog" aria-label="Filters">
 		<section class="filter-section">
 			<div class="filter-eyebrow">{copy.discover.filterWhenLabel}</div>
+			{#snippet dayCell(day: WeekDate)}
+				<button
+					class="day-cell"
+					class:draggable={dayDrag !== null}
+					class:selected={selectedDays.has(day.date)}
+					aria-pressed={selectedDays.has(day.date)}
+					data-date={day.date}
+					onpointerdown={dayDrag ? (e) => dayDrag.start(e, day.date) : undefined}
+					onclick={() => handleDayClick(day.date)}
+				>
+					<!-- The 1st of a month shows its month label instead of a weekday,
+					     so the grid reads across a month boundary without a header row. -->
+					<span class="day-name">{day.dayNum === 1 ? day.monthShort : day.dayShort}</span>
+					<span class="day-num">{day.dayNum}</span>
+				</button>
+			{/snippet}
 			<div class="day-row">
 				{#each weekDates as day}
-					<button
-						class="day-cell"
-						class:selected={selectedDays.has(day.date)}
-						aria-pressed={selectedDays.has(day.date)}
-						onclick={() => onToggleDay?.(day.date)}
-					>
-						<span class="day-name">{day.dayShort}</span>
-						<span class="day-num">{day.dayNum}</span>
-					</button>
+					{@render dayCell(day)}
 				{/each}
+				{#if monthAhead}
+					<button
+						class="cal-btn"
+						class:has-far={farSelectedCount > 0}
+						aria-haspopup="dialog"
+						aria-label={copy.common.pickDaysAhead}
+						onclick={() => (calendarOpen = true)}
+					>
+						<svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+							<rect x="2.5" y="4" width="15" height="13.5" rx="2" stroke="currentColor" stroke-width="1.5"/>
+							<path d="M2.5 8h15" stroke="currentColor" stroke-width="1.5"/>
+							<path d="M6.5 2v4M13.5 2v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+						</svg>
+						{#if farSelectedCount > 0}<span class="cal-count">{farSelectedCount}</span>{/if}
+					</button>
+				{/if}
 			</div>
 		</section>
 
@@ -327,6 +378,15 @@
 			onclick={() => onClearFilters?.()}
 		>{copy.discover.filterClearAll}</button>
 	</div>
+{/if}
+
+{#if calendarOpen}
+	<MonthCalendarModal
+		selected={selectedDays}
+		onToggle={(date) => onToggleDay?.(date)}
+		onClose={() => (calendarOpen = false)}
+		onReplaceSelection={onReplaceDays}
+	/>
 {/if}
 
 <style>
@@ -508,8 +568,48 @@
 		transition: background 0.15s, color 0.15s;
 	}
 	.day-cell.selected { background: var(--text-primary); color: var(--bg-canvas); }
+	/* Drag-enabled chips own their touch gestures: a touch starting on a chip
+	   sweeps the range instead of scrolling the sheet. */
+	.day-cell.draggable { touch-action: none; }
 	.day-name { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.04em; opacity: 0.7; }
 	.day-num { font-size: var(--text-base); font-weight: 600; line-height: 1; }
+
+	/* Round calendar button — echoes the pill's functional buttons. Opens the
+	   month-ahead picker modal; inverts once it holds beyond-week selections. */
+	.cal-btn {
+		position: relative;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 2.75rem;
+		height: 2.75rem;
+		flex: 0 0 auto;
+		align-self: center;
+		padding: 0;
+		background: color-mix(in srgb, var(--text-primary) 6%, transparent);
+		border: none;
+		border-radius: 50%;
+		cursor: pointer;
+		color: var(--text-muted);
+		transition: background 0.15s, color 0.15s;
+	}
+	.cal-btn:hover { background: color-mix(in srgb, var(--text-primary) 12%, transparent); color: var(--text-primary); }
+	.cal-btn.has-far { background: var(--text-primary); color: var(--bg-canvas); }
+	.cal-count {
+		position: absolute;
+		top: 0;
+		right: 0;
+		min-width: 14px;
+		height: 14px;
+		border-radius: 7px;
+		font-size: 10px;
+		font-weight: 600;
+		line-height: 14px;
+		text-align: center;
+		background: var(--bg-canvas);
+		color: var(--text-primary);
+		box-shadow: 0 0 0 1px var(--border-subtle);
+	}
 
 	/* Segmented control — shared by Type and Corner so selection reads identically. */
 	.seg { display: flex; gap: var(--space-1); }

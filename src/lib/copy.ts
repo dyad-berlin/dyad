@@ -59,6 +59,11 @@ export const copy = {
 		loading: 'Loading…',
 		clear: 'Clear',
 		someone: 'someone',
+		// Round calendar button on the day rails (publish sheet + discover When
+		// filter) and the calendar picker modal it opens.
+		pickDaysAhead: 'pick days further ahead',
+		monthAheadTitle: 'Further ahead',
+		done: 'done',
 		networkError: 'Network error. Please try again.',
 		genericError: 'Something went wrong. Please try again.',
 		submitFailed: 'Couldn’t submit. Please try again.',
@@ -277,7 +282,7 @@ export const copy = {
 		coverUploadFailed: 'Couldn’t upload that image. Please try again.',
 		coverNetworkError: 'Couldn’t reach the server. Check your connection.',
 		writingPlaceholder: 'you can start writing here',
-		dayPickerHint: 'Pick up to three slots in the next 7 days.',
+		dayPickerHint: 'Pick up to three slots in the month ahead.',
 		privacyNote: 'We only show the address to those you agree to meet.',
 		addTime: '+ add time',
 		publishing: 'Publishing…',

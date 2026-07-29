@@ -332,8 +332,10 @@
 		attentionCount={data.attentionCount ?? 0}
 		onMapClick={() => viewMode = viewMode === 'map' ? 'split' : 'map'}
 		{weekDates}
+		monthAhead={true}
 		selectedDays={selectedDates}
 		onToggleDay={toggleDate}
+		onReplaceDays={(next) => (selectedDates = next)}
 		{availableAreas}
 		{selectedArea}
 		onSetArea={setArea}
