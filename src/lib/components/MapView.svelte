@@ -18,9 +18,14 @@
 		 *  produce a pin. Used by the discover page so date/area filters narrow pin
 		 *  emission rather than just the conversation list. */
 		slotFilter?: SlotFilter;
+		/** Fit signal: when this key changes to a non-null value, the view fits
+		 *  the bounds of the currently visible (post-filter) pins. The discover
+		 *  page passes the selected district, so choosing one centers the map on
+		 *  it and zooms to cover its pins. Clearing (null) leaves the view put. */
+		fitKey?: string | null;
 	}
 
-	let { prompts, onSelectPin, onMapClick, initialCenter, initialZoom, onMoveEnd, scrollWheelZoom = true, zoomControl = false, zoomControlPosition = 'topleft', slotFilter }: Props = $props();
+	let { prompts, onSelectPin, onMapClick, initialCenter, initialZoom, onMoveEnd, scrollWheelZoom = true, zoomControl = false, zoomControlPosition = 'topleft', slotFilter, fitKey = null }: Props = $props();
 
 	let mapContainer: HTMLElement | undefined = $state();
 	let map: LeafletMap | undefined;
@@ -30,8 +35,13 @@
 	const BERLIN_CENTER: [number, number] = [52.52, 13.405];
 	const DEFAULT_ZOOM = 12;
 
+	// Fitting caps at neighbourhood scale: a district with one pin must not
+	// zoom to rooftop level (positions are fuzzed for privacy anyway).
+	const FIT_MAX_ZOOM = 15;
+	const FIT_PADDING: [number, number] = [40, 40];
+
 	function rebuildMarkers(L: typeof import('leaflet')) {
-		if (!markerLayer) return;
+		if (!markerLayer) return [] as ReturnType<typeof buildPins>;
 		markerLayer.clearLayers();
 
 		const pins = buildPins(prompts, slotFilter);
@@ -74,6 +84,7 @@
 			});
 			marker.addTo(markerLayer);
 		}
+		return pins;
 	}
 
 	let leafletModule: typeof import('leaflet') | undefined;
@@ -126,17 +137,27 @@
 
 	let prevPrompts: PromptSummary[] | undefined;
 	let prevSlotFilter: SlotFilter | undefined;
+	let prevFitKey: string | null = null;
 	$effect(() => {
 		const currentPrompts = prompts;
 		const currentFilter = slotFilter;
+		const currentFitKey = fitKey;
 		if (
 			leafletModule &&
 			markerLayer &&
-			(currentPrompts !== prevPrompts || currentFilter !== prevSlotFilter)
+			(currentPrompts !== prevPrompts ||
+				currentFilter !== prevSlotFilter ||
+				currentFitKey !== prevFitKey)
 		) {
 			prevPrompts = currentPrompts;
 			prevSlotFilter = currentFilter;
-			rebuildMarkers(leafletModule);
+			const fitRequested = currentFitKey !== prevFitKey && currentFitKey !== null;
+			prevFitKey = currentFitKey;
+			const pins = rebuildMarkers(leafletModule);
+			if (fitRequested && map && pins.length > 0) {
+				const bounds = leafletModule.latLngBounds(pins.map((p) => p.position));
+				map.fitBounds(bounds, { padding: FIT_PADDING, maxZoom: FIT_MAX_ZOOM });
+			}
 		}
 	});
 

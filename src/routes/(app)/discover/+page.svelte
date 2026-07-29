@@ -264,6 +264,7 @@
 	<MapView
 		prompts={filteredPrompts}
 		slotFilter={mapSlotFilter}
+		fitKey={selectedArea}
 		onSelectPin={handlePinSelect}
 		onMapClick={closeSheet}
 		initialCenter={mapCenter ?? data.mapCenter}
@@ -307,7 +308,6 @@
 		<aside class="list-pane">
 			<div class="list-head">
 				<span class="list-title">Conversations</span>
-				<button class="expand-btn" onclick={() => (viewMode = 'list')} aria-label="Expand to full list">expand ⤢</button>
 			</div>
 			<div class="list-scroll">
 				{@render listBlock()}
@@ -321,15 +321,9 @@
 		<BottomSheet items={selectedPinItems} />
 	{/if}
 {:else}
+	<!-- No in-page view switch: the nav pill's map/list toggle is the single
+	     control for split ↔ list, so nothing here duplicates it. -->
 	<div class="content list-full">
-		<div class="list-head">
-			<!-- Honest per-breakpoint label: on desktop this restores map + list;
-			     on mobile the split view IS the map, so it reads "map". -->
-			<button class="expand-btn" onclick={() => (viewMode = 'split')} aria-label={copy.discover.backToMapAria}>
-				<span class="label-desktop">{copy.discover.backToMapDesktop}</span>
-				<span class="label-mobile">{copy.discover.backToMapMobile}</span>
-			</button>
-		</div>
 		{@render listBlock()}
 	</div>
 {/if}
@@ -452,16 +446,6 @@
 		font-weight: 500;
 		color: var(--text-primary);
 	}
-	.expand-btn {
-		background: none;
-		border: 1px solid var(--border-link);
-		border-radius: var(--radius-card);
-		padding: var(--space-1) var(--space-3);
-		font-size: var(--text-sm);
-		color: var(--text-primary);
-		cursor: pointer;
-	}
-	.expand-btn:hover { border-color: var(--text-primary); }
 	.list-scroll {
 		flex: 1;
 		overflow-y: auto;
@@ -475,17 +459,10 @@
 	}
 	.list-full { margin: 0 auto; }
 
-	/* Responsive back-button label: the split view is map+list on desktop but
-	   full-bleed map on mobile, so the list view's return button names what it
-	   actually returns to. */
-	.label-mobile { display: none; }
-
 	/* Narrow screens: the split view IS the map — the list pane (and its
 	   expand button) hides, and the nav toggle switches map ↔ list. This
 	   replaces the old third view mode (map-only) rather than hiding the map. */
 	@media (max-width: 768px) {
 		.list-pane { display: none; }
-		.label-desktop { display: none; }
-		.label-mobile { display: inline; }
 	}
 </style>

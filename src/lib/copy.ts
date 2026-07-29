@@ -179,11 +179,6 @@ export const copy = {
 		searchPlaceholder: 'Search',
 		noResults: 'No conversations found.',
 		searchSuggestions: ['strangers & connection', 'philosophy of everyday life', 'belonging in Berlin', 'silence & listening', 'living in Berlin'],
-		// The list view's return button: desktop restores map + list; on mobile
-		// the split view is the full-bleed map, so the label says what it does.
-		backToMapDesktop: '‹ map + list',
-		backToMapMobile: '‹ map',
-		backToMapAria: 'Back to the map',
 		filterWhenLabel: 'When',
 		filterWhereLabel: 'Where',
 		filterAnywhere: 'Anywhere',
