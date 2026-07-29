@@ -2,6 +2,7 @@
 	import CitySearch from '$lib/components/CitySearch.svelte';
 	import { copy } from '$lib/copy';
 	import { env } from '$env/dynamic/public';
+	import { capture } from '$lib/analytics';
 
 	let name = $state('');
 	let email = $state('');
@@ -72,6 +73,7 @@
 			}
 
 			status = 'sent';
+			capture('waitlist_requested');
 		} catch (err) {
 			errorMsg = err instanceof Error ? err.message : copy.waitlist.genericError;
 			status = 'error';
