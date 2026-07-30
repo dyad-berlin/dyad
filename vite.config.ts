@@ -50,13 +50,17 @@ export default defineConfig({
 		SvelteKitPWA({
 			registerType: 'autoUpdate',
 			manifest: {
+				// Pins app identity independent of start_url.
+				id: '/',
 				name: 'dyad',
 				short_name: 'dyad',
 				description: 'Cultivating a culture of conversation in Berlin',
 				theme_color: '#ffffff',
-				background_color: '#f8fafc',
+				// Launch splash; matches --bg-canvas in app.css.
+				background_color: '#f5f3f0',
 				display: 'standalone',
 				start_url: '/',
+				scope: '/',
 				icons: [
 					{
 						src: 'icon-192.png',
