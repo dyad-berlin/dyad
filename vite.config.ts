@@ -49,6 +49,9 @@ export default defineConfig({
 		sveltekit(),
 		SvelteKitPWA({
 			registerType: 'autoUpdate',
+			// Explicit rather than relying on the plugin default: src/app.html links
+			// this path by hand, and app.html.test.ts asserts the two agree.
+			manifestFilename: 'manifest.webmanifest',
 			manifest: {
 				// Pins app identity independent of start_url.
 				id: '/',
