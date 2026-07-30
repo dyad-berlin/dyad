@@ -85,8 +85,10 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-${{ hashFiles('package-lock.json') }}
 
+      # webkit is required, not optional: it is the only engine here that reads
+      # the iOS PWA install signals. Chromium cannot fail on a WebKit-only break.
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps chromium webkit
 
       # E2E tests (all viewport projects, sequential)
       - run: npx playwright test
