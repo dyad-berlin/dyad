@@ -189,13 +189,23 @@ export const copy = {
 		headlineLine1: 'Meet people',
 		headlineLine2: "you wouldn't otherwise.",
 		headlineLine3: 'On your own terms.',
-		subcopy: 'We are a collective working in service to community and collective sensemaking.',
+		wordmark: 'DYAD',
+		// Each heading is the opening of the sentence its body completes, so the
+		// body starts mid-sentence and never restates the heading.
+		toggleLabelWeAre: 'We are',
+		toggleLabelWeDo: 'We do that by',
+		toggleLabelWhy: 'Dyad exists because',
+		subcopy: 'a collective working in service to community and collective sensemaking.',
 		subcopyHighlightPre:
-			'We do that by building open-source online software, dyad, that will be collectively owned and governed,',
+			'building open-source online software, dyad, that will be collectively owned and governed,',
 		subcopyHighlight:
 			'for people seeking encounters beyond their existing circles through in-person conversation.',
 		subcopyClosing:
 			'Alongside the platform, we publish editorial work and will produce seasonal public event series that offer alternatives to the infrastructures of Big Tech and corporate media, creating different conditions for how we meet, think, and live together.',
+		subcopyWhy:
+			'our loneliness, wellbeing, and living, flourishing lives are not personal matters, but realities made possible — and even intentionally perpetuated — by certain decisions we made about our collective stewarding of life. Situating ourselves in a prefigurative understanding of social change-making, we are on the side of creating the conditions for a different way to meet, be together, in conversation, and live together.',
+		// Banner pinned to the top-left of the landing map.
+		mapBanner: 'Live in Berlin',
 		// CTA on the map card that floats over a selected conversation.
 		mapCardCta: 'Join to read & meet',
 	},
