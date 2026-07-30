@@ -164,12 +164,20 @@
 							{/each}
 						</div>
 					{/if}
+					{#if selected.cover_image_url}
+						<div class="map-card-cover">
+							<img src={selected.cover_image_url} alt={selected.title ? `Cover image for ${selected.title}` : ''} />
+						</div>
+					{/if}
 					<div class="map-card-body">
 						<h3 class="map-card-title">{selected.title ?? 'Untitled'}</h3>
 						<div class="map-card-meta">
 							{#if areaOf(selected)}<span>{areaOf(selected)}</span>{/if}
 							{#if selected.soonest_slot}<span>{formatDate(selected.soonest_slot)}</span>{/if}
 						</div>
+						{#if selected.body_snippet}
+							<p class="map-card-snippet">{selected.body_snippet}</p>
+						{/if}
 						<a href="/waitlist" class="map-card-cta">{og.mapCardCta}</a>
 					</div>
 				</div>
@@ -226,6 +234,7 @@
 		--landing-hairline: rgba(59, 42, 29, 0.14);
 		--landing-card-bg: #fff;
 		--landing-card-ink: #111;
+		--landing-card-ink-soft: #555;
 		--landing-card-ink-muted: #717171;
 		/* The map sits almost the same tone as the paper ground, so it reads
 		   as part of the page rather than a dark box dropped onto it. */
@@ -305,14 +314,14 @@
 		align-items: flex-start;
 	}
 
-	/* Section headings — the newsletter's card-title treatment: Futura,
-	   uppercase, heavy. See (zine)/newsletter/+page.svelte. */
+	/* Section headings — the newsletter's Futura card-title weight, but
+	   sentence-cased: landing display headings are sentence case by design
+	   (CLAUDE.md § UI conventions), unlike the newsletter's uppercase titles. */
 	.hero-toggle-label {
 		font-family: var(--font-display);
-		font-size: 1rem;
+		font-size: 1.05rem;
 		font-weight: 800;
-		letter-spacing: 0.01em;
-		text-transform: uppercase;
+		letter-spacing: 0.005em;
 		color: var(--landing-ink);
 		margin: 0;
 		text-shadow: var(--ink-halo);
@@ -438,22 +447,26 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--space-4);
-		transition: width var(--duration-slow, 400ms) var(--ease-ink, ease),
-		            bottom var(--duration-slow, 400ms) var(--ease-ink, ease);
+		transition: bottom var(--duration-slow, 400ms) var(--ease-ink, ease);
 	}
 
-	/* Expanded: the right half of the page, as the map pane used to be. It
-	   floats over the headline/footer beneath rather than reflowing them —
-	   z-index above .left, and the frame is opaque so nothing shows through. */
+	/* Expanded: the pane grows downward only — width is unchanged, so the
+	   column keeps its place and nothing to the left reflows. It floats over
+	   the headline/footer beneath (z-index above .left) rather than pushing
+	   them around; the frame is opaque so nothing shows through. */
 	.map-pane.expanded {
-		width: min(52vw, 820px);
 		bottom: var(--space-4);
 		z-index: 60;
 	}
+	/* Expanding lifts the map out of the column flow to cover the full pane —
+	   so it opens *over* the about text beneath rather than shrinking to
+	   share the space with it. The frame is opaque, so nothing shows
+	   through; the text is untouched underneath and returns on collapse. */
 	.map-pane.expanded .map-frame {
+		position: absolute;
+		inset: 0;
+		z-index: 2;
 		aspect-ratio: auto;
-		flex: 1;
-		min-height: 0;
 	}
 
 	/* Banner pinned to the map, mirroring the expand control opposite it. */
@@ -589,7 +602,27 @@
 		color: var(--landing-card-bg);
 	}
 
+	.map-card-cover {
+		width: 100%;
+		aspect-ratio: 3 / 2;
+		overflow: hidden;
+	}
+	.map-card-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
 	.map-card-body { padding: var(--space-3) var(--space-4) var(--space-4); }
+
+	.map-card-snippet {
+		font-family: var(--font-serif);
+		font-size: 0.82rem;
+		line-height: 1.45;
+		color: var(--landing-card-ink-soft);
+		margin: 0 0 var(--space-3);
+		display: -webkit-box;
+		-webkit-line-clamp: 2;
+		line-clamp: 2;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
 
 	.map-card-title {
 		font-size: var(--text-base);
@@ -714,6 +747,11 @@
 		/* Expanding is a desktop affordance — on mobile the card is already
 		   full-width, so the control has nothing to do. */
 		.map-expand { display: none; }
+
+		/* The pin card leads with the conversation itself — cover, title, and
+		   a couple of lines — rather than an ask. Joining is already the
+		   headline CTA further down the page. */
+		.map-card-cta { display: none; }
 
 		/* On a scrolling page the card shouldn't scroll inside itself. */
 		.hero-card { max-height: none; overflow: visible; }
