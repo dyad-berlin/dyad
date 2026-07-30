@@ -21,7 +21,15 @@
 			<div class="hero-inner" aria-hidden="true"></div>
 		{/if}
 		{#if entry.heroCredit}
-			<p class="hero-credit">{entry.heroCredit}</p>
+			<p class="hero-credit">
+				{#if entry.heroCreditUrl}
+					<a href={entry.heroCreditUrl} target="_blank" rel="noopener noreferrer"
+						>{entry.heroCredit}</a
+					>
+				{:else}
+					{entry.heroCredit}
+				{/if}
+			</p>
 		{/if}
 	</div>
 
