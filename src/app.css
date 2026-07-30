@@ -238,6 +238,29 @@ button, input, textarea, select {
 	color: inherit;
 }
 
+/* iOS zooms the viewport in when a focused text field is under 16px, and a
+ * standalone PWA has no browser chrome to zoom back out from — the member is
+ * simply stuck at ~3x. Keyed on pointer, not width: this is a touch-device
+ * behaviour, so a desktop window dragged narrow keeps the 14px scale, and a
+ * tablet in landscape is covered. Buttons are excluded (no focus-zoom, and
+ * bumping them would resize every action in the app); so are checkbox and
+ * radio, which render no text but do feed em-based layout.
+ * Declining the alternative deliberately: maximum-scale=1 / user-scalable=no
+ * would also stop the zoom, by disabling pinch-zoom entirely (WCAG 1.4.4). */
+@media (pointer: coarse) {
+	input:not([type='checkbox']):not([type='radio']),
+	textarea,
+	select {
+		/* !important is load-bearing, not laziness. Nine components set their own
+		 * input font-size, and Svelte's scoped class ties this selector's
+		 * specificity and wins on source order — the rule silently did nothing
+		 * without it. A specificity bump would break again the moment a component
+		 * adds one more class, and @layer would lose outright (unlayered styles
+		 * beat layered ones). This is a floor, so it declares itself as one. */
+		font-size: 16px !important;
+	}
+}
+
 /* Buttons are unstyled by default — add appearance via .btn-primary, .btn-secondary, etc. */
 button {
 	border: none;
