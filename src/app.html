@@ -4,10 +4,15 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 		<meta name="theme-color" content="#ffffff" />
+		<!-- Both needed: WebKit reads the apple- form, Chromium the unprefixed one. -->
+		<meta name="apple-mobile-web-app-capable" content="yes" />
 		<meta name="mobile-web-app-capable" content="yes" />
 		<meta name="apple-mobile-web-app-status-bar-style" content="default" />
 		<link rel="icon" href="%sveltekit.assets%/favicon.png" type="image/png" />
 		<link rel="apple-touch-icon" href="%sveltekit.assets%/icon-192.png" />
+		<!-- Emitted by SvelteKitPWA (vite.config.ts); the plugin does not inject this
+		     link. Build-only — 404s under `npm run dev`, where devOptions is off. -->
+		<link rel="manifest" href="/manifest.webmanifest" />
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">

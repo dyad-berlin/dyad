@@ -44,6 +44,9 @@ export default defineConfig({
 		{
 			name: 'desktop',
 			testMatch: /e2e\/.*\.test\.ts/,
+			// WebKit specs are engine-specific; running them under Chromium would
+			// assert Blink behaviour and report it as a pass.
+			testIgnore: /\.webkit\.test\.ts/,
 			use: { viewport: { width: 1280, height: 720 } },
 			dependencies: ['setup']
 		},
@@ -52,6 +55,17 @@ export default defineConfig({
 			testMatch: /e2e\/.*\.responsive\.test\.ts/,
 			use: { ...devices['Pixel 7'] },
 			dependencies: ['setup']
+		},
+		{
+			// Both other projects are Blink. That is the blind spot that let the
+			// iOS standalone regression ship: `apple-mobile-web-app-capable` was
+			// renamed to the unprefixed Chromium name on correct Chromium advice,
+			// and nothing in the toolchain reads WebKit. devices['iPhone 13']
+			// carries defaultBrowserType: 'webkit'. No auth needed — the specs
+			// here are anonymous.
+			name: 'webkit',
+			testMatch: /e2e\/.*\.webkit\.test\.ts/,
+			use: { ...devices['iPhone 13'] }
 		}
 	],
 	webServer: isCI
