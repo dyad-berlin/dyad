@@ -9,10 +9,12 @@
 		env.PUBLIC_VIDEO_BASE_URL ??
 		'https://iwdjpuyuznzukhowxjhk.supabase.co/storage/v1/object/public/videos';
 
-	// Kaspar and Ali archived per review — Pauline only, for now.
+	// Kaspar stays archived per review — no kaspar.mp4 in the bucket to serve.
 	// { src: `${videoBase}/voices/kaspar.mp4`, name: 'Kaspar' },
-	// { src: `${videoBase}/voices/ali.mp4`, name: 'Ali' }
-	const voices = [{ src: `${videoBase}/voices/pauline.mp4`, name: 'Pauline' }];
+	const voices = [
+		{ src: `${videoBase}/voices/pauline.mp4`, name: 'Pauline' },
+		{ src: `${videoBase}/voices/ali.mp4`, name: 'Ali' }
+	];
 
 	function toggle(e: Event) {
 		const el = e.currentTarget as HTMLVideoElement;
