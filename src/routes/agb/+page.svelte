@@ -5,7 +5,7 @@
 
 <svelte:head>
 	<title>agb · {copy.common.titleSuffix}</title>
-	<meta name="description" content="Terms of use for dyad — membership, conduct, and cancellation." />
+	<meta name="description" content={copy.seo.agb} />
 </svelte:head>
 
 <main class="legal-page">

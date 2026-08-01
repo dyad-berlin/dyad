@@ -87,6 +87,24 @@ describe('articleJsonLd', () => {
 		expect(JSON.parse(out).description).toBe('ends here </script><img src=x>');
 	});
 
+	it('escapes the script-data-double-escape sequence, not just the closing tag', () => {
+		// Inside a script element the tokenizer also reacts to `<!--` followed by
+		// `<script`, which swallows the rest of the head. Escaping only `</` leaves
+		// this open, so the assertion is that no raw `<` survives at all.
+		const out = articleJsonLd({ ...base, title: 'a <!--<script> b' });
+		expect(out).not.toContain('<');
+		expect(JSON.parse(out).headline).toBe('a <!--<script> b');
+	});
+
+	it('carries an image when given one, since Article rich results require it', () => {
+		const img = 'https://cdn.example/storage/v1/object/public/newsletter%20assets/hero.jpg';
+		expect(JSON.parse(articleJsonLd({ ...base, image: img })).image).toBe(img);
+	});
+
+	it('omits image entirely when the entry has no hero', () => {
+		expect('image' in JSON.parse(articleJsonLd(base))).toBe(false);
+	});
+
 	it('names the publisher', () => {
 		const parsed = JSON.parse(articleJsonLd(base));
 		expect(parsed.publisher.name).toBe('dyad');
@@ -110,9 +128,13 @@ describe('isPublicPath', () => {
 		expect(isPublicPath('/newsletter/conversation-is-a-fundamental-technology')).toBe(true);
 	});
 
-	it('does not reject a public path that merely starts with the same letters', () => {
-		// '/logout' is non-public; '/log' or '/logbook' must not be caught by a
-		// bare startsWith without the separator check.
-		expect(isPublicPath('/logbook')).toBe(true);
+	it('does not reject a public path that merely starts with a gated prefix', () => {
+		// These are the inputs that actually distinguish separator-aware matching
+		// from a bare startsWith: each shares a full prefix with a gated path, so
+		// a naive implementation returns false and this test fails. An input like
+		// '/logbook' would pass under both and prove nothing.
+		expect(isPublicPath('/joined')).toBe(true); // vs '/join'
+		expect(isPublicPath('/apirary')).toBe(true); // vs '/api'
+		expect(isPublicPath('/administration')).toBe(true); // vs '/admin'
 	});
 });

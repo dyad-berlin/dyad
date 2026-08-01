@@ -1,6 +1,7 @@
 import type { RequestHandler } from './$types';
 import { canonicalUrl, PUBLIC_PATHS } from '$lib/seo';
 import { unfoldingEntries } from '$lib/content/unfolding';
+import { escapeHtml } from '$lib/utils/escape-html';
 
 /**
  * Sitemap for the public surface.
@@ -11,33 +12,33 @@ import { unfoldingEntries } from '$lib/content/unfolding';
  * cannot disagree about a page's address.
  */
 
-function xmlEscape(value: string): string {
-	return value
-		.replace(/&/g, '&amp;')
-		.replace(/</g, '&lt;')
-		.replace(/>/g, '&gt;')
-		.replace(/"/g, '&quot;')
-		.replace(/'/g, '&apos;');
-}
-
 interface SitemapEntry {
 	path: string;
 	lastmod?: string;
 }
 
-export const GET: RequestHandler = async ({ setHeaders }) => {
+/** W3C date, which is what the sitemap spec accepts for lastmod. */
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}(T[\d:.+Z-]+)?$/;
+
+export const GET: RequestHandler = async ({ setHeaders, locals }) => {
 	const entries: SitemapEntry[] = [
 		...PUBLIC_PATHS.map((path) => ({ path })),
-		...unfoldingEntries.map((entry) => ({
-			path: `/newsletter/${entry.slug}`,
-			lastmod: entry.date
-		}))
+		...unfoldingEntries
+			// A malformed entry would otherwise become /newsletter/undefined in a
+			// document search engines treat as authoritative.
+			.filter((entry) => !!entry.slug)
+			.map((entry) => ({
+				path: `/newsletter/${entry.slug}`,
+				lastmod: ISO_DATE.test(entry.date ?? '') ? entry.date : undefined
+			}))
 	];
 
 	const urls = entries
 		.map(({ path, lastmod }) => {
-			const loc = `\t\t<loc>${xmlEscape(canonicalUrl(path))}</loc>`;
-			const mod = lastmod ? `\n\t\t<lastmod>${xmlEscape(lastmod)}</lastmod>` : '';
+			// encodeURI first so a slug with a space or non-ASCII character yields a
+			// resolvable URL; escapeHtml then covers the XML metacharacters.
+			const loc = `\t\t<loc>${escapeHtml(encodeURI(canonicalUrl(path)))}</loc>`;
+			const mod = lastmod ? `\n\t\t<lastmod>${escapeHtml(lastmod)}</lastmod>` : '';
 			return `\t<url>\n${loc}${mod}\n\t</url>`;
 		})
 		.join('\n');
@@ -47,11 +48,17 @@ export const GET: RequestHandler = async ({ setHeaders }) => {
 ${urls}
 </urlset>`;
 
-	// Content changes only when a post is published, so a short shared cache with
-	// a long stale window keeps crawler traffic off the worker.
+	// The body is identical for every visitor, so it is shared-cacheable — but
+	// only for an anonymous request. A signed-in request runs the same auth
+	// pipeline as any other and can carry a refreshed Set-Cookie; pairing that
+	// with a public directive is how a shared cache ends up holding someone's
+	// session. Cloudflare declines to cache Set-Cookie responses today, which is
+	// a platform behaviour rather than a guarantee this code should lean on.
 	setHeaders({
 		'Content-Type': 'application/xml',
-		'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400'
+		'Cache-Control': locals.user
+			? 'private, no-store'
+			: 'public, s-maxage=3600, stale-while-revalidate=86400'
 	});
 
 	return new Response(body);

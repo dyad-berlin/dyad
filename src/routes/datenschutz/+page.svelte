@@ -5,7 +5,7 @@
 
 <svelte:head>
 	<title>datenschutz · {copy.common.titleSuffix}</title>
-	<meta name="description" content="How dyad handles personal data: what is collected, why, and for how long." />
+	<meta name="description" content={copy.seo.datenschutz} />
 </svelte:head>
 
 <main class="legal-page">

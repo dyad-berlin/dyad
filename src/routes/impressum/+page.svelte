@@ -5,7 +5,7 @@
 
 <svelte:head>
 	<title>impressum · {copy.common.titleSuffix}</title>
-	<meta name="description" content="Legal notice for dyad — operator, contact, and responsible party." />
+	<meta name="description" content={copy.seo.impressum} />
 </svelte:head>
 
 <main class="legal-page">

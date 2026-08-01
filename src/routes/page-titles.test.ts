@@ -27,7 +27,8 @@ const ROUTES: Array<{ path: string; file: string; homepage?: boolean }> = [
 	{ path: '/impressum', file: 'src/routes/impressum/+page.svelte' },
 	{ path: '/datenschutz', file: 'src/routes/datenschutz/+page.svelte' },
 	{ path: '/agb', file: 'src/routes/agb/+page.svelte' },
-	{ path: '/legal', file: 'src/routes/legal/+page.svelte' }
+	{ path: '/legal', file: 'src/routes/legal/+page.svelte' },
+	{ path: '/waitlist', file: 'src/routes/(auth)/waitlist/+page.svelte' }
 ];
 
 const read = (file: string) =>
@@ -40,11 +41,31 @@ const SUFFIX = copy.common.titleSuffix;
  * matters, so a page may write the suffix either as a literal or through the
  * constant and still be checked against the same value.
  */
+/** Resolves `{copy.a.b}` against the real copy object so a title sourced from
+ *  copy.ts is checked the same way as a literal one. */
+const resolveCopyRefs = (s: string) =>
+	s.replace(/\{copy\.([\w.]+)\}/g, (whole, path: string) => {
+		const value = path
+			.split('.')
+			.reduce<unknown>((acc, key) => (acc as Record<string, unknown>)?.[key], copy);
+		return typeof value === 'string' ? value : whole;
+	});
+
 const titleOf = (src: string) =>
-	src
-		.match(/<title>([\s\S]*?)<\/title>/)?.[1]
-		?.replace(/\{copy\.common\.titleSuffix\}/g, SUFFIX)
-		.trim();
+	resolveCopyRefs(src.match(/<title>([\s\S]*?)<\/title>/)?.[1] ?? '').trim() || undefined;
+
+describe('ROUTES stays in step with the sitemap', () => {
+	it('covers every non-dynamic path the sitemap advertises', async () => {
+		// Two hand-kept lists of the same page set. Without this, a page added to
+		// PUBLIC_PATHS is sitemapped and crawled while silently dropping out of the
+		// title and description checks below.
+		const { PUBLIC_PATHS } = await import('$lib/seo');
+		const covered = new Set(ROUTES.map((r) => r.path));
+		for (const path of PUBLIC_PATHS) {
+			expect(covered.has(path), `${path} is in PUBLIC_PATHS but missing from ROUTES`).toBe(true);
+		}
+	});
+});
 
 describe('public page titles', () => {
 	it.each(ROUTES)('$path declares a title', ({ file }) => {

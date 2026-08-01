@@ -26,11 +26,38 @@ describe('aliasRedirect', () => {
 		expect(res?.headers.get('Location')).toBe('https://dyad.social/');
 	});
 
-	it('sends www.dyad.amsterdam to its own target, not the apex', () => {
-		// The helper redirects to whatever target the caller resolved; it must not
-		// hardcode the apex, or conference guests get bounced off their host.
-		const res = aliasRedirect(new URL('https://www.dyad.amsterdam/join'), 'dyad.amsterdam');
-		expect(res?.headers.get('Location')).toBe('https://dyad.amsterdam/join');
+	it('redirects to the target the caller resolved rather than a hardcoded apex', () => {
+		// Uses www.dyad.berlin because it is an actual ALIAS_TARGETS key. An earlier
+		// version asserted www.dyad.amsterdam, which is in no alias map and 404s in
+		// production — a test describing a route that does not exist.
+		const res = aliasRedirect(new URL('https://www.dyad.berlin/join'), 'dyad.social');
+		expect(res?.headers.get('Location')).toBe('https://dyad.social/join');
+	});
+
+	describe('machine traffic is served in place, not redirected', () => {
+		it('does not redirect a POST, whose body a redirect would discard', () => {
+			// 301 and 302 both downgrade POST to GET and drop the body, so
+			// redirecting is strictly worse than serving.
+			expect(aliasRedirect(new URL('https://dyad.berlin/anything'), 'dyad.social', 'POST')).toBeNull();
+		});
+
+		it('does not redirect any /api/ path, whatever the method', () => {
+			// /api/webhooks/resend-sync is configured at an alias host in its own
+			// README and had no exemption when the list was path-by-path.
+			for (const p of ['/api/webhooks/resend-sync', '/api/stripe/webhook', '/api/contact']) {
+				expect(aliasRedirect(new URL(`https://dyad.berlin${p}`), 'dyad.social', 'GET')).toBeNull();
+			}
+		});
+
+		it('still redirects an ordinary browser GET', () => {
+			expect(aliasRedirect(new URL('https://dyad.berlin/wiggling'), 'dyad.social', 'GET')?.status)
+				.toBe(301);
+		});
+
+		it('redirects HEAD, which link checkers and crawlers use', () => {
+			expect(aliasRedirect(new URL('https://dyad.berlin/zine'), 'dyad.social', 'HEAD')?.status)
+				.toBe(301);
+		});
 	});
 
 	describe('Stripe webhook exemption (payment incident 2026-07-27)', () => {
@@ -52,11 +79,21 @@ describe('aliasRedirect', () => {
 			expect(res).toBeNull();
 		});
 
-		it('does not exempt a path that merely starts with the webhook path', () => {
+		it('exempts paths below the webhook too, since the whole API surface is exempt', () => {
+			// Deliberately broader than the original exact-path check. That version
+			// covered Stripe and missed /api/webhooks/resend-sync, which is
+			// configured at an alias host in its own README.
 			const res = aliasRedirect(
 				new URL(`https://dyad.berlin${WEBHOOK_EXEMPT_FROM_REDIRECT}/extra`),
 				'dyad.social'
 			);
+			expect(res).toBeNull();
+		});
+
+		it('still redirects a browser path that merely resembles an API path', () => {
+			// '/apirary' shares a prefix with '/api' but is not under it; the
+			// exemption must not swallow ordinary pages.
+			const res = aliasRedirect(new URL('https://dyad.berlin/apirary'), 'dyad.social');
 			expect(res?.status).toBe(ALIAS_REDIRECT_STATUS);
 		});
 	});

@@ -13,7 +13,9 @@
 			title: entry.title,
 			description: entry.quote,
 			path: `/newsletter/${entry.slug}`,
-			datePublished: entry.date
+			datePublished: entry.date,
+			// storageUrl returns an absolute URL, which the Article image requires.
+			image: entry.heroImage ? storageUrl('newsletter assets', entry.heroImage) : undefined
 		})
 	);
 </script>

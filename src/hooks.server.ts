@@ -116,7 +116,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 	// be served on the host it arrived at.
 	if (kind === 'alias-redirect') {
 		const target = ALIAS_TARGETS[event.url.hostname.replace(/\.$/, '')] ?? APEX_HOSTNAME;
-		const redirect = aliasRedirect(event.url, target);
+		const redirect = aliasRedirect(event.url, target, event.request.method);
 		if (redirect) return redirect;
 	}
 

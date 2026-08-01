@@ -5,6 +5,9 @@
 User-agent: *
 Disallow: /admin
 Disallow: /api
+Disallow: /auth
+Disallow: /oauth
+Disallow: /prompts
 Disallow: /discover
 Disallow: /conversations
 Disallow: /meetings

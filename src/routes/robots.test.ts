@@ -37,10 +37,15 @@ describe('static/robots.txt', () => {
 		}
 	});
 
-	it('leaves every public path crawlable', () => {
+	it('leaves every public path crawlable under real robots semantics', () => {
+		// RFC 9309 matches Disallow values as a bare prefix, not on path segments:
+		// `Disallow: /join` blocks `/joined` too. Modelling it with the separator-
+		// aware rule that isPublicPath uses would make this test agree with seo.ts
+		// while both disagree with the crawler — exactly the bug it exists to
+		// catch, since a public path shadowed by a gated prefix would pass.
 		for (const path of PUBLIC_PATHS) {
-			const blocked = disallowed.some((d) => path === d || path.startsWith(d + '/'));
-			expect(blocked, `${path} is blocked by robots.txt`).toBe(false);
+			const blocked = disallowed.some((d) => path.startsWith(d));
+			expect(blocked, `${path} is blocked by robots.txt under bare-prefix matching`).toBe(false);
 		}
 	});
 

@@ -37,9 +37,9 @@ export const copy = {
 		// Brand suffix for every page title, as `<page> · <suffix>`. Public pages
 		// had drifted across three variants — 'dyad.', 'dyad.social', and
 		// 'dyad. cultivating a culture of conversation' — which reads as three
-		// sites in a search results page. src/lib/copy.test.ts pins the single
-		// value; the search-result title is the page name, not the brand, so the
-		// shortest form wins.
+		// sites in a search results page. src/routes/page-titles.test.ts pins the
+		// single value; the search-result title is the page name, not the brand,
+		// so the shortest form wins.
 		titleSuffix: 'dyad.',
 		untitled: 'Untitled',
 		// The viewer’s own pin in a participants stack — never their raw @handle.
@@ -140,6 +140,21 @@ export const copy = {
 		yoursCtaMember: 'Become a member',
 		yoursCtaExplore: 'Explore',
 		skip: 'Skip'
+	},
+
+	// ── Search-result descriptions ─────────────────────────────────────
+	// Pages whose own copy block has no description. These are what a search
+	// result shows under the title, so they say what the page contains and
+	// nothing else. src/routes/page-titles.test.ts requires every public page to
+	// have one and requires them to be distinct.
+	seo: {
+		_routes: ['/impressum', '/datenschutz', '/agb', '/legal', '/waitlist'],
+		_description: 'Meta descriptions for public pages, shown in search results.',
+		impressum: 'Legal notice for dyad: operator, contact details, and responsible party.',
+		datenschutz: 'What personal data dyad collects, why, and how long it is kept.',
+		agb: 'Terms of use for dyad: membership, conduct, and cancellation.',
+		legal: "dyad's legal notice, terms of use, and privacy policy.",
+		waitlist: 'Request to join dyad, the offline social network owned by its community.'
 	},
 
 	// ── Landing page ───────────────────────────────────────────────────

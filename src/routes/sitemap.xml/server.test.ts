@@ -6,11 +6,12 @@ const { GET } = await import('./+server.js');
 const { PUBLIC_PATHS, NON_PUBLIC_PREFIXES, canonicalUrl } = await import('$lib/seo');
 const { unfoldingEntries } = await import('$lib/content/unfolding');
 
-async function render() {
+async function render(locals: Record<string, unknown> = { user: null }) {
 	const headers: Record<string, string> = {};
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const res: Response = await (GET as any)({
-		setHeaders: (h: Record<string, string>) => Object.assign(headers, h)
+		setHeaders: (h: Record<string, string>) => Object.assign(headers, h),
+		locals
 	});
 	return { body: await res.text(), headers };
 }
@@ -21,6 +22,20 @@ describe('GET /sitemap.xml', () => {
 	it('serves XML', async () => {
 		const { headers } = await render();
 		expect(headers['Content-Type']).toBe('application/xml');
+	});
+
+	it('is shared-cacheable for an anonymous request', async () => {
+		const { headers } = await render({ user: null });
+		expect(headers['Cache-Control']).toContain('public');
+	});
+
+	it('refuses a shared cache when a session is present', async () => {
+		// The body is visitor-independent, but a signed-in request runs the same
+		// auth pipeline as any other and can carry a refreshed Set-Cookie. A public
+		// directive on that response is how a shared cache ends up holding a
+		// session.
+		const { headers } = await render({ user: { id: 'abc' } });
+		expect(headers['Cache-Control']).toBe('private, no-store');
 	});
 
 	it('declares the sitemap namespace and a matching urlset', async () => {

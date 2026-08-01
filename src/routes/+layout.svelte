@@ -32,8 +32,15 @@
 	// preview subdomains serve these same pages, so without this a crawler has
 	// no way to tell which host is authoritative. Gated routes get none — they
 	// are disallowed in robots.txt, and a canonical there would invite a crawl.
+	// The admin-host guard mirrors plausibleEnabled below, and is needed for the
+	// same reason: src/hooks.ts reroutes admin.dyad.berlin/<path> to /admin/<path>
+	// for routing only, so page.url.pathname stays unprefixed and isPublicPath
+	// would call an admin page public — emitting a canonical that points at the
+	// unrelated dyad.social page of the same name.
 	const canonical = $derived(
-		isPublicPath(page.url.pathname) ? canonicalUrl(page.url.pathname) : null
+		page.url.hostname !== 'admin.dyad.berlin' && isPublicPath(page.url.pathname)
+			? canonicalUrl(page.url.pathname)
+			: null
 	);
 
 	const PLAUSIBLE_SRC = env.PUBLIC_PLAUSIBLE_SCRIPT_SRC;

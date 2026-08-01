@@ -22,6 +22,9 @@ export const SITE_ORIGIN = IS_LOCAL ? 'http://localhost:5173' : 'https://dyad.so
 export const NON_PUBLIC_PREFIXES = [
 	'/admin',
 	'/api',
+	'/auth',
+	'/oauth',
+	'/prompts',
 	'/discover',
 	'/conversations',
 	'/meetings',
@@ -56,6 +59,13 @@ export const PUBLIC_PATHS = [
 	'/legal'
 ] as const;
 
+/**
+ * Fail-open by design, and worth knowing: a path is public unless it matches a
+ * gated prefix. Adding a gated route without adding its prefix here leaves it
+ * crawlable and self-canonical, and nothing else in the app will notice.
+ * `seo-routes.test.ts` walks the real route tree and fails when a route is
+ * classified by neither list, which is what keeps the default honest.
+ */
 export function isPublicPath(pathname: string): boolean {
 	return !NON_PUBLIC_PREFIXES.some(
 		(prefix) => pathname === prefix || pathname.startsWith(prefix + '/')
@@ -81,16 +91,20 @@ export interface ArticleMeta {
 	description: string;
 	path: string;
 	datePublished?: string;
+	/** Absolute URL. Google requires an image for Article rich-result eligibility. */
+	image?: string;
 }
 
 /**
  * JSON-LD `Article` for a published essay, ready to embed in a script tag.
  *
- * Serialised with `JSON.stringify` and then escaped for the one character
- * sequence that can terminate a script element early: a literal `</` inside
- * the JSON would close the tag and spill the remainder into the document as
- * markup. This is a different hazard from HTML text escaping, so
- * `$lib/utils/escape-html` is deliberately not used here.
+ * Every `<` is escaped to `<`, not just `</`. Inside a script element the
+ * tokenizer also reacts to `<!--` and `<script`, so escaping only the closing
+ * sequence leaves the double-escape breakout open. Escaping the character
+ * outright is safe by construction rather than safe because today's content
+ * happens to be developer-authored, and it round-trips identically through
+ * `JSON.parse`. This is a script-context hazard rather than an HTML-text one,
+ * so `$lib/utils/escape-html` is deliberately not used.
  */
 export function articleJsonLd(meta: ArticleMeta): string {
 	const data: Record<string, unknown> = {
@@ -106,6 +120,9 @@ export function articleJsonLd(meta: ArticleMeta): string {
 		}
 	};
 	if (meta.datePublished) data.datePublished = meta.datePublished;
+	// Without an image the markup is well-formed but ineligible for the Article
+	// rich result, which is the only reason to emit it.
+	if (meta.image) data.image = meta.image;
 
-	return JSON.stringify(data).replace(/<\//g, '<\\/');
+	return JSON.stringify(data).replace(/</g, '\\u003c');
 }

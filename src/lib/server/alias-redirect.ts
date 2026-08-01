@@ -2,8 +2,8 @@
  * Alias-host canonicalization: the response an alias host returns so links to
  * old URLs land on the canonical host with path and query intact.
  *
- * Extracted from hooks.server.ts so the two load-bearing properties — the
- * permanent status and the Stripe exemption — are unit-testable. Neither was
+ * Extracted from hooks.server.ts so the load-bearing properties — the permanent
+ * status and the machine-traffic exemptions — are unit-testable. None of it was
  * reachable by a test while the branch lived inline.
  */
 
@@ -31,9 +31,24 @@ export const ALIAS_REDIRECT_STATUS = 301;
 /**
  * Returns the redirect response for an alias host, or null when the request
  * must be served on the host it arrived at.
+ *
+ * Two exemptions, both about machine traffic rather than browsers:
+ *
+ * 1. Any non-GET/HEAD request. A redirect on a POST is never useful — 301 and
+ *    302 both downgrade the method to GET and drop the body, so the caller's
+ *    payload is lost either way. Redirecting is strictly worse than serving.
+ * 2. Anything under `/api/`. These authenticate by signature or token, never by
+ *    hostname, so the host they arrive on does not matter. The Stripe webhook
+ *    was the known case; `/api/webhooks/resend-sync` is configured at an alias
+ *    host in its own README and had no exemption, which is what a
+ *    path-by-path list costs. Covering the surface is what makes the next one
+ *    safe without anyone remembering.
  */
-export function aliasRedirect(url: URL, target: string): Response | null {
-	if (url.pathname === WEBHOOK_EXEMPT_FROM_REDIRECT) return null;
+export function aliasRedirect(url: URL, target: string, method = 'GET'): Response | null {
+	const isRead = method === 'GET' || method === 'HEAD';
+	const isApi = url.pathname === '/api' || url.pathname.startsWith('/api/');
+	if (!isRead || isApi) return null;
+
 	return new Response(null, {
 		status: ALIAS_REDIRECT_STATUS,
 		headers: { Location: `https://${target}${url.pathname}${url.search}` }

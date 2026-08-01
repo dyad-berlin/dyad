@@ -29,7 +29,7 @@
 
 <svelte:head>
 	<title>legal · {copy.common.titleSuffix}</title>
-	<meta name="description" content="dyad's legal documents in one place: legal notice, terms of use, and privacy policy." />
+	<meta name="description" content={copy.seo.legal} />
 </svelte:head>
 
 <main class="legal-page">
