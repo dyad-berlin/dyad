@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { copy } from '$lib/copy';
 	import ImpressumContent from '$lib/components/legal/ImpressumContent.svelte';
 	import AgbContent from '$lib/components/legal/AgbContent.svelte';
 	import DatenschutzContent from '$lib/components/legal/DatenschutzContent.svelte';
@@ -27,7 +28,8 @@
 <svelte:window onhashchange={fromHash} />
 
 <svelte:head>
-	<title>legal · dyad. cultivating a culture of conversation</title>
+	<title>legal · {copy.common.titleSuffix}</title>
+	<meta name="description" content="dyad's legal documents in one place: legal notice, terms of use, and privacy policy." />
 </svelte:head>
 
 <main class="legal-page">

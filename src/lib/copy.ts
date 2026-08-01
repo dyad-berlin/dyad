@@ -34,6 +34,13 @@ export const copy = {
 	common: {
 		_routes: ['/discover', '/profile', '/conversations/[id]', '/meetings/[id]', '/feedback/[id]'],
 		_description: 'Button labels, fallback text, and error messages used across the whole app.',
+		// Brand suffix for every page title, as `<page> · <suffix>`. Public pages
+		// had drifted across three variants — 'dyad.', 'dyad.social', and
+		// 'dyad. cultivating a culture of conversation' — which reads as three
+		// sites in a search results page. src/lib/copy.test.ts pins the single
+		// value; the search-result title is the page name, not the brand, so the
+		// shortest form wins.
+		titleSuffix: 'dyad.',
 		untitled: 'Untitled',
 		// The viewer’s own pin in a participants stack — never their raw @handle.
 		you: 'you',
@@ -682,7 +689,7 @@ export const copy = {
 		// join" heading. introDocsLink renders inline inside introPre/introPost;
 		// introJoin is the second paragraph, naming what the consent cards below
 		// it are for.
-		pageTitle: 'join · dyad. cultivating a culture of conversation',
+		pageTitle: 'join · dyad.',
 		heading: 'Request to join',
 		introPre: 'Dyad is an offline network where people meet on their own terms and can take part in shaping the product and its policies. We review each request to preserve an environment where people feel safe enough to take part and enjoy being here. We detail our thinking and processes in the ',
 		introDocsLink: 'documentation section',

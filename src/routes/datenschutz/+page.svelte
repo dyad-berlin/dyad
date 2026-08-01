@@ -1,9 +1,11 @@
 <script lang="ts">
 	import DatenschutzContent from '$lib/components/legal/DatenschutzContent.svelte';
+	import { copy } from '$lib/copy';
 </script>
 
 <svelte:head>
-	<title>datenschutz · dyad. cultivating a culture of conversation</title>
+	<title>datenschutz · {copy.common.titleSuffix}</title>
+	<meta name="description" content="How dyad handles personal data: what is collected, why, and for how long." />
 </svelte:head>
 
 <main class="legal-page">
