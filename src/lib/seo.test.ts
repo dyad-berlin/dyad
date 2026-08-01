@@ -129,10 +129,9 @@ describe('isPublicPath', () => {
 	});
 
 	it('does not reject a public path that merely starts with a gated prefix', () => {
-		// These are the inputs that actually distinguish separator-aware matching
-		// from a bare startsWith: each shares a full prefix with a gated path, so
-		// a naive implementation returns false and this test fails. An input like
-		// '/logbook' would pass under both and prove nothing.
+		// Each shares a full prefix with a gated path, so a bare startsWith would
+		// return false and fail here. A path that only resembles a prefix without
+		// containing it passes either way and would not test anything.
 		expect(isPublicPath('/joined')).toBe(true); // vs '/join'
 		expect(isPublicPath('/apirary')).toBe(true); // vs '/api'
 		expect(isPublicPath('/administration')).toBe(true); // vs '/admin'

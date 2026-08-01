@@ -143,18 +143,10 @@ export const copy = {
 	},
 
 	// ── Search-result descriptions ─────────────────────────────────────
-	// Pages whose own copy block has no description. These are what a search
-	// result shows under the title, so they say what the page contains and
-	// nothing else. src/routes/page-titles.test.ts requires every public page to
-	// have one and requires them to be distinct.
-	//
-	// Two things a critique pass caught, worth not undoing. Vary the sentence
-	// shape: an earlier draft made three of these "X for dyad: A, B, and C",
-	// and a set of identically-shaped lines reads as one template stamped
-	// repeatedly rather than five acts of description. And describe only what
-	// the page actually answers — a draft promised "how long data is kept" when
-	// the Datenschutz gives conditions ("deleted once the purpose lapses"), not
-	// durations, for all but one item.
+	// Shown under the title in a search result. Say only what the page answers,
+	// and vary the sentence shape between them — a set of identically-shaped
+	// lines reads as a template rather than a description.
+	// src/routes/page-titles.test.ts requires one per public page, all distinct.
 	seo: {
 		_routes: ['/impressum', '/datenschutz', '/agb', '/legal', '/waitlist'],
 		_description: 'Meta descriptions for public pages, shown in search results.',

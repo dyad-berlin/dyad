@@ -27,9 +27,8 @@ describe('aliasRedirect', () => {
 	});
 
 	it('redirects to the target the caller resolved rather than a hardcoded apex', () => {
-		// Uses www.dyad.berlin because it is an actual ALIAS_TARGETS key. An earlier
-		// version asserted www.dyad.amsterdam, which is in no alias map and 404s in
-		// production — a test describing a route that does not exist.
+		// www.dyad.berlin is an actual ALIAS_TARGETS key. Hosts outside that map
+		// never reach this helper — they classify as 'reject' and 404.
 		const res = aliasRedirect(new URL('https://www.dyad.berlin/join'), 'dyad.social');
 		expect(res?.headers.get('Location')).toBe('https://dyad.social/join');
 	});
@@ -80,9 +79,9 @@ describe('aliasRedirect', () => {
 		});
 
 		it('exempts paths below the webhook too, since the whole API surface is exempt', () => {
-			// Deliberately broader than the original exact-path check. That version
-			// covered Stripe and missed /api/webhooks/resend-sync, which is
-			// configured at an alias host in its own README.
+			// The exemption covers the API surface, not a list of known webhooks:
+			// /api/webhooks/resend-sync is configured at an alias host in its own
+			// README and would be missed by an exact-path check.
 			const res = aliasRedirect(
 				new URL(`https://dyad.berlin${WEBHOOK_EXEMPT_FROM_REDIRECT}/extra`),
 				'dyad.social'
