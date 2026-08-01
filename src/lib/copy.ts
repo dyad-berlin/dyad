@@ -147,14 +147,23 @@ export const copy = {
 	// result shows under the title, so they say what the page contains and
 	// nothing else. src/routes/page-titles.test.ts requires every public page to
 	// have one and requires them to be distinct.
+	//
+	// Two things a critique pass caught, worth not undoing. Vary the sentence
+	// shape: an earlier draft made three of these "X for dyad: A, B, and C",
+	// and a set of identically-shaped lines reads as one template stamped
+	// repeatedly rather than five acts of description. And describe only what
+	// the page actually answers — a draft promised "how long data is kept" when
+	// the Datenschutz gives conditions ("deleted once the purpose lapses"), not
+	// durations, for all but one item.
 	seo: {
 		_routes: ['/impressum', '/datenschutz', '/agb', '/legal', '/waitlist'],
 		_description: 'Meta descriptions for public pages, shown in search results.',
-		impressum: 'Legal notice for dyad: operator, contact details, and responsible party.',
-		datenschutz: 'What personal data dyad collects, why, and how long it is kept.',
-		agb: 'Terms of use for dyad: membership, conduct, and cancellation.',
-		legal: "dyad's legal notice, terms of use, and privacy policy.",
-		waitlist: 'Request to join dyad, the offline social network owned by its community.'
+		impressum: 'Who runs dyad, and how to reach them.',
+		datenschutz: 'What dyad does with personal data, and the rights you have over it.',
+		agb: 'The terms of use for dyad membership and the zine.',
+		legal: "All of dyad's legal documents on one page.",
+		waitlist:
+			'Request to join dyad, the offline social network owned by its community. Every request is reviewed.'
 	},
 
 	// ── Landing page ───────────────────────────────────────────────────
