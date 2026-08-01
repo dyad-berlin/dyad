@@ -158,8 +158,8 @@ export const copy = {
 	seo: {
 		_routes: ['/impressum', '/datenschutz', '/agb', '/legal', '/waitlist'],
 		_description: 'Meta descriptions for public pages, shown in search results.',
-		impressum: 'Who runs dyad, and how to reach them.',
-		datenschutz: 'What dyad does with personal data, and the rights you have over it.',
+		impressum: 'Who runs dyad and how to reach them.',
+		datenschutz: 'What dyad does with personal data and the rights you have over it.',
 		agb: 'The terms of use for dyad membership and the zine.',
 		legal: "All of dyad's legal documents on one page.",
 		waitlist:
