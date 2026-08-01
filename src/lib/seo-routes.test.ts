@@ -4,7 +4,8 @@ import { fileURLToPath } from 'node:url';
 
 vi.mock('$env/static/public', () => ({ PUBLIC_SUPABASE_URL: 'https://abc.supabase.co' }));
 
-const { PUBLIC_PATHS, NON_PUBLIC_PREFIXES, isPublicPath } = await import('./seo.js');
+const { PUBLIC_PATHS, NON_PUBLIC_PREFIXES, CANONICAL_OVERRIDES, isPublicPath } =
+	await import('./seo.js');
 
 /**
  * `isPublicPath` is fail-open: anything not matching a gated prefix is treated
@@ -64,13 +65,15 @@ describe('route-tree classification', () => {
 
 		const gated = NON_PUBLIC_PREFIXES.some((p) => segment === p || segment.startsWith(p + '/'));
 		const declaredPublic = (PUBLIC_PATHS as readonly string[]).includes(segment);
+		const canonicalisedElsewhere = segment in CANONICAL_OVERRIDES;
 
 		expect(
-			gated || declaredPublic,
-			`${segment} exists under src/routes but is in neither PUBLIC_PATHS nor ` +
-				`NON_PUBLIC_PREFIXES in src/lib/seo.ts. Add it to one: public routes go in ` +
-				`PUBLIC_PATHS so the sitemap lists them, gated routes go in ` +
-				`NON_PUBLIC_PREFIXES (and static/robots.txt) so they are not crawled.`
+			gated || declaredPublic || canonicalisedElsewhere,
+			`${segment} exists under src/routes but is classified nowhere in ` +
+				`src/lib/seo.ts. Pick one: PUBLIC_PATHS if it should be indexed at its ` +
+				`own URL, NON_PUBLIC_PREFIXES (and static/robots.txt) if it should not ` +
+				`be crawled, or CANONICAL_OVERRIDES if it is reachable but duplicates ` +
+				`a page that owns the content.`
 		).toBe(true);
 	});
 
@@ -83,6 +86,29 @@ describe('route-tree classification', () => {
 	it('lists no path in PUBLIC_PATHS that a gated prefix would shadow', () => {
 		for (const path of PUBLIC_PATHS) {
 			expect(isPublicPath(path), `${path} is in PUBLIC_PATHS but reads as gated`).toBe(true);
+		}
+	});
+
+	it('keeps canonical overrides out of the sitemap', () => {
+		// Being absent from PUBLIC_PATHS is the half of the statement that stops
+		// the sitemap advertising a URL whose own canonical points elsewhere.
+		for (const from of Object.keys(CANONICAL_OVERRIDES)) {
+			expect(
+				(PUBLIC_PATHS as readonly string[]).includes(from),
+				`${from} declares another URL canonical, so it should not be in PUBLIC_PATHS`
+			).toBe(false);
+		}
+	});
+
+	it('points every override at a path that is itself indexed', () => {
+		// An override aiming at a page that is gated, missing, or itself
+		// overridden would send crawlers to a dead end.
+		for (const [from, to] of Object.entries(CANONICAL_OVERRIDES)) {
+			expect(
+				(PUBLIC_PATHS as readonly string[]).includes(to),
+				`${from} canonicalises to ${to}, which is not in PUBLIC_PATHS`
+			).toBe(true);
+			expect(to in CANONICAL_OVERRIDES, `${to} is both a target and an override`).toBe(false);
 		}
 	});
 });
