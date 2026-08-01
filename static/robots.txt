@@ -1,3 +1,25 @@
-# allow crawling everything by default
+# Public pages stay crawlable by default, so adding a public route needs no
+# edit here. The Disallow list covers the gated surfaces only; it mirrors
+# NON_PUBLIC_PREFIXES in src/lib/seo.ts, and src/routes/robots.test.ts asserts
+# the two agree.
 User-agent: *
-Disallow:
+Disallow: /admin
+Disallow: /api
+Disallow: /discover
+Disallow: /conversations
+Disallow: /meetings
+Disallow: /feedback
+Disallow: /profile
+Disallow: /membership
+Disallow: /users
+Disallow: /login
+Disallow: /signup
+Disallow: /join
+Disallow: /welcome
+Disallow: /access-ended
+Disallow: /logout
+Disallow: /dev
+
+# Absolute on purpose: dyad.amsterdam and the preview subdomains serve this
+# same file, and the sitemap they should read is the canonical host's.
+Sitemap: https://dyad.social/sitemap.xml

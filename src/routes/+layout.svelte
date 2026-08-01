@@ -6,6 +6,7 @@
 	import { env } from '$env/dynamic/public';
 	import { themeStore } from '$lib/stores/theme.svelte';
 	import { setCopyOverrides } from '$lib/copy-runtime.svelte';
+	import { canonicalUrl, isPublicPath } from '$lib/seo';
 
 	let { children, data } = $props();
 
@@ -27,6 +28,14 @@
 	// the script URL (e.g. https://plausible.io/js/pa-XXXX.js), and a small
 	// inline shim queues events fired before the async script loads — events
 	// captured during initial render are flushed once the tracker arrives.
+	// Canonical URL, public routes only. dyad.amsterdam and the Cloudflare
+	// preview subdomains serve these same pages, so without this a crawler has
+	// no way to tell which host is authoritative. Gated routes get none — they
+	// are disallowed in robots.txt, and a canonical there would invite a crawl.
+	const canonical = $derived(
+		isPublicPath(page.url.pathname) ? canonicalUrl(page.url.pathname) : null
+	);
+
 	const PLAUSIBLE_SRC = env.PUBLIC_PLAUSIBLE_SCRIPT_SRC;
 	const plausibleEnabled = $derived(
 		!!PLAUSIBLE_SRC
@@ -88,6 +97,9 @@
 <svelte:head>
 	<title>dyad.</title>
 	<link rel="icon" href="/favicon.png" type="image/png" />
+	{#if canonical}
+		<link rel="canonical" href={canonical} />
+	{/if}
 	{#if plausibleEnabled}
 		<script async src={PLAUSIBLE_SRC}></script>
 		<!-- eslint-disable-next-line svelte/no-at-html-tags -->

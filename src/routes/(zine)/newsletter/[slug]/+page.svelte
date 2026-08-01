@@ -2,15 +2,29 @@
 	import { formatEditorialDate } from '$lib/utils/dates';
 	import { storageUrl } from '$lib/utils/storage-url';
 	import MembershipInvite from '$lib/components/MembershipInvite.svelte';
+	import { articleJsonLd } from '$lib/seo';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 	const entry = $derived(data.entry);
+
+	const jsonLd = $derived(
+		articleJsonLd({
+			title: entry.title,
+			description: entry.quote,
+			path: `/newsletter/${entry.slug}`,
+			datePublished: entry.date
+		})
+	);
 </script>
 
 <svelte:head>
 	<title>{entry.title} · Unfolding · dyad.</title>
 	<meta name="description" content={entry.quote} />
+	<!-- Escaped in articleJsonLd against the `</` script-terminating sequence;
+	     see the note there on why HTML escaping is the wrong tool. -->
+	<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+	{@html `<script type="application/ld+json">${jsonLd}</script>`}
 </svelte:head>
 
 <article class="essay">
