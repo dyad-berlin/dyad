@@ -153,7 +153,7 @@ export const copy = {
 		impressum: 'Who runs dyad and how to reach them.',
 		datenschutz: 'What dyad does with your personal data and how to see, correct or delete it.',
 		agb: 'The terms of use for dyad membership and the zine.',
-		legal: "All of dyad's legal documents on one page.",
+		legal: "Switch between dyad's Impressum, terms of use and privacy policy.",
 		waitlist:
 			'Request to join dyad, the offline social network owned by its community. Every request is reviewed.'
 	},

@@ -55,9 +55,24 @@ export const PUBLIC_PATHS = [
 	'/waitlist',
 	'/impressum',
 	'/datenschutz',
-	'/agb',
-	'/legal'
+	'/agb'
 ] as const;
+
+/**
+ * Public pages that are not their own canonical, mapped to the URL that is.
+ *
+ * These stay reachable and return 200; they are simply not the address search
+ * engines should index or rank. Being absent from `PUBLIC_PATHS` keeps them out
+ * of the sitemap, which is the matching half of the same statement.
+ */
+export const CANONICAL_OVERRIDES: Record<string, string> = {
+	// /legal renders one document at a time and defaults to the Impressum, so a
+	// crawler receives exactly the body /impressum serves. The standalone page
+	// wins because German law expects the Impressum at a directly reachable URL,
+	// and because the reverse is impossible: /legal cannot be the canonical for
+	// three documents when it only ever shows one.
+	'/legal': '/impressum'
+};
 
 /**
  * Fail-open by design, and worth knowing: a path is public unless it matches a
@@ -82,7 +97,8 @@ export function isPublicPath(pathname: string): boolean {
  */
 export function canonicalUrl(pathname: string): string {
 	const [rawPath] = pathname.split(/[?#]/);
-	const path = rawPath.length > 1 ? rawPath.replace(/\/+$/, '') : rawPath;
+	const trimmed = rawPath.length > 1 ? rawPath.replace(/\/+$/, '') : rawPath;
+	const path = CANONICAL_OVERRIDES[trimmed] ?? trimmed;
 	return SITE_ORIGIN + (path.startsWith('/') ? path : '/' + path);
 }
 

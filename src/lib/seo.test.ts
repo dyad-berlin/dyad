@@ -44,6 +44,26 @@ describe('SITE_ORIGIN', () => {
 	});
 });
 
+describe('canonicalUrl with an override', () => {
+	it('sends /legal to the page that owns the body it renders', () => {
+		expect(canonicalUrl('/legal')).toBe('https://dyad.social/impressum');
+	});
+
+	it('applies the override after trailing-slash and query trimming', () => {
+		expect(canonicalUrl('/legal/')).toBe('https://dyad.social/impressum');
+		expect(canonicalUrl('/legal?x=1')).toBe('https://dyad.social/impressum');
+	});
+
+	it('leaves the target page as its own canonical', () => {
+		expect(canonicalUrl('/impressum')).toBe('https://dyad.social/impressum');
+	});
+
+	it('does not follow a hash, which is not a distinct URL to a crawler', () => {
+		// /legal#agb switches the tab client-side; the served body is unchanged.
+		expect(canonicalUrl('/legal#agb')).toBe('https://dyad.social/impressum');
+	});
+});
+
 describe('articleJsonLd', () => {
 	const base = {
 		title: 'Conversation: A primal technology for sensemaking',
