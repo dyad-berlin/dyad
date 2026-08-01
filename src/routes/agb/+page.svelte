@@ -1,9 +1,11 @@
 <script lang="ts">
 	import AgbContent from '$lib/components/legal/AgbContent.svelte';
+	import { copy } from '$lib/copy';
 </script>
 
 <svelte:head>
-	<title>agb · dyad. cultivating a culture of conversation</title>
+	<title>agb · {copy.common.titleSuffix}</title>
+	<meta name="description" content={copy.seo.agb} />
 </svelte:head>
 
 <main class="legal-page">

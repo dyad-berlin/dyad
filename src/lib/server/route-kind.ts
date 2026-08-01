@@ -25,9 +25,12 @@ export interface RouteKindOptions {
 	 */
 	secondaryApexHostnames?: readonly string[];
 	/**
-	 * Hostnames that 302 to a canonical host (e.g. `www.dyad.amsterdam` →
-	 * `dyad.amsterdam`), path preserved. Every path redirects — including
-	 * `/admin`. Optional; defaults to none.
+	 * Hostnames that 301 to a canonical host (e.g. `www.dyad.berlin` →
+	 * `dyad.social`), path preserved. Browser paths redirect, including
+	 * `/admin`; `/api/*` and non-GET requests are served in place — see
+	 * `$lib/server/alias-redirect`. Static assets excluded from the Worker in
+	 * `_routes.json` (robots.txt, favicons) never reach this logic at all.
+	 * Optional; defaults to none.
 	 */
 	aliasHostnames?: readonly string[];
 }

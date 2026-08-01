@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { env } from '$env/dynamic/public';
+	import { copy } from '$lib/copy';
 
 	// The zine is sold through Stripe Payment Links — full-page redirects to
 	// Stripe-hosted checkout. We deliberately do NOT embed Stripe.js or the
@@ -56,7 +57,7 @@
 </script>
 
 <svelte:head>
-	<title>The Dyad Zine · dyad.social</title>
+	<title>The Dyad Zine · {copy.common.titleSuffix}</title>
 	<meta name="description" content="A zine about conversation, connection, and the city. Made in Berlin." />
 	<!-- The masthead is an 11rem Light serif: with font-display swap the
 	     fallback→serif reflow is a visible flash. Preloading the two weights

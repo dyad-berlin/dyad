@@ -34,6 +34,13 @@ export const copy = {
 	common: {
 		_routes: ['/discover', '/profile', '/conversations/[id]', '/meetings/[id]', '/feedback/[id]'],
 		_description: 'Button labels, fallback text, and error messages used across the whole app.',
+		// Brand suffix for every page title, as `<page> · <suffix>`. Public pages
+		// had drifted across three variants — 'dyad.', 'dyad.social', and
+		// 'dyad. cultivating a culture of conversation' — which reads as three
+		// sites in a search results page. src/routes/page-titles.test.ts pins the
+		// single value; the search-result title is the page name, not the brand,
+		// so the shortest form wins.
+		titleSuffix: 'dyad.',
 		untitled: 'Untitled',
 		// The viewer’s own pin in a participants stack — never their raw @handle.
 		you: 'you',
@@ -133,6 +140,22 @@ export const copy = {
 		yoursCtaMember: 'Become a member',
 		yoursCtaExplore: 'Explore',
 		skip: 'Skip'
+	},
+
+	// ── Search-result descriptions ─────────────────────────────────────
+	// Shown under the title in a search result. Say only what the page answers,
+	// and vary the sentence shape between them — a set of identically-shaped
+	// lines reads as a template rather than a description.
+	// src/routes/page-titles.test.ts requires one per public page, all distinct.
+	seo: {
+		_routes: ['/impressum', '/datenschutz', '/agb', '/legal', '/waitlist'],
+		_description: 'Meta descriptions for public pages, shown in search results.',
+		impressum: 'Who runs dyad and how to reach them.',
+		datenschutz: 'What dyad does with your personal data and how to see, correct or delete it.',
+		agb: 'The terms of use for dyad membership and the zine.',
+		legal: "All of dyad's legal documents on one page.",
+		waitlist:
+			'Request to join dyad, the offline social network owned by its community. Every request is reviewed.'
 	},
 
 	// ── Landing page ───────────────────────────────────────────────────
@@ -682,7 +705,7 @@ export const copy = {
 		// join" heading. introDocsLink renders inline inside introPre/introPost;
 		// introJoin is the second paragraph, naming what the consent cards below
 		// it are for.
-		pageTitle: 'join · dyad. cultivating a culture of conversation',
+		pageTitle: 'join · dyad.',
 		heading: 'Request to join',
 		introPre: 'Dyad is an offline network where people meet on their own terms and can take part in shaping the product and its policies. We review each request to preserve an environment where people feel safe enough to take part and enjoy being here. We detail our thinking and processes in the ',
 		introDocsLink: 'documentation section',

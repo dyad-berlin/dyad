@@ -1,9 +1,11 @@
 <script lang="ts">
 	import ImpressumContent from '$lib/components/legal/ImpressumContent.svelte';
+	import { copy } from '$lib/copy';
 </script>
 
 <svelte:head>
-	<title>impressum · dyad. cultivating a culture of conversation</title>
+	<title>impressum · {copy.common.titleSuffix}</title>
+	<meta name="description" content={copy.seo.impressum} />
 </svelte:head>
 
 <main class="legal-page">

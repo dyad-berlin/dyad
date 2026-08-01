@@ -83,6 +83,7 @@
 
 <svelte:head>
 	<title>{copy.waitlist.pageTitle}</title>
+	<meta name="description" content={copy.seo.waitlist} />
 </svelte:head>
 
 <div class="auth-card">
