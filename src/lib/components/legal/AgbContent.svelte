@@ -1,12 +1,5 @@
 <!-- Shared content for /agb and the combined /legal page — single
      source of truth so the two surfaces cannot drift apart. -->
-<!-- ENTWURF: Diese AGB wurden als Ausgangspunkt entworfen und sind vor
-     Veröffentlichung anwaltlich zu prüfen. Insbesondere: die Lifetime-Klausel
-     (§ 6 Abs. 3), die Änderungsklausel (§ 14, Zustimmungsfiktion) und die
-     Widerrufsbelehrung gegen den tatsächlichen Bestellablauf (Stripe Checkout:
-     Zustimmung zum vorzeitigen Beginn der Leistung einholen, sonst kein
-     Wertersatz bei Widerruf). Offen außerdem: Kündigungsbutton nach § 312k BGB
-     (eigenständige Produktpflicht, nicht Teil dieses Texts). -->
 
 <div class="legal-doc" lang="de">
 	<h1>Allgemeine Geschäftsbedingungen</h1>
