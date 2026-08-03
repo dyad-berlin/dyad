@@ -24,6 +24,7 @@
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"lint": "eslint src/ tests/ --max-warnings 0",
+		"check:pr": "bash scripts/check-pr-ready.sh",
 		"precommit": "npm run lint && npm run check && npm run test",
 		"premerge": "npm run precommit && npm run test:e2e",
 		"test": "vitest run",
