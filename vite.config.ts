@@ -43,7 +43,14 @@ export default defineConfig({
 		// Dev-only: admit the conference hostnames so the host routing in
 		// hooks.server.ts can be exercised locally with a Host header or a
 		// hosts-file entry (production host admission lives in route-kind.ts).
-		allowedHosts: ['dyad.amsterdam', 'www.dyad.amsterdam']
+		allowedHosts: ['dyad.amsterdam', 'www.dyad.amsterdam'],
+		watch: {
+			// Agent worktrees under .claude/ carry their own build output. Vite
+			// would watch every file in them and exhaust the inotify budget for
+			// this process — dev then dies with ENOSPC on a machine whose global
+			// limit is nowhere near reached.
+			ignored: ['**/.claude/worktrees/**']
+		}
 	},
 	plugins: [
 		sveltekit(),
