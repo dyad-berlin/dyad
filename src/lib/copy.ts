@@ -175,35 +175,79 @@ export const copy = {
 		footerCommunity: 'Wiggling',
 		footerNewsletter: 'Newsletter',
 		footerLegal: 'Legal',
-		// Hero: a three-line headline and three subcopy paragraphs (display
-		// copy; sentence case is the intentional brand styling — see CLAUDE.md
-		// § UI conventions). The middle paragraph is split into
-		// subcopyHighlightPre + subcopyHighlight only so the audience phrase
-		// can render bold (mirroring the waitlist introPre/introPost pattern);
-		// subcopyClosing is its own paragraph.
-		// Ownership language: "Collectively owned" was removed as a PRESENT
-		// claim 2026-07-20 (same reason "Steward-owned" went 2026-07-14 — dyad
-		// is not yet collectively owned). subcopyHighlightPre carries it as a
-		// stated direction ("will be"), which is the settled framing. The
-		// archived ownership page lives at src/lib/archive/StewardOwnershipPage.svelte.
-		headlineLine1: 'Meet people',
-		headlineLine2: "you wouldn't otherwise.",
-		headlineLine3: 'On your own terms.',
+		// ── Hero ────────────────────────────────────────────────────────
+		// One sentence, with three phrases inside it that open into the what,
+		// the why and the how. It has to stand on its own for anyone who never
+		// hovers, so the claim lives in the sentence and the reveals only go
+		// deeper.
+		//
+		// "Turns … into" makes dyad a movement rather than a place, which is
+		// both the honest description and the one thing nobody else in the
+		// category can say — everyone else wants you to stay. It is already
+		// literally true: a conversation starts in writing here (a prompt, a
+		// response) and becomes face to face. When posts and bookmarks can be
+		// imported, the same sentence covers that too, so the copy grows into
+		// the roadmap without ever having overclaimed.
+		//
+		// Ownership stays future-framed ("on its way to"), for the same reason
+		// "Collectively owned" was dropped as a present claim on 2026-07-20 —
+		// dyad is not collectively owned yet. The archived ownership page is at
+		// src/lib/archive/StewardOwnershipPage.svelte.
+		headline: 'Turn your conversations online, offline.',
+		// The paragraph beneath the headline. Split so 'soft' can carry a
+		// reveal: it is the one word doing work a reader cannot unpack on
+		// sight, and the definition behind it is a real lineage rather than
+		// an adjective we invented.
+		//
+		// "Stewarded by" rather than "owned by": dyad is not collectively
+		// owned yet, the same reason "Collectively owned" was dropped as a
+		// present claim on 2026-07-20.
+		sublineLead: 'Dyad is a third space for initiating and finding face to face conversations about what matters to you.',
+		// Who we are, in first person, positioned inside the 2020s
+		// counterculture rather than described from outside it. "We practise
+		// that refusal" needs an antecedent you can act on, which is why the
+		// first sentence names a refusal rather than an observation.
+		//
+		// The three practices are ordered by how checkable they are today.
+		// The writing culture is the strongest of them: open source is table
+		// stakes in this field, the ownership transition is a promise about
+		// the future, but legible decisions can be verified now. "Transition
+		// to" keeps the tense honest, the same reason "Collectively owned" was
+		// dropped as a present claim on 2026-07-20.
+		// "Prefigurative" is the term of art for building the world you want in
+		// the means you use to get there. It is also the framing the Unfolding
+		// pieces already use, so the landing page and the newsletter name the
+		// same practice.
+		whoLead:
+			'Rooted in our time’s decentralised, internet-native counterculture, we resist digital saturation, corporate capture, and the institutional norms that sustain both. We take a prefigurative approach to building social technology through open-source software, a writing culture that keeps decisions legible, and our transition to collective ownership and governance.',
+		sublineFor:
+			'For people who want less screen time and more contact with the world and one another.',
 		wordmark: 'DYAD',
-		// Each heading is the opening of the sentence its body completes, so the
-		// body starts mid-sentence and never restates the heading.
-		toggleLabelWeAre: 'We are',
-		toggleLabelWeDo: 'We do that by',
-		toggleLabelWhy: 'Dyad exists because',
-		subcopy: 'a collective working in service to community and collective sensemaking.',
-		subcopyHighlightPre:
-			'building open-source online software, dyad, that will be collectively owned and governed,',
-		subcopyHighlight:
-			'for people seeking encounters beyond their existing circles through in-person conversation.',
-		subcopyClosing:
-			'Alongside the platform, we publish editorial work and will produce seasonal public event series that offer alternatives to the infrastructures of Big Tech and corporate media, creating different conditions for how we meet, think, and live together.',
-		subcopyWhy:
-			'our loneliness, wellbeing, and living, flourishing lives are not personal matters, but realities made possible — and even intentionally perpetuated — by certain decisions we made about our collective stewarding of life. Situating ourselves in a prefigurative understanding of social change-making, we are on the side of creating the conditions for a different way to meet, be together, in conversation, and live together.',
+
+		// ── The three reveals ────────────────────────────────────────────
+		// Voice matched to the Unfolding pieces: reflective, structural, and
+		// unhurried, rather than the short hard beats of ad copy. Each still
+		// points at something checkable instead of reaching for an adjective.
+		aboutWhatLabel: 'Conversations that start online',
+		aboutWhat: [
+			'begin here in writing. Someone puts down what they want to talk about; someone else writes back. Only then does a meeting follow: a topic, a question, a time, a neighbourhood.',
+			'That is the whole thing. There is no feed to scroll and no one to swipe past.'
+		],
+		aboutWhyLabel: 'Face to face',
+		aboutWhy: [
+			'is the part that cannot happen on a screen. We did not like how being social online felt: stripped to one version of ourselves, and not the version we wanted to come forth.',
+			'The platforms are not broken. They are working exactly as they were built to work. The problem is systemic, and so must be the response.',
+			'A face to face conversation belongs to an oral culture we only recently parted ways with. Stories and conversations have long been how we weave parts of us together.'
+		],
+		aboutHowLabel: 'On its way to collective ownership',
+		aboutHow: [
+			'means the code is public and the workings are legible: who owns this, what incentives that creates, and which decisions follow from them.',
+			'Dyad is not collectively owned yet. It is being built toward that, with the rules written by the people using it rather than for them.',
+			'The Whole Earth Catalog had a name for tools like this: soft technology. Alive, resilient, adaptive, maybe even lovable, as against the rigid and the administrative.'
+		],
+		// Icon-only zoom control on the map — the accessible name and tooltip.
+		mapZoomIn: 'Zoom in',
+		mapZoomOut: 'Zoom out',
 		// Banner pinned to the top-left of the landing map.
 		mapBanner: 'Live in Berlin',
 		// CTA on the map card that floats over a selected conversation.
