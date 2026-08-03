@@ -137,7 +137,7 @@
 	<!-- A direct child of .shell, not of .left. .left carries its own z-index,
 	     which would trap these below the map however high their own z-index
 	     went; a stacking context cannot be escaped from the inside. -->
-	<div class="left-links">
+	<div class="left-links" class:behind-map={mapExpanded}>
 		<!-- href fallback so this action degrades without JS -->
 		<a href="/login" class="text-link" onclick={(e) => { e.preventDefault(); openLogin(); }}>{og.logIn}</a>
 		<a href="/waitlist" class="btn-join" data-testid="join-cta">{og.joinWaitlist}</a>
@@ -463,8 +463,8 @@
 
 	/* The actions sit at the top right on every size, above the map, opposite
 	   the wordmark and centred on its line box. Fixed rather than absolute so
-	   they hold that corner over the map, which carries its own stacking
-	   context, and above it when it goes full screen.
+	   they hold that corner over the collapsed map, which carries its own
+	   stacking context. Expanded, they drop behind it; see .behind-map below.
 	   Height and top come from the wordmark's own type tokens, so the two stay
 	   optically centred on one line without a measured offset. */
 	.left-links {
@@ -476,6 +476,16 @@
 		right: var(--space-6);
 		height: calc(var(--wordmark-size) * var(--wordmark-leading));
 		z-index: 210;
+		transition: opacity var(--duration-fast, 180ms) var(--ease-ink, ease);
+	}
+
+	/* Zoomed in, the map owns the viewport, so the actions drop behind it
+	   rather than floating over the atlas. visibility, not just opacity, so
+	   they also leave the tab order while they are covered. */
+	.left-links.behind-map {
+		z-index: 1;
+		opacity: 0;
+		visibility: hidden;
 	}
 
 	/* Primary action: a dark pill on the bright hero, sitting last in the row
