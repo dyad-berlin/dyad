@@ -53,11 +53,18 @@
 	// the event from ever reaching bubble-phase window handlers underneath
 	// (e.g. the landing page's expanded-map collapse). One Escape closes the
 	// dialog only; the next reaches whatever is beneath it.
+	//
+	// Capture runs before the target, so a popup nested INSIDE the dialog would
+	// otherwise never see its own Escape: the city autocomplete closes its
+	// dropdown on Escape and stops the event there precisely so one press
+	// dismisses the dropdown rather than the whole form. Yield only while such
+	// a popup is actually open — yielding to the whole dialog would swallow
+	// every Escape, since the dialog autofocuses an input inside itself.
 	function handleKeydown(e: KeyboardEvent) {
-		if (open && e.key === 'Escape') {
-			e.stopPropagation();
-			hide();
-		}
+		if (!open || e.key !== 'Escape') return;
+		if (dialogBox?.querySelector('[data-escape-first]')) return;
+		e.stopPropagation();
+		hide();
 	}
 
 	// A plain fixed overlay, NOT <dialog>.showModal(). The native dialog renders

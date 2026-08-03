@@ -172,8 +172,12 @@
 		// map card) need the map re-measured, or tiles render for the old
 		// size. Observing the container keeps the map honest without the
 		// host signalling anything.
+		// pan: false — the default re-pans to keep the centre, which fires a real
+		// moveend. Discover persists moveend into its snapshot, so an incidental
+		// resize (mobile URL bar, keyboard over the filter) would rewrite the
+		// member's saved position. Re-measuring is all that is wanted here.
 		resizeObserver = new ResizeObserver(() => {
-			map?.invalidateSize();
+			map?.invalidateSize({ pan: false });
 		});
 		resizeObserver.observe(mapContainer);
 

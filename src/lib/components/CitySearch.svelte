@@ -116,7 +116,11 @@
 		onfocus={handleFocus}
 	/>
 	{#if open && results.length > 0}
-		<div class="city-dropdown">
+		<!-- data-escape-first: while this dropdown is open it owns Escape. An
+		     enclosing overlay (AuthDialog) checks for this marker and lets the
+		     key reach us instead of closing itself out from under a half-typed
+		     form. -->
+		<div class="city-dropdown" data-escape-first>
 			{#each results as result, i}
 				<button
 					type="button"

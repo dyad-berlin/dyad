@@ -50,6 +50,87 @@ test.describe('Landing layout — hero text vs map pane', () => {
 	});
 });
 
+test.describe('Landing map — the two Leaflet prop bugs', () => {
+	// Both behaviours are prop-driven and were invisible to the suite: Leaflet
+	// reads scrollWheelZoom once at construction and caches its container size,
+	// so a prop flip did nothing and a CSS resize left stale tiles.
+
+	test('wheel scrolls the page while collapsed and zooms the map while expanded', async ({
+		page
+	}) => {
+		await page.goto('/');
+		await page.locator('.leaflet-container').waitFor({ timeout: 15000 });
+
+		// OSM tile URLs are /{z}/{x}/{y}.png, so the zoom level is observable
+		// from the loaded tiles without reaching for Leaflet's internals.
+		const zoom = () =>
+			page.evaluate(() => {
+				const t = document.querySelector<HTMLImageElement>('img.leaflet-tile-loaded');
+				return t?.src.match(/\/(\d+)\/\d+\/\d+\.png/)?.[1] ?? null;
+			});
+		const mapBox = (await page.locator('.leaflet-container').boundingBox())!;
+		expect(mapBox).not.toBeNull();
+		const centre = { x: mapBox.x + mapBox.width / 2, y: mapBox.y + mapBox.height / 2 };
+
+		// Collapsed: scrollWheelZoom={false}, so the wheel must not zoom. (It
+		// does not scroll the page either — the desktop shell is fixed and
+		// deliberately unscrollable; the point of the prop is that the map does
+		// not swallow the gesture.)
+		const collapsedZoom = await zoom();
+		expect(collapsedZoom, 'zoom level should be readable from the tile pane').not.toBeNull();
+		await page.mouse.move(centre.x, centre.y);
+		await page.mouse.wheel(0, 400);
+		await page.waitForTimeout(700);
+		expect(await zoom(), 'wheel over the collapsed map must not zoom it').toBe(collapsedZoom);
+
+		// Expanded: the prop flips to true. Leaflet reads it once at
+		// construction, so this only works because of the sync effect.
+		await page.locator('.map-zoom').click();
+		await expect(page.locator('.map-pane')).toHaveClass(/expanded/);
+		await page.waitForTimeout(400);
+
+		const zoomBefore = await zoom();
+		const box = (await page.locator('.leaflet-container').boundingBox())!;
+		await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+		await page.mouse.wheel(0, -300);
+		await expect
+			.poll(zoom, { timeout: 5000, message: 'wheel over the expanded map should zoom it' })
+			.not.toBe(zoomBefore);
+	});
+
+	test('expanding re-measures the map so tiles cover the new size', async ({ page }) => {
+		await page.goto('/');
+		await page.locator('.leaflet-container').waitFor({ timeout: 15000 });
+
+		await page.locator('.map-zoom').click();
+		await expect(page.locator('.map-pane')).toHaveClass(/expanded/);
+		await page.waitForTimeout(1200);
+
+		// Without invalidateSize Leaflet keeps the collapsed dimensions and
+		// paints tiles for that box, leaving the rest of the pane blank.
+		const { pane, tiled } = await page.evaluate(() => {
+			const c = document.querySelector('.leaflet-container')!.getBoundingClientRect();
+			const boxes = [...document.querySelectorAll('.leaflet-tile-loaded')].map((t) =>
+				t.getBoundingClientRect()
+			);
+			return {
+				pane: { w: c.width, h: c.height },
+				tiled: {
+					w: Math.max(...boxes.map((b) => b.right)) - Math.min(...boxes.map((b) => b.left)),
+					h: Math.max(...boxes.map((b) => b.bottom)) - Math.min(...boxes.map((b) => b.top))
+				}
+			};
+		});
+
+		expect(tiled.w, `tiles span ${tiled.w}px of a ${pane.w}px pane`).toBeGreaterThanOrEqual(
+			pane.w
+		);
+		expect(tiled.h, `tiles span ${tiled.h}px of a ${pane.h}px pane`).toBeGreaterThanOrEqual(
+			pane.h
+		);
+	});
+});
+
 test.describe('Landing overlays — scroll lock and Escape ordering', () => {
 	test('dialog over expanded map: lock survives dialog close, Escape collapses map only after', async ({ page }) => {
 		await page.goto('/');
@@ -70,9 +151,9 @@ test.describe('Landing overlays — scroll lock and Escape ordering', () => {
 			.toBe('hidden');
 
 		// Open sign-in over the expanded map. While the map is expanded the
-		// header actions are display:none by design (the collapse control must
-		// not end up under the Join pill on touch), so a pointer cannot reach
-		// the link; dispatch the click on it directly. The same state is
+		// header actions fade to visibility:hidden by design (the collapse
+		// control must not end up under the Join pill on touch), so a pointer
+		// cannot reach the link; dispatch the click on it directly. The same state is
 		// reachable by a real user in the reverse order — open the dialog,
 		// then Tab to the zoom control (no focus trap, background not inert)
 		// and press Enter — and the guards under test are order-independent:

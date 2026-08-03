@@ -33,6 +33,14 @@
 		activeIndex = 0;
 	}
 
+	// Collapsing closes any open card, whichever way it happened — the zoom
+	// control or Escape from the page. The card is sized and centred for the
+	// expanded frame and would overflow the collapsed one, where its close
+	// button ends up under the header actions.
+	$effect(() => {
+		if (!expanded) closeConversation();
+	});
+
 	// Clicking a map pin opens the cluster of co-located conversations as a
 	// floating card. The first item (closest to the click) is shown by default;
 	// when the cluster holds more than one, the card lets the visitor switch.

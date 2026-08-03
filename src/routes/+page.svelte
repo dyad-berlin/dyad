@@ -315,6 +315,14 @@
 		visibility: hidden;
 	}
 
+	/* Everything else the map covers leaves the tab order too, or Tab walks
+	   focus onto invisible links behind it — Enter on the hidden wordmark
+	   would navigate away from a map the visitor thinks they are looking at. */
+	.shell.map-expanded .intro,
+	.shell.map-expanded .site-footer {
+		visibility: hidden;
+	}
+
 	/* Primary action: a light pill on the photo, sitting last in the row so it
 	   holds the outer edge. Sign in stays a quiet text link beside it. */
 	.btn-join {
