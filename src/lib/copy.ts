@@ -175,29 +175,49 @@ export const copy = {
 		footerCommunity: 'Wiggling',
 		footerNewsletter: 'Newsletter',
 		footerLegal: 'Legal',
-		// Hero: a three-line headline and three subcopy paragraphs (display
-		// copy; sentence case is the intentional brand styling — see CLAUDE.md
-		// § UI conventions). The middle paragraph is split into
-		// subcopyHighlightPre + subcopyHighlight only so the audience phrase
-		// can render bold (mirroring the waitlist introPre/introPost pattern);
-		// subcopyClosing is its own paragraph.
-		// Ownership language: "Collectively owned" was removed as a PRESENT
-		// claim 2026-07-20 (same reason "Steward-owned" went 2026-07-14 — dyad
-		// is not yet collectively owned). subcopyHighlightPre carries it as a
-		// stated direction ("will be"), which is the settled framing. The
-		// archived ownership page lives at src/lib/archive/StewardOwnershipPage.svelte.
-		headlineLine1: 'Meet people',
-		headlineLine2: "you wouldn't otherwise.",
-		headlineLine3: 'On your own terms.',
-		subcopy: 'We are a collective working in service to community and collective sensemaking.',
-		subcopyHighlightPre:
-			'We do that by building open-source online software, dyad, that will be collectively owned and governed,',
-		subcopyHighlight:
-			'for people seeking encounters beyond their existing circles through in-person conversation.',
-		subcopyClosing:
-			'Alongside the platform, we publish editorial work and will produce seasonal public event series that offer alternatives to the infrastructures of Big Tech and corporate media, creating different conditions for how we meet, think, and live together.',
+		// ── Hero ────────────────────────────────────────────────────────
+		// Display copy; sentence case is the intentional brand styling — see
+		// CLAUDE.md § UI conventions.
+		//
+		// "Turn … offline" makes dyad a movement rather than a place, which is
+		// both the honest description and the one thing nobody else in the
+		// category can say — everyone else wants you to stay. It is already
+		// literally true: a conversation starts in writing here (a prompt, a
+		// response) and becomes face to face. When posts and bookmarks can be
+		// imported, the same sentence covers that too, so the copy grows into
+		// the roadmap without ever having overclaimed.
+		headline: 'Turn your conversations online, offline.',
+		sublineLead: 'Dyad is a third space for initiating and finding face to face conversations about what matters to you.',
+		// Who we are, in first person, positioned inside the 2020s
+		// counterculture rather than described from outside it.
+		//
+		// The three practices are ordered by how checkable they are today.
+		// The writing culture is the strongest of them: open source is table
+		// stakes in this field, the ownership transition is a promise about
+		// the future, but legible decisions can be verified now. "Transition
+		// to" keeps the tense honest, the same reason "Collectively owned" was
+		// dropped as a present claim on 2026-07-20.
+		// "Prefigurative" is the term of art for building the world you want in
+		// the means you use to get there. It is also the framing the Unfolding
+		// pieces already use, so the landing page and the newsletter name the
+		// same practice.
+		whoLead:
+			'Rooted in our time’s decentralised, internet-native counterculture, we resist digital saturation, corporate capture, and the institutional norms that sustain both. We take a prefigurative approach to building social technology through open-source software, a writing culture that keeps decisions legible, and our transition to collective ownership and governance.',
+		sublineFor:
+			'For people who want less screen time and more contact with the world and one another.',
+		wordmark: 'DYAD',
+		// Accessible name for the wordmark link — names the destination, not
+		// the styling.
+		wordmarkLabel: 'Dyad, home',
+		// Icon-only zoom control on the map — the accessible name and tooltip.
+		mapZoomIn: 'Zoom in',
+		mapZoomOut: 'Zoom out',
+		// Banner pinned to the top-left of the landing map.
+		mapBanner: 'Live in Berlin',
 		// CTA on the map card that floats over a selected conversation.
 		mapCardCta: 'Join to read & meet',
+		// Alt text for the map card's cover image.
+		mapCardCoverAlt: (title: string) => `Cover image for ${title}`,
 	},
 
 	// ── Discover ───────────────────────────────────────────────────────
