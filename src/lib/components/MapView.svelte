@@ -216,6 +216,16 @@
 		}
 	});
 
+	// scrollWheelZoom is read once at construction, so a caller that flips it
+	// later (the landing map enables it only when full-screen) would otherwise
+	// see no change. Keep the live map in sync with the prop.
+	$effect(() => {
+		const wheel = scrollWheelZoom;
+		if (!map) return;
+		if (wheel) map.scrollWheelZoom.enable();
+		else map.scrollWheelZoom.disable();
+	});
+
 	onDestroy(() => {
 		resizeObserver?.disconnect();
 		resizeObserver = undefined;
