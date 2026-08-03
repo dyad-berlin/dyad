@@ -361,32 +361,6 @@
 		text-shadow: var(--ink-halo);
 	}
 
-	/* No surface of its own — the text sits straight on the photo, carried by
-	   the ink halo on each line (see --ink-halo). Still its own scroll area:
-	   every section keeps a visible preview, and opening one scrolls rather
-	   than pushing the block off-screen. */
-
-	/* One container for whichever phrase is open. Absolute on desktop so the
-	   column never shifts as the pointer crosses the sentence; the panel is
-	   paper, so ink flips dark inside it and the halo — which exists only to
-	   lift type off the photo — switches off. */
-
-	/* On a pointer device the reveal floats up and to the right of its phrase
-	   (left/bottom come from placeCard), so opening it never moves the text
-	   beneath. Touch keeps the in-flow version above, where the paragraph
-	   splits into three rows instead. Safe against hover-thrash because the
-	   close is bound to .left-head, not to the trigger: moving onto the card
-	   never counts as leaving.
-	   CARD_W in the script must match the 420px here. */
-	@media (hover: hover) and (min-width: 769px) {
-	}
-
-	/* Small pointer down toward the phrase, the way a Wikipedia hovercard
-	   ties itself to its link. Offset from the card's left edge, which is
-	   aligned to the phrase, so it lands near the start of the words. */
-
-
-
 
 
 	/* ── Bottom-left: headline + footer ── */

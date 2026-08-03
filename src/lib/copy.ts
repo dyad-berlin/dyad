@@ -224,27 +224,6 @@ export const copy = {
 			'For people who want less screen time and more contact with the world and one another.',
 		wordmark: 'DYAD',
 
-		// ── The three reveals ────────────────────────────────────────────
-		// Voice matched to the Unfolding pieces: reflective, structural, and
-		// unhurried, rather than the short hard beats of ad copy. Each still
-		// points at something checkable instead of reaching for an adjective.
-		aboutWhatLabel: 'Conversations that start online',
-		aboutWhat: [
-			'begin here in writing. Someone puts down what they want to talk about; someone else writes back. Only then does a meeting follow: a topic, a question, a time, a neighbourhood.',
-			'That is the whole thing. There is no feed to scroll and no one to swipe past.'
-		],
-		aboutWhyLabel: 'Face to face',
-		aboutWhy: [
-			'is the part that cannot happen on a screen. We did not like how being social online felt: stripped to one version of ourselves, and not the version we wanted to come forth.',
-			'The platforms are not broken. They are working exactly as they were built to work. The problem is systemic, and so must be the response.',
-			'A face to face conversation belongs to an oral culture we only recently parted ways with. Stories and conversations have long been how we weave parts of us together.'
-		],
-		aboutHowLabel: 'On its way to collective ownership',
-		aboutHow: [
-			'means the code is public and the workings are legible: who owns this, what incentives that creates, and which decisions follow from them.',
-			'Dyad is not collectively owned yet. It is being built toward that, with the rules written by the people using it rather than for them.',
-			'The Whole Earth Catalog had a name for tools like this: soft technology. Alive, resilient, adaptive, maybe even lovable, as against the rigid and the administrative.'
-		],
 		// Icon-only zoom control on the map — the accessible name and tooltip.
 		mapZoomIn: 'Zoom in',
 		mapZoomOut: 'Zoom out',
