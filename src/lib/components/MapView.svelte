@@ -56,6 +56,7 @@
 	let mapContainer: HTMLElement | undefined = $state();
 	let map: LeafletMap | undefined;
 	let markerLayer: LayerGroup | undefined;
+	let resizeObserver: ResizeObserver | undefined;
 
 	// ── Configuration ────────────────────────────────────────────────────────
 	const BERLIN_CENTER: [number, number] = [52.52, 13.405];
@@ -165,6 +166,16 @@
 		if (zoomControl) {
 			L.control.zoom({ position: zoomControlPosition }).addTo(map);
 		}
+
+		// Leaflet measures its container once, at construction. Hosts that
+		// resize the pane afterwards (the landing page's collapsed/expanded
+		// map card) need the map re-measured, or tiles render for the old
+		// size. Observing the container keeps the map honest without the
+		// host signalling anything.
+		resizeObserver = new ResizeObserver(() => {
+			map?.invalidateSize();
+		});
+		resizeObserver.observe(mapContainer);
 
 		L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 			attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
@@ -328,9 +339,22 @@
 		}
 	});
 
+	// scrollWheelZoom is set at construction and then kept in sync here: the
+	// landing map flips it (disabled collapsed, enabled expanded) so a page
+	// scroll over the card never zooms, while the full-screen map behaves
+	// like a map.
+	$effect(() => {
+		const enabled = scrollWheelZoom;
+		if (!map) return;
+		if (enabled) map.scrollWheelZoom.enable();
+		else map.scrollWheelZoom.disable();
+	});
+
 	let destroyed = false;
 	onDestroy(() => {
 		destroyed = true;
+		resizeObserver?.disconnect();
+		resizeObserver = undefined;
 		map?.off('move zoom moveend zoomend', reportActivePoint);
 		map?.remove();
 		map = undefined;
