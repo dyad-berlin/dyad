@@ -22,20 +22,40 @@
 	// newsletter cover images use — confirmed with a direct request (200).
 	const bgImageUrl = storageUrl('newsletter assets', 'landing page.jpg');
 
-	// The three about sections, shown in full — no longer collapsible.
-	const heroItems: Array<{ label: string; body: string[] }> = [
-		{ label: og.toggleLabelWeAre, body: [og.subcopy] },
-		{
-			label: og.toggleLabelWeDo,
-			body: [`${og.subcopyHighlightPre} ${og.subcopyHighlight}`, og.subcopyClosing]
-		},
-		{ label: og.toggleLabelWhy, body: [og.subcopyWhy] }
-	];
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	// Collapsed, the map is a card in the top-right corner; expanded, it takes
 	// the right half of the page as it used to. MapView watches its own
 	// container with a ResizeObserver, so Leaflet reflows on the transition
 	// without this component signalling anything.
 	let mapExpanded = $state(false);
+
+	// A full-screen map is a modal surface: hold the page still behind it, and
+	// let Escape out the way any overlay should.
+	$effect(() => {
+		if (typeof document === 'undefined') return;
+		document.body.style.overflow = mapExpanded ? 'hidden' : '';
+		return () => {
+			document.body.style.overflow = '';
+		};
+	});
+
+	function onWindowKey(e: KeyboardEvent) {
+		if (e.key === 'Escape' && mapExpanded) mapExpanded = false;
+	}
 
 	// ── Map ──────────────────────────────────────────────────────────────
 	// The pin cluster opened over the map (Airbnb-style card). Co-located
@@ -99,6 +119,8 @@
      Deliberately theme-independent, like the (zine) pages: its own local
      --landing-* custom properties, not the global light/dark tokens, so it
      always reads bright regardless of the app's own theme toggle. -->
+<svelte:window onkeydown={onWindowKey} />
+
 <div class="shell">
 	<!-- Static pastoral backdrop. The gradient is the base layer; the photo
 	     sits on top of it as a second background-image layer, so a 404 just
@@ -112,32 +134,57 @@
 		<a href="/" class="wordmark" aria-label="Dyad, home">{og.wordmark}</a>
 	</div>
 
+	<!-- A direct child of .shell, not of .left. .left carries its own z-index,
+	     which would trap these below the map however high their own z-index
+	     went; a stacking context cannot be escaped from the inside. -->
+	<div class="left-links">
+		<!-- href fallback so this action degrades without JS -->
+		<a href="/login" class="text-link" onclick={(e) => { e.preventDefault(); openLogin(); }}>{og.logIn}</a>
+		<a href="/waitlist" class="btn-join" data-testid="join-cta">{og.joinWaitlist}</a>
+	</div>
+
 	<!-- Top-right: a small map of live conversations, expandable to the right
 	     half of the page. -->
 	<aside class="map-pane" class:expanded={mapExpanded}>
 		<div class="map-frame">
 			<span class="map-banner">{og.mapBanner}</span>
 
+			<!-- Icon-only, so it needs an explicit label; the label names the
+			     action rather than the current state. -->
 			<button
 				type="button"
-				class="map-expand"
+				class="map-zoom"
 				aria-expanded={mapExpanded}
+				aria-label={mapExpanded ? og.mapZoomOut : og.mapZoomIn}
+				title={mapExpanded ? og.mapZoomOut : og.mapZoomIn}
 				onclick={() => (mapExpanded = !mapExpanded)}
 			>
-				{mapExpanded ? 'Close map' : 'Expand map'}
+				<!-- Viewfinder: four corner marks framing a plus, and the same
+				     frame around a minus once zoomed in. -->
+				<svg viewBox="0 0 24 24" aria-hidden="true">
+					<path d="M3 8V3h5" />
+					<path d="M16 3h5v5" />
+					<path d="M3 16v5h5" />
+					<path d="M21 16v5h-5" />
+					<path d="M9 12h6" />
+					{#if !mapExpanded}<path d="M12 9v6" />{/if}
+				</svg>
 			</button>
 
 			<div class="map-inner">
 				{#await import('$lib/components/MapView.svelte')}
 					<div class="map-placeholder"></div>
 				{:then { default: MapView }}
+					<!-- Zoom 12 sits between the two extremes: the inner city reads
+					     as a whole, with districts still named, rather than either a
+					     single neighbourhood or the entire metro area. -->
 					<MapView
 						prompts={conversations}
 						initialCenter={data.mapCenter}
-						initialZoom={11}
+						initialZoom={12}
 						onSelectPin={handlePinSelect}
 						onMapClick={closeConversation}
-						scrollWheelZoom={false}
+						scrollWheelZoom={mapExpanded}
 						zoomControl={false}
 					/>
 				{:catch}
@@ -184,28 +231,17 @@
 			{/if}
 		</div>
 
-		<!-- Nested under the map. Every section is shown in full — no longer
-		     collapsible, so these are plain headings rather than buttons. -->
-		<section class="hero-card" aria-label="About dyad">
-			{#each heroItems as item}
-				<div class="hero-toggle-item">
-					<h2 class="hero-toggle-label">{item.label}</h2>
-					{#each item.body as paragraph}
-						<p class="hero-toggle-body">{paragraph}</p>
-					{/each}
-				</div>
-			{/each}
-		</section>
 	</aside>
 
 	<section class="left">
 		<header class="left-head">
-			<h1 class="left-title">{og.headlineLine1}<br />{og.headlineLine2}<br />{og.headlineLine3}</h1>
-			<div class="left-links">
-				<a href="/waitlist" class="btn-join" data-testid="join-cta">{og.joinWaitlist}</a>
-				<!-- href fallback so this action degrades without JS -->
-				<a href="/login" class="text-link" onclick={(e) => { e.preventDefault(); openLogin(); }}>{og.logIn}</a>
-			</div>
+			<h1 class="left-title">{og.headline}</h1>
+
+			<p class="left-subline">{og.sublineLead}</p>
+
+			<p class="left-who">{og.whoLead}</p>
+			<p class="left-for">{og.sublineFor}</p>
+
 		</header>
 
 		<footer class="site-footer">
@@ -227,11 +263,21 @@
 	/* ── Shell — full-bleed photo behind everything. ── */
 	.shell {
 		--landing-bg: #faf8f3;              /* zine paper, matched exactly */
-		--landing-ink: #3b2a1d;              /* dark bark brown — matched to the trees in the photo */
-		--landing-ink-soft: rgba(59, 42, 29, 0.72);
-		--landing-ink-muted: rgba(59, 42, 29, 0.48);
-		--landing-ink-invert: #faf8f3;        /* light text, for the dark-filled CTA */
-		--landing-hairline: rgba(59, 42, 29, 0.14);
+		/* Text over the photo is the paper colour, not ink — the type reads as
+		   cut out of the background. This only works against something dark,
+		   so .sky-scrim carries a wash and --ink-halo is a dark glow (both
+		   below). Anywhere text sits ON the paper instead of over the photo
+		   — the whole below-fold half of mobile — these are re-scoped back to
+		   the dark values; see the mobile block. */
+		/* Muted warm off-white, not the paper's full brightness — pure #faf8f3
+		   over a photo reads as glowing rather than printed. */
+		--landing-ink: #e4dfd3;
+		--landing-ink-soft: rgba(228, 223, 211, 0.8);
+		--landing-ink-muted: rgba(228, 223, 211, 0.58);
+		--landing-ink-invert: #2a1f16;        /* dark text, for the light-filled CTA */
+		--landing-hairline: rgba(250, 248, 243, 0.28);
+		/* The dark bark brown, kept for paper-ground contexts. */
+		--landing-ink-on-paper: #3b2a1d;
 		--landing-card-bg: #fff;
 		--landing-card-ink: #111;
 		--landing-card-ink-soft: #555;
@@ -240,14 +286,27 @@
 		   as part of the page rather than a dark box dropped onto it. */
 		--landing-map-surface: rgba(250, 248, 243, 0.92);
 		--sky-fallback-gradient: linear-gradient(175deg, #dce4e2 0%, #eae6da 55%, #f3efe4 100%);
+		/* Width of the right-hand map column. Used both to size .map-pane and
+		   to cap .left so the two can never overlap — one value, one place. */
+		--map-w: min(560px, 42vw);
+		/* The wordmark's type, kept as tokens so the mobile actions can be
+		   centred on its line box rather than on a guessed pixel offset. */
+		--wordmark-size: clamp(1.1rem, 1.7vw, 1.45rem);
+		--wordmark-leading: 1.15;
+		/* Height of the top row: the Join pill is taller than the wordmark's
+		   line box and is centred on it, so this is what anything below has to
+		   clear. */
+		--topbar-h: 44px;
 		/* Type stacks shared with the newsletter (see (zine)/newsletter):
 		   Futura for uppercase headings, system sans for uppercase kickers
 		   and utility chrome, SangBleu (--font-serif, app.css) for prose. */
 		--font-display: Futura, 'Futura PT', 'Avenir Next', 'Helvetica Neue', -apple-system, BlinkMacSystemFont, sans-serif;
 		--font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-		/* Light halo behind dark ink — the main legibility aid over the photo,
-		   so the scrim can stay faint and the image reads close to as-shot. */
-		--ink-halo: 0 1px 16px rgba(250, 248, 243, 0.78), 0 0 2px rgba(250, 248, 243, 0.6);
+		/* A single soft dark shadow for legibility over the photo — deliberately
+		   not a second tight shadow, which is what made the type look like it
+		   was lit from behind rather than sitting on the image. */
+		--ink-halo: 0 1px 14px rgba(26, 21, 15, 0.42);
+		--ink-halo-none: 0 0 0 rgba(0, 0, 0, 0);
 
 		position: fixed;
 		inset: 0;
@@ -270,10 +329,17 @@
 		background-size: cover, cover;
 		background-position: center, center;
 	}
+	/* Light type needs something to sit against. A flat wash would grey the
+	   whole photo, so this is weighted to the edges where the text actually
+	   is — bottom-left for the headline, top for the wordmark and map — and
+	   stays clear through the middle of the image. */
 	.sky-scrim {
 		position: absolute;
 		inset: 0;
-		background: rgba(250, 248, 243, 0.12);
+		background:
+			linear-gradient(to top, rgba(26, 21, 15, 0.55) 0%, rgba(26, 21, 15, 0) 45%),
+			linear-gradient(to bottom, rgba(26, 21, 15, 0.4) 0%, rgba(26, 21, 15, 0) 32%),
+			rgba(26, 21, 15, 0.12);
 	}
 
 	/* ── Top-left: wordmark + toggle nav ── */
@@ -286,12 +352,12 @@
 
 	.wordmark {
 		font-family: var(--font-serif);
-		font-size: clamp(1.1rem, 1.7vw, 1.45rem);
+		font-size: var(--wordmark-size);
 		font-weight: 700;
 		letter-spacing: 0.06em;
 		color: var(--landing-ink);
 		text-decoration: none;
-		line-height: 1.15;
+		line-height: var(--wordmark-leading);
 		text-shadow: var(--ink-halo);
 	}
 
@@ -299,79 +365,121 @@
 	   the ink halo on each line (see --ink-halo). Still its own scroll area:
 	   every section keeps a visible preview, and opening one scrolls rather
 	   than pushing the block off-screen. */
-	.hero-card {
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-4);
-		padding: var(--space-1) 0 0;
-		max-height: 38vh;
-		overflow-y: auto;
+
+	/* One container for whichever phrase is open. Absolute on desktop so the
+	   column never shifts as the pointer crosses the sentence; the panel is
+	   paper, so ink flips dark inside it and the halo — which exists only to
+	   lift type off the photo — switches off. */
+
+	/* On a pointer device the reveal floats up and to the right of its phrase
+	   (left/bottom come from placeCard), so opening it never moves the text
+	   beneath. Touch keeps the in-flow version above, where the paragraph
+	   splits into three rows instead. Safe against hover-thrash because the
+	   close is bound to .left-head, not to the trigger: moving onto the card
+	   never counts as leaving.
+	   CARD_W in the script must match the 420px here. */
+	@media (hover: hover) and (min-width: 769px) {
 	}
 
-	.hero-toggle-item {
-		display: flex;
-		flex-direction: column;
-		align-items: flex-start;
-	}
+	/* Small pointer down toward the phrase, the way a Wikipedia hovercard
+	   ties itself to its link. Offset from the card's left edge, which is
+	   aligned to the phrase, so it lands near the start of the words. */
 
-	/* Section headings — the newsletter's Futura card-title weight, but
-	   sentence-cased: landing display headings are sentence case by design
-	   (CLAUDE.md § UI conventions), unlike the newsletter's uppercase titles. */
-	.hero-toggle-label {
-		font-family: var(--font-display);
-		font-size: 1.05rem;
-		font-weight: 800;
-		letter-spacing: 0.005em;
-		color: var(--landing-ink);
-		margin: 0;
-		text-shadow: var(--ink-halo);
-	}
 
-	/* Prose — matched to the newsletter essay body (.essay-body p in
-	   (zine)/newsletter/[slug]): SangBleu, 1rem, 400, 1.55, upright. The
-	   34px trailing margin there separates paragraphs; here the section gap
-	   does that, so only paragraphs after the first carry it. */
-	.hero-toggle-body {
-		font-family: var(--font-serif);
-		font-size: 1rem;
-		font-weight: 400;
-		line-height: 1.55;
-		color: var(--landing-ink);
-		margin: var(--space-2) 0 0;
-		text-shadow: var(--ink-halo);
-	}
-	.hero-toggle-body + .hero-toggle-body { margin-top: 22px; }
+
+
 
 	/* ── Bottom-left: headline + footer ── */
 	.left {
 		position: relative;
 		z-index: 20;
+		/* Sizing reference for the headline: the column's width is capped and
+		   also reduced by the map, so it is not a fixed fraction of the
+		   viewport — vw would guess wrong. cqw measures the real thing. */
+		container-type: inline-size;
 		display: flex;
 		flex-direction: column;
 		flex: 1;
 		min-height: 0;
-		max-width: var(--content-standard, 700px);
+		/* Two caps, whichever is smaller. 880px is the measure we want; the
+		   calc is the guard that keeps this column clear of the map, which is
+		   absolutely positioned at the right edge. Derived from --map-w rather
+		   than a guessed number so the two cannot drift apart. Without it the
+		   text sits beneath the map from ~769px to ~1300px. */
+		max-width: min(880px, calc(100% - var(--map-w) - var(--space-8)));
 		margin-top: auto;
 		box-sizing: border-box;
 	}
 
-	.left-head { margin-top: auto; margin-bottom: var(--space-6); }
+	.left-head { position: relative; margin-top: auto; margin-bottom: 0; }
 
 	.left-title {
 		font-family: var(--font-serif);
-		font-size: clamp(2rem, 4.4vw, 3rem);
+		/* One row. ~5.1% of the column per character-width keeps all 40
+		   characters on a single line; the cap stops it growing past a
+		   comfortable display size on wide screens. The clamp above it is the
+		   fallback for engines without container query units. */
+		font-size: clamp(1.6rem, 2.4vw, 2.6rem);
+		font-size: min(2.6rem, 5.1cqw);
+		white-space: nowrap;
 		font-weight: 700;
-		color: var(--landing-ink);
+		/* A step softer than the body ink: at this size the headline carries by
+		   scale, and full-strength here is what read as glare. */
+		color: var(--landing-ink-soft);
 		margin: 0 0 var(--space-5);
-		line-height: 1.05;
+		line-height: 1.24;
 		letter-spacing: -0.015em;
-		text-shadow: 0 2px 24px rgba(250, 248, 243, 0.7), 0 1px 3px rgba(250, 248, 243, 0.5);
+		text-align: left;
+		text-wrap: pretty;
+		/* The shared dark halo, not the light glow this used to carry — that was
+		   left over from when the ink was dark brown, and behind light type it
+		   lit the letters from behind. */
+		text-shadow: var(--ink-halo);
 	}
 
-	.left-links { display: flex; gap: var(--space-4); align-items: center; }
+	/* Under the headline: what dyad is and who it is for, as one paragraph.
+	   Set at caption scale rather than as a second headline, so the display
+	   line above keeps the weight. */
+	/* Everything under the headline shares one treatment, so the block reads as
+	   a single voice rather than three tiers of importance. */
+	.left-subline,
+	.left-who,
+	.left-for {
+		position: relative;
+		font-family: var(--font-serif);
+		font-size: clamp(0.88rem, 1.4vw, 1.02rem);
+		font-weight: 400;
+		line-height: 1.55;
+		color: var(--landing-ink-soft);
+		max-width: none;
+		margin: 0 0 var(--space-4);
+		text-shadow: var(--ink-halo);
+	}
+	.left-subline { margin-top: var(--space-5); }
 
-	/* Primary action: a dark pill on the bright hero so Join is unmistakably
-	   the first thing to do. Log in stays a quiet text link beside it. */
+
+
+
+
+	/* The actions sit at the top right on every size, above the map, opposite
+	   the wordmark and centred on its line box. Fixed rather than absolute so
+	   they hold that corner over the map, which carries its own stacking
+	   context, and above it when it goes full screen.
+	   Height and top come from the wordmark's own type tokens, so the two stay
+	   optically centred on one line without a measured offset. */
+	.left-links {
+		display: flex;
+		gap: var(--space-4);
+		align-items: center;
+		position: fixed;
+		top: var(--space-6);
+		right: var(--space-6);
+		height: calc(var(--wordmark-size) * var(--wordmark-leading));
+		z-index: 210;
+	}
+
+	/* Primary action: a dark pill on the bright hero, sitting last in the row
+	   so it holds the outer edge. Sign in stays a quiet text link beside it. */
 	.btn-join {
 		display: inline-flex;
 		align-items: center;
@@ -418,8 +526,10 @@
 		justify-content: space-between;
 		column-gap: var(--space-4);
 		row-gap: var(--space-2);
-		margin-top: var(--space-5);
-		padding-top: var(--space-4);
+		/* The copy sits directly on the footer rule; the rule's own breathing
+		   room is the only separation. */
+		margin-top: var(--space-3);
+		padding-top: var(--space-3);
 		border-top: 1px solid var(--landing-hairline);
 	}
 
@@ -441,22 +551,24 @@
 	.map-pane {
 		position: absolute;
 		right: var(--space-6);
-		top: var(--space-6);
+		/* Clears the actions row rather than starting level with it, so Join
+		   and Sign in are never behind the map. */
+		top: calc(var(--space-6) + var(--topbar-h));
 		z-index: 30;
-		width: min(560px, 42vw);
+		width: var(--map-w);
 		display: flex;
 		flex-direction: column;
 		gap: var(--space-4);
 		transition: bottom var(--duration-slow, 400ms) var(--ease-ink, ease);
 	}
 
-	/* Expanded: the pane grows downward only — width is unchanged, so the
-	   column keeps its place and nothing to the left reflows. It floats over
-	   the headline/footer beneath (z-index above .left) rather than pushing
-	   them around; the frame is opaque so nothing shows through. */
+	/* Zoomed in, the map takes the whole viewport — fixed rather than absolute
+	   so it leaves the column entirely and covers the page. */
 	.map-pane.expanded {
-		bottom: var(--space-4);
-		z-index: 60;
+		position: fixed;
+		inset: 0;
+		width: auto;
+		z-index: 200;
 	}
 	/* Expanding lifts the map out of the column flow to cover the full pane —
 	   so it opens *over* the about text beneath rather than shrinking to
@@ -467,7 +579,12 @@
 		inset: 0;
 		z-index: 2;
 		aspect-ratio: auto;
+		border: none;
+		border-radius: 0;
+		padding: 0;
+		box-shadow: none;
 	}
+	.map-pane.expanded .map-inner { border-radius: 0; }
 
 	/* Banner pinned to the map, mirroring the expand control opposite it. */
 	.map-banner {
@@ -480,37 +597,49 @@
 		font-weight: 600;
 		letter-spacing: 0.08em;
 		text-transform: uppercase;
-		color: var(--landing-ink);
+		/* Dark ink, not --landing-ink: that token is the light off-white used
+		   for type over the photograph, and this label sits on a paper pill. */
+		color: var(--landing-ink-on-paper);
 		background: rgba(250, 248, 243, 0.9);
-		border: 1px solid var(--landing-hairline);
+		border: 1px solid rgba(59, 42, 29, 0.14);
 		border-radius: var(--radius-pill);
 		padding: 5px 12px;
 	}
 
-	.map-expand {
+	.map-zoom {
 		position: absolute;
 		top: var(--space-3);
 		right: var(--space-3);
 		z-index: 1200;
-		font-family: var(--font-ui);
-		font-size: 0.68rem;
-		font-weight: 600;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: var(--landing-ink);
+		display: grid;
+		place-items: center;
+		width: 34px;
+		height: 34px;
+		padding: 0;
+		color: var(--landing-ink-on-paper);
 		background: rgba(250, 248, 243, 0.9);
-		border: 1px solid var(--landing-hairline);
-		border-radius: var(--radius-pill);
-		padding: 5px 12px;
+		border: 1px solid rgba(59, 42, 29, 0.14);
+		border-radius: 50%;
 		cursor: pointer;
 		transition: background 0.15s;
 	}
-	.map-expand:hover { background: rgba(250, 248, 243, 1); }
+	.map-zoom:hover { background: rgba(250, 248, 243, 1); }
+	.map-zoom svg {
+		width: 18px;
+		height: 18px;
+		fill: none;
+		stroke: currentColor;
+		/* Square ends and mitred corners — the mark is meant to read as crop
+		   marks, so rounding the joins would soften exactly what it is. */
+		stroke-width: 2;
+		stroke-linecap: butt;
+		stroke-linejoin: miter;
+	}
 
 	.map-frame {
 		position: relative;
 		width: 100%;
-		aspect-ratio: 4 / 3;
+		aspect-ratio: 16 / 9;
 		background: var(--landing-map-surface);
 		backdrop-filter: blur(16px);
 		border: 1px solid var(--landing-hairline);
@@ -661,19 +790,6 @@
 
 
 	/* ── Desktop ── */
-	@media (min-width: 769px) {
-		/* A half-transparent panel behind the about text so it reads clearly
-		   over the photo — the image still shows through it. Mobile doesn't
-		   need this: that text sits on the plain paper ground below the fold. */
-		.hero-card {
-			background: rgba(250, 248, 243, 0.55);
-			backdrop-filter: blur(10px);
-			border: 1px solid rgba(250, 248, 243, 0.5);
-			border-radius: var(--radius-card);
-			padding: var(--space-5);
-		}
-	}
-
 	/* ── Mobile ──
 	   The page scrolls: a full-height photo hero (wordmark + headline + CTA),
 	   then everything below it sits on the plain paper ground — the map and
@@ -720,19 +836,63 @@
 		   screen, the footer to the very bottom of the page. */
 		.left { display: contents; }
 
+		/* The actions sit opposite the wordmark on one line. Anchored to
+		   .shell, and offset up from the wordmark's own top padding by half
+		   the difference in their heights, so the two are centred on the same
+		   horizontal line rather than merely sharing a corner. */
+		/* Same treatment, at the phone's narrower inset. */
+		.left-links {
+			top: var(--space-5);
+			right: var(--space-5);
+		}
+
+		/* One row would put a 40-character line below body-copy size on a
+		   phone, so it wraps here and keeps the display scale instead. */
+		.left-title {
+			white-space: normal;
+			font-size: clamp(2.1rem, 10.5vw, 3rem);
+		}
+
 		.left-head {
-			position: relative;
+			/* Static, so the actions below can anchor to .shell and share the
+			   wordmark's line rather than this block's top edge. z-index still
+			   applies: this is a flex item of .shell, and flex items honour
+			   z-index without being positioned. */
+			position: static;
 			z-index: 1;
 			order: 2;
-			/* Fills out the rest of the first screen so the headline lands at
-			   the fold, with the wordmark row above accounted for. */
+			/* The headline and the three paragraphs have to sit inside the
+			   first screen, so the block is capped at the viewport less the
+			   wordmark row above it, and can scroll internally on a short
+			   phone rather than pushing the map down the page. */
 			min-height: calc(100vh - 92px);
+			max-height: calc(100vh - 92px);
+			overflow-y: auto;
+			/* Starts the copy below the wordmark row with room to breathe,
+			   rather than immediately under it. The block scrolls internally
+			   if the copy runs past the screen. */
+			padding-top: calc(var(--space-10) + var(--space-6));
 			display: flex;
 			flex-direction: column;
 			justify-content: flex-end;
 			margin: 0;
-			padding: 0 var(--space-5) var(--space-6);
+			padding-right: var(--space-5);
+			padding-bottom: var(--space-6);
+			padding-left: var(--space-5);
 			box-sizing: border-box;
+		}
+
+		/* Below the fold everything sits on the paper ground, not the photo —
+		   so the ink tokens flip back to the dark brown and the halo goes
+		   away. Re-scoping the custom properties on the containers means
+		   every child picks it up; no per-element colour overrides. */
+		.map-pane,
+		.site-footer {
+			--landing-ink: var(--landing-ink-on-paper);
+			--landing-ink-soft: rgba(59, 42, 29, 0.72);
+			--landing-ink-muted: rgba(59, 42, 29, 0.48);
+			--landing-hairline: rgba(59, 42, 29, 0.14);
+			--ink-halo: var(--ink-halo-none);
 		}
 
 		.map-pane {
@@ -744,9 +904,13 @@
 			order: 3;
 			padding: var(--space-8) var(--space-5) 0;
 		}
-		/* Expanding is a desktop affordance — on mobile the card is already
-		   full-width, so the control has nothing to do. */
-		.map-expand { display: none; }
+		/* Taller than the desktop card: on a narrow column a 16/9 strip leaves
+		   too little of the city to read. Expanding still earns its keep here,
+		   growing to a portrait crop so pins can be picked apart. */
+		.map-frame { aspect-ratio: 4 / 3; }
+
+		/* Zoomed in is full-viewport here too, so the base rules already
+		   cover it — only the collapsed card needs a mobile ratio. */
 
 		/* The pin card leads with the conversation itself — cover, title, and
 		   a couple of lines — rather than an ask. Joining is already the
@@ -754,8 +918,6 @@
 		.map-card-cta { display: none; }
 
 		/* On a scrolling page the card shouldn't scroll inside itself. */
-		.hero-card { max-height: none; overflow: visible; }
-
 		.site-footer {
 			position: relative;
 			z-index: 1;
@@ -764,6 +926,9 @@
 			padding: var(--space-4) 0 var(--space-6);
 		}
 
+		/* No hover on touch: the panel opens on tap and sits in normal flow,
+		   so it pushes the CTA down instead of covering it. Overlaying would
+		   trap the tap target underneath on a small screen. */
 		/* Keep the mobile footer to the four site sections; the social links
 		   would wrap onto a second row for little benefit. */
 		.footer-link.is-social { display: none; }
