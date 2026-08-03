@@ -3,6 +3,7 @@
 	import { enhance } from '$app/forms';
 	import { copy } from '$lib/copy';
 	import { env } from '$env/dynamic/public';
+	import { lock, unlock } from '$lib/utils/scroll-lock';
 	import CitySearch from './CitySearch.svelte';
 
 	interface Props {
@@ -48,8 +49,15 @@
 		open = false;
 	}
 
+	// Capture-phase, so the open dialog owns Escape: stopPropagation here keeps
+	// the event from ever reaching bubble-phase window handlers underneath
+	// (e.g. the landing page's expanded-map collapse). One Escape closes the
+	// dialog only; the next reaches whatever is beneath it.
 	function handleKeydown(e: KeyboardEvent) {
-		if (open && e.key === 'Escape') hide();
+		if (open && e.key === 'Escape') {
+			e.stopPropagation();
+			hide();
+		}
 	}
 
 	// A plain fixed overlay, NOT <dialog>.showModal(). The native dialog renders
@@ -58,9 +66,9 @@
 	// to fire. A normal overlay keeps the login form in the page's stacking
 	// context, where password managers behave as they do on any page.
 	$effect(() => {
-		if (typeof document === 'undefined') return;
-		document.body.style.overflow = open ? 'hidden' : '';
-		return () => { document.body.style.overflow = ''; };
+		if (!open) return;
+		lock();
+		return unlock;
 	});
 
 	// Native <dialog> auto-focused the first control; preserve that.
@@ -145,7 +153,7 @@
 	}
 </script>
 
-<svelte:window onkeydown={handleKeydown} />
+<svelte:window onkeydowncapture={handleKeydown} />
 
 {#if open}
 	<!-- svelte-ignore a11y_click_events_have_key_events -->

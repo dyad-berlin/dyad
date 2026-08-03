@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import ZineFooter from '$lib/components/ZineFooter.svelte';
+	import { lock, unlock } from '$lib/utils/scroll-lock';
 	let { children } = $props();
 
 	// The newsletter (Unfolding is its first series; more will follow) keeps
@@ -44,9 +45,9 @@
 	}
 
 	$effect(() => {
-		if (typeof document === 'undefined') return;
-		document.body.style.overflow = menuOpen ? 'hidden' : '';
-		return () => { document.body.style.overflow = ''; };
+		if (!menuOpen) return;
+		lock();
+		return unlock;
 	});
 </script>
 
