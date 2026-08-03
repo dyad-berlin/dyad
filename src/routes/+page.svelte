@@ -288,8 +288,8 @@
 
 	/* The actions sit at the top right on every size, above the map, opposite
 	   the wordmark and centred on its line box. Fixed rather than absolute so
-	   they hold that corner over the map, which carries its own stacking
-	   context.
+	   they hold that corner over the collapsed map, which carries its own
+	   stacking context. Expanded, they drop behind it; see below.
 	   Height and top come from the wordmark's own type tokens, so the two stay
 	   optically centred on one line without a measured offset. */
 	.left-links {
@@ -301,12 +301,19 @@
 		right: var(--space-6);
 		height: calc(var(--wordmark-size) * var(--wordmark-leading));
 		z-index: 210;
+		transition: opacity var(--duration-fast) var(--ease-ink);
 	}
 
-	/* While the map covers the viewport the actions leave: the collapse
-	   control sits in the same corner, and on touch it must not end up under
-	   the Join pill. */
-	.shell.map-expanded .left-links { display: none; }
+	/* Zoomed in, the map owns the viewport, so the actions drop behind it
+	   rather than floating over the atlas — the collapse control sits in the
+	   same corner and on touch must not end up under the Join pill.
+	   visibility, not just opacity, so they also leave the tab order while
+	   they are covered. */
+	.shell.map-expanded .left-links {
+		z-index: 1;
+		opacity: 0;
+		visibility: hidden;
+	}
 
 	/* Primary action: a light pill on the photo, sitting last in the row so it
 	   holds the outer edge. Sign in stays a quiet text link beside it. */
