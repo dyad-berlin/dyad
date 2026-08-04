@@ -141,6 +141,7 @@
 	}
 
 	let leafletModule: typeof import('leaflet') | undefined;
+	let resizeObserver: ResizeObserver | undefined;
 
 	onMount(async () => {
 		if (!mapContainer) return;
@@ -187,6 +188,14 @@
 				onMoveEnd?.([c.lat, c.lng], map.getZoom());
 			}, 300);
 		});
+
+		// Leaflet caches its container size; if the container is resized by CSS
+		// (e.g. the landing map expanding from a card to a half-page pane) the
+		// map keeps its old dimensions and renders misaligned/blank tiles until
+		// told otherwise. Watching the container covers every such case without
+		// callers having to signal a resize.
+		resizeObserver = new ResizeObserver(() => map?.invalidateSize());
+		resizeObserver.observe(mapContainer);
 
 		markerLayer = L.layerGroup().addTo(map);
 		lastPins = rebuildMarkers(L);
@@ -328,10 +337,22 @@
 		}
 	});
 
+	// scrollWheelZoom is read once at construction, so a caller that flips it
+	// later (the landing map enables it only when full-screen) would otherwise
+	// see no change. Keep the live map in sync with the prop.
+	$effect(() => {
+		const wheel = scrollWheelZoom;
+		if (!map) return;
+		if (wheel) map.scrollWheelZoom.enable();
+		else map.scrollWheelZoom.disable();
+	});
+
 	let destroyed = false;
 	onDestroy(() => {
 		destroyed = true;
 		map?.off('move zoom moveend zoomend', reportActivePoint);
+		resizeObserver?.disconnect();
+		resizeObserver = undefined;
 		map?.remove();
 		map = undefined;
 		markerLayer = undefined;
