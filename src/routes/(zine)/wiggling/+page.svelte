@@ -48,10 +48,20 @@
 
 	// Photo slots reference static files that don't exist in the repo yet —
 	// drop the real images into static/images/wiggling/ using these exact
-	// names and they'll render; until then the onerror handler swaps in a
-	// muted placeholder instead of a broken-image icon.
+	// names and they'll render; until then the failed src gets a muted
+	// placeholder instead of a broken-image icon.
+	//
+	// The missing state has to reach the markup through `class:missing`, not
+	// through classList.add from an onerror handler. Svelte strips CSS whose
+	// selectors it cannot match against the template, so `.photo-slot.missing`
+	// rules compiled away entirely when `missing` only ever appeared at
+	// runtime — the handler ran, the class landed, and no rule existed to
+	// apply. Copy-on-write on the Set, per the runes reactivity rule.
+	let failed = $state(new Set<string>());
+
 	function onImgError(e: Event) {
-		(e.currentTarget as HTMLElement).closest('.photo-slot')?.classList.add('missing');
+		const src = (e.currentTarget as HTMLImageElement).getAttribute('src');
+		if (src) failed = new Set(failed).add(src);
 	}
 </script>
 
@@ -99,10 +109,10 @@
 			</div>
 
 			<div class="photo-row cols-2">
-				<figure class="photo-slot">
+				<figure class="photo-slot" class:missing={failed.has('/images/wiggling/brafe-camp-2024-236.jpg')}>
 					<img src="/images/wiggling/brafe-camp-2024-236.jpg" alt="Brafe Space Camp, 2024" loading="lazy" onerror={onImgError} />
 				</figure>
-				<figure class="photo-slot">
+				<figure class="photo-slot" class:missing={failed.has('/images/wiggling/brafe-camp-2024-220.jpg')}>
 					<img src="/images/wiggling/brafe-camp-2024-220.jpg" alt="Brafe Space Camp, 2024" loading="lazy" onerror={onImgError} />
 				</figure>
 			</div>
@@ -128,10 +138,10 @@
 			</div>
 
 			<div class="photo-row cols-2">
-				<figure class="photo-slot">
+				<figure class="photo-slot" class:missing={failed.has('/images/wiggling/brafe-camp-2022-screenshot.png')}>
 					<img src="/images/wiggling/brafe-camp-2022-screenshot.png" alt="Brafe Space, 2022" loading="lazy" onerror={onImgError} />
 				</figure>
-				<figure class="photo-slot">
+				<figure class="photo-slot" class:missing={failed.has('/images/wiggling/brafe-camp-2024-112.jpg')}>
 					<img src="/images/wiggling/brafe-camp-2024-112.jpg" alt="Brafe Space Camp, 2024" loading="lazy" onerror={onImgError} />
 				</figure>
 			</div>
@@ -157,7 +167,7 @@
 			</div>
 
 			<div class="photo-row cols-1">
-				<figure class="photo-slot">
+				<figure class="photo-slot" class:missing={failed.has('/images/wiggling/brafe-camp-2024-093.jpg')}>
 					<img src="/images/wiggling/brafe-camp-2024-093.jpg" alt="Brafe Space Camp, 2024" loading="lazy" onerror={onImgError} />
 				</figure>
 			</div>
@@ -193,19 +203,22 @@
 
 	/* ── Video cards — floating media, On Being style: no border, a soft warm
 	   shadow doing all the work of separating the card from the paper it
-	   sits on. Second card sits lower — a small, deliberate stagger, echoing
-	   the page's own "life doesn't move in straight lines" line. ── */
-	/* Columns are capped rather than 1fr: the reels are portrait (9/16), so a
-	   half-page column would render them absurdly tall on a wide viewport. */
+	   sits on.
+	   Columns are capped rather than 1fr: the reels are portrait (9/16), so a
+	   half-page column would render them absurdly tall on a wide viewport.
+	   The cards share a baseline. An earlier revision dropped the second one
+	   64px as a deliberate stagger, which read as a broken grid rather than an
+	   editorial one once the frames went from 16/9 to portrait — at that
+	   height the offset looks like a layout bug. ── */
 	.videos {
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 300px));
 		gap: 64px 40px;
 		margin-top: 64px;
+		align-items: start;
 	}
 
 	.video-card { margin: 0; min-width: 0; }
-	.video-card:nth-child(2) { margin-top: 64px; }
 
 	.video-frame {
 		position: relative;
@@ -283,7 +296,12 @@
 	.principle { margin: 0 0 44px; }
 	.principle:last-of-type { margin-bottom: 0; }
 
-	.principle-name {
+	/* Scoped under .principles-prose to outrank the layout's
+	   :global(.zine-main .prose p), which is (0,2,1) and otherwise wins over a
+	   bare .principle-name — the names rendered at body size and body opacity,
+	   leaving the section with no hierarchy at all. Anything styling a <p>
+	   inside .prose needs the extra class for the same reason. */
+	.principles-prose .principle-name {
 		font-family: var(--font-serif);
 		font-style: italic;
 		font-size: 1.3rem;
@@ -297,15 +315,24 @@
 	   measure, same treatment the community-care photo grids use elsewhere:
 	   a plain rectangle, no shadow (unlike the videos above, these sit flush
 	   with the page rather than "floating" — texture, not spectacle). */
+	/* The breakout has to be expressed in absolute units, not percentages: the
+	   containing block is .principles-prose at 640px, so `min(100%, 860px)`
+	   resolved to 640 and the rows silently sat flush with the text instead of
+	   breaking out of it. --gutter is the .page padding on each side. */
 	.photo-row {
+		--gutter: 96px;
+		--breakout: min(860px, calc(100vw - var(--gutter)));
 		display: grid;
 		gap: 20px;
 		margin: 48px 0;
-		width: min(100%, 860px);
-		margin-left: calc(50% - min(100%, 860px) / 2);
+		width: var(--breakout);
+		margin-left: calc((100% - var(--breakout)) / 2);
 	}
 	.photo-row.cols-2 { grid-template-columns: 1fr 1fr; }
-	.photo-row.cols-1 { grid-template-columns: 1fr; width: min(100%, 560px); margin-left: calc(50% - min(100%, 560px) / 2); }
+	.photo-row.cols-1 {
+		--breakout: min(560px, calc(100vw - var(--gutter)));
+		grid-template-columns: 1fr;
+	}
 
 	.photo-slot {
 		position: relative;
@@ -337,9 +364,14 @@
 		color: rgba(27, 28, 30, 0.25);
 	}
 
+	/* Below 760px the page drops to 20px padding (see the (zine) layout), so
+	   the gutter shrinks with it and the breakout collapses to full width. */
+	@media (max-width: 760px) {
+		.photo-row { --gutter: 40px; }
+	}
+
 	@media (max-width: 640px) {
 		.videos { grid-template-columns: minmax(0, 300px); gap: 40px; }
-		.video-card:nth-child(2) { margin-top: 0; }
 		.photo-row.cols-2 { grid-template-columns: 1fr; }
 	}
 
