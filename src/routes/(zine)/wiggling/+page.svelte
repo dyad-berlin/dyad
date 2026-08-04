@@ -1,23 +1,50 @@
 <script lang="ts">
-	// Reverted to YouTube embeds — the full episodes only exist on YouTube
-	// right now (no self-hosted master uploaded yet), so a native <video> had
-	// nothing to point at. youtube-nocookie.com is YouTube's privacy-enhanced
-	// embed domain: fewer identifying cookies than youtube.com, same player.
-	// Once real files are compressed + uploaded to Supabase Storage, swap
-	// this back to a plain <video src=...> (see git history on this file for
-	// that version) to drop the YouTube chrome.
-	const videos = [
+	import { env } from '$env/dynamic/public';
+
+	// Reel sources: prefer PUBLIC_VIDEO_BASE_URL (sovereign host), else the public
+	// videos bucket. In local dev the default Supabase URL is the LOCAL stack (no
+	// videos bucket), so the reels wouldn't play; this base defaults to the public
+	// bucket in every env. Files still live under the videos/voices/ prefix.
+	const videoBase =
+		env.PUBLIC_VIDEO_BASE_URL ??
+		'https://iwdjpuyuznzukhowxjhk.supabase.co/storage/v1/object/public/videos';
+
+	// The reel plays here, self-hosted. The full episode is a plain outbound
+	// link, NOT an embed: an iframe (even youtube-nocookie.com) contacts Google
+	// on page load and discloses every visitor's IP before anyone presses play,
+	// which is the drift CLAUDE.md § Data Collection and Values rules out. A
+	// link makes the visitor's relationship with YouTube their own — the same
+	// move as pointing newsletter signups at Substack rather than collecting
+	// addresses here.
+	//
+	// Once compressed masters are in the videos bucket under episodes/, the full
+	// conversation can play on the page as a second <video> and the outbound
+	// link can go. Kaspar stays archived — no kaspar.mp4 in the bucket to serve.
+	// { src: `${videoBase}/voices/kaspar.mp4`, name: 'Kaspar' },
+	const voices = [
 		{
-			id: 'yaChHM7iIIo',
+			src: `${videoBase}/voices/pauline.mp4`,
 			name: 'Pauline Gwet',
-			href: 'https://www.youtube.com/watch?v=yaChHM7iIIo'
+			episode: 'https://www.youtube.com/watch?v=yaChHM7iIIo'
 		},
 		{
-			id: '48hVieSCBbo',
+			src: `${videoBase}/voices/ali.mp4`,
 			name: 'Ali Nezamolmaleki',
-			href: 'https://www.youtube.com/watch?v=48hVieSCBbo'
+			episode: 'https://www.youtube.com/watch?v=48hVieSCBbo'
 		}
 	];
+
+	function toggle(e: Event) {
+		const el = e.currentTarget as HTMLVideoElement;
+		if (el.paused) {
+			// Pause the others so two voices never talk over each other.
+			for (const v of document.querySelectorAll('video')) if (v !== el) v.pause();
+			el.muted = false;
+			void el.play();
+		} else {
+			el.pause();
+		}
+	}
 
 	// Photo slots reference static files that don't exist in the repo yet —
 	// drop the real images into static/images/wiggling/ using these exact
@@ -42,20 +69,20 @@
 		</div>
 
 		<div class="videos">
-			{#each videos as v}
+			{#each voices as v}
 				<figure class="video-card">
 					<div class="video-frame">
-						<iframe
-							src={`https://www.youtube-nocookie.com/embed/${v.id}`}
-							title={v.name}
-							loading="lazy"
-							allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; web-share"
-							allowfullscreen
-						></iframe>
+						<!-- svelte-ignore a11y_media_has_caption -->
+						<!-- #t=0.1 makes the browser render a real frame as the poster; without
+						     it, preload="metadata" leaves the element black until playback. -->
+						<video src={`${v.src}#t=0.1`} preload="metadata" playsinline onclick={toggle}
+						></video>
 					</div>
 					<figcaption>
 						<span class="video-name">{v.name}</span>
-						<a class="video-link" href={v.href} target="_blank" rel="noopener">Watch on YouTube ↗</a>
+						<a class="video-link" href={v.episode} target="_blank" rel="noopener noreferrer"
+							>Watch the full conversation on YouTube ↗</a
+						>
 					</figcaption>
 				</figure>
 			{/each}
@@ -168,9 +195,11 @@
 	   shadow doing all the work of separating the card from the paper it
 	   sits on. Second card sits lower — a small, deliberate stagger, echoing
 	   the page's own "life doesn't move in straight lines" line. ── */
+	/* Columns are capped rather than 1fr: the reels are portrait (9/16), so a
+	   half-page column would render them absurdly tall on a wide viewport. */
 	.videos {
 		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
+		grid-template-columns: repeat(2, minmax(0, 300px));
 		gap: 64px 40px;
 		margin-top: 64px;
 	}
@@ -180,7 +209,7 @@
 
 	.video-frame {
 		position: relative;
-		aspect-ratio: 16 / 9;
+		aspect-ratio: 9 / 16;
 		border-radius: 16px;
 		overflow: hidden;
 		background: #000;
@@ -197,12 +226,14 @@
 			0 18px 36px -12px rgba(43, 36, 26, 0.16);
 	}
 
-	.video-frame iframe {
+	.video-frame video {
 		position: absolute;
 		inset: 0;
 		width: 100%;
 		height: 100%;
-		border: 0;
+		object-fit: cover;
+		display: block;
+		cursor: pointer;
 	}
 
 	.video-card figcaption {
@@ -307,7 +338,7 @@
 	}
 
 	@media (max-width: 640px) {
-		.videos { grid-template-columns: 1fr; gap: 40px; }
+		.videos { grid-template-columns: minmax(0, 300px); gap: 40px; }
 		.video-card:nth-child(2) { margin-top: 0; }
 		.photo-row.cols-2 { grid-template-columns: 1fr; }
 	}
