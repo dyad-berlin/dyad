@@ -291,10 +291,33 @@ try {
 
 **Never force-push to main.** Use `git revert` to undo commits on main.
 
+**Rebase on `upstream/main` before you start, and again before you open the PR.**
+A branch that drifts is a branch reviewed against code that no longer exists.
+`git fetch upstream && git rebase upstream/main`. If a session runs long enough
+that the base moves, rebase mid-session rather than at the end.
+
+**One concern per PR, not just per commit.** A landing-page PR does not carry a
+newsletter post or a redesign of another route, however small the diff. If the
+title cannot describe every commit, it is more than one PR. Split with
+`git log --oneline upstream/main..HEAD`, then cherry-pick onto fresh branches.
+
+**Delete the scaffolding with the feature.** When a mechanism is removed, its
+CSS, its copy keys, and above all its comments go with it. A comment describing
+code that no longer exists is worse than no comment, because the next reader
+trusts it. `svelte-check` will not catch this: it reports unused *selectors*,
+not empty blocks or orphaned comments.
+
+**Run `npm run check:pr` before opening.** It checks the three things the build
+and `svelte-check` cannot see: whether the branch is behind its base, whether
+the PR carries more than one concern, and whether removed features left
+comments, empty rule blocks, or unrendered copy keys behind. Keep it green;
+a check that is red on arrival is a check nobody reads.
+
 ### Self-Review Checklist
 
 ```
 - [ ] On the correct branch (not main) — `git branch` to verify
+- [ ] `npm run check:pr` green — base current, one concern, no leftovers
 - [ ] Every `request.json()` wrapped in try/catch
 - [ ] No `error.message` or internal details in API responses
 - [ ] No `{@html}` without protocol-safe sanitization
