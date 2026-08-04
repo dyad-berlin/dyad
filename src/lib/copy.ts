@@ -176,37 +176,34 @@ export const copy = {
 		footerNewsletter: 'Newsletter',
 		footerLegal: 'Legal',
 		// ── Hero ────────────────────────────────────────────────────────
-		// One sentence, with three phrases inside it that open into the what,
-		// the why and the how. It has to stand on its own for anyone who never
-		// hovers, so the claim lives in the sentence and the reveals only go
-		// deeper.
+		// One sentence, carrying the whole claim on its own. There is no
+		// progressive disclosure behind it — what a reader sees is all there
+		// is, so the sentence has to be complete rather than a teaser.
 		//
-		// "Turns … into" makes dyad a movement rather than a place, which is
-		// both the honest description and the one thing nobody else in the
+		// "Online, offline" makes dyad a movement rather than a place, which
+		// is both the honest description and the one thing nobody else in the
 		// category can say — everyone else wants you to stay. It is already
 		// literally true: a conversation starts in writing here (a prompt, a
 		// response) and becomes face to face. When posts and bookmarks can be
 		// imported, the same sentence covers that too, so the copy grows into
 		// the roadmap without ever having overclaimed.
 		//
-		// Ownership stays future-framed ("on its way to"), for the same reason
-		// "Collectively owned" was dropped as a present claim on 2026-07-20 —
-		// dyad is not collectively owned yet. The archived ownership page is at
+		// No ownership claim in the headline. Ownership language lives in
+		// whoLead below, future-framed, for the reason "Collectively owned"
+		// was dropped as a present claim on 2026-07-20 — dyad is not
+		// collectively owned yet. The archived ownership page is at
 		// src/lib/archive/StewardOwnershipPage.svelte.
 		headline: 'Turn your conversations online, offline.',
-		// The paragraph beneath the headline. Split so 'soft' can carry a
-		// reveal: it is the one word doing work a reader cannot unpack on
-		// sight, and the definition behind it is a real lineage rather than
-		// an adjective we invented.
-		//
-		// "Stewarded by" rather than "owned by": dyad is not collectively
-		// owned yet, the same reason "Collectively owned" was dropped as a
-		// present claim on 2026-07-20.
+		// The paragraph beneath the headline: what dyad is, in one line, for
+		// a reader who has just met the headline and needs the noun.
+		// "Third space" is the load-bearing term — the established one for a
+		// place that is neither home nor work, so it does real work without
+		// needing a gloss.
 		sublineLead: 'Dyad is a third space for initiating and finding face to face conversations about what matters to you.',
 		// Who we are, in first person, positioned inside the 2020s
-		// counterculture rather than described from outside it. "We practise
-		// that refusal" needs an antecedent you can act on, which is why the
-		// first sentence names a refusal rather than an observation.
+		// counterculture rather than described from outside it. The first
+		// sentence names a refusal ("we resist …") rather than an
+		// observation, so the second has something to act on.
 		//
 		// The three practices are ordered by how checkable they are today.
 		// The writing culture is the strongest of them: open source is table
