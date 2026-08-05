@@ -3,31 +3,11 @@
 	import { storageUrl } from '$lib/utils/storage-url';
 	import MembershipInvite from '$lib/components/MembershipInvite.svelte';
 	import { articleJsonLd } from '$lib/seo';
+	import { segments } from './segments';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 	const entry = $derived(data.entry);
-
-	/** Split a paragraph into plain text, `[label](https://…)` links, and
-	 *  `*emphasis*`, so the markup can render real anchors and <em>.
-	 *  Deliberately not `{@html}`: the copy is author-controlled today, but
-	 *  rendering raw strings would make the next person's paste an XSS. Only
-	 *  http(s) is matched, so a `javascript:` URL stays inert text. */
-	type Segment = { text: string; href?: string; em?: boolean };
-
-	function segments(paragraph: string): Segment[] {
-		const token = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|\*([^*\n]+)\*/g;
-		const out: Segment[] = [];
-		let last = 0;
-		for (const m of paragraph.matchAll(token)) {
-			if (m.index > last) out.push({ text: paragraph.slice(last, m.index) });
-			if (m[2]) out.push({ text: m[1], href: m[2] });
-			else out.push({ text: m[3], em: true });
-			last = m.index + m[0].length;
-		}
-		if (last < paragraph.length) out.push({ text: paragraph.slice(last) });
-		return out;
-	}
 
 	const jsonLd = $derived(
 		articleJsonLd({
