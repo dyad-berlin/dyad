@@ -21,16 +21,31 @@
 	// conversation can play on the page as a second <video> and the outbound
 	// link can go. Kaspar stays archived — no kaspar.mp4 in the bucket to serve.
 	// { src: `${videoBase}/voices/kaspar.mp4`, name: 'Kaspar' },
+	// Poster frames live in the images bucket, not videos/: that one accepts
+	// video mime types only. Served as webp — the source PNGs were 1.8-3.2MB
+	// each and a poster loads before anyone presses play, so three of them
+	// would have cost ~8MB on arrival. These are 41-69kB.
+	const posterBase =
+		'https://iwdjpuyuznzukhowxjhk.supabase.co/storage/v1/object/public/newsletter%20assets/voices';
+
 	const voices = [
 		{
 			src: `${videoBase}/voices/pauline.mp4`,
+			poster: `${posterBase}/pauline.webp`,
 			name: 'Pauline Gwet',
 			episode: 'https://www.youtube.com/watch?v=yaChHM7iIIo'
 		},
 		{
 			src: `${videoBase}/voices/ali.mp4`,
+			poster: `${posterBase}/ali.webp`,
 			name: 'Ali Nezamolmaleki',
 			episode: 'https://www.youtube.com/watch?v=48hVieSCBbo'
+		},
+		{
+			src: `${videoBase}/voices/sude.mp4`,
+			poster: `${posterBase}/sude.webp`,
+			name: 'Sude Elverdi',
+			episode: 'https://www.youtube.com/watch?v=bqX0Mx_YmfY'
 		}
 	];
 
@@ -65,9 +80,10 @@
 				<figure class="video-card">
 					<div class="video-frame">
 						<!-- svelte-ignore a11y_media_has_caption -->
-						<!-- #t=0.1 makes the browser render a real frame as the poster; without
-						     it, preload="metadata" leaves the element black until playback. -->
-						<video src={`${v.src}#t=0.1`} preload="metadata" playsinline onclick={toggle}
+						<!-- A real poster means preload="none": no part of the reel is fetched
+						     until someone presses play. Replaces the #t=0.1 first-frame trick,
+						     which only existed because there was no thumbnail to show. -->
+						<video src={v.src} poster={v.poster} preload="none" playsinline onclick={toggle}
 						></video>
 					</div>
 					<figcaption>
@@ -119,7 +135,7 @@
 	   height the offset looks like a layout bug. ── */
 	.videos {
 		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 300px));
+		grid-template-columns: repeat(3, minmax(0, 300px));
 		gap: 64px 40px;
 		margin-top: 64px;
 		align-items: start;
@@ -179,6 +195,13 @@
 		transition: color var(--duration-fast, 150ms);
 	}
 	.video-link:hover { color: rgba(27, 28, 30, 0.7); }
+
+	/* Three across needs ~1000px with the 40px gutters; below that two, then
+	   one. Wide query first: both match on a phone, and at equal specificity
+	   the later rule wins. */
+	@media (max-width: 1040px) {
+		.videos { grid-template-columns: repeat(2, minmax(0, 300px)); }
+	}
 
 	@media (max-width: 640px) {
 		.videos { grid-template-columns: minmax(0, 300px); gap: 40px; }
