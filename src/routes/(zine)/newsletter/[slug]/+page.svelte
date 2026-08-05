@@ -8,6 +8,27 @@
 	let { data }: { data: PageData } = $props();
 	const entry = $derived(data.entry);
 
+	/** Split a paragraph into plain text, `[label](https://…)` links, and
+	 *  `*emphasis*`, so the markup can render real anchors and <em>.
+	 *  Deliberately not `{@html}`: the copy is author-controlled today, but
+	 *  rendering raw strings would make the next person's paste an XSS. Only
+	 *  http(s) is matched, so a `javascript:` URL stays inert text. */
+	type Segment = { text: string; href?: string; em?: boolean };
+
+	function segments(paragraph: string): Segment[] {
+		const token = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|\*([^*\n]+)\*/g;
+		const out: Segment[] = [];
+		let last = 0;
+		for (const m of paragraph.matchAll(token)) {
+			if (m.index > last) out.push({ text: paragraph.slice(last, m.index) });
+			if (m[2]) out.push({ text: m[1], href: m[2] });
+			else out.push({ text: m[3], em: true });
+			last = m.index + m[0].length;
+		}
+		if (last < paragraph.length) out.push({ text: paragraph.slice(last) });
+		return out;
+	}
+
 	const jsonLd = $derived(
 		articleJsonLd({
 			title: entry.title,
@@ -66,7 +87,13 @@
 			</blockquote>
 
 			{#each entry.paragraphs as paragraph}
-				<p>{paragraph}</p>
+				<p>
+					{#each segments(paragraph) as part}{#if part.href}<a
+								href={part.href}
+								target="_blank"
+								rel="noopener noreferrer">{part.text}</a
+							>{:else if part.em}<em>{part.text}</em>{:else}{part.text}{/if}{/each}
+				</p>
 			{/each}
 		</div>
 
@@ -197,6 +224,18 @@
 		margin: 0 auto;
 		padding: 0 24px;
 	}
+
+	/* Inline links in the prose: underlined in the body ink rather than a
+	   separate accent, so a citation reads as part of the sentence. */
+	.essay-body p a {
+		color: inherit;
+		text-decoration: underline;
+		text-underline-offset: 0.18em;
+		text-decoration-thickness: 1px;
+		text-decoration-color: rgba(27, 28, 30, 0.35);
+		transition: text-decoration-color 0.15s;
+	}
+	.essay-body p a:hover { text-decoration-color: currentColor; }
 
 	.essay-body p {
 		font-family: var(--font-serif);
