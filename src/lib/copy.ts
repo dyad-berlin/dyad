@@ -991,6 +991,11 @@ export const copy = {
 		// completed (meetings that reached feedback lock).
 		completedCount: (n: number) =>
 			n === 1 ? '1 conversation completed' : `${n} conversations completed`,
+		// Featured feedback is stepped through one at a time; these name the
+		// controls for screen readers and label the position.
+		featuredPrev: 'Previous feedback',
+		featuredNext: 'Next feedback',
+		featuredPosition: (n: number, total: number) => `${n} of ${total}`,
 	},
 
 	// ── Emails ─────────────────────────────────────────────────────────
