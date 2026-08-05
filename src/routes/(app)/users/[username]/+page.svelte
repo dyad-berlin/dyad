@@ -2,19 +2,30 @@
 	import type { PageData } from './$types';
 	import FloatingNav from '$lib/components/FloatingNav.svelte';
 	import { copy } from '$lib/copy';
+	import { clampFeaturedIndex, nextFeaturedIndex } from './featured-index';
 
 	let { data }: { data: PageData } = $props();
 
 	// Featured feedback shows one at a time. A grid of them read as a wall of
 	// praise; one quote at a time gives each its own moment, and the count
 	// tells the visitor there are more without showing them all at once.
+	//
+	// featuredIndex is component-local $state; featured is $derived from data.
+	// SvelteKit reuses this component across a navigation that keeps the same
+	// route id (/users/alice -> /users/bob) and re-runs the loader in place on
+	// invalidateAll(), which MeetingFeedbackModal calls from the (app) layout
+	// on whatever page the member is standing on. Either path can swap in a
+	// shorter list under an index that survived, so every read goes through
+	// safeIndex — reading featured[featuredIndex] directly would render
+	// undefined.created_at and take the whole profile down, not just the card.
 	let featuredIndex = $state(0);
 	const featured = $derived(data.featuredFeedback);
-	const currentFeedback = $derived(featured[featuredIndex]);
+	const safeIndex = $derived(clampFeaturedIndex(featuredIndex, featured.length));
+	const currentFeedback = $derived(featured[safeIndex]);
 
-	// Wraps, so neither arrow is ever a dead control.
+	// Wraps, so neither arrow is ever a dead control. See featured-index.ts.
 	function stepFeedback(delta: number) {
-		featuredIndex = (featuredIndex + delta + featured.length) % featured.length;
+		featuredIndex = nextFeaturedIndex(featuredIndex, delta, featured.length);
 	}
 
 	function formatDate(iso: string): string {
@@ -54,7 +65,7 @@
 							<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
 						</button>
 						<span class="feedback-count"
-							>{copy.publicProfile.featuredPosition(featuredIndex + 1, featured.length)}</span
+							>{copy.publicProfile.featuredPosition(safeIndex + 1, featured.length)}</span
 						>
 						<button
 							type="button"
