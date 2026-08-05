@@ -13,6 +13,9 @@ cd "$(git rev-parse --show-toplevel)"
 
 BASE_REMOTE="${BASE_REMOTE:-upstream}"
 BASE_BRANCH="${BASE_BRANCH:-main}"
+# Where the PR branch is pushed from. When it differs from BASE_REMOTE this is
+# a fork, and its default branch drifts silently behind upstream.
+FORK_REMOTE="${FORK_REMOTE:-origin}"
 BASE="$BASE_REMOTE/$BASE_BRANCH"
 
 bold=$(tput bold 2>/dev/null || echo '')
@@ -48,6 +51,23 @@ else
 fi
 
 changed=$(git diff --name-only "$BASE"...HEAD)
+
+# ── 1b. Is the fork itself current? ────────────────────────────────────────────
+# A branch can be cut from a fresh upstream/main while the fork's own main sits
+# weeks behind. Nothing breaks immediately, but the fork's compare view and
+# anyone branching from it are working against stale code.
+if [ "$FORK_REMOTE" != "$BASE_REMOTE" ] && git remote get-url "$FORK_REMOTE" >/dev/null 2>&1; then
+	git fetch "$FORK_REMOTE" "$BASE_BRANCH" --quiet 2>/dev/null
+	if git rev-parse --verify -q "$FORK_REMOTE/$BASE_BRANCH" >/dev/null; then
+		fork_behind=$(git rev-list --count "$FORK_REMOTE/$BASE_BRANCH".."$BASE")
+		if [ "$fork_behind" -eq 0 ]; then
+			ok "  Fork $FORK_REMOTE/$BASE_BRANCH is in sync."
+		else
+			bad "  Fork $FORK_REMOTE/$BASE_BRANCH is $fork_behind commit(s) behind $BASE. Sync before opening:"
+			bad "      git fetch $BASE_REMOTE && git push $FORK_REMOTE $BASE:refs/heads/$BASE_BRANCH"
+		fi
+	fi
+fi
 
 # ── 2. Does the PR carry one concern? ─────────────────────────────────────────
 printf '\n%s\n' "${bold}Scope${off}"
