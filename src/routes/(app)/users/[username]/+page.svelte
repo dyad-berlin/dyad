@@ -2,8 +2,31 @@
 	import type { PageData } from './$types';
 	import FloatingNav from '$lib/components/FloatingNav.svelte';
 	import { copy } from '$lib/copy';
+	import { clampFeaturedIndex, nextFeaturedIndex } from './featured-index';
 
 	let { data }: { data: PageData } = $props();
+
+	// Featured feedback shows one at a time. A grid of them read as a wall of
+	// praise; one quote at a time gives each its own moment, and the count
+	// tells the visitor there are more without showing them all at once.
+	//
+	// featuredIndex is component-local $state; featured is $derived from data.
+	// SvelteKit reuses this component across a navigation that keeps the same
+	// route id (/users/alice -> /users/bob) and re-runs the loader in place on
+	// invalidateAll(), which MeetingFeedbackModal calls from the (app) layout
+	// on whatever page the member is standing on. Either path can swap in a
+	// shorter list under an index that survived, so every read goes through
+	// safeIndex — reading featured[featuredIndex] directly would render
+	// undefined.created_at and take the whole profile down, not just the card.
+	let featuredIndex = $state(0);
+	const featured = $derived(data.featuredFeedback);
+	const safeIndex = $derived(clampFeaturedIndex(featuredIndex, featured.length));
+	const currentFeedback = $derived(featured[safeIndex]);
+
+	// Wraps, so neither arrow is ever a dead control. See featured-index.ts.
+	function stepFeedback(delta: number) {
+		featuredIndex = nextFeaturedIndex(featuredIndex, delta, featured.length);
+	}
 
 	function formatDate(iso: string): string {
 		return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -29,20 +52,44 @@
 
 	{#if data.featuredFeedback.length > 0}
 		<section class="featured-section">
-			<h2 class="section-title">{copy.publicProfile.featuredHeading}</h2>
-			<div class="feedback-grid">
-				{#each data.featuredFeedback as fb}
-					<article class="feedback-card">
-						<p class="feedback-date">{formatMonthYear(fb.created_at)}</p>
-						{#if fb.quote}
-							<p class="feedback-quote">{fb.quote}</p>
-						{/if}
-						{#if fb.tags.length > 0}
-							<p class="feedback-tags">{fb.tags.join(' · ')}</p>
-						{/if}
-					</article>
-				{/each}
+			<div class="featured-head">
+				<h2 class="section-title">{copy.publicProfile.featuredHeading}</h2>
+				{#if featured.length > 1}
+					<div class="feedback-nav">
+						<button
+							type="button"
+							class="feedback-arrow"
+							onclick={() => stepFeedback(-1)}
+							aria-label={copy.publicProfile.featuredPrev}
+						>
+							<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
+						</button>
+						<span class="feedback-count"
+							>{copy.publicProfile.featuredPosition(safeIndex + 1, featured.length)}</span
+						>
+						<button
+							type="button"
+							class="feedback-arrow"
+							onclick={() => stepFeedback(1)}
+							aria-label={copy.publicProfile.featuredNext}
+						>
+							<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" /></svg>
+						</button>
+					</div>
+				{/if}
 			</div>
+
+			<!-- aria-live so stepping through announces the new quote rather than
+			     silently swapping it for anyone not watching the screen. -->
+			<article class="feedback-card" aria-live="polite">
+				<p class="feedback-date">{formatMonthYear(currentFeedback.created_at)}</p>
+				{#if currentFeedback.quote}
+					<p class="feedback-quote">{currentFeedback.quote}</p>
+				{/if}
+				{#if currentFeedback.tags.length > 0}
+					<p class="feedback-tags">{currentFeedback.tags.join(' · ')}</p>
+				{/if}
+			</article>
 		</section>
 	{/if}
 
@@ -90,14 +137,66 @@
 	   travels with the snapshot. */
 	.featured-section { margin-bottom: var(--space-8); }
 
-	.feedback-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-		column-gap: var(--space-8);
-		row-gap: var(--space-6);
+	/* The heading is heavier than the shared .section-title so the section
+	   label reads as chrome and the quote below reads as the content. They
+	   were the same weight, which flattened the two together. Overridden
+	   here rather than in shared.css, which meetings and feedback also use. */
+	.featured-head {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: var(--space-4);
+	}
+	.featured-head .section-title {
+		font-weight: 600;
+		margin-bottom: var(--space-3);
 	}
 
-	.feedback-card { min-width: 0; }
+	.feedback-nav {
+		display: flex;
+		align-items: center;
+		gap: var(--space-2);
+		flex-shrink: 0;
+	}
+
+	.feedback-count {
+		font-size: var(--text-sm);
+		color: var(--text-muted);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.feedback-arrow {
+		display: grid;
+		place-items: center;
+		width: 28px;
+		height: 28px;
+		padding: 0;
+		border: none;
+		border-radius: 50%;
+		background: none;
+		color: var(--text-muted);
+		cursor: pointer;
+		transition: color 0.15s, background 0.15s;
+	}
+	.feedback-arrow:hover { color: var(--text-primary); background: var(--border-subtle); }
+	.feedback-arrow svg {
+		width: 17px;
+		height: 17px;
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 2;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+	}
+
+	/* min-height holds the block steady while stepping: quotes differ in
+	   length, and without it the page jumps under the pointer as you click
+	   through, moving the arrow you just pressed. */
+	.feedback-card {
+		min-width: 0;
+		max-width: 46ch;
+		min-height: 7.5rem;
+	}
 
 	.feedback-date {
 		font-size: var(--text-sm);
