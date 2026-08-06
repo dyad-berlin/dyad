@@ -1,0 +1,23 @@
+{
+	"capturedAt": "2026-08-06",
+	"voices": [
+		{
+			"src": "https://iwdjpuyuznzukhowxjhk.supabase.co/storage/v1/object/public/videos/voices/pauline.mp4",
+			"poster": "https://iwdjpuyuznzukhowxjhk.supabase.co/storage/v1/object/public/newsletter%20assets/voices/pauline.webp",
+			"name": "Pauline Gwet",
+			"episode": "https://www.youtube.com/watch?v=yaChHM7iIIo"
+		},
+		{
+			"src": "https://iwdjpuyuznzukhowxjhk.supabase.co/storage/v1/object/public/videos/voices/ali.mp4",
+			"poster": "https://iwdjpuyuznzukhowxjhk.supabase.co/storage/v1/object/public/newsletter%20assets/voices/ali.webp",
+			"name": "Ali Nezamolmaleki",
+			"episode": "https://www.youtube.com/watch?v=48hVieSCBbo"
+		},
+		{
+			"src": "https://iwdjpuyuznzukhowxjhk.supabase.co/storage/v1/object/public/videos/voices/sude.mp4",
+			"poster": "https://iwdjpuyuznzukhowxjhk.supabase.co/storage/v1/object/public/newsletter%20assets/voices/sude.webp",
+			"name": "Sude Elverdi",
+			"episode": "https://www.youtube.com/watch?v=bqX0Mx_YmfY"
+		}
+	]
+}

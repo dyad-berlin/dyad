@@ -38,10 +38,18 @@ const entry: UnfoldingEntry = {
 	paragraphs: ['One.']
 };
 
+const voice = {
+	src: 'https://example.test/reel.mp4',
+	poster: 'https://example.test/poster.webp',
+	name: 'A Voice',
+	episode: 'https://www.youtube.com/watch?v=x'
+};
+
 function makeAdapter() {
 	return {
 		listEntries: vi.fn(async () => [summaryOf(entry)]),
-		getEntry: vi.fn(async (slug: string) => (slug === entry.slug ? entry : null))
+		getEntry: vi.fn(async (slug: string) => (slug === entry.slug ? entry : null)),
+		listVoices: vi.fn(async () => [voice])
 	} satisfies ContentService;
 }
 
@@ -162,6 +170,20 @@ describe('CachedContentService', () => {
 
 		await service.getEntry(entry.slug);
 		expect(adapter.getEntry).toHaveBeenCalledTimes(2);
+	});
+
+	it('caches voices read-through like entries', async () => {
+		const kv = makeKv();
+		const adapter = makeAdapter();
+		const service = new CachedContentService(adapter, kv);
+
+		await expect(service.listVoices()).resolves.toEqual([voice]);
+		await service.listVoices();
+		expect(adapter.listVoices).toHaveBeenCalledTimes(1);
+
+		await service.invalidate();
+		await service.listVoices();
+		expect(adapter.listVoices).toHaveBeenCalledTimes(2);
 	});
 
 	it('treats a corrupt KV value as a miss rather than an error', async () => {

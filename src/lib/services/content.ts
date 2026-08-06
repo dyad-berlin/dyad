@@ -1,4 +1,5 @@
 import { unfoldingEntries } from '$lib/content/unfolding';
+import { wigglingVoices } from '$lib/content/wiggling';
 import { CachedContentService, type ContentKV } from '$lib/server/content-cache';
 
 /**
@@ -37,11 +38,21 @@ export interface UnfoldingEntry {
  */
 export type UnfoldingSummary = Omit<UnfoldingEntry, 'paragraphs'>;
 
+// Moved here from the Wiggling page component (see src/lib/content/wiggling.ts).
+export interface WigglingVoice {
+	src: string; // self-hosted reel
+	poster: string; // poster frame, resolved through storageUrl()
+	name: string;
+	episode: string; // outbound link to the full conversation — a link, never an embed
+}
+
 export interface ContentService {
 	/** All entries as summaries, in display order (newest first). */
 	listEntries(): Promise<UnfoldingSummary[]>;
 	/** The full entry for a slug, or null when unknown. Never throws on bad input. */
 	getEntry(slug: string): Promise<UnfoldingEntry | null>;
+	/** The Wiggling voices, in display order. */
+	listVoices(): Promise<WigglingVoice[]>;
 }
 
 // Bounds for the shape guard. The adapter output is checked at the port —
@@ -106,11 +117,18 @@ function toSummary(entry: UnfoldingEntry): UnfoldingSummary {
  * migration; retired when content moves to a runtime source.
  */
 export class ModuleContentService implements ContentService {
-	// The entries parameter is a test seam; production callers use the default.
-	constructor(private entries: UnfoldingEntry[] = unfoldingEntries) {}
+	// The entries/voices parameters are a test seam; production callers use the defaults.
+	constructor(
+		private entries: UnfoldingEntry[] = unfoldingEntries,
+		private voices: WigglingVoice[] = wigglingVoices
+	) {}
 
 	async listEntries(): Promise<UnfoldingSummary[]> {
 		return this.entries.filter((entry) => this.passesGuard(entry)).map(toSummary);
+	}
+
+	async listVoices(): Promise<WigglingVoice[]> {
+		return this.voices;
 	}
 
 	async getEntry(slug: string): Promise<UnfoldingEntry | null> {
