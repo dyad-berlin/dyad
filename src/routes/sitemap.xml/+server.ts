@@ -1,6 +1,6 @@
 import type { RequestHandler } from './$types';
 import { canonicalUrl, PUBLIC_PATHS } from '$lib/seo';
-import { unfoldingEntries } from '$lib/content/unfolding';
+import { ModuleContentService } from '$lib/services/content';
 import { escapeHtml } from '$lib/utils/escape-html';
 
 /**
@@ -21,16 +21,18 @@ interface SitemapEntry {
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}(T[\d:.+Z-]+)?$/;
 
 export const GET: RequestHandler = async ({ setHeaders, locals }) => {
+	// Summaries via the content port. The port's shape guard already skips any
+	// malformed entry, which would otherwise become /newsletter/undefined in a
+	// document search engines treat as authoritative.
+	const content = new ModuleContentService();
+	const summaries = await content.listEntries();
+
 	const entries: SitemapEntry[] = [
 		...PUBLIC_PATHS.map((path) => ({ path })),
-		...unfoldingEntries
-			// A malformed entry would otherwise become /newsletter/undefined in a
-			// document search engines treat as authoritative.
-			.filter((entry) => !!entry.slug)
-			.map((entry) => ({
-				path: `/newsletter/${entry.slug}`,
-				lastmod: ISO_DATE.test(entry.date ?? '') ? entry.date : undefined
-			}))
+		...summaries.map((entry) => ({
+			path: `/newsletter/${entry.slug}`,
+			lastmod: ISO_DATE.test(entry.date ?? '') ? entry.date : undefined
+		}))
 	];
 
 	const urls = entries
