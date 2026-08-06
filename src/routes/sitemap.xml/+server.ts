@@ -1,6 +1,6 @@
 import type { RequestHandler } from './$types';
 import { canonicalUrl, PUBLIC_PATHS } from '$lib/seo';
-import { ModuleContentService } from '$lib/services/content';
+import { getContentService } from '$lib/services/content';
 import { escapeHtml } from '$lib/utils/escape-html';
 
 /**
@@ -20,12 +20,11 @@ interface SitemapEntry {
 /** W3C date, which is what the sitemap spec accepts for lastmod. */
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}(T[\d:.+Z-]+)?$/;
 
-export const GET: RequestHandler = async ({ setHeaders, locals }) => {
+export const GET: RequestHandler = async ({ setHeaders, locals, platform }) => {
 	// Summaries via the content port. The port's shape guard already skips any
 	// malformed entry, which would otherwise become /newsletter/undefined in a
 	// document search engines treat as authoritative.
-	const content = new ModuleContentService();
-	const summaries = await content.listEntries();
+	const summaries = await getContentService(platform).listEntries();
 
 	const entries: SitemapEntry[] = [
 		...PUBLIC_PATHS.map((path) => ({ path })),
@@ -56,6 +55,10 @@ ${urls}
 	// with a public directive is how a shared cache ends up holding someone's
 	// session. Cloudflare declines to cache Set-Cookie responses today, which is
 	// a platform behaviour rather than a guarantee this code should lean on.
+	// Note the anonymous branch's `public, s-maxage` directive is currently
+	// advisory: the edge does not cache Worker responses on headers alone
+	// (verified DYNAMIC in production, 2026-08-05). The anonymous/signed-in
+	// split is the part that matters.
 	setHeaders({
 		'Content-Type': 'application/xml',
 		'Cache-Control': locals.user
