@@ -4,7 +4,9 @@ vi.mock('$env/static/public', () => ({ PUBLIC_SUPABASE_URL: 'https://abc.supabas
 
 const { GET } = await import('./+server.js');
 const { PUBLIC_PATHS, NON_PUBLIC_PREFIXES, canonicalUrl } = await import('$lib/seo');
-const { unfoldingEntries } = await import('$lib/content/unfolding');
+const { ModuleContentService } = await import('$lib/services/content');
+
+const summaries = await new ModuleContentService().listEntries();
 
 async function render(locals: Record<string, unknown> = { user: null }) {
 	const headers: Record<string, string> = {};
@@ -54,8 +56,24 @@ describe('GET /sitemap.xml', () => {
 
 	it('lists every published newsletter entry', async () => {
 		const locs = locsOf((await render()).body);
-		for (const entry of unfoldingEntries) {
+		expect(summaries.length).toBeGreaterThan(0);
+		for (const entry of summaries) {
 			expect(locs).toContain(canonicalUrl(`/newsletter/${entry.slug}`));
+		}
+	});
+
+	it('gains a URL when the content service returns an extra entry', async () => {
+		const spy = vi
+			.spyOn(ModuleContentService.prototype, 'listEntries')
+			.mockResolvedValue([
+				...summaries,
+				{ slug: 'a-brand-new-essay', kicker: 'K', title: 'T', quote: 'Q', date: '2026-08-06' }
+			]);
+		try {
+			const locs = locsOf((await render()).body);
+			expect(locs).toContain(canonicalUrl('/newsletter/a-brand-new-essay'));
+		} finally {
+			spy.mockRestore();
 		}
 	});
 
@@ -79,7 +97,7 @@ describe('GET /sitemap.xml', () => {
 
 	it('emits lastmod for entries that carry a date', async () => {
 		const { body } = await render();
-		for (const entry of unfoldingEntries) {
+		for (const entry of summaries) {
 			expect(body).toContain(`<lastmod>${entry.date}</lastmod>`);
 		}
 	});

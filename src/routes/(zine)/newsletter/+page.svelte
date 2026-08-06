@@ -1,9 +1,11 @@
 <script lang="ts">
-	import { unfoldingEntries } from '$lib/content/unfolding';
 	import { formatEditorialDate } from '$lib/utils/dates';
 	import { storageUrl } from '$lib/utils/storage-url';
+	import type { PageData } from './$types';
 
-	const [featured, ...rest] = unfoldingEntries;
+	let { data }: { data: PageData } = $props();
+	const featured = $derived(data.entries[0]);
+	const rest = $derived(data.entries.slice(1));
 </script>
 
 <svelte:head>
