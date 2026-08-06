@@ -1,4 +1,5 @@
 import { unfoldingEntries } from '$lib/content/unfolding';
+import { CachedContentService, type ContentKV } from '$lib/server/content-cache';
 
 /**
  * Content boundary for the zine surfaces (newsletter, Wiggling). Wraps the
@@ -130,4 +131,31 @@ export class ModuleContentService implements ContentService {
 		console.error(`content: entry ${label} failed the shape guard and was skipped`);
 		return false;
 	}
+}
+
+let cachedService: ContentService | null = null;
+let cachedBinding: ContentKV | undefined;
+
+/**
+ * The injection point route loaders use. With the CONTENT_KV binding present
+ * on the platform (production and preview deployments, where the binding is
+ * dashboard-managed), returns the KV-cached service wrapping the module
+ * adapter; without it (local dev, vitest), transparently returns the bare
+ * adapter, so a missing binding degrades to uncached reads rather than
+ * breaking a page.
+ */
+export function getContentService(platform?: App.Platform): ContentService {
+	const kv = platform?.env?.CONTENT_KV;
+	if (cachedService && cachedBinding === kv) return cachedService;
+	cachedBinding = kv;
+	cachedService = kv
+		? new CachedContentService(new ModuleContentService(), kv)
+		: new ModuleContentService();
+	return cachedService;
+}
+
+/** Test hook: reset module cache state between test cases. */
+export function _resetContentCache(): void {
+	cachedService = null;
+	cachedBinding = undefined;
 }
