@@ -10,7 +10,12 @@
  * invalidation (deleting the key) is the production mechanism for retracting
  * content: an operator can pull an entry faster than any TTL.
  */
-import type { ContentService, UnfoldingEntry, UnfoldingSummary } from '$lib/services/content';
+import type {
+	ContentService,
+	UnfoldingEntry,
+	UnfoldingSummary,
+	WigglingVoice
+} from '$lib/services/content';
 
 /**
  * The slice of a Cloudflare KVNamespace this cache uses, typed structurally
@@ -40,6 +45,7 @@ export class ContentUnavailableError extends Error {
 export const CONTENT_CACHE_TTL_MS = 60_000;
 
 const ENTRIES_KEY = 'content:entries';
+const VOICES_KEY = 'content:voices';
 const entryKey = (slug: string) => `content:entry:${slug}`;
 
 interface Envelope<T> {
@@ -62,14 +68,19 @@ export class CachedContentService implements ContentService {
 		return this.readThrough(entryKey(slug), () => this.inner.getEntry(slug));
 	}
 
+	async listVoices(): Promise<WigglingVoice[]> {
+		return this.readThrough(VOICES_KEY, () => this.inner.listVoices());
+	}
+
 	/**
 	 * The production retraction path (KTD4): deletes the entry's key and the
-	 * listing key so the next read misses and refetches. With no slug, only
-	 * the listing key is dropped.
+	 * listing keys so the next read misses and refetches. With no slug, only
+	 * the listing keys are dropped.
 	 */
 	async invalidate(slug?: string): Promise<void> {
 		if (slug) await this.kv.delete(entryKey(slug));
 		await this.kv.delete(ENTRIES_KEY);
+		await this.kv.delete(VOICES_KEY);
 	}
 
 	private async readThrough<T>(key: string, fetchFresh: () => Promise<T>): Promise<T> {
