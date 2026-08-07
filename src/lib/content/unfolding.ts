@@ -7,21 +7,12 @@
 // unfolding-drafts-full branch (fork only — never opens upstream) until
 // their week comes.
 
-export interface UnfoldingEntry {
-	slug: string;
-	kicker: string; // zine chapter this essay is drawn from
-	title: string;
-	dek?: string; // optional subtitle, shown under the title
-	quote: string;
-	quoteAttr?: string; // omitted when the quote is dyad's own words
-	date: string; // ISO date, published date
-	paragraphs: string[];
-	// Hero image path within the "newsletter assets" Supabase bucket. Falls
-	// back to the textured placeholder panel when unset.
-	heroImage?: string;
-	heroCredit?: string; // photo credit, shown bottom-right under the image
-	heroCreditUrl?: string; // link target for heroCredit, e.g. the artist's profile
-}
+// The entry type lives with the content boundary, not the data module, so it
+// survives this module's eventual retirement. Type-only import: no runtime
+// cycle with content.ts importing the data below.
+import type { UnfoldingEntry } from '$lib/services/content';
+
+export type { UnfoldingEntry };
 
 // Newest posted entry always goes first — the archive page takes featured +
 // grid order directly from this array (no date sort).
@@ -85,7 +76,3 @@ export const unfoldingEntries: UnfoldingEntry[] = [
 		heroCredit: 'Charts Of The Soul by illustrator Peter Goodfellow for Omni magazine, 1983.'
 	}
 ];
-
-export function getUnfoldingEntry(slug: string): UnfoldingEntry | undefined {
-	return unfoldingEntries.find((e) => e.slug === slug);
-}

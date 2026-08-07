@@ -4,12 +4,10 @@ import { SupabasePromptQueryService } from '$lib/services/prompt-query.js';
 import { regionMapCenter } from '$lib/services/location.js';
 import type { PromptSummary } from '$lib/domain/types.js';
 
-export const load: PageServerLoad = async ({ locals, setHeaders }) => {
+export const load: PageServerLoad = async ({ locals }) => {
 	if (locals.user) {
 		redirect(302, '/discover');
 	}
-
-	setHeaders({ 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300' });
 
 	const prompts = await new SupabasePromptQueryService(locals.supabase)
 		.getPublishedPromptsPublic({ region: 'berlin', limit: 20 });

@@ -1,6 +1,6 @@
 import type { RequestHandler } from './$types';
 import { canonicalUrl, PUBLIC_PATHS } from '$lib/seo';
-import { unfoldingEntries } from '$lib/content/unfolding';
+import { getContentService } from '$lib/services/content';
 import { escapeHtml } from '$lib/utils/escape-html';
 
 /**
@@ -20,17 +20,18 @@ interface SitemapEntry {
 /** W3C date, which is what the sitemap spec accepts for lastmod. */
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}(T[\d:.+Z-]+)?$/;
 
-export const GET: RequestHandler = async ({ setHeaders, locals }) => {
+export const GET: RequestHandler = async ({ setHeaders, locals, platform }) => {
+	// Summaries via the content port. The port's shape guard already skips any
+	// malformed entry, which would otherwise become /newsletter/undefined in a
+	// document search engines treat as authoritative.
+	const summaries = await getContentService(platform).listEntries();
+
 	const entries: SitemapEntry[] = [
 		...PUBLIC_PATHS.map((path) => ({ path })),
-		...unfoldingEntries
-			// A malformed entry would otherwise become /newsletter/undefined in a
-			// document search engines treat as authoritative.
-			.filter((entry) => !!entry.slug)
-			.map((entry) => ({
-				path: `/newsletter/${entry.slug}`,
-				lastmod: ISO_DATE.test(entry.date ?? '') ? entry.date : undefined
-			}))
+		...summaries.map((entry) => ({
+			path: `/newsletter/${entry.slug}`,
+			lastmod: ISO_DATE.test(entry.date ?? '') ? entry.date : undefined
+		}))
 	];
 
 	const urls = entries
@@ -54,6 +55,10 @@ ${urls}
 	// with a public directive is how a shared cache ends up holding someone's
 	// session. Cloudflare declines to cache Set-Cookie responses today, which is
 	// a platform behaviour rather than a guarantee this code should lean on.
+	// Note the anonymous branch's `public, s-maxage` directive is currently
+	// advisory: the edge does not cache Worker responses on headers alone
+	// (verified DYNAMIC in production, 2026-08-05). The anonymous/signed-in
+	// split is the part that matters.
 	setHeaders({
 		'Content-Type': 'application/xml',
 		'Cache-Control': locals.user

@@ -74,6 +74,14 @@ declare global {
 			env?: {
 				PUBLIC_SUPABASE_URL: string;
 				PUBLIC_SUPABASE_ANON_KEY: string;
+				/**
+				 * KV data cache for the content port (see $lib/server/content-cache).
+				 * Dashboard-managed binding — never declared in wrangler.toml, which
+				 * would flip this Pages project to file-based configuration and
+				 * supersede every dashboard-set variable and secret. Optional: local
+				 * dev and vitest have no binding and get uncached reads.
+				 */
+				CONTENT_KV?: import('$lib/server/content-cache').ContentKV;
 			};
 			context?: {
 				waitUntil(promise: Promise<unknown>): void;
