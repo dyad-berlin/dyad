@@ -12,7 +12,7 @@
 	const blueskyUrl = (env.PUBLIC_BLUESKY_URL ?? '').trim();
 
 	const og = copy.landing;
-	const ogImage = `${og.ogUrl}/images/og-card.png`;
+	const ogImage = `${og.ogUrl}/images/og-card-v2.png`;
 
 	let { data }: { data: PageData } = $props();
 
