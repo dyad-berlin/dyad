@@ -78,9 +78,9 @@ export class CachedContentService implements ContentService {
 	 * the listing keys are dropped.
 	 */
 	async invalidate(slug?: string): Promise<void> {
-		if (slug) await this.kv.delete(entryKey(slug));
-		await this.kv.delete(ENTRIES_KEY);
-		await this.kv.delete(VOICES_KEY);
+		const deletes = [this.kv.delete(ENTRIES_KEY), this.kv.delete(VOICES_KEY)];
+		if (slug) deletes.push(this.kv.delete(entryKey(slug)));
+		await Promise.all(deletes);
 	}
 
 	private async readThrough<T>(key: string, fetchFresh: () => Promise<T>): Promise<T> {
@@ -100,10 +100,15 @@ export class CachedContentService implements ContentService {
 
 		try {
 			const value = await fetchFresh();
-			try {
-				await this.kv.put(key, JSON.stringify({ fetchedAt: now, value } satisfies Envelope<T>));
-			} catch (err) {
-				console.error(`[content-cache] write failed for ${key}:`, err);
+			// Never persist a negative result: null values are cheap to recompute,
+			// and a stored null would otherwise be a permanent KV key minted per
+			// unknown slug — an unbounded, attacker-controllable namespace.
+			if (value !== null) {
+				try {
+					await this.kv.put(key, JSON.stringify({ fetchedAt: now, value } satisfies Envelope<T>));
+				} catch (err) {
+					console.error(`[content-cache] write failed for ${key}:`, err);
+				}
 			}
 			return value;
 		} catch (err) {
