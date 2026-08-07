@@ -6,7 +6,11 @@
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 	let loading = $state(false);
 	// svelte-ignore state_referenced_locally — intentional initial-value capture for form fields
-	let mode = $state<'login' | 'reset' | 'update'>(data.mode === 'update' ? 'update' : 'login');
+	// An expired reset link lands here with ?error=link_expired: open the reset
+	// form directly so the member can request a fresh link.
+	let mode = $state<'login' | 'reset' | 'update'>(
+		data.mode === 'update' ? 'update' : data.linkExpired ? 'reset' : 'login'
+	);
 	// svelte-ignore state_referenced_locally
 	let email = $state(form?.email ?? '');
 	let password = $state('');
@@ -31,6 +35,8 @@
 
 	{#if form?.error}
 		<div class="error-message">{form.error}</div>
+	{:else if data.linkExpired && mode === 'reset'}
+		<div class="error-message">{copy.auth.resetLinkExpired}</div>
 	{/if}
 
 	{#if form?.success}

@@ -7,13 +7,15 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const { session } = await locals.safeGetSession();
 	const mode = url.searchParams.get('mode');
 	const redirectTo = safeLocalPath(url.searchParams.get('redirectTo'));
+	// Set by /auth/confirm when a reset link is invalid, expired, or already used.
+	const linkExpired = url.searchParams.get('error') === 'link_expired';
 
 	// Allow update password mode even if logged in (for recovery flow)
 	if (session && mode !== 'update') {
 		redirect(302, redirectTo ?? '/discover');
 	}
 
-	return { mode, redirectTo };
+	return { mode, redirectTo, linkExpired };
 };
 
 export const actions: Actions = {
