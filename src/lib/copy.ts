@@ -790,6 +790,8 @@ export const copy = {
 		resetPasswordTitle: 'Reset password',
 		setNewPasswordTitle: 'Set new password',
 		resetSubtitle: 'Enter your email to receive a reset link',
+		resetLinkExpired:
+			'That reset link has expired or was already used. Enter your email and we will send you a new one.',
 		updateSubtitle: 'Choose a new password for your account',
 		signingIn: 'Signing in…',
 		sending: 'Sending…',
