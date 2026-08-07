@@ -76,7 +76,3 @@ export const unfoldingEntries: UnfoldingEntry[] = [
 		heroCredit: 'Charts Of The Soul by illustrator Peter Goodfellow for Omni magazine, 1983.'
 	}
 ];
-
-export function getUnfoldingEntry(slug: string): UnfoldingEntry | undefined {
-	return unfoldingEntries.find((e) => e.slug === slug);
-}
