@@ -172,6 +172,15 @@ describe('CachedContentService', () => {
 		expect(adapter.getEntry).toHaveBeenCalledTimes(2);
 	});
 
+	it('never persists a negative result — an unknown slug mints no KV key', async () => {
+		const kv = makeKv();
+		const adapter = makeAdapter();
+		const service = new CachedContentService(adapter, kv);
+
+		await expect(service.getEntry('no-such-slug')).resolves.toBeNull();
+		expect(kv.store.size).toBe(0);
+	});
+
 	it('caches voices read-through like entries', async () => {
 		const kv = makeKv();
 		const adapter = makeAdapter();
