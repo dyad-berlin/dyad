@@ -19,16 +19,16 @@ describe('wiggling content module', () => {
 		expect(wigglingVoices).toEqual(baseline.voices);
 	});
 
-	it('keeps the archived Kaspar entry absent', () => {
-		expect(wigglingVoices.map((v) => v.name)).not.toContain('Kaspar');
-		expect(wigglingVoices.some((v) => v.src.includes('kaspar'))).toBe(false);
+	it('carries Kaspar, un-archived once his reel reached the bucket', () => {
+		expect(wigglingVoices.map((v) => v.name)).toContain('Kaspar Föhres');
+		expect(wigglingVoices.some((v) => v.src.includes('kaspar.mp4'))).toBe(true);
 	});
 });
 
 describe('/wiggling load', () => {
-	it('returns all three voices with src, poster, name and episode intact', async () => {
+	it('returns all four voices with src, poster, name and episode intact', async () => {
 		const { voices } = await payload();
-		expect(voices).toHaveLength(3);
+		expect(voices).toHaveLength(4);
 		for (const voice of voices) {
 			expect(voice.src).toMatch(/^https:\/\//);
 			expect(voice.poster).toMatch(/^https:\/\//);
