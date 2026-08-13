@@ -14,6 +14,12 @@
 			"episode": "https://www.youtube.com/watch?v=48hVieSCBbo"
 		},
 		{
+			"src": "https://iwdjpuyuznzukhowxjhk.supabase.co/storage/v1/object/public/videos/voices/kaspar.mp4",
+			"poster": "https://iwdjpuyuznzukhowxjhk.supabase.co/storage/v1/object/public/newsletter%20assets/voices/kaspar.webp",
+			"name": "Kaspar F\u00f6hres",
+			"episode": "https://www.youtube.com/watch?v=rFA1xWBmiaI"
+		},
+		{
 			"src": "https://iwdjpuyuznzukhowxjhk.supabase.co/storage/v1/object/public/videos/voices/sude.mp4",
 			"poster": "https://iwdjpuyuznzukhowxjhk.supabase.co/storage/v1/object/public/newsletter%20assets/voices/sude.webp",
 			"name": "Sude Elverdi",

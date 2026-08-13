@@ -15,7 +15,7 @@ const { wigglingVoices } = await import('$lib/content/wiggling');
 
 describe('wiggling env overrides', () => {
 	it('reel sources honour PUBLIC_VIDEO_BASE_URL when set', () => {
-		expect(wigglingVoices).toHaveLength(3);
+		expect(wigglingVoices).toHaveLength(4);
 		for (const voice of wigglingVoices) {
 			expect(voice.src).toMatch(/^https:\/\/video\.example\/voices\//);
 		}

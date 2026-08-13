@@ -15,8 +15,8 @@ const videoBase =
 	env.PUBLIC_VIDEO_BASE_URL ??
 	'https://iwdjpuyuznzukhowxjhk.supabase.co/storage/v1/object/public/videos';
 
-// Kaspar stays archived — no kaspar.mp4 in the bucket to serve.
-// { src: `${videoBase}/voices/kaspar.mp4`, name: 'Kaspar' },
+// Kaspar was archived while there was no kaspar.mp4 in the bucket; the reel
+// exists now, so he is back as the fourth voice.
 //
 // Poster frames live in the 'newsletter assets' bucket, not videos/: that
 // one accepts video mime types only. Served as webp — the source PNGs were
@@ -43,6 +43,12 @@ export const wigglingVoices: WigglingVoice[] = [
 		poster: poster('ali'),
 		name: 'Ali Nezamolmaleki',
 		episode: 'https://www.youtube.com/watch?v=48hVieSCBbo'
+	},
+	{
+		src: `${videoBase}/voices/kaspar.mp4`,
+		poster: poster('kaspar'),
+		name: 'Kaspar Föhres',
+		episode: 'https://www.youtube.com/watch?v=rFA1xWBmiaI'
 	},
 	{
 		src: `${videoBase}/voices/sude.mp4`,

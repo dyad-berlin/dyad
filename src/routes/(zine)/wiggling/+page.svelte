@@ -98,14 +98,17 @@
 	   sits on.
 	   Columns are capped rather than 1fr: the reels are portrait (9/16), so a
 	   half-page column would render them absurdly tall on a wide viewport.
+	   Four voices sit four-across at 260px rather than three-across with one
+	   orphan on a second row; the 2x2 breakpoint moves up to 1240px so the
+	   narrower columns never squeeze.
 	   The cards share a baseline. An earlier revision dropped the second one
 	   64px as a deliberate stagger, which read as a broken grid rather than an
 	   editorial one once the frames went from 16/9 to portrait — at that
 	   height the offset looks like a layout bug. ── */
 	.videos {
 		display: grid;
-		grid-template-columns: repeat(3, minmax(0, 300px));
-		gap: 64px 40px;
+		grid-template-columns: repeat(4, minmax(0, 260px));
+		gap: 64px 32px;
 		margin-top: 64px;
 		align-items: start;
 	}
@@ -168,8 +171,8 @@
 	/* Three across needs ~1000px with the 40px gutters; below that two, then
 	   one. Wide query first: both match on a phone, and at equal specificity
 	   the later rule wins. */
-	@media (max-width: 1040px) {
-		.videos { grid-template-columns: repeat(2, minmax(0, 300px)); }
+	@media (max-width: 1240px) {
+		.videos { grid-template-columns: repeat(2, minmax(0, 300px)); gap: 56px 40px; }
 	}
 
 	@media (max-width: 640px) {
