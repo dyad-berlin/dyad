@@ -1,6 +1,8 @@
+import { env } from '$env/dynamic/private';
 import { unfoldingEntries } from '$lib/content/unfolding';
 import { wigglingVoices } from '$lib/content/wiggling';
 import { CachedContentService, type ContentKV } from '$lib/server/content-cache';
+import { AtprotoContentService } from '$lib/services/content-atproto';
 
 /**
  * Content boundary for the zine surfaces (newsletter, Wiggling). Wraps the
@@ -104,7 +106,7 @@ export function isValidUnfoldingEntry(value: unknown): value is UnfoldingEntry {
 	);
 }
 
-function toSummary(entry: UnfoldingEntry): UnfoldingSummary {
+export function toUnfoldingSummary(entry: UnfoldingEntry): UnfoldingSummary {
 	// Rest-destructure so the summary carries no `paragraphs` key at all,
 	// not a `paragraphs: undefined`.
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -124,7 +126,7 @@ export class ModuleContentService implements ContentService {
 	) {}
 
 	async listEntries(): Promise<UnfoldingSummary[]> {
-		return this.entries.filter((entry) => this.passesGuard(entry)).map(toSummary);
+		return this.entries.filter((entry) => this.passesGuard(entry)).map(toUnfoldingSummary);
 	}
 
 	async listVoices(): Promise<WigglingVoice[]> {
@@ -155,9 +157,25 @@ let cachedService: ContentService | null = null;
 let cachedBinding: ContentKV | undefined;
 
 /**
+ * Source selection is a config gate (plan U5/KTD6): the module adapter is the
+ * default everywhere; the atproto spike adapter activates only when
+ * CONTENT_SOURCE=atproto and a repo is named — intended for preview
+ * deployments during the spike, never a silent production switch.
+ */
+function makeSourceAdapter(): ContentService {
+	if (env.CONTENT_SOURCE === 'atproto' && env.CONTENT_ATPROTO_REPO) {
+		return new AtprotoContentService({
+			repo: env.CONTENT_ATPROTO_REPO,
+			entryHost: env.CONTENT_ATPROTO_ENTRY_HOST || undefined
+		});
+	}
+	return new ModuleContentService();
+}
+
+/**
  * The injection point route loaders use. With the CONTENT_KV binding present
  * on the platform (production and preview deployments, where the binding is
- * dashboard-managed), returns the KV-cached service wrapping the module
+ * dashboard-managed), returns the KV-cached service wrapping the source
  * adapter; without it (local dev, vitest), transparently returns the bare
  * adapter, so a missing binding degrades to uncached reads rather than
  * breaking a page.
@@ -166,9 +184,8 @@ export function getContentService(platform?: App.Platform): ContentService {
 	const kv = platform?.env?.CONTENT_KV;
 	if (cachedService && cachedBinding === kv) return cachedService;
 	cachedBinding = kv;
-	cachedService = kv
-		? new CachedContentService(new ModuleContentService(), kv)
-		: new ModuleContentService();
+	const source = makeSourceAdapter();
+	cachedService = kv ? new CachedContentService(source, kv) : source;
 	return cachedService;
 }
 
