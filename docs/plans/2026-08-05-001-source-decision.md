@@ -86,7 +86,7 @@ R9 replaces the editorial gate that the PR flow provided. `f5edfd7` and `2dbfa2f
 | Unpublish without deploy | Delete the record, then explicit KV invalidation — persisting values mean deletion alone is not enough (KTD4) | Commit a revert, then invalidate | **Flip `state`, invalidate — the same two-step, on infrastructure already operated** | Built in |
 | Editorial review | None | PR review, the mechanism being removed | **None by default — see below** | Workflow states in Directus/Strapi |
 
-The admin plane scores best on the first three and is honest about the fourth: nothing in Branch B forces a second pair of eyes before publish. The draft state plus the preview route makes review *possible*; it does not make it *required*. **PROPOSAL:** accept that, since dyad has two people and a required-approval workflow between them is ceremony rather than a gate. What replaces the PR is the draft-then-preview habit, not an enforced state machine. If the team grows past that, add an `approved_by` column — but not before it is load-bearing.
+The admin plane scores best on the first three and is honest about the fourth: nothing in Branch B forces a second pair of eyes before publish. The draft state plus the preview route makes review *possible*; it does not make it *required*. **Decided (founder, 2026-08-28): accepted.** dyad has two people, and a required-approval workflow between them is ceremony rather than a gate. What replaces the PR is the draft-then-preview habit, not an enforced state machine. If the team grows past that, add an `approved_by` column — but not before it is load-bearing.
 
 ---
 
