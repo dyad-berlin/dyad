@@ -26,13 +26,15 @@ async function runRowMutation(
 	matchColumn: string,
 	matchValue: string,
 	payload: Record<string, unknown>,
-	messages: { failure: string; notFound: string }
+	messages: { failure: string; notFound: string },
+	// Optimistic-concurrency token: when given, the update matches only the
+	// row version the caller saw, so a stale form cannot overwrite a newer
+	// edit (the /admin/copy expectedUpdatedAt pattern).
+	expectedUpdatedAt?: string
 ): Promise<string | null> {
-	const { error, data } = await makeAdminClient()
-		.from(table)
-		.update(payload)
-		.eq(matchColumn, matchValue)
-		.select(matchColumn);
+	let query = makeAdminClient().from(table).update(payload).eq(matchColumn, matchValue);
+	if (expectedUpdatedAt) query = query.eq('updated_at', expectedUpdatedAt);
+	const { error, data } = await query.select(matchColumn);
 	if (error) {
 		console.error(`[content-admin] ${table} update failed:`, error);
 		return messages.failure;
@@ -98,6 +100,10 @@ export function validateEntryInput(input: EntryInput): string | null {
 		if (value.length > MAX_FIELD_LENGTH) return `${name} is too long.`;
 	}
 	if (!/^\d{4}-\d{2}-\d{2}$/.test(input.date)) return 'Date must be YYYY-MM-DD.';
+	// Rendered as an <a href> on the public page — same rule as episode links.
+	if (input.heroCreditUrl && !/^https:\/\//.test(input.heroCreditUrl)) {
+		return 'The credit link must be an https URL.';
+	}
 	if (input.body !== null) {
 		const bodyError = validateEssayBody(input.body);
 		if (bodyError) return bodyError;
@@ -169,13 +175,35 @@ export async function createEntry(
 	return null;
 }
 
-export async function saveEntry(input: EntryInput, operator: string | null): Promise<string | null> {
+export async function saveEntry(
+	input: EntryInput,
+	operator: string | null,
+	expectedUpdatedAt?: string
+): Promise<string | null> {
 	const invalid = validateEntryInput(input);
 	if (invalid) return invalid;
-	return runRowMutation('unfolding_entries', 'slug', input.slug, inputToRow(input, operator), {
-		failure: 'Could not save the essay.',
-		notFound: 'This essay no longer exists.'
-	});
+	// A published row must stay renderable: a save may not degrade it below
+	// the publish gate. Drafts stay loose — that is the deliberate split.
+	const current = await getEntryRow(input.slug);
+	if (!current) return 'This essay no longer exists.';
+	if (current.state === 'published') {
+		const candidate: AdminEntryRow = { ...current, ...inputToRow(input, operator) };
+		const blockers = publishBlockers(candidate);
+		if (blockers.length > 0) {
+			return `This essay is live — the save would break it (${blockers.join('; ')}). Unpublish first or fix the fields.`;
+		}
+	}
+	return runRowMutation(
+		'unfolding_entries',
+		'slug',
+		input.slug,
+		inputToRow(input, operator),
+		{
+			failure: 'Could not save the essay.',
+			notFound: 'This essay changed since you opened it — reload and re-apply your edit.'
+		},
+		expectedUpdatedAt
+	);
 }
 
 /**
@@ -191,8 +219,9 @@ export async function setEntryState(
 	if (state === 'published') {
 		const row = await getEntryRow(slug);
 		if (!row) return 'Unknown essay.';
-		if (rowToEntry(row) === null) {
-			return 'This essay is not complete enough to publish — it must render as a valid entry.';
+		const blockers = publishBlockers(row);
+		if (blockers.length > 0) {
+			return `Not publishable yet: ${blockers.join('; ')}.`;
 		}
 	}
 	return runRowMutation(
@@ -303,21 +332,24 @@ export async function setVoiceState(
 	});
 }
 
-// Publish never proceeds silently without a validated row; used by the edit
-// page to tell the operator what still blocks publishing.
+/**
+ * The publish gate, and the edit page's explanation of it. Checks run
+ * unconditionally — the shape guard alone accepts an empty quote (bounded
+ * string), but the public page renders the quote as the lede blockquote, so
+ * publishing one would render a dangling empty quotation. kicker is not
+ * required: no page renders it today.
+ */
 export function publishBlockers(row: AdminEntryRow): string[] {
 	const blockers: string[] = [];
-	const entry = rowToEntry(row);
-	if (entry === null) {
-		if (!row.kicker) blockers.push('kicker is empty');
-		if (!row.quote) blockers.push('quote is empty');
-		const hasParagraphs = Array.isArray(row.paragraphs) && row.paragraphs.length > 0;
-		if (!hasParagraphs && !row.body) blockers.push('the essay has no body yet');
-		if (row.body !== null && row.body !== undefined) {
-			const bodyError = validateEssayBody(row.body);
-			if (bodyError) blockers.push(bodyError);
-		}
-		if (blockers.length === 0) blockers.push('the entry does not pass the shape guard');
+	if (!row.quote) blockers.push('quote is empty');
+	const hasParagraphs = Array.isArray(row.paragraphs) && row.paragraphs.length > 0;
+	if (!hasParagraphs && !row.body) blockers.push('the essay has no body yet');
+	if (row.body !== null && row.body !== undefined) {
+		const bodyError = validateEssayBody(row.body);
+		if (bodyError) blockers.push(bodyError);
+	}
+	if (blockers.length === 0 && rowToEntry(row) === null) {
+		blockers.push('the entry does not pass the shape guard');
 	}
 	return blockers;
 }

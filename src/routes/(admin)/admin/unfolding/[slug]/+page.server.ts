@@ -1,13 +1,15 @@
 import { error, fail } from '@sveltejs/kit';
+import type { JSONContent } from '@tiptap/core';
 import { nanoid } from 'nanoid';
 import { getAuthorizedAdminOperator } from '$lib/server/admin-auth';
-import { invalidateContentKeys } from '$lib/server/content-cache';
-import { BlobRejectedError, mirrorBlob } from '$lib/server/atproto/blob-mirror';
+import { invalidateEntryKeys } from '$lib/server/content-cache';
+import { ALLOWED_IMAGE_TYPES, BlobRejectedError, mirrorBlob } from '$lib/server/atproto/blob-mirror';
 import { SupabaseStorageService } from '$lib/services/storage';
 import { makeAdminClient } from '$lib/server/supabase-admin';
 import { NEWSLETTER_ASSETS_BUCKET } from '$lib/services/content-supabase';
 import { renderTiptapToHtml } from '$lib/utils/tiptap-html';
 import { storageUrl } from '$lib/utils/storage-url';
+import { normalizeEssayBody } from '$lib/server/validate-essay-body';
 import {
 	getEntryRow,
 	publishBlockers,
@@ -25,9 +27,8 @@ import type { Actions, PageServerLoad } from './$types';
  * Access via the hook, like the whole admin plane.
  */
 
-// Hero images: the image subset of KTD5's media allowlist. SVG stays out —
-// stored SVG is a same-origin XSS vector.
-const HERO_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/avif'];
+// Hero images: the image subset of KTD5's media allowlist (SVG is not on it —
+// stored SVG is a same-origin XSS vector).
 const HERO_MAX_BYTES = 8 * 1024 * 1024;
 const HERO_EXT: Record<string, string> = {
 	'image/png': 'png',
@@ -42,14 +43,15 @@ export const load: PageServerLoad = async ({ params }) => {
 	return {
 		entry: row,
 		blockers: publishBlockers(row),
-		bodyHtml: row.body ? renderTiptapToHtml(row.body as never) : null,
+		bodyHtml: row.body ? renderTiptapToHtml(row.body as JSONContent) : null,
 		heroUrl: row.hero_image ? storageUrl(NEWSLETTER_ASSETS_BUCKET, row.hero_image) : null
 	};
 };
 
 async function invalidate(platform: App.Platform | undefined, slug: string) {
 	const kv = platform?.env?.CONTENT_KV;
-	if (kv) await invalidateContentKeys(kv, slug);
+	// Entry-scoped: an essay mutation leaves the voices last-known-good alone.
+	if (kv) await invalidateEntryKeys(kv, slug);
 }
 
 export const actions: Actions = {
@@ -59,7 +61,7 @@ export const actions: Actions = {
 			getAuthorizedAdminOperator(request)
 		]);
 
-		let body: unknown | null = null;
+		let body: JSONContent | null = null;
 		const bodyRaw = String(form.get('body') ?? '');
 		if (bodyRaw) {
 			try {
@@ -67,6 +69,9 @@ export const actions: Actions = {
 			} catch {
 				return fail(400, { error: 'The essay body could not be read — reload and try again.' });
 			}
+			// A focused-but-untouched editor emits a text-empty doc; that is
+			// "no body", not a body that displaces legacy paragraphs.
+			body = normalizeEssayBody(body);
 		}
 
 		const input: EntryInput = {
@@ -83,7 +88,8 @@ export const actions: Actions = {
 			heroCreditUrl: String(form.get('heroCreditUrl') ?? '').trim()
 		};
 
-		const saveError = await saveEntry(input, operator?.email ?? null);
+		const expectedUpdatedAt = String(form.get('expectedUpdatedAt') ?? '') || undefined;
+		const saveError = await saveEntry(input, operator?.email ?? null, expectedUpdatedAt);
 		if (saveError) return fail(400, { error: saveError });
 		await invalidate(platform, params.slug);
 		return { saved: true };
@@ -101,8 +107,13 @@ export const actions: Actions = {
 		if (file.size > HERO_MAX_BYTES) {
 			return fail(400, { error: 'The image is larger than 8MB.' });
 		}
-		if (!HERO_IMAGE_TYPES.includes(file.type)) {
+		if (!ALLOWED_IMAGE_TYPES.includes(file.type as never)) {
 			return fail(400, { error: 'Hero images are png, jpeg, webp, or avif.' });
+		}
+		// The row check precedes the Storage write: a bad slug must not mint a
+		// public orphan blob (getEntryRow also validates the slug shape).
+		if (!(await getEntryRow(params.slug))) {
+			return fail(404, { error: 'Unknown essay.' });
 		}
 		// mirrorBlob owns KTD5's guard sequence — allowlist, magic bytes, then
 		// the Storage write — so the check lives in one place.

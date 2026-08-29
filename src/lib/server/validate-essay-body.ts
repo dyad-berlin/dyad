@@ -18,6 +18,16 @@ import { validateTiptapContent } from '$lib/server/validate-tiptap-content';
 
 const FORBIDDEN_ESSAY_NODE_TYPES = new Set(['image']);
 
+// A TipTap editor that was merely focused emits { doc > paragraph } with no
+// text. Counting that as a body would displace a legacy paragraphs essay
+// with nothing (the page renders body over paragraphs whenever present).
+function hasText(node: JSONContent): boolean {
+	if (node.type === 'text' && typeof node.text === 'string' && node.text.trim().length > 0) {
+		return true;
+	}
+	return (node.content ?? []).some(hasText);
+}
+
 function findForbiddenNode(node: JSONContent): string | null {
 	if (node.type && FORBIDDEN_ESSAY_NODE_TYPES.has(node.type)) return node.type;
 	for (const child of node.content ?? []) {
@@ -31,10 +41,22 @@ function findForbiddenNode(node: JSONContent): string | null {
  * Returns null when the body is a valid essay body, or an error message.
  * Mirrors the validateTiptapContent contract so callers compose the two.
  */
+/**
+ * A structurally valid but text-empty body is "no body": the admin editor
+ * emits { doc > empty paragraph } when merely focused, and saving that must
+ * not displace a legacy paragraphs essay. Returns null for such a body so
+ * callers store the absence rather than the husk.
+ */
+export function normalizeEssayBody(body: JSONContent | null): JSONContent | null {
+	if (body === null) return null;
+	return hasText(body) ? body : null;
+}
+
 export function validateEssayBody(body: unknown): string | null {
 	const structural = validateTiptapContent(body);
 	if (structural) return structural;
 	const forbidden = findForbiddenNode(body as JSONContent);
 	if (forbidden) return `Essay bodies do not carry inline media (found "${forbidden}" node)`;
+	if (!hasText(body as JSONContent)) return 'The essay body is empty.';
 	return null;
 }

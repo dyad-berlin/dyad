@@ -1,6 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { getAuthorizedAdminOperator } from '$lib/server/admin-auth';
-import { invalidateContentKeys } from '$lib/server/content-cache';
+import { invalidateEntryKeys, invalidateVoiceKeys } from '$lib/server/content-cache';
 import {
 	createEntry,
 	createVoice,
@@ -26,9 +26,15 @@ export const load: PageServerLoad = async () => {
 	return { entries, voices };
 };
 
-async function invalidate(platform: App.Platform | undefined, slug?: string) {
+// Scoped per content type: an essay mutation must not discard the voices
+// listing's last-known-good, and vice versa (KTD4).
+async function invalidateEntries(platform: App.Platform | undefined, slug?: string) {
 	const kv = platform?.env?.CONTENT_KV;
-	if (kv) await invalidateContentKeys(kv, slug);
+	if (kv) await invalidateEntryKeys(kv, slug);
+}
+async function invalidateVoices(platform: App.Platform | undefined) {
+	const kv = platform?.env?.CONTENT_KV;
+	if (kv) await invalidateVoiceKeys(kv);
 }
 
 function voiceInput(form: FormData): VoiceInput {
@@ -37,7 +43,8 @@ function voiceInput(form: FormData): VoiceInput {
 		src: String(form.get('src') ?? '').trim(),
 		poster: String(form.get('poster') ?? '').trim(),
 		episode: String(form.get('episode') ?? '').trim(),
-		position: Number(form.get('position') ?? NaN)
+		// Number('') is 0 — an untouched field must not silently claim position 0.
+		position: String(form.get('position') ?? '').trim() === '' ? NaN : Number(form.get('position'))
 	};
 }
 
@@ -63,7 +70,7 @@ export const actions: Actions = {
 		const state = form.get('state') === 'published' ? 'published' : 'draft';
 		const error = await setEntryState(slug, state, operator?.email ?? null);
 		if (error) return fail(400, { section: 'entries', error });
-		await invalidate(platform, slug);
+		await invalidateEntries(platform, slug);
 		return { section: 'entries', ok: true };
 	},
 
@@ -74,7 +81,7 @@ export const actions: Actions = {
 		]);
 		const error = await createVoice(voiceInput(form), operator?.email ?? null);
 		if (error) return fail(400, { section: 'voices', error });
-		await invalidate(platform);
+		await invalidateVoices(platform);
 		return { section: 'voices', ok: true };
 	},
 
@@ -86,7 +93,7 @@ export const actions: Actions = {
 		const id = String(form.get('id') ?? '');
 		const error = await updateVoice(id, voiceInput(form), operator?.email ?? null);
 		if (error) return fail(400, { section: 'voices', error });
-		await invalidate(platform);
+		await invalidateVoices(platform);
 		return { section: 'voices', ok: true };
 	},
 
@@ -106,7 +113,7 @@ export const actions: Actions = {
 			operator?.email ?? null
 		);
 		if (error) return fail(400, { section: 'voices', error });
-		await invalidate(platform);
+		await invalidateVoices(platform);
 		return { section: 'voices', ok: true };
 	}
 };

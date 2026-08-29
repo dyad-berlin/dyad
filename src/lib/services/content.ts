@@ -107,6 +107,11 @@ export function isValidUnfoldingEntry(value: unknown): value is UnfoldingEntry {
 	if (!isBoundedOptionalString(entry.heroImage)) return false;
 	if (!isBoundedOptionalString(entry.heroCredit)) return false;
 	if (!isBoundedOptionalString(entry.heroCreditUrl)) return false;
+	// Rendered directly as an <a href> on the public page — https only, so a
+	// javascript: URL can never reach the anchor even from a hand-written row.
+	if (entry.heroCreditUrl !== undefined && !/^https:\/\//.test(entry.heroCreditUrl as string)) {
+		return false;
+	}
 
 	if (!Array.isArray(entry.paragraphs) || entry.paragraphs.length > MAX_PARAGRAPH_COUNT) {
 		return false;

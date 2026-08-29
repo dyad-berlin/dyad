@@ -58,6 +58,8 @@
 		<label>hero credit link <input name="heroCreditUrl" value={entry.hero_credit_url ?? ''} /></label>
 	</div>
 	<input type="hidden" name="heroImage" value={entry.hero_image ?? ''} />
+	<!-- Optimistic-concurrency token: a stale tab cannot overwrite a newer edit. -->
+	<input type="hidden" name="expectedUpdatedAt" value={entry.updated_at} />
 	<input type="hidden" name="body" value={body ? JSON.stringify(body) : ''} />
 
 	<div class="editor-block">

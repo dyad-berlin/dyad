@@ -53,11 +53,27 @@ const entryKey = (slug: string) => `content:entry:${slug}`;
  * listing keys and, when a slug is given, that entry's key, so the next read
  * misses and refetches. Standalone so the admin plane's write path can
  * invalidate without constructing a cached service.
+ *
+ * Scoped per content type: deleting a key discards its last-known-good, so an
+ * essay save must not empty the voices fallback and vice versa. The
+ * unscoped form remains the belt-and-braces retraction path.
  */
 export async function invalidateContentKeys(kv: ContentKV, slug?: string): Promise<void> {
 	const deletes = [kv.delete(ENTRIES_KEY), kv.delete(VOICES_KEY)];
 	if (slug) deletes.push(kv.delete(entryKey(slug)));
 	await Promise.all(deletes);
+}
+
+/** Invalidate the essay listing and, when given, one entry key. */
+export async function invalidateEntryKeys(kv: ContentKV, slug?: string): Promise<void> {
+	const deletes = [kv.delete(ENTRIES_KEY)];
+	if (slug) deletes.push(kv.delete(entryKey(slug)));
+	await Promise.all(deletes);
+}
+
+/** Invalidate the voices listing only. */
+export async function invalidateVoiceKeys(kv: ContentKV): Promise<void> {
+	await kv.delete(VOICES_KEY);
 }
 
 interface Envelope<T> {

@@ -19,6 +19,9 @@ export const ALLOWED_MEDIA_TYPES = [
 
 export type AllowedMediaType = (typeof ALLOWED_MEDIA_TYPES)[number];
 
+/** The image-only subset — what an admin image upload may claim. */
+export const ALLOWED_IMAGE_TYPES = ALLOWED_MEDIA_TYPES.filter((t) => t.startsWith('image/'));
+
 function ascii(bytes: Uint8Array, start: number, length: number): string {
 	return String.fromCharCode(...bytes.slice(start, start + length));
 }
