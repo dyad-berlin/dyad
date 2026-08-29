@@ -1,4 +1,6 @@
 import { env } from '$env/dynamic/private';
+import type { JSONContent } from '@tiptap/core';
+import { validateEssayBody } from '$lib/server/validate-essay-body';
 import { unfoldingEntries } from '$lib/content/unfolding';
 import { wigglingVoices } from '$lib/content/wiggling';
 import { CachedContentService, type ContentKV } from '$lib/server/content-cache';
@@ -26,6 +28,12 @@ export interface UnfoldingEntry {
 	quoteAttr?: string; // omitted when the quote is dyad's own words
 	date: string; // ISO date, published date
 	paragraphs: string[];
+	// TipTap JSON body (plan KTD2's one budgeted contract change, spent at
+	// U7). When present it carries the essay and paragraphs is empty; when
+	// absent, paragraphs carries it via the segments.ts inline grammar.
+	// Validated by $lib/server/validate-essay-body (structure + no inline
+	// media); rendered only through $lib/utils/tiptap-html.
+	body?: JSONContent;
 	// Hero image path within the "newsletter assets" Supabase bucket. Falls
 	// back to the textured placeholder panel when unset.
 	heroImage?: string;
@@ -38,7 +46,7 @@ export interface UnfoldingEntry {
  * metadata; shipping every essay body on every archive request would grow
  * that payload linearly with the catalogue.
  */
-export type UnfoldingSummary = Omit<UnfoldingEntry, 'paragraphs'>;
+export type UnfoldingSummary = Omit<UnfoldingEntry, 'paragraphs' | 'body'>;
 
 // Moved here from the Wiggling page component (see src/lib/content/wiggling.ts).
 export interface WigglingVoice {
@@ -101,16 +109,24 @@ export function isValidUnfoldingEntry(value: unknown): value is UnfoldingEntry {
 	if (!Array.isArray(entry.paragraphs) || entry.paragraphs.length > MAX_PARAGRAPH_COUNT) {
 		return false;
 	}
-	return entry.paragraphs.every(
-		(p) => typeof p === 'string' && p.length <= MAX_PARAGRAPH_LENGTH
-	);
+	if (
+		!entry.paragraphs.every((p) => typeof p === 'string' && p.length <= MAX_PARAGRAPH_LENGTH)
+	) {
+		return false;
+	}
+
+	// Body variant (KTD2): optional TipTap JSON, validated structurally and
+	// against the no-inline-media rule. An entry must carry a body, some
+	// paragraphs, or both — an empty essay is a malformed record.
+	if (entry.body !== undefined && validateEssayBody(entry.body) !== null) return false;
+	return entry.body !== undefined || entry.paragraphs.length > 0;
 }
 
 export function toUnfoldingSummary(entry: UnfoldingEntry): UnfoldingSummary {
-	// Rest-destructure so the summary carries no `paragraphs` key at all,
-	// not a `paragraphs: undefined`.
+	// Rest-destructure so the summary carries no `paragraphs`/`body` key at
+	// all, not keys set to undefined.
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	const { paragraphs, ...summary } = entry;
+	const { paragraphs, body, ...summary } = entry;
 	return summary;
 }
 
