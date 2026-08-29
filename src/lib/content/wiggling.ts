@@ -1,19 +1,14 @@
 // Wiggling — dyad's conversation series. Extracted from the page component so
 // the content flows through the ContentService port like the newsletter.
-import { env } from '$env/dynamic/public';
-import { storageUrl } from '$lib/utils/storage-url';
+import { storageUrl, videoBase as sharedVideoBase } from '$lib/utils/storage-url';
 // Type-only import: no runtime cycle with content.ts importing the data below.
 import type { WigglingVoice } from '$lib/services/content';
 
 export type { WigglingVoice };
 
-// Reel sources: prefer PUBLIC_VIDEO_BASE_URL (sovereign host), else the public
-// videos bucket. In local dev the default Supabase URL is the LOCAL stack (no
-// videos bucket), so the reels wouldn't play; this base defaults to the public
-// bucket in every env. Files still live under the videos/voices/ prefix.
-const videoBase =
-	env.PUBLIC_VIDEO_BASE_URL ??
-	'https://iwdjpuyuznzukhowxjhk.supabase.co/storage/v1/object/public/videos';
+// Files live under the videos/voices/ prefix; base resolution is shared
+// with the Supabase content adapter (see $lib/utils/storage-url).
+const videoBase = sharedVideoBase();
 
 // Kaspar was archived while there was no kaspar.mp4 in the bucket; the reel
 // exists now, so he is back as the fourth voice.

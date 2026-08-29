@@ -14,6 +14,7 @@
 		<a href="/admin/conversations" class="admin-tab" class:active={$page.url.pathname === '/admin/conversations'}>{copy.admin.conversations}</a>
 		<a href="/admin/feedback" class="admin-tab" class:active={$page.url.pathname === '/admin/feedback'}>{copy.admin.feedback}</a>
 		<a href="/admin/copy" class="admin-tab" class:active={$page.url.pathname === '/admin/copy'}>{copy.admin.copyEditor}</a>
+		<a href="/admin/unfolding" class="admin-tab" class:active={$page.url.pathname.startsWith('/admin/unfolding')}>{copy.admin.unfolding}</a>
 		<a href="/admin/settings" class="admin-tab" class:active={$page.url.pathname === '/admin/settings'}>{copy.admin.settings}</a>
 	</nav>
 

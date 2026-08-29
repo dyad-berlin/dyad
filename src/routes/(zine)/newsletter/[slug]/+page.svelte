@@ -66,15 +66,21 @@
 				{#if entry.quoteAttr}<cite>— {entry.quoteAttr}</cite>{/if}
 			</blockquote>
 
-			{#each entry.paragraphs as paragraph}
-				<p>
-					{#each segments(paragraph) as part}{#if part.href}<a
-								href={part.href}
-								target="_blank"
-								rel="noopener noreferrer">{part.text}</a
-							>{:else if part.em}<em>{part.text}</em>{:else}{part.text}{/if}{/each}
-				</p>
-			{/each}
+			{#if data.bodyHtml}
+				<!-- Body variant (KTD2): server-rendered by the allowlist renderer
+				     in +page.server.ts — the one permitted {@html} body use (R6). -->
+				{@html data.bodyHtml}
+			{:else}
+				{#each entry.paragraphs as paragraph}
+					<p>
+						{#each segments(paragraph) as part}{#if part.href}<a
+									href={part.href}
+									target="_blank"
+									rel="noopener noreferrer">{part.text}</a
+								>{:else if part.em}<em>{part.text}</em>{:else}{part.text}{/if}{/each}
+					</p>
+				{/each}
+			{/if}
 		</div>
 
 		<MembershipInvite />

@@ -112,3 +112,62 @@ describe('ModuleContentService', () => {
 		});
 	});
 });
+
+describe('shape guard — body variant (KTD2)', () => {
+	let errorSpy: ReturnType<typeof vi.spyOn>;
+	beforeEach(() => {
+		errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+	});
+	afterEach(() => {
+		errorSpy.mockRestore();
+	});
+
+	const validBody = {
+		type: 'doc',
+		content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Body text.' }] }]
+	};
+
+	it('accepts an entry carrying a valid TipTap body and no paragraphs', async () => {
+		const e = entry({ paragraphs: [], body: validBody });
+		const service = new ModuleContentService([e]);
+		const got = await service.getEntry('a-valid-slug');
+		expect(got?.body).toEqual(validBody);
+	});
+
+	it('summaries carry neither paragraphs nor body', async () => {
+		const service = new ModuleContentService([entry({ paragraphs: [], body: validBody })]);
+		const [summary] = await service.listEntries();
+		expect('paragraphs' in summary).toBe(false);
+		expect('body' in summary).toBe(false);
+	});
+
+	it('skips an entry whose body fails structural validation', async () => {
+		const e = entry({
+			paragraphs: [],
+			body: { type: 'doc', content: [{ type: 'script' }] } as never
+		});
+		const service = new ModuleContentService([e]);
+		expect(await service.getEntry('a-valid-slug')).toBeNull();
+		expect(errorSpy).toHaveBeenCalled();
+	});
+
+	it('skips an entry whose body carries an inline image (no-inline-media rule)', async () => {
+		const e = entry({
+			paragraphs: [],
+			body: {
+				type: 'doc',
+				content: [
+					{ type: 'paragraph', content: [{ type: 'text', text: 'hi' }] },
+					{ type: 'image', attrs: { src: 'https://example.org/x.png' } }
+				]
+			} as never
+		});
+		const service = new ModuleContentService([e]);
+		expect(await service.getEntry('a-valid-slug')).toBeNull();
+	});
+
+	it('skips an entry with neither paragraphs nor body — an empty essay is malformed', async () => {
+		const service = new ModuleContentService([entry({ paragraphs: [] })]);
+		expect(await service.getEntry('a-valid-slug')).toBeNull();
+	});
+});

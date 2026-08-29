@@ -17,3 +17,14 @@ export function storageUrl(bucket: string, path: string): string {
 		.join('/');
 	return `${base}/storage/v1/object/public/${encodedBucket}/${encodedPath}`;
 }
+
+// Reel sources: prefer PUBLIC_VIDEO_BASE_URL (sovereign host), else the public
+// videos bucket. In local dev the default Supabase URL is the LOCAL stack (no
+// videos bucket), so the reels wouldn't play; this base defaults to the public
+// bucket in every env.
+const VIDEO_BASE_DEFAULT = 'https://iwdjpuyuznzukhowxjhk.supabase.co/storage/v1/object/public/videos';
+
+/** Base URL for self-hosted reels; paths under it live in videos/voices/. */
+export function videoBase(): string {
+	return (env.PUBLIC_VIDEO_BASE_URL ?? VIDEO_BASE_DEFAULT).replace(/\/+$/, '');
+}
