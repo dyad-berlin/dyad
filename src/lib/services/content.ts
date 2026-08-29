@@ -5,6 +5,8 @@ import { unfoldingEntries } from '$lib/content/unfolding';
 import { wigglingVoices } from '$lib/content/wiggling';
 import { CachedContentService, type ContentKV } from '$lib/server/content-cache';
 import { AtprotoContentService } from '$lib/services/content-atproto';
+import { SupabaseContentService, supabaseContentDb } from '$lib/services/content-supabase';
+import { makeAdminClient } from '$lib/server/supabase-admin';
 
 /**
  * Content boundary for the zine surfaces (newsletter, Wiggling). Wraps the
@@ -179,6 +181,12 @@ let cachedBinding: ContentKV | undefined;
  * deployments during the spike, never a silent production switch.
  */
 function makeSourceAdapter(): ContentService {
+	if (env.CONTENT_SOURCE === 'supabase') {
+		// U7's chosen source (Branch B): published rows via the service-role
+		// client. Gated so the module adapter stays the default until the U8
+		// cutover flips it deliberately.
+		return new SupabaseContentService(supabaseContentDb(makeAdminClient()));
+	}
 	if (env.CONTENT_SOURCE === 'atproto' && env.CONTENT_ATPROTO_REPO) {
 		return new AtprotoContentService({
 			repo: env.CONTENT_ATPROTO_REPO,
