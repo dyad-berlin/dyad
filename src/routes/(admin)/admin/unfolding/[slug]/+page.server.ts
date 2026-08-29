@@ -2,7 +2,7 @@ import { error, fail } from '@sveltejs/kit';
 import { nanoid } from 'nanoid';
 import { getAuthorizedAdminOperator } from '$lib/server/admin-auth';
 import { invalidateContentKeys } from '$lib/server/content-cache';
-import { matchesMagicBytes } from '$lib/server/atproto/blob-mirror';
+import { BlobRejectedError, mirrorBlob } from '$lib/server/atproto/blob-mirror';
 import { SupabaseStorageService } from '$lib/services/storage';
 import { makeAdminClient } from '$lib/server/supabase-admin';
 import { NEWSLETTER_ASSETS_BUCKET } from '$lib/services/content-supabase';
@@ -54,7 +54,10 @@ async function invalidate(platform: App.Platform | undefined, slug: string) {
 
 export const actions: Actions = {
 	save: async ({ request, params, platform }) => {
-		const form = await request.formData();
+		const [form, operator] = await Promise.all([
+			request.formData(),
+			getAuthorizedAdminOperator(request)
+		]);
 
 		let body: unknown | null = null;
 		const bodyRaw = String(form.get('body') ?? '');
@@ -80,7 +83,6 @@ export const actions: Actions = {
 			heroCreditUrl: String(form.get('heroCreditUrl') ?? '').trim()
 		};
 
-		const operator = await getAuthorizedAdminOperator(request);
 		const saveError = await saveEntry(input, operator?.email ?? null);
 		if (saveError) return fail(400, { error: saveError });
 		await invalidate(platform, params.slug);
@@ -88,7 +90,10 @@ export const actions: Actions = {
 	},
 
 	uploadHero: async ({ request, params, platform }) => {
-		const form = await request.formData();
+		const [form, operator] = await Promise.all([
+			request.formData(),
+			getAuthorizedAdminOperator(request)
+		]);
 		const file = form.get('file');
 		if (!(file instanceof File) || file.size === 0) {
 			return fail(400, { error: 'Choose an image file first.' });
@@ -99,23 +104,26 @@ export const actions: Actions = {
 		if (!HERO_IMAGE_TYPES.includes(file.type)) {
 			return fail(400, { error: 'Hero images are png, jpeg, webp, or avif.' });
 		}
-		// KTD5's spoofed-type check: the claimed MIME type must match the
-		// file's actual bytes before anything reaches Storage.
+		// mirrorBlob owns KTD5's guard sequence — allowlist, magic bytes, then
+		// the Storage write — so the check lives in one place.
 		const bytes = new Uint8Array(await file.arrayBuffer());
-		if (!matchesMagicBytes(file.type, bytes)) {
-			return fail(400, { error: 'The file content does not match its image type.' });
-		}
-
 		const path = `heroes/${params.slug}-${nanoid(8)}.${HERO_EXT[file.type]}`;
 		try {
-			const storage = new SupabaseStorageService(makeAdminClient());
-			await storage.upload(NEWSLETTER_ASSETS_BUCKET, path, file, { upsert: false });
+			await mirrorBlob({
+				bytes,
+				claimedType: file.type,
+				storage: new SupabaseStorageService(makeAdminClient()),
+				bucket: NEWSLETTER_ASSETS_BUCKET,
+				path
+			});
 		} catch (err) {
+			if (err instanceof BlobRejectedError) {
+				return fail(400, { error: 'The file content does not match its image type.' });
+			}
 			console.error('[admin/unfolding] hero upload failed:', err);
 			return fail(500, { error: 'The upload failed.' });
 		}
 
-		const operator = await getAuthorizedAdminOperator(request);
 		const setError = await setEntryHeroImage(params.slug, path, operator?.email ?? null);
 		if (setError) return fail(400, { error: setError });
 		await invalidate(platform, params.slug);
@@ -123,9 +131,11 @@ export const actions: Actions = {
 	},
 
 	setState: async ({ request, params, platform }) => {
-		const form = await request.formData();
+		const [form, operator] = await Promise.all([
+			request.formData(),
+			getAuthorizedAdminOperator(request)
+		]);
 		const state = form.get('state') === 'published' ? 'published' : 'draft';
-		const operator = await getAuthorizedAdminOperator(request);
 		const stateError = await setEntryState(params.slug, state, operator?.email ?? null);
 		if (stateError) return fail(400, { error: stateError });
 		await invalidate(platform, params.slug);

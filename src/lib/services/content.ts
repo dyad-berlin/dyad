@@ -72,7 +72,7 @@ export interface ContentService {
 // any future source is skipped and logged rather than rendered.
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const MAX_SLUG_LENGTH = 128;
-const MAX_FIELD_LENGTH = 1000;
+export const MAX_FIELD_LENGTH = 1000;
 const MAX_PARAGRAPH_LENGTH = 20_000;
 const MAX_PARAGRAPH_COUNT = 200;
 

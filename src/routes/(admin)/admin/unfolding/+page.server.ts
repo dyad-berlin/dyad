@@ -43,20 +43,24 @@ function voiceInput(form: FormData): VoiceInput {
 
 export const actions: Actions = {
 	createEntry: async ({ request }) => {
-		const form = await request.formData();
+		const [form, operator] = await Promise.all([
+			request.formData(),
+			getAuthorizedAdminOperator(request)
+		]);
 		const slug = String(form.get('slug') ?? '').trim();
 		const title = String(form.get('title') ?? '').trim();
-		const operator = await getAuthorizedAdminOperator(request);
 		const error = await createEntry({ slug, title }, operator?.email ?? null);
 		if (error) return fail(400, { section: 'entries', error });
 		redirect(303, `/admin/unfolding/${slug}`);
 	},
 
 	setEntryState: async ({ request, platform }) => {
-		const form = await request.formData();
+		const [form, operator] = await Promise.all([
+			request.formData(),
+			getAuthorizedAdminOperator(request)
+		]);
 		const slug = String(form.get('slug') ?? '');
 		const state = form.get('state') === 'published' ? 'published' : 'draft';
-		const operator = await getAuthorizedAdminOperator(request);
 		const error = await setEntryState(slug, state, operator?.email ?? null);
 		if (error) return fail(400, { section: 'entries', error });
 		await invalidate(platform, slug);
@@ -64,8 +68,10 @@ export const actions: Actions = {
 	},
 
 	createVoice: async ({ request, platform }) => {
-		const form = await request.formData();
-		const operator = await getAuthorizedAdminOperator(request);
+		const [form, operator] = await Promise.all([
+			request.formData(),
+			getAuthorizedAdminOperator(request)
+		]);
 		const error = await createVoice(voiceInput(form), operator?.email ?? null);
 		if (error) return fail(400, { section: 'voices', error });
 		await invalidate(platform);
@@ -73,9 +79,11 @@ export const actions: Actions = {
 	},
 
 	updateVoice: async ({ request, platform }) => {
-		const form = await request.formData();
+		const [form, operator] = await Promise.all([
+			request.formData(),
+			getAuthorizedAdminOperator(request)
+		]);
 		const id = String(form.get('id') ?? '');
-		const operator = await getAuthorizedAdminOperator(request);
 		const error = await updateVoice(id, voiceInput(form), operator?.email ?? null);
 		if (error) return fail(400, { section: 'voices', error });
 		await invalidate(platform);
@@ -83,10 +91,12 @@ export const actions: Actions = {
 	},
 
 	setVoiceState: async ({ request, platform }) => {
-		const form = await request.formData();
+		const [form, operator] = await Promise.all([
+			request.formData(),
+			getAuthorizedAdminOperator(request)
+		]);
 		const id = String(form.get('id') ?? '');
 		const stateRaw = form.get('state');
-		const operator = await getAuthorizedAdminOperator(request);
 		const error = await setVoiceState(
 			id,
 			{

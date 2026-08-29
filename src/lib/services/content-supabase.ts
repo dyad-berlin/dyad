@@ -1,6 +1,5 @@
 import type { JSONContent } from '@tiptap/core';
-import { env } from '$env/dynamic/public';
-import { storageUrl } from '$lib/utils/storage-url';
+import { storageUrl, videoBase } from '$lib/utils/storage-url';
 import {
 	isValidSlug,
 	isValidUnfoldingEntry,
@@ -49,16 +48,6 @@ export interface WigglingVoiceRow {
 
 /** Buckets the content surfaces read from and the admin editor writes to. */
 export const NEWSLETTER_ASSETS_BUCKET = 'newsletter assets';
-
-// Reel sources resolve against PUBLIC_VIDEO_BASE_URL (sovereign host) or the
-// public videos bucket — same rule as the retiring content module. Rows
-// store paths, never URLs (R4 structural); resolution happens here.
-function videoBase(): string {
-	return (
-		env.PUBLIC_VIDEO_BASE_URL ??
-		'https://iwdjpuyuznzukhowxjhk.supabase.co/storage/v1/object/public/videos'
-	);
-}
 
 const ENTRY_COLUMNS =
 	'slug, kicker, title, dek, quote, quote_attr, date, paragraphs, body, hero_image, hero_credit, hero_credit_url';
@@ -162,7 +151,8 @@ export class SupabaseContentService implements ContentService {
 
 	async listVoices(): Promise<WigglingVoice[]> {
 		const rows = await this.db.listPublishedVoices();
-		const base = videoBase().replace(/\/+$/, '');
+		// Rows store paths, never URLs (R4 structural); resolution happens here.
+		const base = videoBase();
 		return rows.map((r) => ({
 			name: r.name,
 			src: `${base}/${r.src}`,

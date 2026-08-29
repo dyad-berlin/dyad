@@ -11,22 +11,47 @@
  */
 import { makeAdminClient } from '$lib/server/supabase-admin';
 import { validateEssayBody } from '$lib/server/validate-essay-body';
-import { isValidSlug, isValidUnfoldingEntry } from '$lib/services/content';
+import { isValidSlug, MAX_FIELD_LENGTH } from '$lib/services/content';
 import { rowToEntry, type UnfoldingRow } from '$lib/services/content-supabase';
 
-const MAX_FIELD = 1000; // mirrors the port guard's field bound
+export type ContentState = 'draft' | 'published';
+
+/**
+ * Shared shape of every row mutation here: update, log the Supabase error
+ * server-side, return a generic message; a matched-nothing update is its own
+ * error rather than a silent success.
+ */
+async function runRowMutation(
+	table: string,
+	matchColumn: string,
+	matchValue: string,
+	payload: Record<string, unknown>,
+	messages: { failure: string; notFound: string }
+): Promise<string | null> {
+	const { error, data } = await makeAdminClient()
+		.from(table)
+		.update(payload)
+		.eq(matchColumn, matchValue)
+		.select(matchColumn);
+	if (error) {
+		console.error(`[content-admin] ${table} update failed:`, error);
+		return messages.failure;
+	}
+	if (!data || data.length === 0) return messages.notFound;
+	return null;
+}
 
 export interface EntryListItem {
 	slug: string;
 	title: string;
-	state: string;
+	state: ContentState;
 	date: string;
 	updated_at: string;
 	updated_by: string | null;
 }
 
 export interface AdminEntryRow extends UnfoldingRow {
-	state: string;
+	state: ContentState;
 	updated_at: string;
 	updated_by: string | null;
 }
@@ -37,7 +62,7 @@ export interface AdminVoiceRow {
 	src: string;
 	poster: string;
 	episode: string;
-	state: string;
+	state: ContentState;
 	position: number;
 	archived_at: string | null;
 }
@@ -70,7 +95,7 @@ export function validateEntryInput(input: EntryInput): string | null {
 		heroCredit: input.heroCredit,
 		heroCreditUrl: input.heroCreditUrl
 	})) {
-		if (value.length > MAX_FIELD) return `${name} is too long.`;
+		if (value.length > MAX_FIELD_LENGTH) return `${name} is too long.`;
 	}
 	if (!/^\d{4}-\d{2}-\d{2}$/.test(input.date)) return 'Date must be YYYY-MM-DD.';
 	if (input.body !== null) {
@@ -126,7 +151,8 @@ export async function createEntry(
 	operator: string | null
 ): Promise<string | null> {
 	if (!isValidSlug(input.slug)) return 'Slug must be lowercase words joined by hyphens.';
-	if (input.title.length === 0 || input.title.length > MAX_FIELD) return 'A title is required.';
+	if (input.title.length === 0 || input.title.length > MAX_FIELD_LENGTH)
+		return input.title.length === 0 ? 'A title is required.' : 'title is too long.';
 	const { error } = await makeAdminClient().from('unfolding_entries').insert({
 		slug: input.slug,
 		title: input.title,
@@ -146,17 +172,10 @@ export async function createEntry(
 export async function saveEntry(input: EntryInput, operator: string | null): Promise<string | null> {
 	const invalid = validateEntryInput(input);
 	if (invalid) return invalid;
-	const { error, data } = await makeAdminClient()
-		.from('unfolding_entries')
-		.update(inputToRow(input, operator))
-		.eq('slug', input.slug)
-		.select('slug');
-	if (error) {
-		console.error('[content-admin] save failed:', error);
-		return 'Could not save the essay.';
-	}
-	if (!data || data.length === 0) return 'This essay no longer exists.';
-	return null;
+	return runRowMutation('unfolding_entries', 'slug', input.slug, inputToRow(input, operator), {
+		failure: 'Could not save the essay.',
+		notFound: 'This essay no longer exists.'
+	});
 }
 
 /**
@@ -165,7 +184,7 @@ export async function saveEntry(input: EntryInput, operator: string | null): Pro
  */
 export async function setEntryState(
 	slug: string,
-	state: 'draft' | 'published',
+	state: ContentState,
 	operator: string | null
 ): Promise<string | null> {
 	if (!isValidSlug(slug)) return 'Unknown essay.';
@@ -176,17 +195,13 @@ export async function setEntryState(
 			return 'This essay is not complete enough to publish — it must render as a valid entry.';
 		}
 	}
-	const { error, data } = await makeAdminClient()
-		.from('unfolding_entries')
-		.update({ state, updated_at: new Date().toISOString(), updated_by: operator })
-		.eq('slug', slug)
-		.select('slug');
-	if (error) {
-		console.error('[content-admin] state change failed:', error);
-		return 'Could not change the publish state.';
-	}
-	if (!data || data.length === 0) return 'Unknown essay.';
-	return null;
+	return runRowMutation(
+		'unfolding_entries',
+		'slug',
+		slug,
+		{ state, updated_at: new Date().toISOString(), updated_by: operator },
+		{ failure: 'Could not change the publish state.', notFound: 'Unknown essay.' }
+	);
 }
 
 export async function setEntryHeroImage(
@@ -194,17 +209,13 @@ export async function setEntryHeroImage(
 	path: string,
 	operator: string | null
 ): Promise<string | null> {
-	const { error, data } = await makeAdminClient()
-		.from('unfolding_entries')
-		.update({ hero_image: path, updated_at: new Date().toISOString(), updated_by: operator })
-		.eq('slug', slug)
-		.select('slug');
-	if (error) {
-		console.error('[content-admin] hero update failed:', error);
-		return 'Could not attach the image.';
-	}
-	if (!data || data.length === 0) return 'Unknown essay.';
-	return null;
+	return runRowMutation(
+		'unfolding_entries',
+		'slug',
+		slug,
+		{ hero_image: path, updated_at: new Date().toISOString(), updated_by: operator },
+		{ failure: 'Could not attach the image.', notFound: 'Unknown essay.' }
+	);
 }
 
 // --- Wiggling voices ---
@@ -225,7 +236,7 @@ export function validateVoiceInput(input: VoiceInput): string | null {
 		episode: input.episode
 	})) {
 		if (value.length === 0) return `${name} is required.`;
-		if (value.length > MAX_FIELD) return `${name} is too long.`;
+		if (value.length > MAX_FIELD_LENGTH) return `${name} is too long.`;
 	}
 	// src and poster are bucket paths, never URLs — R4 stays structural.
 	if (/^[a-z]+:\/\//i.test(input.src)) return 'The reel is a path within the videos bucket, not a URL.';
@@ -266,22 +277,18 @@ export async function updateVoice(
 ): Promise<string | null> {
 	const invalid = validateVoiceInput(input);
 	if (invalid) return invalid;
-	const { error, data } = await makeAdminClient()
-		.from('wiggling_voices')
-		.update({ ...input, updated_at: new Date().toISOString(), updated_by: operator })
-		.eq('id', id)
-		.select('id');
-	if (error) {
-		console.error('[content-admin] voice update failed:', error);
-		return 'Could not save the voice.';
-	}
-	if (!data || data.length === 0) return 'Unknown voice.';
-	return null;
+	return runRowMutation(
+		'wiggling_voices',
+		'id',
+		id,
+		{ ...input, updated_at: new Date().toISOString(), updated_by: operator },
+		{ failure: 'Could not save the voice.', notFound: 'Unknown voice.' }
+	);
 }
 
 export async function setVoiceState(
 	id: string,
-	changes: { state?: 'draft' | 'published'; archived: boolean },
+	changes: { state?: ContentState; archived: boolean },
 	operator: string | null
 ): Promise<string | null> {
 	const update: Record<string, unknown> = {
@@ -290,17 +297,10 @@ export async function setVoiceState(
 		updated_by: operator
 	};
 	if (changes.state) update.state = changes.state;
-	const { error, data } = await makeAdminClient()
-		.from('wiggling_voices')
-		.update(update)
-		.eq('id', id)
-		.select('id');
-	if (error) {
-		console.error('[content-admin] voice state change failed:', error);
-		return 'Could not change the voice state.';
-	}
-	if (!data || data.length === 0) return 'Unknown voice.';
-	return null;
+	return runRowMutation('wiggling_voices', 'id', id, update, {
+		failure: 'Could not change the voice state.',
+		notFound: 'Unknown voice.'
+	});
 }
 
 // Publish never proceeds silently without a validated row; used by the edit
@@ -321,6 +321,3 @@ export function publishBlockers(row: AdminEntryRow): string[] {
 	}
 	return blockers;
 }
-
-// Re-exported so route code needs one import; the guard stays port-owned.
-export { isValidUnfoldingEntry };
