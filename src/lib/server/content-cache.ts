@@ -48,6 +48,18 @@ const ENTRIES_KEY = 'content:entries';
 const VOICES_KEY = 'content:voices';
 const entryKey = (slug: string) => `content:entry:${slug}`;
 
+/**
+ * Explicit invalidation — the production retraction path (KTD4). Deletes the
+ * listing keys and, when a slug is given, that entry's key, so the next read
+ * misses and refetches. Standalone so the admin plane's write path can
+ * invalidate without constructing a cached service.
+ */
+export async function invalidateContentKeys(kv: ContentKV, slug?: string): Promise<void> {
+	const deletes = [kv.delete(ENTRIES_KEY), kv.delete(VOICES_KEY)];
+	if (slug) deletes.push(kv.delete(entryKey(slug)));
+	await Promise.all(deletes);
+}
+
 interface Envelope<T> {
 	fetchedAt: number;
 	value: T;
@@ -72,15 +84,9 @@ export class CachedContentService implements ContentService {
 		return this.readThrough(VOICES_KEY, () => this.inner.listVoices());
 	}
 
-	/**
-	 * The production retraction path (KTD4): deletes the entry's key and the
-	 * listing keys so the next read misses and refetches. With no slug, only
-	 * the listing keys are dropped.
-	 */
+	/** See invalidateContentKeys — kept as a method for callers holding the service. */
 	async invalidate(slug?: string): Promise<void> {
-		const deletes = [this.kv.delete(ENTRIES_KEY), this.kv.delete(VOICES_KEY)];
-		if (slug) deletes.push(this.kv.delete(entryKey(slug)));
-		await Promise.all(deletes);
+		await invalidateContentKeys(this.kv, slug);
 	}
 
 	private async readThrough<T>(key: string, fetchFresh: () => Promise<T>): Promise<T> {

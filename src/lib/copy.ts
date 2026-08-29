@@ -880,6 +880,7 @@ export const copy = {
 		conversations: 'Conversations',
 		settings: 'Settings',
 		copyEditor: 'Copy',
+		unfolding: 'Unfolding',
 		hide: 'Hide',
 		unhide: 'Unhide',
 		hidden: 'Hidden',
