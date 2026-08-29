@@ -1,0 +1,11 @@
+{
+	"slug": "spike-test-essay",
+	"kicker": "Spike",
+	"title": "A test essay published through atproto",
+	"quote": "Published without a commit, a PR, or a build.",
+	"date": "2026-08-07",
+	"paragraphs": [
+		"This entry was written to an atproto repo by scripts/spike-atproto.mjs and read back through AtprotoContentService.",
+		"It exists to exercise the read path end to end on a preview deployment; it is deleted when the spike concludes."
+	]
+}
