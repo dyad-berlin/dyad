@@ -220,14 +220,6 @@ export const copy = {
 		sublineFor:
 			'For people who want less screen time and more contact with the world and one another.',
 		wordmark: 'DYAD',
-
-		// Icon-only zoom control on the map — the accessible name and tooltip.
-		mapZoomIn: 'Zoom in',
-		mapZoomOut: 'Zoom out',
-		// Banner pinned to the top-left of the landing map.
-		mapBanner: 'Live in Berlin',
-		// CTA on the map card that floats over a selected conversation.
-		mapCardCta: 'Join to read & meet',
 	},
 
 	// ── Discover ───────────────────────────────────────────────────────

@@ -1,9 +1,7 @@
 import { test, expect } from '@playwright/test';
 
-// The zine (wiggling / governance / community-care / docs) and the
-// landing pin→card→Join funnel are all anonymous surfaces, so no auth storage
-// state is needed. The funnel test depends on seeded geo-located prompts in the
-// local Supabase stack; it skips gracefully when no pins are present.
+// The zine (wiggling / governance / community-care / docs) and the landing
+// Join funnel are all anonymous surfaces, so no auth storage state is needed.
 // Steward-ownership was removed (archived to src/lib/archive/) — dyad is not yet
 // steward-owned; /wiggling + /docs replaced it in the restructure. /docs is a
 // self-contained master-detail surface with its own chrome (no zine header
@@ -24,26 +22,12 @@ test.describe('Zine pages — smoke', () => {
 	}
 });
 
-test.describe('Landing — pin → card → Join funnel (best effort)', () => {
-	test('clicking a map pin opens a card whose Join CTA opens the waitlist', async ({ page }) => {
+test.describe('Landing — Join funnel', () => {
+	test('the Join action leads to the waitlist', async ({ page }) => {
 		await page.goto('/');
 		await expect(page.locator('.left-title')).toBeVisible();
 
-		// Wait for the lazy-loaded map markers. If the seed has no geo-located
-		// published prompts, there are no pins — skip rather than fail.
-		const marker = page.locator('.marker-pin').first();
-		try {
-			await marker.waitFor({ state: 'visible', timeout: 8000 });
-		} catch {
-			test.skip(true, 'No geo-located prompts seeded — nothing to click.');
-			return;
-		}
-
-		await marker.click();
-		await expect(page.locator('.map-card')).toBeVisible();
-
-		// The CTA is now a plain link to /waitlist (the modal was archived).
-		await page.locator('.map-card-cta').click();
+		await page.getByTestId('join-cta').click();
 		await page.waitForURL(/\/waitlist/);
 		await expect(page.getByRole('button', { name: /request to join/i })).toBeVisible();
 	});

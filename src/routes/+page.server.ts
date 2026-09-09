@@ -1,25 +1,12 @@
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import { SupabasePromptQueryService } from '$lib/services/prompt-query.js';
-import { regionMapCenter } from '$lib/services/location.js';
-import type { PromptSummary } from '$lib/domain/types.js';
 
+// The landing page is static markup for anonymous visitors; the only server
+// work left is sending a signed-in member straight to the feed.
 export const load: PageServerLoad = async ({ locals }) => {
 	if (locals.user) {
 		redirect(302, '/discover');
 	}
 
-	const prompts = await new SupabasePromptQueryService(locals.supabase)
-		.getPublishedPromptsPublic({ region: 'berlin', limit: 20 });
-
-	// Anonymise author data — real usernames must not reach the public client.
-	// Only conversations with a geo-located slot can show a pin on the map.
-	const mapPrompts: PromptSummary[] = prompts
-		.filter((p) => p.available_slots.some((s) => s.general_area_lat != null && s.general_area_lng != null))
-		.map((p) => ({ ...p, author_username: '•'.repeat(p.author_username.length), author_id: '' }));
-
-	return {
-		mapPrompts,
-		mapCenter: regionMapCenter('berlin')
-	};
+	return {};
 };
