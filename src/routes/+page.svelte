@@ -116,8 +116,6 @@
 		--landing-ink-muted: rgba(228, 223, 211, 0.86);
 		--landing-ink-invert: #2a1f16;        /* dark text, for the light-filled CTA */
 		--landing-hairline: rgba(250, 248, 243, 0.28);
-		/* The dark bark brown, kept for paper-ground contexts. */
-		--landing-ink-on-paper: #3b2a1d;
 		--sky-fallback-gradient: linear-gradient(175deg, #dce4e2 0%, #eae6da 55%, #f3efe4 100%);
 		/* The legibility plate. Every wash that sits directly under type uses
 		   this one alpha, so the guarantee is a single number: over a pure
@@ -127,6 +125,9 @@
 		/* How far above the text the plate fades in. Nothing readable may sit
 		   inside this band — it is bleed, not a ground for type. */
 		--plate-fade: 7rem;
+		/* Height of the wordmark row's plate; see .sky-scrim for the
+		   measurement it comes from. */
+		--topbar-plate-h: 64px;
 		/* The wordmark's type, kept as tokens so the mobile actions can be
 		   centred on its line box rather than on a guessed pixel offset. */
 		--wordmark-size: clamp(1.1rem, 1.7vw, 1.45rem);
@@ -140,7 +141,6 @@
 		   It carries no part of the contrast ratio — WCAG does not count a
 		   shadow — so it can be removed without making anything unreadable. */
 		--ink-halo: 0 1px 10px rgba(26, 21, 15, 0.35);
-		--ink-halo-none: 0 0 0 rgba(0, 0, 0, 0);
 
 		position: fixed;
 		inset: 0;
@@ -163,16 +163,23 @@
 		background-size: cover, cover;
 		background-position: center, center;
 	}
-	/* The top band is the plate for the wordmark row: full plate strength down
-	   past the tallest thing in that row, then a long fade so the photograph
-	   comes back through the middle of the image. The bottom of the page is
-	   covered by .left::before, which is anchored to the text itself rather
-	   than to a guessed fraction of the viewport. */
+	/* The top band is the plate for the wordmark row, and it is sized to that
+	   row rather than guessed. The row starts at --space-6 and its tallest
+	   element is the Join pill, which is centred on the wordmark's line box
+	   and overhangs it: 24px inset + a ~36px pill puts the last ink at ~52px.
+	   --topbar-plate-h is that, plus margin for the halo. The fade then runs
+	   twice the band's own height, which is enough to read as a gradient and
+	   short enough to give the photograph back near the top of the image. */
 	.sky-scrim {
 		position: absolute;
 		inset: 0;
 		background:
-			linear-gradient(to bottom, var(--landing-plate) 0, var(--landing-plate) 132px, rgba(26, 21, 15, 0) 300px),
+			linear-gradient(
+				to bottom,
+				var(--landing-plate) 0,
+				var(--landing-plate) var(--topbar-plate-h),
+				rgba(26, 21, 15, 0) calc(var(--topbar-plate-h) * 3.5)
+			),
 			rgba(26, 21, 15, 0.12);
 	}
 
@@ -378,21 +385,30 @@
 			min-height: 100vh;
 			flex-direction: column;
 			padding: 0;
-			/* Paper ground for everything past the hero. */
+			/* Last resort behind the photo, which now covers the whole
+			   shell. Only visible if both the image and its fallback
+			   gradient fail. */
 			background: var(--landing-bg);
 		}
 
-		/* The photo covers the first screen, then dissolves into the paper
-		   ground rather than ending on a hard edge. It runs past the fold so
-		   the fade happens *below* the headline, and the mask makes the image
-		   itself go transparent — so what it fades into is the shell's paper
-		   background, whatever that is, with no gradient colour to keep in
-		   sync. */
+		/* The photo runs the full height of the shell, footer included, so the
+		   phone gets the same one-surface hero the desktop does. It used to
+		   stop at 124vh under a mask and dissolve into the paper ground, which
+		   put a light band with dark text under a dark hero — two treatments
+		   on one page, and the seam was visible. */
 		.sky {
-			bottom: auto;
-			height: 124vh;
-			-webkit-mask-image: linear-gradient(to bottom, #000 74%, rgba(0, 0, 0, 0.55) 88%, transparent 100%);
-			mask-image: linear-gradient(to bottom, #000 74%, rgba(0, 0, 0, 0.55) 88%, transparent 100%);
+			bottom: 0;
+			height: auto;
+		}
+
+		/* One flat wash over the whole photo. The desktop gradient cannot work
+		   here: .left-head carries its own plate directly beneath the wordmark
+		   row, so a fading top band crossed it and read as a dark strip above a
+		   lighter one. Flat is also honest about what the phone layout is —
+		   the copy block fills the screen, so there is no middle of the
+		   photograph left to give back. */
+		.sky-scrim {
+			background: var(--landing-plate);
 		}
 
 		.intro {
@@ -431,11 +447,9 @@
 			   z-index without being positioned. */
 			position: static;
 			z-index: 1;
-			/* The plate, as a background rather than a pseudo-element, because
-			   this block is not a positioned ancestor. The copy is justified to
-			   the bottom of the box and can fill it on a short phone, so the
-			   wash is at full strength across the whole box. */
-			background: var(--landing-plate);
+			/* No plate of its own: .sky-scrim is a flat wash at the same
+			   strength across the whole photo here, so a second one would
+			   double up and show as a seam at this block's top edge. */
 			order: 2;
 			/* The headline and the three paragraphs have to sit inside the
 			   first screen, so the block is capped at the viewport less the
@@ -458,14 +472,9 @@
 			box-sizing: border-box;
 		}
 
-		/* Below the fold the footer sits on the paper ground, not the photo —
-		   so the ink tokens flip back to the dark brown and the halo goes
-		   away. Re-scoping the custom properties on the container means every
-		   child picks it up; no per-element colour overrides. */
+		/* The footer sits on the photo like everything else now, so it keeps
+		   the light ink and the halo rather than flipping to dark-on-paper. */
 		.site-footer {
-			--landing-ink: var(--landing-ink-on-paper);
-			--landing-hairline: rgba(59, 42, 29, 0.14);
-			--ink-halo: var(--ink-halo-none);
 			position: relative;
 			z-index: 1;
 			order: 4;
